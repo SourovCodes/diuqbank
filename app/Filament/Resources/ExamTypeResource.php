@@ -11,7 +11,6 @@ use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ExamTypeResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\ExamTypeResource\RelationManagers;
 
 class ExamTypeResource extends Resource
 {

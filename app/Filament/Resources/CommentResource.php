@@ -12,7 +12,6 @@ use Filament\Forms\Components\Select;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\CommentResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\CommentResource\RelationManagers;
 
 class CommentResource extends Resource
 {
