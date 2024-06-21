@@ -2,7 +2,7 @@
     'hoverAction' => true,
     'align' => 'right',
     'width' => '48',
-    'contentClasses' => 'py-1 bg-white dark:bg-slate-800 dark:border dark:border-gray-700 ',
+    'contentClasses' => 'py-1 bg-white dark:bg-gray-800 dark:border dark:border-gray-700 ',
 ])
 
 @php
@@ -29,7 +29,7 @@
 @endphp
 
 <div {{ $attributes->merge(['class' => $classes]) }} x-data="{ open: false }" @click.outside="open = false">
-    <div @if ($hoverAction) @mouseover="open = true" 
+    <div @if ($hoverAction) @mouseover="open = true"
         @else
         @click="open = !open" @endif
         class="flex ">

@@ -30,7 +30,7 @@
     @vite('resources/css/app.css')
 </head>
 
-<body class="bg-slate-100 text-gray-900 dark:text-gray-100 dark:bg-slate-800 antialiased flex flex-col min-h-screen">
+<body class="bg-gray-50 text-gray-900 dark:text-gray-100 dark:bg-gray-950 antialiased flex flex-col min-h-screen">
 @include('inc.navbar')
 {{ $slot }}
 

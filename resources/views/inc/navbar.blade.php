@@ -14,7 +14,7 @@
              x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
              x-transition:leave="transition ease-in-out duration-300 transform" x-transition:leave-start="translate-x-0"
              x-transition:leave-end="-translate-x-full"
-             class="relative max-w-xs w-full bg-white  dark:bg-slate-800  shadow-xl pb-12 flex flex-col overflow-y-auto">
+             class="relative max-w-xs w-full bg-white  dark:bg-gray-900  shadow-xl pb-12 flex flex-col overflow-y-auto">
             <div class="px-4 pt-5 pb-2 flex">
                 <button type="button" x-on:click="offCanvasMenu= !offCanvasMenu"
                         class="-m-2 p-2 rounded-md inline-flex items-center justify-center text-gray-400 ">
@@ -95,7 +95,7 @@
         </div>
     </div>
 
-    <header class="relative bg-white dark:bg-slate-800 border-b border-gray-200  dark:border-gray-700 ">
+    <header class="relative bg-white dark:bg-black border-b border-gray-200  dark:border-gray-800 ">
         <p
             class="bg-indigo-600 h-10 flex items-center justify-center text-sm font-medium text-white px-4 sm:px-6 lg:px-8">
             {{ __('We are new, Kindly contribute by uploading questions') }}
@@ -156,16 +156,16 @@
                         <div class="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-3">
 
 
-{{--                            @auth--}}
+                            @auth
 
 
-{{--                                <x-dropdown align="right" width="48">--}}
-{{--                                    <x-slot name="trigger">--}}
-{{--                                        <x-nav-link href="#">--}}
-{{--                                            <x-svg.user-circle class="inline w-5 h-5" /> {{ __('Profile') }}--}}
-{{--                                        </x-nav-link>--}}
-{{--                                    </x-slot>--}}
-{{--                                    <x-slot name="content">--}}
+                                <x-dropdown align="right" width="48">
+                                    <x-slot name="trigger">
+                                        <x-nav-link href="#">
+                                            <x-svg.user-circle class="inline w-5 h-5" /> {{ __('Profile') }}
+                                        </x-nav-link>
+                                    </x-slot>
+                                    <x-slot name="content">
 
 {{--                                        <x-dropdown-link :href="route('contributors.show', auth()->user()->username)">--}}
 {{--                                            {{ __('Profile') }}--}}
@@ -177,34 +177,34 @@
 
 
 
-{{--                                        --}}{{----}}
+
 {{--                                        @admin--}}
 {{--                                            <x-dropdown-link :href="route('admin.dashboard')">--}}
 {{--                                                {{ __('Admin Panel') }}--}}
 {{--                                            </x-dropdown-link>--}}
-{{--                                        @endadmin --}}
+{{--                                        @endadmin--}}
 
-{{--                                        <!-- Authentication -->--}}
-{{--                                        <form method="POST" action="{{ route('logout') }}">--}}
-{{--                                            @csrf--}}
+                                        <!-- Authentication -->
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
 
-{{--                                            <x-dropdown-link :href="route('logout')"--}}
-{{--                                                             onclick="event.preventDefault();--}}
-{{--                                            this.closest('form').submit();">--}}
-{{--                                                {{ __('Log Out') }}--}}
-{{--                                            </x-dropdown-link>--}}
-{{--                                        </form>--}}
-{{--                                    </x-slot>--}}
-{{--                                </x-dropdown>--}}
-{{--                            @else--}}
-{{--                                <x-nav-link :href="route('login')" :active="request()->routeIs('login')" class="border-none">--}}
-{{--                                    <x-svg.exit class="inline w-4 h-4" /></i> {{ __('Login') }}--}}
-{{--                                </x-nav-link>--}}
-{{--                                <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>--}}
-{{--                                <x-nav-link :href="route('register')" :active="request()->routeIs('register')" class="border-none">--}}
-{{--                                    <x-svg.user-plus class="inline w-4 h-4" /> {{ __('Register') }}--}}
-{{--                                </x-nav-link>--}}
-{{--                            @endauth--}}
+                                            <x-dropdown-link :href="route('logout')"
+                                                             onclick="event.preventDefault();
+                                            this.closest('form').submit();">
+                                                {{ __('Log Out') }}
+                                            </x-dropdown-link>
+                                        </form>
+                                    </x-slot>
+                                </x-dropdown>
+                            @else
+                                <x-nav-link :href="route('login')" :active="request()->routeIs('login')" class="border-none">
+                                    <x-svg.exit class="inline w-4 h-4" /> {{ __('Login') }}
+                                </x-nav-link>
+                                <span class="h-6 w-px bg-gray-200" aria-hidden="true"></span>
+                                <x-nav-link :href="route('register')" :active="request()->routeIs('register')" class="border-none">
+                                    <x-svg.user-plus class="inline w-4 h-4" /> {{ __('Register') }}
+                                </x-nav-link>
+                            @endauth
                         </div>
 
                         {{-- <x-dropdown align="left" width="48">
