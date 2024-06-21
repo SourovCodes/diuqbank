@@ -17,51 +17,63 @@ class GoogleLoginController extends Controller
     public function googleCallback()
     {
 
-        $googleUser = Socialite::driver('google')->user();
 
-        $user = User::where('email', $googleUser->getEmail())->withTrashed()->first();
-        if (!$user) {
+        try {
+            $googleUser = Socialite::driver('google')->user();
 
-            $i = 0;
-            $username = Str::slug($googleUser->getName());
-            while (User::where('username', '=', $username)->exists()) {
-                $i++;
-                $username = $username . $i;
-            }
-            $new_user = User::create([
-                'name' => $googleUser->getName(),
-                'username' => $username,
-                'email' => $googleUser->getEmail(),
-                'role' => $googleUser->getEmail() == 'sourovbuzz@gmail.com' ? UserRole::admin : UserRole::user,
-            ]);
+            $user = User::where('email', $googleUser->getEmail())->withTrashed()->first();
+            if (!$user) {
 
-            Auth::login($new_user);
-            if ($googleUser['verified_email']) {
-                $new_user->markEmailAsVerified();
-            }
-            event(new Registered($new_user));
-            $new_user->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
-                ->usingFileName($googleUser->name . '.png')
-                ->toMediaCollection('profile-images', 'profile-images');
-            Notification::make()
-                ->title("You are now logged in!")
-                ->success()
-                ->send();
-            return redirect()->intended(route('home'));
-        } else {
-            if ($user->deleted_at) {
-                $user->restore();
-            }
-            Auth::login($user);
+                $i = 0;
+                $username = Str::slug($googleUser->getName());
+                while (User::where('username', '=', $username)->exists()) {
+                    $i++;
+                    $username = $username . $i;
+                }
+                $new_user = User::create([
+                    'name' => $googleUser->getName(),
+                    'username' => $username,
+                    'email' => $googleUser->getEmail(),
+                    'role' => $googleUser->getEmail() == 'sourovbuzz@gmail.com' ? UserRole::admin : UserRole::user,
+                ]);
+
+                Auth::login($new_user);
+                Notification::make()
+                    ->title("You are now logged in!")
+                    ->success()
+                    ->send();
+                if ($googleUser['verified_email']) {
+                    $new_user->markEmailAsVerified();
+                }
+                event(new Registered($new_user));
+                $new_user->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
+                    ->usingFileName($googleUser->name . '.png')
+                    ->toMediaCollection('profile-images', 'profile-images');
+
+                return redirect()->intended(route('home'));
+            } else {
+                if ($user->deleted_at) {
+                    $user->restore();
+                }
+                Auth::login($user);
 //                $user->update(['token' => $googleUser->token]);
-            if ($googleUser['verified_email']) {
-                $user->markEmailAsVerified();
+                if ($googleUser['verified_email']) {
+                    $user->markEmailAsVerified();
+                }
+                Notification::make()
+                    ->title("You are now logged in!")
+                    ->success()
+                    ->send();
+                return redirect()->intended(route('home'));
             }
+        } catch (\Throwable $th) {
             Notification::make()
-                ->title("You are now logged in!")
-                ->success()
+                ->title("There was an error while logging in.")
+                ->body($th->getMessage())
+                ->danger()
                 ->send();
-            return redirect()->intended(route('home'));
+            return redirect()->intended(route('home')) ;
+
         }
     }
 }
