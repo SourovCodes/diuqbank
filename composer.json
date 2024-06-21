@@ -9,6 +9,7 @@
         "filament/filament": "^3.2",
         "filament/spatie-laravel-media-library-plugin": "^3.2",
         "laravel/framework": "^11.9",
+        "laravel/socialite": "^5.15",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "stechstudio/filament-impersonate": "^3.9"

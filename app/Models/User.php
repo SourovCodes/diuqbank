@@ -2,14 +2,35 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
+use Filament\Panel;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements MustVerifyEmail
+
+
+class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser
 {
     use HasFactory, Notifiable;
+    use InteractsWithMedia, SoftDeletes;
+
+
+
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return ($this->email == 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail()) || $this->role == UserRole::admin;
+        // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
+    }
+
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +42,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'username',
         'email',
         'password',
+        'student_id',
+        'phone',
     ];
 
     /**
@@ -45,4 +68,30 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('profile-images')
+            ->useFallbackUrl(asset('images/user.png'))
+            ->useFallbackPath(public_path('/images/user.png'));
+        $this
+            ->addMediaCollection('cover-photos')
+            ->useFallbackUrl(asset('images/def_cover.jpg'))
+            ->useFallbackPath(public_path('images/def_cover.jpg'));
+    }
+    public function registerMediaConversions(Media|null $media = null): void
+    {
+        $this
+            ->addMediaConversion('preview')
+            ->fit(Fit::Crop, 300, 300)
+            ->queued();
+    }
+
+    public function questions()
+    {
+        return $this->hasMany(Question::class);
+    }
+
+
 }
