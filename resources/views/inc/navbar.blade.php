@@ -34,12 +34,14 @@
                 <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
                     {{ __('Home') }}
                 </x-nav-link>
-{{--                <x-nav-link :href="route('questions.index')" :active="request()->routeIs('questions.*')">--}}
+                <x-nav-link :href="route('contributors.index')" :active="request()->routeIs('contributors.index')">
+                    {{ __('Contributors') }}
+                </x-nav-link>
+
+                {{--                <x-nav-link :href="route('questions.index')" :active="request()->routeIs('questions.*')">--}}
 {{--                    {{ __('Questions') }}--}}
 {{--                </x-nav-link>--}}
-{{--                <x-nav-link :href="route('contributors.index')" :active="request()->routeIs('contributors.index')">--}}
-{{--                    {{ __('Contributors') }}--}}
-{{--                </x-nav-link>--}}
+{{--                -}}
 {{--                <x-nav-link :href="route('pages.about')" :active="request()->routeIs('pages.about')">--}}
 {{--                    {{ __('About') }}--}}
 {{--                </x-nav-link>--}}
@@ -50,36 +52,36 @@
 
             <div class="border-t border-gray-200 dark:border-gray-700 py-6 px-4 space-y-4">
 
-{{--                @auth--}}
+                @auth
 
 
-{{--                    <x-nav-link :href="route('contributors.show', auth()->user()->username)" :active="request()->routeIs('contributors.show')">--}}
-{{--                        <x-svg.user-circle class="inline w-4 h-4" /> {{ __('Profile') }}--}}
-{{--                    </x-nav-link>--}}
+                    <x-nav-link :href="route('contributors.show', auth()->user()->username)" :active="request()->routeIs('contributors.show')">
+                        <x-svg.user-circle class="inline w-4 h-4" /> {{ __('Profile') }}
+                    </x-nav-link>
 
-{{--                    <x-nav-link :href="route('my-account.questions.create')" :active="request()->routeIs('my-account.questions.create')">--}}
-{{--                        <x-svg.document-check class="inline w-5 h-5" />{{ __('Submit New Question') }}--}}
-{{--                    </x-nav-link>--}}
+                    <x-nav-link :href="route('my-account.questions.create')" :active="request()->routeIs('my-account.questions.create')">
+                        <x-svg.document-check class="inline w-5 h-5" />{{ __('Submit New Question') }}
+                    </x-nav-link>
 
 
-{{--                    <!-- Authentication -->--}}
-{{--                    <form method="POST" action="{{ route('logout') }}">--}}
-{{--                        @csrf--}}
+                    <!-- Authentication -->
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
 
-{{--                        <x-nav-link :href="route('logout')"--}}
-{{--                                    onclick="event.preventDefault();--}}
-{{--                                            this.closest('form').submit();">--}}
-{{--                            <x-svg.exit class="inline w-4 h-4" /></i> {{ __('Log Out') }}--}}
-{{--                        </x-nav-link>--}}
-{{--                    </form>--}}
-{{--                @else--}}
-{{--                    <x-nav-link :href="route('login')" :active="request()->routeIs('login')">--}}
-{{--                        <x-svg.exit class="inline w-4 h-4" /> {{ __('Login') }}--}}
-{{--                    </x-nav-link>--}}
-{{--                    <x-nav-link :href="route('register')" :active="request()->routeIs('register')">--}}
-{{--                        <x-svg.user-plus class="inline w-4 h-4" /> {{ __('Register') }}--}}
-{{--                    </x-nav-link>--}}
-{{--                @endauth--}}
+                        <x-nav-link :href="route('logout')"
+                                    onclick="event.preventDefault();
+                                            this.closest('form').submit();">
+                            <x-svg.exit class="inline w-4 h-4" /> {{ __('Log Out') }}
+                        </x-nav-link>
+                    </form>
+                @else
+                    <x-nav-link :href="route('login')" :active="request()->routeIs('login')">
+                        <x-svg.exit class="inline w-4 h-4" /> {{ __('Login') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('register')" :active="request()->routeIs('register')">
+                        <x-svg.user-plus class="inline w-4 h-4" /> {{ __('Register') }}
+                    </x-nav-link>
+                @endauth
 
 
             </div>
@@ -131,14 +133,16 @@
                             <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
                                 {{ __('Home') }}
                             </x-nav-link>
+                            <x-nav-link :href="route('contributors.index')"
+                                        :active="request()->routeIs('contributors.*')">
+                                {{ __('Contributors') }}
+                            </x-nav-link>
 
 {{--                            <x-nav-link :href="route('questions.index')" :active="request()->routeIs('questions.*')">--}}
 {{--                                {{ __('Questions') }}--}}
 {{--                            </x-nav-link>--}}
 
-{{--                            <x-nav-link :href="route('contributors.index')" :active="request()->routeIs('contributors.*')">--}}
-{{--                                {{ __('Contributors') }}--}}
-{{--                            </x-nav-link>--}}
+
 
 
 {{--                            <x-nav-link :href="route('pages.about')" :active="request()->routeIs('pages.about')">--}}
@@ -167,13 +171,13 @@
                                     </x-slot>
                                     <x-slot name="content">
 
-{{--                                        <x-dropdown-link :href="route('contributors.show', auth()->user()->username)">--}}
-{{--                                            {{ __('Profile') }}--}}
-{{--                                        </x-dropdown-link>--}}
+                                        <x-dropdown-link :href="route('contributors.show', auth()->user()->username)">
+                                            {{ __('Profile') }}
+                                        </x-dropdown-link>
 
-{{--                                        <x-dropdown-link :href="route('my-account.questions.create')">--}}
-{{--                                            {{ __('Submit New Question') }}--}}
-{{--                                        </x-dropdown-link>--}}
+                                        <x-dropdown-link :href="route('my-account.questions.create')">
+                                            {{ __('Submit New Question') }}
+                                        </x-dropdown-link>
 
 
 
@@ -237,7 +241,7 @@
 
                         <button id="theme-toggle" data-tooltip-target="tooltip-toggle" type="button"
                                 class=" text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none   ml-2 rounded-lg text-sm p-2.5">
-                            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor"
+                            <svg id="theme-toggle-dark-icon" class=" w-5 h-5" fill="currentColor"
                                  viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                             </svg>

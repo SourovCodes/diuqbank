@@ -19,7 +19,7 @@ class Question extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
 
     /**
@@ -131,7 +131,6 @@ class Question extends Model implements HasMedia
 
             Section::make('Submit Question')
                 ->columns(2)
-
                 ->description('Please try to be responsible')
                 ->schema([
                     TextInput::make('title')
@@ -161,6 +160,7 @@ class Question extends Model implements HasMedia
                         ->relationship('departments', 'name')
                         ->createOptionModalHeading("Add New Department")
                         ->createOptionForm(Department::getForm())
+                        ->searchable()
                         ->required()
                         ->preload(),
 
@@ -168,6 +168,8 @@ class Question extends Model implements HasMedia
                         ->relationship('semesters', 'name')
                         ->createOptionModalHeading("Add New Semester")
                         ->createOptionForm(Semester::getForm())
+                        ->searchable()
+                        ->multiple()
                         ->required()
                         ->preload(),
 
@@ -175,11 +177,15 @@ class Question extends Model implements HasMedia
                         ->relationship('course_names', 'name')
                         ->createOptionModalHeading("Add New Course Name")
                         ->createOptionForm(CourseName::getForm())
+                        ->searchable()
+                        ->multiple()
                         ->required()
                         ->preload(),
                     Select::make('exam_types')
                         ->relationship('exam_types', 'name')
                         ->createOptionModalHeading("Add New Exam Type")
+                        ->searchable()
+                        ->multiple()
                         ->createOptionForm(ExamType::getForm())
                         ->required()
                         ->preload(),
