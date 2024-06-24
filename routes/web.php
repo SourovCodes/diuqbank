@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ContributorController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Middleware\EnsureDiuEmail;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +11,12 @@ Route::get('/', function () {
     return view('welcome');
 })->middleware(['auth', 'verified'])->name('home');
 
+Route::prefix('questions')->name('questions.')->group(function () {
+    Route::get('/', [QuestionController::class, 'index'])->name('index');
+    Route::get('/{question}', [QuestionController::class, 'show'])->name('show');
+    Route::get('/pdfviewer/{question}', [QuestionController::class, 'pdfViewer'])->name('pdfviewer');
+
+});
 Route::prefix('contributors')->name('contributors.')->group(function () {
     Route::get('/', [ContributorController::class, 'index'])->name('index');
     Route::get('/{user:username}', [ContributorController::class, 'show'])->name('show');
@@ -29,5 +37,15 @@ Route::prefix('my-account')->name('my-account.')->middleware(['auth'])->group(fu
     });
 
 });
+
+Route::prefix('pages')->middleware([])->group(function () {
+    Route::get('faq', [PageController::class, 'faq'])->name('pages.faq');
+    Route::get('about', [PageController::class, 'about'])->name('pages.about');
+    Route::get('contact', [PageController::class, 'contact'])->name('pages.contact');
+    Route::get('privacy-policy', [PageController::class, 'privacyPolicy'])->name('pages.privacy-policy');
+    Route::get('terms-and-conditions', [PageController::class, 'termsAndConditions'])->name('pages.terms-and-conditions');
+
+});
+
 
 require __DIR__.'/auth.php';

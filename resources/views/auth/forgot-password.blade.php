@@ -19,10 +19,10 @@
                     <div class="grid gap-y-4">
                         <!-- Email Address -->
                         <div>
-                            <x-input-label for="email" :value="__('Email')"/>
-                            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email"
+                            <x-input.label for="email" :value="__('Email')"/>
+                            <x-input.text id="email" class="block mt-1 w-full" type="email" name="email"
                                           :value="old('email')" required autofocus/>
-                            <x-input-error :messages="$errors->get('email')" class="mt-2"/>
+                            <x-input.error :messages="$errors->get('email')" class="mt-2"/>
                         </div>
 
                         <x-button.primary class="py-3">

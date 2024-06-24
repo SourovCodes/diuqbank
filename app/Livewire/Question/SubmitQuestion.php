@@ -3,6 +3,7 @@
 namespace App\Livewire\Question;
 
 
+use Filament\Notifications\Notification;
 use Livewire\Component;
 use App\Models\Question;
 use Filament\Forms\Form;
@@ -43,8 +44,8 @@ class SubmitQuestion extends Component implements HasForms
     public function checkForDuplicateQuestion(): void
     {
         $query = Question::whereHas('departments', function ($q) {
-            $q->whereIn('department_id', $this->data['departments'] ?? []);
-        }, '=', count($this->data['departments'] ?? []))
+            $q->whereIn('department_id', [$this->data['departments']] ?? []);
+        }, '=', count([$this->data['departments']] ?? []))
             ->whereHas('semesters', function ($q) {
                 $q->whereIn('semester_id', $this->data['semesters'] ?? []);
             }, '=', count($this->data['semesters'] ?? []))
@@ -74,7 +75,10 @@ class SubmitQuestion extends Component implements HasForms
         // Check for existing question
         if ($this->warningMessage) {
             // dd($this->duplicateCheckquery->paginate(10));
-            $this->notify($this->warningMessage);
+            Notification::make()
+                ->title($this->warningMessage)
+                ->warning()
+                ->send();
             return;
         }
         $this->saveAfterConfirmation();
@@ -93,7 +97,10 @@ class SubmitQuestion extends Component implements HasForms
         $this->record->save();
         $this->form->model($this->record)->saveRelationships();
         $this->form->fill($this->record->attributesToArray());
-        $this->notify('Question Saved');
+        Notification::make()
+            ->title('Question Saved')
+            ->success()
+            ->send();
 
         cache()->flush();
         $this->redirect(route('questions.show', $this->record));

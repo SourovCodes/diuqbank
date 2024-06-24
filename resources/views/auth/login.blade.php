@@ -27,27 +27,27 @@
                     <div class="grid gap-y-4">
 
                         <div>
-                            <x-input-label for="email" :value="__('Email')"/>
-                            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email"
+                            <x-input.label for="email" :value="__('Email')"/>
+                            <x-input.text id="email" class="block mt-1 w-full" type="email" name="email"
                                           :value="old('email')" required autofocus autocomplete="username"/>
-                            <x-input-error :messages="$errors->get('email')" class="mt-2"/>
+                            <x-input.error :messages="$errors->get('email')" class="mt-2"/>
                         </div>
 
                         <div>
                             <div class="flex justify-between items-center">
-                                <x-input-label for="password" :value="__('Password')"/>
+                                <x-input.label for="password" :value="__('Password')"/>
                                 @if (Route::has('password.request'))
                                     <a class="text-sm text-blue-600 decoration-2 hover:underline font-medium"
                                        href="{{ route('password.request') }}">Forgot password?</a>
                                 @endif
                             </div>
 
-                            <x-text-input id="password" class="block mt-1 w-full"
+                            <x-input.text id="password" class="block mt-1 w-full"
                                           type="password"
                                           name="password"
                                           required autocomplete="current-password"/>
 
-                            <x-input-error :messages="$errors->get('password')" class="mt-2"/>
+                            <x-input.error :messages="$errors->get('password')" class="mt-2"/>
                         </div>
 
 

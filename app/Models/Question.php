@@ -63,11 +63,7 @@ class Question extends Model implements HasMedia
                 $query->whereIn('department_id', [$request->department]);
             });
         }
-        if ($request->batch && $request->batch != 'all') {
-            $query->whereHas('batches', function ($query) use ($request) {
-                $query->whereIn('batch_id', [$request->batch]);
-            });
-        }
+
         if ($request->exam_type && $request->exam_type != 'all') {
             $query->whereHas('exam_types', function ($query) use ($request) {
                 $query->whereIn('exam_type_id', [$request->exam_type]);

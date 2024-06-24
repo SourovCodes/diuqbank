@@ -6,7 +6,8 @@
 
         </div>
         <div class="flex gap-2 ">
-            <div class="ml-2 md:ml-20 -mt-10 md:-mt-20  bg-white  dark:bg-black border dark:border-gray-800 rounded-t-full my-2 p-2">
+            <div
+                class="ml-2 md:ml-20 -mt-10 md:-mt-20  bg-white  dark:bg-black border dark:border-gray-800 rounded-t-full my-2 p-2">
 
                 <a class="spotlight inline-block rounded-full "
                    href="{{ $user->getMedia('profile-images')->last()?->getUrl() ?? asset('images/user.png') }}">
@@ -15,7 +16,8 @@
                          alt="">
                 </a>
             </div>
-            <div class=" bg-white dark:bg-black rounded-sm border dark:border-gray-800 my-2 flex-grow flex items-center p-2">
+            <div
+                class=" bg-white dark:bg-black rounded-sm border dark:border-gray-800 my-2 flex-grow flex items-center p-2">
 
                 <div class="flex items-center bg-emerald-200 w-min rounded-full p-1 mx-1 first:ml-0 last:mr-0">
                     <div class="bg-emerald-300 p-1 rounded-full">
@@ -73,7 +75,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 ">
 
             @foreach ($questions as $question)
-                {{--                <x-question.question-list-item :question="$question" />--}}
+                <x-question.question-list-item :question="$question"/>
             @endforeach
 
 
