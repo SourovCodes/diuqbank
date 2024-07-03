@@ -1,5 +1,5 @@
 <x-web-layout>
-    <div class="container mx-auto px-2">
+    <div class="container mx-auto px-2 py-7">
 
         <x-auth.card>
             <div class="text-center">
