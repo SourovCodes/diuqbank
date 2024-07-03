@@ -99,10 +99,10 @@
     </div>
 
     <header class="relative bg-white dark:bg-black border-b border-gray-200  dark:border-gray-800 ">
-        <p
-            class="bg-indigo-600 h-10 flex items-center justify-center text-sm font-medium text-white px-4 sm:px-6 lg:px-8">
-            {{ __('We are new, Kindly contribute by uploading questions') }}
-        </p>
+{{--        <p--}}
+{{--            class="bg-indigo-600 h-10 flex items-center justify-center text-sm font-medium text-white px-4 sm:px-6 lg:px-8">--}}
+{{--            {{ __('We are new, Kindly contribute by uploading questions') }}--}}
+{{--        </p>--}}
 
         <nav aria-label="Top" class="container mx-auto px-2 ">
             <div class="">

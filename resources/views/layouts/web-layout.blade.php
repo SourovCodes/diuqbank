@@ -33,10 +33,11 @@
 <body class="bg-gray-50 text-gray-900 dark:text-gray-100 dark:bg-gray-950 antialiased flex flex-col min-h-screen">
 @include('inc.navbar')
 {{ $slot }}
+@include('inc.footer')
 
 @livewire('notifications')
 
-@filamentScripts            
+@filamentScripts
 @vite('resources/js/app.js')
 </body>
 </html>

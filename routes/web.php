@@ -7,9 +7,7 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Middleware\EnsureDiuEmail;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->middleware(['auth', 'verified'])->name('home');
+Route::get('/', [QuestionController::class, 'home'])->name('home');
 
 Route::prefix('questions')->name('questions.')->group(function () {
     Route::get('/', [QuestionController::class, 'index'])->name('index');

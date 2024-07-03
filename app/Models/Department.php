@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Department extends Model
 {
-    use HasFactory;
+
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +41,13 @@ class Department extends Model
                 ->maxLength(255)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
+            TextInput::make('full_name')
+                ->placeholder('Computer Science & Engineering')
+                ->required()
+                ->columnSpanFull()
+                ->unique(ignoreRecord: true)
+                ->maxLength(255)
+                ->live(onBlur: true),
 
             TextInput::make('slug')
                 ->placeholder('cse')

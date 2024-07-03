@@ -21,7 +21,7 @@
 
             <div class="px-2 py-2 sm:px-6">
                 <h3 class="text-lg leading-6 font-medium ">Question Information</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Question details and filter info.</p>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">{{$question->view_count}}</p>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-500 px-2 py-2 sm:p-0">
                 <dl class="sm:divide-y sm:divide-gray-200 dark:divide-gray-700">

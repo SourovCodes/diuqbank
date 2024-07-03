@@ -30,6 +30,7 @@ class Question extends Model implements HasMedia
     protected $fillable = [
         'user_id',
         'title',
+        'view_count'
 
     ];
 

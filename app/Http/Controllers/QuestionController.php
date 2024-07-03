@@ -2,11 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Question;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
 {
+
+    public function home()
+    {
+
+        $departments = cache()->remember('departments', now()->addHour(), function () {
+            return  Department::withCount('questions')->get();
+        });
+
+        $questions = cache()->remember('popular-questions',  now()->addHour(), function () {
+            return Question::take(6)->with(['departments', 'semesters', 'course_names', 'exam_types'])->latest()->get();
+        });
+
+        return view('welcome', compact('departments','questions'));
+    }
     /**
      * Display a listing of the resource.
      */
@@ -19,6 +35,10 @@ class QuestionController extends Controller
     public function show(Question $question)
     {
 
+
+        $cacheKey = 'view_count_' . $question->id;
+        Cache::increment($cacheKey);
+        Cache::put($cacheKey, Cache::get($cacheKey), now()->addMinutes(10));
 
         $question = cache()->remember('question+' . $question->id, 86400, function () use ($question) {
             return $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
