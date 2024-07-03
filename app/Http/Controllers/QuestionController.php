@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Question;
-use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class QuestionController extends Controller
 {
@@ -16,16 +14,15 @@ class QuestionController extends Controller
     {
 
         $departments = cache()->remember('departments', now()->addHour(), function () {
-            return Department::withCount('questions')->get();
+            return  Department::withCount('questions')->get();
         });
 
-        $questions = cache()->remember('popular-questions', now()->addHour(), function () {
+        $questions = cache()->remember('popular-questions',  now()->addHour(), function () {
             return Question::take(6)->with(['departments', 'semesters', 'course_names', 'exam_types'])->latest()->get();
         });
 
-        return view('welcome', compact('departments', 'questions'));
+        return view('welcome', compact('departments','questions'));
     }
-
     /**
      * Display a listing of the resource.
      */
@@ -50,7 +47,6 @@ class QuestionController extends Controller
 
         return view('questions.show', compact('question'));
     }
-
     public function pdfViewer(Question $question)
     {
 
@@ -61,25 +57,6 @@ class QuestionController extends Controller
 
 
         return view('pdfViewer', compact('question'));
-
-    }
-
-    public function loadprofilepic()
-    {
-        $response = Http::get('https://diuqbank.live/api/profile_image');
-
-        foreach (User::all() as $user) {
-
-
-            if ($response->json($user->id) != null) {
-
-                $user->addMediaFromUrl($response->json($user->id))
-                    ->toMediaCollection('profile-images', 'profile-images');
-
-            }
-
-
-        }
 
     }
 

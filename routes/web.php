@@ -45,6 +45,5 @@ Route::prefix('pages')->middleware([])->group(function () {
 
 });
 
-Route::get('/loadprofilepic', [QuestionController::class, 'loadprofilepic'])->name('loadprofilepic');
 
 require __DIR__.'/auth.php';
