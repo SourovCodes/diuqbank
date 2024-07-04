@@ -63,7 +63,7 @@ return [
             'bucket' => env('DO_BUCKET'),
             // 'root' => env('DO_FOLDER'),
             'cdn_endpoint' => env('DO_CDN_ENDPOINT'),
-            'url' => env('DO_URL'),
+            'url' => env('DO_QUESTION_URL'),
             'endpoint' => env('DO_ENDPOINT'),
             'use_path_style_endpoint' => env('DO_USE_PATH_STYLE_ENDPOINT', false),
             'root' => env('DO_FOLDER', 'questionbank') . '/questions',
