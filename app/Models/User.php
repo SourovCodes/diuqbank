@@ -14,10 +14,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Sitemap\Contracts\Sitemapable;
 use Spatie\Sitemap\Tags\Url;
 
 
-class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser
+class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser,Sitemapable
 {
     use HasFactory, Notifiable;
     use InteractsWithMedia, SoftDeletes;
