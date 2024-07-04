@@ -34,7 +34,7 @@
 
     </div>
 
-    <div class="bg-white dark:bg-black ">
+    <div class="bg-white dark:bg-black border-y dark:border-gray-800">
 
         <div class="container mx-auto px-2 py-14">
             <h3 class="text-center text-3xl font-marry font-semibold">Departments
