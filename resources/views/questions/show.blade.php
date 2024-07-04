@@ -4,8 +4,22 @@
     <div class="container px-2 mx-auto">
         <div class="">
             <div class="py-8">
-                <div class="space-y-5 lg:space-y-8">
+                <div class="space-y-5 lg:space-y-8 relative">
 
+                    <div class=" absolute  top-0 right-0 flex  gap-2">
+                        @if (auth()->user()?->id == $question->user_id)
+                            <a href="{{ route('my-account.questions.edit', $question) }}"
+                               class="bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+                                <x-svg.edit class="w-5 h-5" />
+                            </a>
+                        @endif
+                        @if (auth()->user()?->email == 'sourov2305101004@diu.edu.bd')
+                            <a href="{{ route('filament.admin.resources.questions.edit', $question) }}"
+                               class=" bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+                                <x-svg.edit class="w-5 h-5" />
+                            </a>
+                        @endif
+                    </div>
 
                     <h2 class="text-3xl font-bold lg:text-5xl dark:text-white">{{ $question->title }}</h2>
 
