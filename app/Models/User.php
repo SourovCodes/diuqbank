@@ -14,7 +14,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-
+use Spatie\Sitemap\Tags\Url;
 
 
 class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser
@@ -91,6 +91,15 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail, Filamen
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+
+    public function toSitemapTag(): Url|string|array
+    {
+        // Return with fine-grained control:
+        return Url::create(route('contributors.show', $this))
+            ->setLastModificationDate(\Carbon\Carbon::create($this->updated_at))
+            ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY);
+
     }
 
 

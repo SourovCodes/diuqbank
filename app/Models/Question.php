@@ -14,6 +14,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Spatie\Sitemap\Tags\Url;
 
 class Question extends Model implements HasMedia
 {
@@ -117,7 +118,16 @@ class Question extends Model implements HasMedia
 
 
 
+    public function toSitemapTag(): Url|string|array
+    {
+        // Simple return:
+        return Url::create(route('questions.show', $this))
+            ->setLastModificationDate(\Carbon\Carbon::create($this->updated_at))
+            ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+            ;
 
+
+    }
     public static function getForm(): array
     {
         return [

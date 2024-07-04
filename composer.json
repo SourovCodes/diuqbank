@@ -13,6 +13,7 @@
         "laravel/socialite": "^5.15",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
+        "spatie/laravel-sitemap": "^7.2",
         "stechstudio/filament-impersonate": "^3.9"
     },
     "require-dev": {
