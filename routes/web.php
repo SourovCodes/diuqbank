@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [QuestionController::class, 'home'])->name('home');
 
+Route::get('/php', function () {
+    return phpinfo();
+})->name('php');
+
 Route::prefix('questions')->name('questions.')->group(function () {
     Route::get('/', [QuestionController::class, 'index'])->name('index');
     Route::get('/{question}', [QuestionController::class, 'show'])->name('show');
