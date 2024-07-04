@@ -17,6 +17,7 @@
         "vite": "^5.0"
     },
     "dependencies": {
+        "preline": "^2.3.0",
         "spotlight.js": "^0.7.8"
     }
 }

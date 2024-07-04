@@ -36,6 +36,7 @@ class UpdateViewCounts extends Command
             if ($cachedViews) {
                 $model->increment('view_count', $cachedViews);
                 Cache::forget($cacheKey);
+                Cache::forget('question+' . $model->id);
             }
         }
 

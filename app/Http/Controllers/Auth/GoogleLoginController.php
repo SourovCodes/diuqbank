@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserRole;
+use App\Events\NewUserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Filament\Notifications\Notification;
@@ -45,7 +46,7 @@ class GoogleLoginController extends Controller
                 if ($googleUser['verified_email']) {
                     $new_user->markEmailAsVerified();
                 }
-                event(new Registered($new_user));
+                event(new NewUserRegistered($new_user));
                 $new_user->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
                     ->usingFileName($googleUser->name . '.png')
                     ->toMediaCollection('profile-images', 'profile-images');

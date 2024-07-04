@@ -16,8 +16,8 @@
         </h1>
 
         <p class="mx-auto mt-9 max-w-2xl text-lg tracking-tight text-gray-700 dark:text-gray-300 sm:mt-6">
-            <span class="inline-block">Bring functionalities of other apps</span>
-            <span class="inline-block">into your Notion workspaces.</span>
+            <span class="inline-block">Get Questions For Your Next Exam.</span>
+            <span class="inline-block">Share Questions of Your Previous Exam.</span>
         </p>
 
         <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">

@@ -38,11 +38,12 @@ class QuestionController extends Controller
 
         $cacheKey = 'view_count_' . $question->id;
         Cache::increment($cacheKey);
-        Cache::put($cacheKey, Cache::get($cacheKey), now()->addMinutes(10));
+        Cache::put($cacheKey, Cache::get($cacheKey), now()->addHour());
 
-        $question = cache()->remember('question+' . $question->id, 86400, function () use ($question) {
+        $question = cache()->remember('question+' . $question->id, now()->addHour(), function () use ($question) {
             return $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
         });
+        $question->view_count = $question->view_count + Cache::get($cacheKey);
 
 
         return view('questions.show', compact('question'));

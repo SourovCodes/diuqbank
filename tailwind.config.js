@@ -11,6 +11,8 @@ export default {
         './app/Filament/**/*.php',
         // './resources/views/filament/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
+        'node_modules/preline/dist/*.js',
+
     ],
     theme: {
         screens: {
@@ -93,5 +95,7 @@ export default {
             textDecoration: ['active'],
         }
     },
-    plugins: [],
+    plugins: [
+        require('preline/plugin'),
+    ],
 }
