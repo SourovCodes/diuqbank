@@ -34,7 +34,11 @@
         </script>
     @endproduction
 
-    <title>{{ config('app.name') }}</title>
+    @hasSection('seo')
+        @yield('seo')
+    @else
+        {!! seo() !!}
+    @endif
 
     <style>
         [x-cloak] {

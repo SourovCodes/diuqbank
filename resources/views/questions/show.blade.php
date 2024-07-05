@@ -1,5 +1,9 @@
 <x-web-layout>
 
+    @section('seo')
+        {!! seo($SEOData) !!}
+    @endsection
+
     <!-- Blog Article -->
     <div class="container px-2 mx-auto">
         <div class="">

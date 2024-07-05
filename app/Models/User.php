@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Filament\Panel;
+use RalphJSmit\Laravel\SEO\Support\HasSEO;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Notifications\Notifiable;
@@ -22,6 +23,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail, Filamen
 {
     use HasFactory, Notifiable;
     use InteractsWithMedia, SoftDeletes;
+    use HasSEO;
 
 
 
@@ -92,6 +94,17 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail, Filamen
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+
+    public function getDynamicSEOData()
+    {
+
+        return new \RalphJSmit\Laravel\SEO\Support\SEOData(
+            title: $this->name,
+            description: "Name: $this->name | Email: $this->email | ID: $this->student_id ",
+            author: $this->name,
+            image: $this->getFirstMediaUrl('profile-images'),
+        );
     }
 
     public function toSitemapTag(): Url|string|array

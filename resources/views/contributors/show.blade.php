@@ -1,5 +1,9 @@
 <x-web-layout>
 
+    @section('seo')
+        {!! seo()->for($user) !!}
+    @endsection
+
     <div class="container mx-auto px-2 mt-10">
         <div class="bg-cover bg-center rounded-sm shadow-sm h-44 md:h-60 xl:h-80"
              style="background-image: url('{{ $user->getFirstMediaUrl('cover-photos', 'preview') }}');">
