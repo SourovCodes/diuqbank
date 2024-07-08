@@ -38,10 +38,10 @@
                 <p class=" font-semibold">Name:</p>
                 <p class=" flex-grow">{{ $user->name }}</p>
             </div>
-            <div class="flex gap-3">
-                <p class=" font-semibold">Email:</p>
-                <p class=" flex-grow">{{ $user->email }}</p>
-            </div>
+{{--            <div class="flex gap-3">--}}
+{{--                <p class=" font-semibold">Email:</p>--}}
+{{--                <p class=" flex-grow">{{ $user->email }}</p>--}}
+{{--            </div>--}}
 
             @if ($user->student_id)
                 <div class="flex gap-3">
