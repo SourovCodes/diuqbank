@@ -7,18 +7,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    @if(!request()->header('X-App-Request'))
-        <script data-cfasync="false">
-            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
-                '(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
+    <script data-cfasync="false">
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
+            '(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
 
-            } else {
-                document.documentElement.classList.remove('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
 
-            }
-        </script>
-    @endif
+        }
+    </script>
 
     @production
         <!-- Google tag (gtag.js) -->
@@ -53,16 +51,10 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900 dark:text-gray-100 dark:bg-gray-950 antialiased flex flex-col min-h-screen">
-@if(!request()->header('X-App-Request'))
-    @include('inc.navbar')
-@endif
-
+@include('inc.navbar')
 {{ $slot }}
+@include('inc.footer')
 
-
-@if(!request()->header('X-App-Request'))
-    @include('inc.footer')
-@endif
 @livewire('notifications')
 
 @filamentScripts
