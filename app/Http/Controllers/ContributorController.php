@@ -37,8 +37,8 @@ class ContributorController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
-        $questions = cache()->remember($user->id . '-questions-' . request()->get('page') ?? '1', 60, function () use ($user) {
-            return Question::where('user_id', $user->id)->with(['departments', 'semesters', 'course_names', 'batches', 'exam_types'])->latest()->paginate(6);
+        $questions = cache()->remember($user->id . '-profile-' . request()->get('page') ?? '1', 60, function () use ($user) {
+            return Question::where('user_id', $user->id)->with(['departments', 'semesters', 'course_names', 'exam_types'])->latest()->paginate(6);
         });
 
         return view('contributors.show', compact('user', 'questions'));
