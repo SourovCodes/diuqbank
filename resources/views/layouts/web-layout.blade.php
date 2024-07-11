@@ -7,16 +7,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script data-cfasync="false">
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
-            '(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
+    @if(!request()->header('X-App-Request'))
+        <script data-cfasync="false">
+            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
+                '(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
 
-        } else {
-            document.documentElement.classList.remove('dark')
+            } else {
+                document.documentElement.classList.remove('dark')
 
-        }
-    </script>
+            }
+        </script>
+    @endif
 
     @production
         <!-- Google tag (gtag.js) -->
