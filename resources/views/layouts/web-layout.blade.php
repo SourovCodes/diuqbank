@@ -51,10 +51,16 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900 dark:text-gray-100 dark:bg-gray-950 antialiased flex flex-col min-h-screen">
-@include('inc.navbar')
-{{ $slot }}
-@include('inc.footer')
+@if(!request()->header('X-App-Request'))
+    @include('inc.navbar')
+@endif
 
+{{ $slot }}
+
+
+@if(!request()->header('X-App-Request'))
+    @include('inc.footer')
+@endif
 @livewire('notifications')
 
 @filamentScripts
