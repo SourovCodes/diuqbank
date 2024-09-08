@@ -36,16 +36,17 @@ class QuestionController extends Controller
     {
 
 
-        $cacheKey = 'view_count_' . $question->id;
-        Cache::increment($cacheKey);
-        Cache::put($cacheKey, Cache::get($cacheKey), now()->addHour());
+//        $cacheKey = 'view_count_' . $question->id;
+//        Cache::increment($cacheKey);
+//        Cache::put($cacheKey, Cache::get($cacheKey), now()->addHour());
 
         $question = cache()->remember('question+' . $question->id, now()->addHour(), function () use ($question) {
             return $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
         });
-        $question->view_count = $question->view_count + Cache::get($cacheKey);
-
-
+//        $question->view_count = $question->view_count + Cache::get($cacheKey);
+	    
+	    $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
+	    
         $semesters = implode(', ', $question->semesters->pluck('name')->toArray());
         $departments = implode(', ', $question->departments->pluck('name')->toArray());
         $course_names = implode(', ', $question->course_names->pluck('name')->toArray());
@@ -56,6 +57,7 @@ class QuestionController extends Controller
             author: $question->user->name,
         //            image: asset('images/DIU-QBank-social-share.png'),
         );
+	    $question->increment('view_count');
         return view('questions.show', compact('question', 'SEOData'));
     }
     public function pdfViewer(Question $question)

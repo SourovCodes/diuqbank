@@ -39,15 +39,15 @@
 
 
 
-            <h3 class=" text-2xl font-marry font-semibold pt-5">
-                Special Offer Just for You
-            </h3>
-            <p class=" text-lg">
-                As a token of our appreciation, if you upload your questions to {{ config('app.name') }}, we'll give you
-                a 1-year free
-                subscription to Canva PRO! This is our way of saying thank you for helping us grow and for being an
-                essential part of our community.
-            </p>
+{{--            <h3 class=" text-2xl font-marry font-semibold pt-5">--}}
+{{--                Special Offer Just for You--}}
+{{--            </h3>--}}
+{{--            <p class=" text-lg">--}}
+{{--                As a token of our appreciation, if you upload your questions to {{ config('app.name') }}, we'll give you--}}
+{{--                a 1-year free--}}
+{{--                subscription to Canva PRO! This is our way of saying thank you for helping us grow and for being an--}}
+{{--                essential part of our community.--}}
+{{--            </p>--}}
 
 
 
