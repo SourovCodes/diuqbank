@@ -1,179 +1,245 @@
 <x-web-layout>
 
-    @section('seo')
-        {!! seo($SEOData) !!}
-    @endsection
+	@section('seo')
+		{!! seo($SEOData) !!}
+	@endsection
 
-    <!-- Blog Article -->
-    <div class="container px-2 mx-auto">
-        <div class="">
-            <div class="py-8">
-                <div class="space-y-5 lg:space-y-8 relative">
+	<!-- Blog Article -->
+	<div class="container px-2 mx-auto">
+		<div class="">
+			<div class="py-8">
+				<div class="space-y-5 lg:space-y-8 relative">
 
-                    <div class=" absolute  top-0 right-0 flex  gap-2">
-                        @if (auth()->user()?->id == $question->user_id)
-                            <a href="{{ route('my-account.questions.edit', $question) }}"
-                               class="bg-primary-300 dark:bg-primary-500 rounded p-2 ">
-                                <x-svg.edit class="w-5 h-5" />
-                            </a>
-                        @endif
-                        @if (auth()->user()?->email == 'sourov2305101004@diu.edu.bd')
-                            <a href="{{ route('filament.admin.resources.questions.edit', $question) }}"
-                               class=" bg-primary-300 dark:bg-primary-500 rounded p-2 ">
-                                <x-svg.edit class="w-5 h-5" />
-                            </a>
-                        @endif
-                    </div>
+					<div class=" absolute  top-0 right-0 flex  gap-2">
+						@if (auth()->user()?->id == $question->user_id)
+							<a href="{{ route('my-account.questions.edit', $question) }}"
+							   class="bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+								<x-svg.edit class="w-5 h-5"/>
+							</a>
+						@endif
+						@if (auth()->user()?->email == 'sourov2305101004@diu.edu.bd')
+							<a href="{{ route('filament.admin.resources.questions.edit', $question) }}"
+							   class=" bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+								<x-svg.edit class="w-5 h-5"/>
+							</a>
+						@endif
+					</div>
 
-                    <h2 class="text-3xl font-bold lg:text-5xl dark:text-white">{{ $question->title }}</h2>
+					<h2 class="text-3xl font-bold lg:text-5xl dark:text-white">{{ $question->title }}</h2>
 
-                    <div class="flex items-center gap-2 flex-wrap ">
-                        <a href="{{ route('contributors.show', $question->user) }}"
-                           class=" flex items-center gap-2 p-1 rounded-full bg-gray-100 dark:bg-gray-900 w-fit px-4">
-                            <img class="rounded-full shadow h-8 w-8"
-                                 src="{{ $question->user->getMedia('profile-images')->last()?->getUrl() ?? asset('images/user.png') }}"
-                                 alt="">
-                            {{ $question->user->name }}</a>
+					<div class="flex items-center gap-2 flex-wrap ">
+						<a href="{{ route('contributors.show', $question->user) }}"
+						   class=" flex items-center gap-2 p-1 rounded-full bg-gray-100 dark:bg-gray-900 w-fit px-4">
+							<img class="rounded-full shadow h-8 w-8"
+							     src="{{ $question->user->getMedia('profile-images')->last()?->getUrl() ?? asset('images/user.png') }}"
+							     alt="">
+							{{ $question->user->name }}</a>
 
-                        @foreach ($question->departments as $department)
-                            <x-badge class="bg-green-100 text-green-800">
-                                {{ $department->name }}
-                            </x-badge>
-                        @endforeach
-                        @foreach ($question->semesters as $semester)
-                            <x-badge class="bg-blue-100 text-blue-800">
-                                {{ $semester->name }}
-                            </x-badge>
-                        @endforeach
-                        @foreach ($question->exam_types as $exat_type)
-                            <x-badge class="bg-orange-100 text-orange-800">
-                                {{ $exat_type->name }}
-                            </x-badge>
-                        @endforeach
-                        @foreach ($question->course_names as $course_code)
-                            <x-badge class="bg-primary-100 text-primary-800">
-                                {{ $course_code->name }}
-                            </x-badge>
-                        @endforeach
-                    </div>
-                    <div class="flex gap-2 flex-wrap justify-center sm:justify-end">
-                        <p class=" md:hidden">Question not loading? <span id="reloadQuestionFrameButton"
-                                                                          class=" cursor-pointer select-none">Click
+						@foreach ($question->departments as $department)
+							<x-badge class="bg-green-100 text-green-800">
+								{{ $department->name }}
+							</x-badge>
+						@endforeach
+						@foreach ($question->semesters as $semester)
+							<x-badge class="bg-blue-100 text-blue-800">
+								{{ $semester->name }}
+							</x-badge>
+						@endforeach
+						@foreach ($question->exam_types as $exat_type)
+							<x-badge class="bg-orange-100 text-orange-800">
+								{{ $exat_type->name }}
+							</x-badge>
+						@endforeach
+						@foreach ($question->course_names as $course_code)
+							<x-badge class="bg-primary-100 text-primary-800">
+								{{ $course_code->name }}
+							</x-badge>
+						@endforeach
+					</div>
+					<div class="flex gap-2 flex-wrap justify-center sm:justify-end">
+						<p class=" md:hidden">Question not loading? <span id="reloadQuestionFrameButton"
+						                                                  class=" cursor-pointer select-none">Click
                         Here</span>
-                        </p>
-                        <div class="flex flex-wrap gap-2">
-                            <x-button.primary id="pdfMakeFullScreenButton" class=" text-sm">View Full Screen
-                            </x-button.primary>
-                            <a href="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
-                               target="_blank">
-                                <x-button.primary class=" text-sm">Download</x-button.primary>
-                            </a>
-                        </div>
+						</p>
+						<div class="flex flex-wrap gap-2">
+							<x-button.primary id="pdfMakeFullScreenButton" class=" text-sm">View Full Screen
+							</x-button.primary>
+							<a href="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+							   target="_blank">
+								<x-button.primary class=" text-sm">Download</x-button.primary>
+							</a>
+						</div>
 
 
-                    </div>
-                    <object
-                        data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
-                        id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
-                        <iframe id="pdfvieweriframe" width="100%" height="700px"
-                                src="{{ route('questions.pdfviewer', $question) }}" frameborder="0"></iframe>
-                    </object>
+					</div>
+					<object
+							data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+							id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
+						<iframe id="pdfvieweriframe" width="100%" height="700px"
+						        src="{{ route('questions.pdfviewer', $question) }}" frameborder="0"></iframe>
+					</object>
 
-                    <div class="grid lg:flex lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
-                        <!-- Badges/Tags -->
-                        <div>
-                            <p class="text-xs sm:text-sm text-gray-800 dark:text-neutral-200">{{$question->created_at->format('M d,Y')}}</p>
-                        </div>
-                        <!-- End Badges/Tags -->
+					<div class="grid lg:flex lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
+						<!-- Badges/Tags -->
+						<div>
+							<p class="text-xs sm:text-sm text-gray-800 dark:text-neutral-200">{{$question->created_at->format('M d,Y')}}</p>
+						</div>
+						<!-- End Badges/Tags -->
 
-                        <div class="flex justify-end items-center gap-x-1.5">
-                            <!-- Button -->
-                            <div class="hs-tooltip inline-block">
-                                <button type="button"
-                                        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
-                                    <x-svg.eye class="w-5 h-5"/>
-                                    {{$question->view_count}}
-                                    <span
-                                        class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
-                                        role="tooltip"> Views </span>
-                                </button>
-                            </div>
-                            <!-- Button -->
+						<div class="flex justify-end items-center gap-x-1.5">
+							<!-- Button -->
+							<div class="hs-tooltip inline-block">
+								<button type="button"
+								        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
+									<x-svg.eye class="w-5 h-5"/>
+									{{$question->view_count}}
+									<span
+											class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
+											role="tooltip"> Views </span>
+								</button>
+							</div>
+							<!-- Button -->
 
-                            <div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>
+							<div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>
 
-                            <!-- Button -->
-                            <div class="hs-tooltip inline-block">
-                                <button type="button"
-                                        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
-                                    <x-svg.comments class="w-5 h-5"/>
-                                    {{$question->comments_count}}
-                                    <span
-                                        class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
-                                        role="tooltip">
+							<!-- Button -->
+							<div class="hs-tooltip inline-block">
+								<button type="button"
+								        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
+									<x-svg.comments class="w-5 h-5"/>
+									{{$question->comments_count}}
+									<span
+											class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
+											role="tooltip">
                     Comment
                   </span>
-                                </button>
-                            </div>
-                            <!-- Button -->
+								</button>
+							</div>
+							<!-- Button -->
 
-                            {{--                            <div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>--}}
+							{{--                            <div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>--}}
 
-                            {{--                            <!-- Button -->--}}
-                            {{--                            <div class="hs-dropdown relative inline-flex">--}}
-                            {{--                                <button type="button" id="blog-article-share-dropdown"--}}
-                            {{--                                        class="hs-dropdown-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">--}}
-                            {{--                                    <x-svg.share class="w-5 h-5" />--}}
-                            {{--                                    Share--}}
-                            {{--                                </button>--}}
-                            {{--                                <div--}}
-                            {{--                                    class="hs-dropdown-menu w-56 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden mb-1 z-10 bg-gray-900 shadow-md rounded-xl p-2 dark:bg-black"--}}
-                            {{--                                    aria-labelledby="blog-article-share-dropdown">--}}
-                            {{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
-                            {{--                                       href="#">--}}
-                            {{--                                        <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24"--}}
-                            {{--                                             height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"--}}
-                            {{--                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">--}}
-                            {{--                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>--}}
-                            {{--                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>--}}
-                            {{--                                        </svg>--}}
-                            {{--                                        Copy link--}}
-                            {{--                                    </a>--}}
-                            {{--                                    <div class="border-t border-gray-600 my-2 dark:border-neutral-800"></div>--}}
-                            {{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
-                            {{--                                       href="#">--}}
-                            {{--                                        <x-svg.twitter class="w-5 h-5" />--}}
-                            {{--                                        Share on Twitter--}}
-                            {{--                                    </a>--}}
-                            {{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
-                            {{--                                       href="#">--}}
-                            {{--                                        <x-svg.facebook class="w-5 h-5" />--}}
-                            {{--                                        Share on Facebook--}}
-                            {{--                                    </a>--}}
-                            {{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
-                            {{--                                       href="#">--}}
-                            {{--                                        <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="16"--}}
-                            {{--                                             height="16" fill="currentColor" viewBox="0 0 16 16">--}}
-                            {{--                                            <path--}}
-                            {{--                                                d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>--}}
-                            {{--                                        </svg>--}}
-                            {{--                                        Share on LinkedIn--}}
-                            {{--                                    </a>--}}
-                            {{--                                </div>--}}
-                            {{--                            </div>--}}
-                            {{--                            <!-- Button -->--}}
-                        </div>
-                    </div>
+							{{--                            <!-- Button -->--}}
+							{{--                            <div class="hs-dropdown relative inline-flex">--}}
+							{{--                                <button type="button" id="blog-article-share-dropdown"--}}
+							{{--                                        class="hs-dropdown-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">--}}
+							{{--                                    <x-svg.share class="w-5 h-5" />--}}
+							{{--                                    Share--}}
+							{{--                                </button>--}}
+							{{--                                <div--}}
+							{{--                                    class="hs-dropdown-menu w-56 transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden mb-1 z-10 bg-gray-900 shadow-md rounded-xl p-2 dark:bg-black"--}}
+							{{--                                    aria-labelledby="blog-article-share-dropdown">--}}
+							{{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
+							{{--                                       href="#">--}}
+							{{--                                        <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24"--}}
+							{{--                                             height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"--}}
+							{{--                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">--}}
+							{{--                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>--}}
+							{{--                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>--}}
+							{{--                                        </svg>--}}
+							{{--                                        Copy link--}}
+							{{--                                    </a>--}}
+							{{--                                    <div class="border-t border-gray-600 my-2 dark:border-neutral-800"></div>--}}
+							{{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
+							{{--                                       href="#">--}}
+							{{--                                        <x-svg.twitter class="w-5 h-5" />--}}
+							{{--                                        Share on Twitter--}}
+							{{--                                    </a>--}}
+							{{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
+							{{--                                       href="#">--}}
+							{{--                                        <x-svg.facebook class="w-5 h-5" />--}}
+							{{--                                        Share on Facebook--}}
+							{{--                                    </a>--}}
+							{{--                                    <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-400 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:focus:ring-neutral-400"--}}
+							{{--                                       href="#">--}}
+							{{--                                        <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="16"--}}
+							{{--                                             height="16" fill="currentColor" viewBox="0 0 16 16">--}}
+							{{--                                            <path--}}
+							{{--                                                d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>--}}
+							{{--                                        </svg>--}}
+							{{--                                        Share on LinkedIn--}}
+							{{--                                    </a>--}}
+							{{--                                </div>--}}
+							{{--                            </div>--}}
+							{{--                            <!-- Button -->--}}
+						</div>
+					</div>
 
-                    <livewire:question.question_comments :question="$question"/>
+					<livewire:question.question_comments :question="$question"/>
+					<article
+							class="prose prose-base mx-auto mt-5 max-w-none dark:prose-invert prose-a:text-primary-600">
 
-                </div>
+					<h2>7 Essential Tips for Private University Students to Maximize Their Academic and Career
+							Success</h2>
+						<h3>Introduction</h3>
+						<p>Being a private university student offers countless opportunities for personal growth and
+							career advancement. With the right strategies and resources, you can make the most of your
+							time in university and set yourself up for long-term success. Whether you're looking to ace
+							your exams, secure scholarships, or even study abroad, these tips will help guide you
+							through your academic journey.</p>
+						<hr>
+						<h3>1. Scholarship Opportunities for Private University Students</h3>
+						<p>Financing your education can be a challenge, but there are numerous scholarship opportunities
+							available for private university students. Many universities offer merit-based and
+							need-based scholarships, while external organizations also provide financial aid.</p>
+						<p><strong>Tip</strong>: Keep an eye on your university&rsquo;s financial aid office and apply
+							for external scholarships to reduce tuition fees.</p>
+						<hr>
+						<h3>2. Internship Programs for Career Growth</h3>
+						<p>One of the best ways to gain real-world experience while studying is by enrolling in
+							internship programs. Internships not only boost your resume but also offer networking
+							opportunities with industry professionals.</p>
+						<p><strong>Tip</strong>: Apply for internships early in your academic career to get hands-on
+							experience and potentially secure full-time job offers.</p>
+						<hr>
+						<h3>3. Study Abroad Programs for Global Exposure</h3>
+						<p>Studying abroad is an invaluable experience that can enhance your education and career
+							prospects. Many study abroad programs are designed specifically for private university
+							students, offering a global perspective on your field of study.</p>
+						<p><strong>Tip</strong>: Look into exchange programs and international partnerships your
+							university may have with foreign institutions.</p>
+						<hr>
+						<h3>4. Online Courses to Boost Your Skillset</h3>
+						<p>Supplementing your university education with online courses can give you a competitive edge
+							in the job market. Platforms like Coursera, Udemy, and edX offer courses on a wide range of
+							topics, from coding to digital marketing.</p>
+						<p><strong>Tip</strong>: Choose courses that align with your career goals and enhance your
+							skillset in areas that are in high demand.</p>
+						<hr>
+						<h3>5. Career Counseling and Placement Services</h3>
+						<p>Most private universities offer career counseling services to help students navigate their
+							career paths. From resume writing to job placement assistance, these services are designed
+							to help students transition smoothly into the workforce.</p>
+						<p><strong>Tip</strong>: Take full advantage of these services to build a professional resume
+							and practice interview techniques.</p>
+						<hr>
+						<h3>6. Financial Aid for Private University Students</h3>
+						<p>Many students struggle with tuition fees, but financial aid options like student loans,
+							grants, and work-study programs can significantly ease this burden.</p>
+						<p><strong>Tip</strong>: Explore both government and private financial aid programs to cover
+							educational costs.</p>
+						<hr>
+						<h3>7. Time Management for Academic Success</h3>
+						<p>Mastering time management is crucial for excelling in your studies. Balancing coursework,
+							internships, and extracurricular activities requires a structured approach to ensure that
+							you stay on top of your academic goals.</p>
+						<p><strong>Tip</strong>: Use time management apps like Todoist or Google Calendar to create a
+							daily study routine and stick to it.</p>
+						<hr>
+						<h3>Conclusion</h3>
+						<p>Private university students have a wealth of opportunities at their disposal, from study
+							abroad programs to scholarship opportunities and career counseling services. By taking
+							advantage of these resources, you can maximize your academic and career success, setting
+							yourself up for a bright future. Be proactive, stay focused, and make the most of your
+							university years.</p>
+					</article>
+				</div>
 
-            </div>
-        </div>
+			</div>
+		</div>
 
-    </div>
-    <script>
+	</div>
+	<script>
         var pdfviewerobject = document.getElementById('pdfviewerobject');
         var pdfvieweriframe = document.getElementById('pdfvieweriframe');
         var button = document.getElementById('pdfMakeFullScreenButton');
@@ -233,5 +299,5 @@
 
             pdfvieweriframe.src = pdfvieweriframe.src;
         }
-    </script>
+	</script>
 </x-web-layout>
