@@ -188,7 +188,7 @@ class QuestionList extends Component implements HasForms
         return view('livewire.question.question-list', [
             // 'questions' => $questions->latest()->paginate(10),
             'questions' => cache()->remember($cacheKey, now()->addHours(2), function () use ($questions) {
-                return $questions->latest()->paginate(10);
+                return $questions->latest()->paginate(20);
             }),
 
         ]);
