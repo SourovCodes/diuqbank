@@ -261,7 +261,7 @@
 
 
 </div>
-<div class="container mx-auto px-2">
+<div class="container mx-auto px-2 max-h-24">
 	<script  data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
 	        crossorigin="anonymous"></script>
 	<!-- horizontal ads -->
