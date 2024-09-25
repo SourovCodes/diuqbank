@@ -166,11 +166,25 @@
 					</div>
 
 					<livewire:question.question_comments :question="$question"/>
+					@production
+						<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
+						        crossorigin="anonymous"></script>
+						<ins class="adsbygoogle"
+						     style="display:block"
+						     data-ad-format="autorelaxed"
+						     data-ad-client="ca-pub-5256137078683241"
+						     data-ad-slot="2792441680"></ins>
+						<script>
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+						</script>
+					@endproduction
 					<article
 							class="prose prose-base mx-auto mt-5 max-w-none dark:prose-invert prose-a:text-primary-600">
 
+
 					<h2>7 Essential Tips for Private University Students to Maximize Their Academic and Career
 							Success</h2>
+
 						<h3>Introduction</h3>
 						<p>Being a private university student offers countless opportunities for personal growth and
 							career advancement. With the right strategies and resources, you can make the most of your
