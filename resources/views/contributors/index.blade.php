@@ -5,6 +5,10 @@
         <h3 class="text-center text-3xl font-marry font-semibold">We are thankful to our contributors
         </h3>
 
+        <x-filament::badge color="info" class="w-fit mx-auto">
+            Upload at-least 1 new question to see yourself here
+        </x-filament::badge>
+
         <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
             @foreach ($contributors as $contributor)
