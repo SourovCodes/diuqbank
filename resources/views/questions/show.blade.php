@@ -164,8 +164,6 @@
 							{{--                            <!-- Button -->--}}
 						</div>
 					</div>
-
-					<livewire:question.question_comments :question="$question"/>
 					@production
 						<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
 						        crossorigin="anonymous"></script>
@@ -178,75 +176,9 @@
                             (adsbygoogle = window.adsbygoogle || []).push({});
 						</script>
 					@endproduction
-					<article
-							class="prose prose-base mx-auto mt-5 max-w-none dark:prose-invert prose-a:text-primary-600">
+					<livewire:question.question_comments :question="$question"/>
 
 
-					<h2>7 Essential Tips for Private University Students to Maximize Their Academic and Career
-							Success</h2>
-
-						<h3>Introduction</h3>
-						<p>Being a private university student offers countless opportunities for personal growth and
-							career advancement. With the right strategies and resources, you can make the most of your
-							time in university and set yourself up for long-term success. Whether you're looking to ace
-							your exams, secure scholarships, or even study abroad, these tips will help guide you
-							through your academic journey.</p>
-						<hr>
-						<h3>1. Scholarship Opportunities for Private University Students</h3>
-						<p>Financing your education can be a challenge, but there are numerous scholarship opportunities
-							available for private university students. Many universities offer merit-based and
-							need-based scholarships, while external organizations also provide financial aid.</p>
-						<p><strong>Tip</strong>: Keep an eye on your university&rsquo;s financial aid office and apply
-							for external scholarships to reduce tuition fees.</p>
-						<hr>
-						<h3>2. Internship Programs for Career Growth</h3>
-						<p>One of the best ways to gain real-world experience while studying is by enrolling in
-							internship programs. Internships not only boost your resume but also offer networking
-							opportunities with industry professionals.</p>
-						<p><strong>Tip</strong>: Apply for internships early in your academic career to get hands-on
-							experience and potentially secure full-time job offers.</p>
-						<hr>
-						<h3>3. Study Abroad Programs for Global Exposure</h3>
-						<p>Studying abroad is an invaluable experience that can enhance your education and career
-							prospects. Many study abroad programs are designed specifically for private university
-							students, offering a global perspective on your field of study.</p>
-						<p><strong>Tip</strong>: Look into exchange programs and international partnerships your
-							university may have with foreign institutions.</p>
-						<hr>
-						<h3>4. Online Courses to Boost Your Skillset</h3>
-						<p>Supplementing your university education with online courses can give you a competitive edge
-							in the job market. Platforms like Coursera, Udemy, and edX offer courses on a wide range of
-							topics, from coding to digital marketing.</p>
-						<p><strong>Tip</strong>: Choose courses that align with your career goals and enhance your
-							skillset in areas that are in high demand.</p>
-						<hr>
-						<h3>5. Career Counseling and Placement Services</h3>
-						<p>Most private universities offer career counseling services to help students navigate their
-							career paths. From resume writing to job placement assistance, these services are designed
-							to help students transition smoothly into the workforce.</p>
-						<p><strong>Tip</strong>: Take full advantage of these services to build a professional resume
-							and practice interview techniques.</p>
-						<hr>
-						<h3>6. Financial Aid for Private University Students</h3>
-						<p>Many students struggle with tuition fees, but financial aid options like student loans,
-							grants, and work-study programs can significantly ease this burden.</p>
-						<p><strong>Tip</strong>: Explore both government and private financial aid programs to cover
-							educational costs.</p>
-						<hr>
-						<h3>7. Time Management for Academic Success</h3>
-						<p>Mastering time management is crucial for excelling in your studies. Balancing coursework,
-							internships, and extracurricular activities requires a structured approach to ensure that
-							you stay on top of your academic goals.</p>
-						<p><strong>Tip</strong>: Use time management apps like Todoist or Google Calendar to create a
-							daily study routine and stick to it.</p>
-						<hr>
-						<h3>Conclusion</h3>
-						<p>Private university students have a wealth of opportunities at their disposal, from study
-							abroad programs to scholarship opportunities and career counseling services. By taking
-							advantage of these resources, you can maximize your academic and career success, setting
-							yourself up for a bright future. Be proactive, stay focused, and make the most of your
-							university years.</p>
-					</article>
 				</div>
 
 			</div>
