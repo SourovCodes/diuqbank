@@ -10,6 +10,10 @@ class PageController extends Controller
     {
         return view('pages.faq');
     }
+    public function cfDiv2()
+    {
+        return view('pages.cf-div-2');
+    }
     public function about()
     {
         return view('pages.about');

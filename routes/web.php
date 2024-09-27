@@ -44,6 +44,8 @@ Route::prefix('pages')->middleware([])->group(function () {
     Route::get('contact', [PageController::class, 'contact'])->name('pages.contact');
     Route::get('privacy-policy', [PageController::class, 'privacyPolicy'])->name('pages.privacy-policy');
     Route::get('terms-and-conditions', [PageController::class, 'termsAndConditions'])->name('pages.terms-and-conditions');
+    Route::get('cf-div-2', [PageController::class, 'cfDiv2'])->name('pages.cf-div-2');
+
 
 });
 
