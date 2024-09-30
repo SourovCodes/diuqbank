@@ -164,18 +164,7 @@
 							{{--                            <!-- Button -->--}}
 						</div>
 					</div>
-					@production
-						<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
-						        crossorigin="anonymous"></script>
-						<ins class="adsbygoogle"
-						     style="display:block"
-						     data-ad-format="autorelaxed"
-						     data-ad-client="ca-pub-5256137078683241"
-						     data-ad-slot="2792441680"></ins>
-						<script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-						</script>
-					@endproduction
+					
 					<livewire:question.question_comments :question="$question"/>
 
 
