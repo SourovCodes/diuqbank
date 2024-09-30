@@ -20,8 +20,13 @@
             <x-button.danger class="mt-4" wire:click="saveAfterConfirmation">
                 ok, but still Update
             </x-button.danger>
-            <p class="mt-5 w-fit items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                {{ $warningMessage }} </p>
+            <x-filament::badge color="danger">
+                {{ $warningMessage }}
+            </x-filament::badge>
+            <x-filament::badge color="warning">
+                {{ $warningMessageBn }}
+            </x-filament::badge>
+         
             <div class="grid grid-cols-1 md:grid-cols-2 mt-2 gap-5">
                 @foreach ($existingQuestions as $question)
                     <a href="{{ route('questions.show', $question) }}" target="_blank">

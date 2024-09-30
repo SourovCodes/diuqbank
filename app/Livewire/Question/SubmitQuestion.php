@@ -20,6 +20,7 @@ class SubmitQuestion extends Component implements HasForms
     public ?array $data = [];
     public Question $record;
     public $warningMessage = null;
+    public $warningMessageBn = null;
     private $duplicateCheckquery;
 
 
@@ -63,8 +64,11 @@ class SubmitQuestion extends Component implements HasForms
         if ($exists) {
             $this->duplicateCheckquery = $query;
             $this->warningMessage = 'Question with the same configuration already exists.';
+            $this->warningMessageBn = 'ওয়েবসাইটে এই ধরনের প্রশ্ন ইতোমধ্যেই রয়েছে। আপনার প্রশ্নটি মুছে ফেলা হবে যদি না এটি ১. আগেরটার চেয়ে ভালো হয় বা ২. নতুন কোনো প্রশ্ন হয়। আমাদের সিস্টেমে দেখা গেছে যে নিচের প্রশ্নগুলো আপনার আপলোড করতে চাওয়া প্রশ্নের সাথে মিলে যেতে পারে। দয়া করে আগে এগুলো দেখে নিশ্চিত হয়ে নিন যে আপনার প্রশ্নটি ওয়েবসাইটে নতুন কিনা।';
+            
         } else {
             $this->warningMessage = null;
+            $this->warningMessageBn = null;
         }
     }
 
@@ -77,6 +81,7 @@ class SubmitQuestion extends Component implements HasForms
             // dd($this->duplicateCheckquery->paginate(10));
             Notification::make()
                 ->title($this->warningMessage)
+                ->body($this->warningMessageBn)
                 ->warning()
                 ->send();
             return;
