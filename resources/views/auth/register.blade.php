@@ -68,7 +68,6 @@
                         </div>
 
                         <div>
-                            <x-input.label for="g-recaptcha" :value="__('g-recaptcha')"/>
 
                             <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha-v2.site_key') }}"></div>
 
