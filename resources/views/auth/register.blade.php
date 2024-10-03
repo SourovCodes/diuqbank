@@ -1,6 +1,5 @@
 <x-web-layout>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha-v2.site_key') }}"></div>
 
     <div class="container mx-auto px-2 py-7">
         <x-auth.card>
