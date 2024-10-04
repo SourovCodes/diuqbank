@@ -25,11 +25,11 @@ Route::prefix('contributors')->name('contributors.')->group(function () {
 });
 Route::get('/profile', [ContributorController::class, 'profile'])->middleware(['auth'])->name('profile');
 
-Route::prefix('my-account')->name('my-account.')->middleware(['auth'])->group(function () {
+Route::prefix('my-account')->name('my-account.')->middleware(['auth','verified'])->group(function () {
     // Route::get('/', [DashboardController::class, 'index'])->name('index');
     // Route::get('/questions', [DashboardController::class, 'questions'])->name('questions');
-    Route::get('/questions/create', [ProfileController::class, 'createQuestions'])->middleware([EnsureDiuEmail::class, 'verified'])->name('questions.create');
-    Route::get('/questions/{question}/edit', [ProfileController::class, 'editQuestions'])->middleware([EnsureDiuEmail::class, 'verified'])->name('questions.edit');
+    Route::get('/questions/create', [ProfileController::class, 'createQuestions'])->middleware([EnsureDiuEmail::class ])->name('questions.create');
+    Route::get('/questions/{question}/edit', [ProfileController::class, 'editQuestions'])->middleware([EnsureDiuEmail::class])->name('questions.edit');
     // Route::get('/questions/{question:slug}/edit', [DashboardController::class, 'EditQuestions'])->name('questions.edit');
 
     Route::prefix('profile')->name('profile.')->group(function () {
