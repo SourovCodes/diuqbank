@@ -36,17 +36,7 @@
                     <li>Arrays and loops</li>
                     <li>Basic combinatorics</li>
                     </ul>
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-5256137078683241"
-     data-ad-slot="5008914638"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
                     <p><strong>Support Group</strong>: <a href="https://t.me/+SNvJ7dpY7WJhNDQ1" target="_blank" rel="noopener">Join Here to get Code</a></p>
                     <hr>
                     <h3>Problem C: Getting Serious</h3>
@@ -63,17 +53,7 @@
                     <li>Binary Search</li>
                     <li>Sorting Algorithms</li>
                     </ul>
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-5256137078683241"
-     data-ad-slot="5008914638"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
                     <p><strong>Support Group</strong>: <a href="https://t.me/+SNvJ7dpY7WJhNDQ1" target="_blank" rel="noopener">Join Here to get Code</a></p>
                     <hr>
                     <h3>Problem D: The Real Deal</h3>
@@ -90,17 +70,7 @@
                     <li>Segment Trees/Fenwick Trees</li>
                     <li>Advanced combinatorics or number theory</li>
                     </ul>
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-5256137078683241"
-     data-ad-slot="5008914638"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
                     <p><strong>Support Group</strong>: <a href="https://t.me/+SNvJ7dpY7WJhNDQ1" target="_blank" rel="noopener">Join Here to get Code</a></p>
                     <hr>
                     <h3>Problem E and Beyond: The Expert Zone</h3>
@@ -117,17 +87,7 @@
                     <li>Geometry</li>
                     <li>Advanced graph theory</li>
                     </ul>
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-5256137078683241"
-     data-ad-slot="5008914638"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
                     <p><strong>Support Group</strong>: <a href="https://t.me/+SNvJ7dpY7WJhNDQ1" target="_blank" rel="noopener">Join Here to get Code</a></p>
                     <hr>
                     <h3>Bonus: How to Consistently Get Accepted Codes!</h3>
