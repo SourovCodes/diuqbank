@@ -26,11 +26,12 @@
             </main>
 
         </div>
-        <div class="max-w-2xl mt-5">
+        <div class="max-w-2xl mt-5 space-y-4">
+            <label for="comment" class="block font-medium text-wrap mt-2 text-xl">{{ $exception->getMessage() }}</label>
+
             <label for="comment" class="block text-sm font-medium text-wrap">We have only 1 developer so its not
                 unexpected that we have some bug on the website, and we are new. so kindly notify us from contact page
                 saying what were you trying to do and what went wrong.</label>
-            <label for="comment" class="block text-sm font-medium text-wrap">{{ $exception->getMessage() }}</label>
 
 
         </div>
