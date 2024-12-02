@@ -1,113 +1,114 @@
 <x-web-layout>
 
 	@section('seo')
-		{!! seo($SEOData) !!}
-	@endsection
+        {!! seo($SEOData) !!}
+    @endsection
 
-	<!-- Blog Article -->
-	<div class="container px-2 mx-auto">
-		<div class="">
-			<div class="py-8">
-				<div class="space-y-5 lg:space-y-8 relative">
+    <!-- Blog Article -->
+    <div class="container px-2 mx-auto">
+        <div class="">
+            <div class="py-8">
+                <div class="space-y-5 lg:space-y-8 relative">
 
-					<div class=" absolute  top-0 right-0 flex  gap-2">
-						@if (auth()->user()?->id == $question->user_id)
-							<a href="{{ route('my-account.questions.edit', $question) }}"
-							   class="bg-primary-300 dark:bg-primary-500 rounded p-2 ">
-								<x-svg.edit class="w-5 h-5"/>
-							</a>
-						@endif
-						@if (auth()->user()?->email == 'sourov2305101004@diu.edu.bd')
-							<a href="{{ route('filament.admin.resources.questions.edit', $question) }}"
-							   class=" bg-primary-300 dark:bg-primary-500 rounded p-2 ">
-								<x-svg.edit class="w-5 h-5"/>
-							</a>
-						@endif
-					</div>
+                    <div class=" absolute  top-0 right-0 flex  gap-2">
+                        @if (auth()->user()?->id == $question->user_id)
+                            <a href="{{ route('my-account.questions.edit', $question) }}"
+                               class="bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+                                <x-svg.edit class="w-5 h-5"/>
+                            </a>
+                        @endif
+                        @if (auth()->user()?->email == 'sourov2305101004@diu.edu.bd')
+                            <a href="{{ route('filament.admin.resources.questions.edit', $question) }}"
+                               class=" bg-primary-300 dark:bg-primary-500 rounded p-2 ">
+                                <x-svg.edit class="w-5 h-5"/>
+                            </a>
+                        @endif
+                    </div>
 
-					<h2 class="text-3xl font-bold lg:text-5xl dark:text-white">{{ $question->title }}</h2>
+                    <h2 class="text-3xl font-bold lg:text-5xl dark:text-white">{{ $question->title }}</h2>
 
-					<div class="flex items-center gap-2 flex-wrap ">
-						<a href="{{ route('contributors.show', $question->user) }}"
-						   class=" flex items-center gap-2 p-1 rounded-full bg-gray-100 dark:bg-gray-900 w-fit px-4">
-							<img class="rounded-full shadow h-8 w-8"
-							     src="{{ $question->user->getMedia('profile-images')->last()?->getUrl() ?? asset('images/user.png') }}"
-							     alt="">
-							{{ $question->user->name }}</a>
+                    <div class="flex items-center gap-2 flex-wrap ">
+                        <a href="{{ route('contributors.show', $question->user) }}"
+                           class=" flex items-center gap-2 p-1 rounded-full bg-gray-100 dark:bg-gray-900 w-fit px-4">
+                            <img class="rounded-full shadow h-8 w-8"
+                                 src="{{ $question->user->getMedia('profile-images')->last()?->getUrl() ?? asset('images/user.png') }}"
+                                 alt="">
+                            {{ $question->user->name }}</a>
 
-						@foreach ($question->departments as $department)
-							<x-badge class="bg-green-100 text-green-800">
-								{{ $department->name }}
-							</x-badge>
-						@endforeach
-						@foreach ($question->semesters as $semester)
-							<x-badge class="bg-blue-100 text-blue-800">
-								{{ $semester->name }}
-							</x-badge>
-						@endforeach
-						@foreach ($question->exam_types as $exat_type)
-							<x-badge class="bg-orange-100 text-orange-800">
-								{{ $exat_type->name }}
-							</x-badge>
-						@endforeach
-						@foreach ($question->course_names as $course_code)
-							<x-badge class="bg-primary-100 text-primary-800">
-								{{ $course_code->name }}
-							</x-badge>
-						@endforeach
-					</div>
-					<div class="flex gap-2 flex-wrap justify-center sm:justify-end">
-						<p class=" md:hidden">Question not loading? <span id="reloadQuestionFrameButton"
-						                                                  class=" cursor-pointer select-none">Click
+                        @foreach ($question->departments as $department)
+                            <x-badge class="bg-green-100 text-green-800">
+                                {{ $department->name }}
+                            </x-badge>
+                        @endforeach
+                        @foreach ($question->semesters as $semester)
+                            <x-badge class="bg-blue-100 text-blue-800">
+                                {{ $semester->name }}
+                            </x-badge>
+                        @endforeach
+                        @foreach ($question->exam_types as $exat_type)
+                            <x-badge class="bg-orange-100 text-orange-800">
+                                {{ $exat_type->name }}
+                            </x-badge>
+                        @endforeach
+                        @foreach ($question->course_names as $course_code)
+                            <x-badge class="bg-primary-100 text-primary-800">
+                                {{ $course_code->name }}
+                            </x-badge>
+                        @endforeach
+                    </div>
+                    <div class="flex gap-2 flex-wrap justify-center sm:justify-end">
+                        <p class=" md:hidden">Question not loading? <span id="reloadQuestionFrameButton"
+                                                                          class=" cursor-pointer select-none">Click
                         Here</span>
-						</p>
-						<div class="flex flex-wrap gap-2">
-							<x-button.primary id="pdfMakeFullScreenButton" class=" text-sm">View Full Screen
-							</x-button.primary>
-							<a href="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
-							   target="_blank">
-								<x-button.primary class=" text-sm">Download</x-button.primary>
-							</a>
-						</div>
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <x-button.primary id="pdfMakeFullScreenButton" class=" text-sm">View Full Screen
+                            </x-button.primary>
+                            <a href="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+                               target="_blank">
+                                <x-button.primary class=" text-sm">Download</x-button.primary>
+                            </a>
+                        </div>
 
 
-					</div>
-					<object
-							data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
-							id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
-						<iframe id="pdfvieweriframe" width="100%" height="700px"
-						        src="{{ route('questions.pdfviewer', $question) }}" frameborder="0"></iframe>
-					</object>
+                    </div>
+                    <object
+                            data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+                            id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
+                        <iframe width="100%" height="600px"
+                                src="https://docs.google.com/viewer?url={!! $question->getFirstMediaUrl('question-files'). '?uploader=' . urlencode($question->user->name) !!}&embedded=true"
+                                frameborder="0"></iframe>
+                    </object>
 
-					<div class="grid lg:flex lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
-						<!-- Badges/Tags -->
-						<div>
-							<p class="text-xs sm:text-sm text-gray-800 dark:text-neutral-200">{{$question->created_at->format('M d,Y')}}</p>
-						</div>
-						<!-- End Badges/Tags -->
+                    <div class="grid lg:flex lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
+                        <!-- Badges/Tags -->
+                        <div>
+                            <p class="text-xs sm:text-sm text-gray-800 dark:text-neutral-200">{{$question->created_at->format('M d,Y')}}</p>
+                        </div>
+                        <!-- End Badges/Tags -->
 
-						<div class="flex justify-end items-center gap-x-1.5">
-							<!-- Button -->
-							<div class="hs-tooltip inline-block">
-								<button type="button"
-								        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
-									<x-svg.eye class="w-5 h-5"/>
-									{{$question->view_count}}
-									<span
-											class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
-											role="tooltip"> Views </span>
-								</button>
-							</div>
-							<!-- Button -->
+                        <div class="flex justify-end items-center gap-x-1.5">
+                            <!-- Button -->
+                            <div class="hs-tooltip inline-block">
+                                <button type="button"
+                                        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
+                                    <x-svg.eye class="w-5 h-5"/>
+                                    {{$question->view_count}}
+                                    <span
+                                            class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
+                                            role="tooltip"> Views </span>
+                                </button>
+                            </div>
+                            <!-- Button -->
 
-							<div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>
+                            <div class="block h-3 border-e border-gray-300 mx-3 dark:border-neutral-600"></div>
 
-							<!-- Button -->
-							<div class="hs-tooltip inline-block">
-								<button type="button"
-								        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
-									<x-svg.comments class="w-5 h-5"/>
-									{{$question->comments_count}}
+                            <!-- Button -->
+                            <div class="hs-tooltip inline-block">
+                                <button type="button"
+                                        class="hs-tooltip-toggle flex items-center gap-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200">
+                                    <x-svg.comments class="w-5 h-5"/>
+                                    {{$question->comments_count}}
 									<span
 											class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
 											role="tooltip">
@@ -164,7 +165,7 @@
 							{{--                            <!-- Button -->--}}
 						</div>
 					</div>
-					
+
 					<livewire:question.question_comments :question="$question"/>
 
 
