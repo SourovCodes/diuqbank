@@ -10,6 +10,7 @@ class GenerateWatermarkedPDFs extends Command
     protected $signature = 'media:generate-watermarked-pdfs';
     protected $description = 'Generate watermarked PDFs for all media in the "question-files" collection.';
 
+
     public function handle()
     {
         $this->info('Starting to generate custom watermarked PDFs...');

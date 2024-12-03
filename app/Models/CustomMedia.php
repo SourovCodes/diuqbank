@@ -30,6 +30,7 @@ class CustomMedia extends Media
         try {
             // Step 1: Download the PDF from S3 to a temporary local path
             $tempPdfPath = storage_path("app/tmp/pdf/{$this->id}.pdf");
+            $flattenedPdfPath = storage_path("app/tmp/pdf/{$this->id}-flattened.pdf");
 
             Storage::disk('local')->put("tmp/pdf/{$this->id}.pdf", Storage::disk($this->disk)->get($this->getPathRelativeToRoot()));
 
@@ -41,7 +42,9 @@ class CustomMedia extends Media
             // Step 2: Define a local path for the watermarked file
             $watermarkedPath = storage_path("app/tmp/pdf/{$this->id}-watermarked.pdf");
 
-            $this->addWatermarkToPdf($tempPdfPath, $watermarkedPath, "For more questions: https://diuqbank.com");
+            $this->preprocessPdf($tempPdfPath, $flattenedPdfPath);
+
+            $this->addWatermarkToPdf($flattenedPdfPath, $watermarkedPath, "For more questions: https://diuqbank.com");
 
             // Verify that the watermarked file was created and is not empty
             if (!file_exists($watermarkedPath) || filesize($watermarkedPath) === 0) {
@@ -56,6 +59,9 @@ class CustomMedia extends Media
             if (file_exists($tempPdfPath)) {
                 unlink($tempPdfPath);
             }
+            if (file_exists($flattenedPdfPath)) {
+                unlink($flattenedPdfPath);
+            }
 
             if (file_exists($watermarkedPath)) {
                 unlink($watermarkedPath);
@@ -66,6 +72,15 @@ class CustomMedia extends Media
 
         } catch (\Throwable $e) {
             throw new \Exception("Failed to watermark media ID: {$this->id}. Error: " . $e->getMessage());
+        }
+    }
+
+    public function preprocessPdf($inputFile, $outputFile)
+    {
+        $command = "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dNOPAUSE -dBATCH -sOutputFile={$outputFile} {$inputFile}";
+        exec($command, $output, $returnCode);
+        if ($returnCode !== 0) {
+            throw new \Exception("Ghostscript failed: " . implode("\n", $output));
         }
     }
 
