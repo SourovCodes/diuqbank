@@ -44,7 +44,7 @@ class CustomMedia extends Media
 
             $this->preprocessPdf($tempPdfPath, $flattenedPdfPath);
 
-            $this->addWatermarkToPdf($flattenedPdfPath, $watermarkedPath, "For more questions: https://diuqbank.com");
+            $this->addWatermarkToPdf($flattenedPdfPath, $watermarkedPath, $text );
 
             // Verify that the watermarked file was created and is not empty
             if (!file_exists($watermarkedPath) || filesize($watermarkedPath) === 0) {
@@ -105,12 +105,12 @@ class CustomMedia extends Media
             $pdf->useTemplate($tplId);
 
             // Set font and color for watermark text
-            $pdf->SetFont('Arial', 'B', 10); // Select font and size
-            $pdf->SetTextColor(150, 150, 150); // Light gray
+            $pdf->SetFont('Arial', '', 10); // Select font and size
+            $pdf->SetTextColor(0, 0, 0); // Light gray
 
             // Add watermark text to top-left corner
-            $pdf->SetXY(10, 10); // Coordinates: 10mm from top and left
-            $pdf->Write(10, $watermarkText); // Write text
+            $pdf->SetXY(3, 2); // Coordinates: 10mm from top and left
+            $pdf->Write(5, $watermarkText); // Write text
         }
 
         // Output the PDF to a file

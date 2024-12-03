@@ -23,7 +23,7 @@ class GenerateWatermarkedPDFs extends Command
 //                    if($media->hasGeneratedConversion('watermarked'))continue;
                     $this->info("Processing media ID: {$media->id}");
                     try {
-                        $media->addWatermark('Confidential');
+                        $media->addWatermark("For more questions: https://diuqbank.com | Uploader: " . $question->user->name);
                         $this->info("Watermarking completed for media ID: {$media->id}");
                     } catch (\Exception $e) {
                         $this->error("Failed to watermark media ID: {$media->id}. Error: {$e->getMessage()}");
