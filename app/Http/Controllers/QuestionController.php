@@ -40,13 +40,13 @@ class QuestionController extends Controller
 //        Cache::increment($cacheKey);
 //        Cache::put($cacheKey, Cache::get($cacheKey), now()->addHour());
 
-        $question = cache()->remember('question+' . $question->id, now()->addHour(), function () use ($question) {
-            return $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
-        });
+//        $question = cache()->remember('question+' . $question->id, now()->addHour(), function () use ($question) {
+//            return $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
+//        });
 //        $question->view_count = $question->view_count + Cache::get($cacheKey);
-	    
+
 	    $question->loadMissing(['departments', 'semesters', 'exam_types', 'course_names', 'media']);
-	    
+
         $semesters = implode(', ', $question->semesters->pluck('name')->toArray());
         $departments = implode(', ', $question->departments->pluck('name')->toArray());
         $course_names = implode(', ', $question->course_names->pluck('name')->toArray());

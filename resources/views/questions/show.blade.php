@@ -64,7 +64,7 @@
                         <div class="flex flex-wrap gap-2">
                             <x-button.primary id="pdfMakeFullScreenButton" class=" text-sm">View Full Screen
                             </x-button.primary>
-                            <a href="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+                            <a href="{{ $question->getFirstMedia('question-files')->watermarked_pdf_url }}"
                                target="_blank">
                                 <x-button.primary class=" text-sm">Download</x-button.primary>
                             </a>
@@ -73,10 +73,10 @@
 
                     </div>
                     <object
-                            data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
-                            id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
+                        data="{{ $question->getFirstMedia('question-files')->watermarked_pdf_url }}"
+                        id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
                         <iframe width="100%" height="600px"
-                                src="https://docs.google.com/viewer?url={!! $question->getFirstMediaUrl('question-files'). '?uploader=' . urlencode($question->user->name) !!}&embedded=true"
+                                src="https://docs.google.com/viewer?url={!! $question->getFirstMedia('question-files')->watermarked_pdf_url !!}&embedded=true"
                                 frameborder="0"></iframe>
                     </object>
 
@@ -95,8 +95,8 @@
                                     <x-svg.eye class="w-5 h-5"/>
                                     {{$question->view_count}}
                                     <span
-                                            class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
-                                            role="tooltip"> Views </span>
+                                        class="hs-tooltip-content hs-tooltip-shown:opacity-100 hs-tooltip-shown:visible opacity-0 transition-opacity inline-block absolute invisible z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded shadow-sm dark:bg-black"
+                                        role="tooltip"> Views </span>
                                 </button>
                             </div>
                             <!-- Button -->

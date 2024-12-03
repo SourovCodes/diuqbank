@@ -28,7 +28,7 @@ See https://github.com/adobe-type-tools/cmap-resources
     <meta name="google" content="notranslate">
     <script>
         const pdfurl =
-            '{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}';
+            '{{ $question->getFirstMedia('question-files')->watermarked_pdf_url }}';
     </script>
     <!-- This snippet is used in production (included from viewer.html) -->
     <link rel="resource" type="application/l10n" href="{{asset('pdfviewer/web/locale/locale.json')}}">

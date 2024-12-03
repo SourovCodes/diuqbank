@@ -14,6 +14,8 @@
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "ralphjsmit/laravel-seo": "^1.6",
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.6",
         "spatie/laravel-sitemap": "^7.2",
         "stechstudio/filament-impersonate": "^3.9"
     },
