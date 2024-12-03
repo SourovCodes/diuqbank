@@ -73,11 +73,10 @@
 
                     </div>
                     <object
-                        data="{{ $question->getFirstMedia('question-files')->watermarked_pdf_url }}"
+                        data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
                         id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
-                        <iframe width="100%" height="600px"
-                                src="https://docs.google.com/viewer?url={!! $question->getFirstMedia('question-files')->watermarked_pdf_url !!}&embedded=true"
-                                frameborder="0"></iframe>
+                        <iframe id="pdfvieweriframe" width="100%" height="700px"
+                                src="{{ route('questions.pdfviewer', $question) }}" frameborder="0"></iframe>
                     </object>
 
                     <div class="grid lg:flex lg:justify-between lg:items-center gap-y-5 lg:gap-y-0">
