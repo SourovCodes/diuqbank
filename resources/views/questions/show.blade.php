@@ -73,7 +73,7 @@
 
                     </div>
                     <object
-                        data="{{ $question->getFirstMediaUrl('question-files') . '?uploader=' . urlencode($question->user->name) }}"
+                        data="{{ $question->getFirstMedia('question-files')->watermarked_pdf_url  }}"
                         id="pdfviewerobject" type="application/pdf" width="100%" height="700px">
                         <iframe id="pdfvieweriframe" width="100%" height="700px"
                                 src="{{ route('questions.pdfviewer', $question) }}" frameborder="0"></iframe>
