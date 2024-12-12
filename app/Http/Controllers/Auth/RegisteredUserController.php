@@ -35,7 +35,7 @@ class RegisteredUserController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'g-recaptcha-response' => ['required', new Recaptcha],
 
@@ -43,8 +43,7 @@ class RegisteredUserController extends Controller
 
         $i = 0;
         $username = Str::slug($request->name);
-        while(User::where('username','=',$username)->exists())
-        {
+        while (User::withTrashed()->where('username', '=', $username)->exists()) {
             $i++;
             $username = $username . $i;
         }
