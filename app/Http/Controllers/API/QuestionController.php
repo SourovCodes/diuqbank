@@ -15,9 +15,18 @@ class QuestionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-       return Question::latest()->paginate(50);
+        $filter = (object) [
+            'semester' => $request->input('semester'),
+            'course_name' => $request->input('course_name'),
+            'department' => $request->input('department'),
+            'exam_type' => $request->input('exam_type'),
+            'qsearch' => $request->input('qsearch')
+        ];
+
+       return $questions = Question::with(['course_names', 'semesters', 'departments', 'exam_types'])
+            ->filter($filter)->paginate(50);
     }
 
 
