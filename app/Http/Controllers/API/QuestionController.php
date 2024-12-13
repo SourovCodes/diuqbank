@@ -33,10 +33,10 @@ class QuestionController extends Controller
     public function getFilterOptions()
     {
         return [
-            'courses'=>CourseName::all(),
-            'departments'=>Department::all(),
-            'semesters'=>Semester::all(),
-            'exam_types'=>ExamType::all(),
+            'course_name'=>CourseName::all(),
+            'department'=>Department::all(),
+            'semester'=>Semester::all(),
+            'exam_type'=>ExamType::all(),
         ];
     }
 
