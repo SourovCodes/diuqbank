@@ -8,5 +8,5 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/questions',function () {
-   return \App\Models\Question::all();
+   return \App\Models\Question::paginate(10);
 });
