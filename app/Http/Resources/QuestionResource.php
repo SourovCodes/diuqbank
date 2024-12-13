@@ -21,6 +21,7 @@ class QuestionResource extends JsonResource
             'semesters' => $this->semesters->pluck('name'),
             'exam_types' => $this->exam_types->pluck('name'),
             'course_names' => $this->course_names->pluck('name'),
+            'pdf_url' => $this->getFirstMedia('question-files')->watermarked_pdf_url
 
         ];
     }
