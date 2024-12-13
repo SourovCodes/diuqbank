@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\QuestionResource;
 use App\Models\CourseName;
 use App\Models\Department;
 use App\Models\ExamType;
@@ -25,8 +26,9 @@ class QuestionController extends Controller
             'qsearch' => $request->input('qsearch')
         ];
 
-       return $questions = Question::with(['course_names', 'semesters', 'departments', 'exam_types'])
-            ->filter($filter)->paginate(50);
+        return QuestionResource::collection(Question::with(['course_names', 'semesters', 'departments', 'exam_types'])
+            ->filter($filter)->paginate(50));
+
     }
 
 
