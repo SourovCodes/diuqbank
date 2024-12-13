@@ -7,6 +7,5 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/questions',function () {
-   return \App\Models\Question::paginate(10);
-});
+Route::resource('questions', \App\Http\Controllers\API\QuestionController::class);
+Route::get('/getFilterOptions', [\App\Http\Controllers\API\QuestionController::class, 'getFilterOptions']);
