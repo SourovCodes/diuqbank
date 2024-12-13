@@ -17,10 +17,10 @@ class QuestionResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'departments' => $this->departments->pluck('name')->join(', '),
-            'semesters' => $this->semesters->pluck('name')->join(', '),
-            'exam_types' => $this->exam_types->pluck('name')->join(', '),
-            'course_names' => $this->course_names->pluck('name')->join(', '),
+            'departments' => $this->departments->pluck('name'),
+            'semesters' => $this->semesters->pluck('name'),
+            'exam_types' => $this->exam_types->pluck('name'),
+            'course_names' => $this->course_names->pluck('name'),
 
         ];
     }
