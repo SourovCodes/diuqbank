@@ -41,6 +41,7 @@ class QuestionController extends Controller
             'department'=>Department::all(),
             'semester'=>Semester::all(),
             'exam_type'=>ExamType::all(),
+            'empty'=>[],
 //            'user'=>User::all(),
         ];
     }
