@@ -21,54 +21,76 @@ class SocialiteController extends Controller
 
     public function handleGoogleCallback(Request $request)
     {
-
         try {
             $googleUser = Socialite::driver('google')->userFromToken($request->token);
-            $user = User::where('email', $googleUser->getEmail())->withTrashed()->first();
-            if (!$user) {
 
-                $i = 0;
+            $user = User::withTrashed()->where('email', $googleUser->getEmail())->first();
+
+            if (!$user) {
+                // Generate a unique username
                 $username = Str::slug($googleUser->getName());
-                while (User::where('username', '=', $username)->exists()) {
-                    $i++;
-                    $username = $username . $i;
+                $i = 1;
+                while (User::where('username', $username)->exists()) {
+                    $username = Str::slug($googleUser->getName()) . $i++;
                 }
-                $new_user = User::create([
+
+                // Create a new user
+                $newUser = User::create([
                     'name' => $googleUser->getName(),
                     'username' => $username,
                     'email' => $googleUser->getEmail(),
-                    'role' => $googleUser->getEmail() == 'sourovbuzz@gmail.com' ? UserRole::admin : UserRole::user,
+                    'role' => $googleUser->getEmail() === 'sourovbuzz@gmail.com' ? UserRole::admin : UserRole::user,
                 ]);
-                if ($googleUser['verified_email']) {
-                    $new_user->markEmailAsVerified();
+
+                if (!empty($googleUser['verified_email'])) {
+                    $newUser->markEmailAsVerified();
                 }
-                event(new NewUserRegistered($new_user));
-                $new_user->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
-                    ->usingFileName($googleUser->name . '.png')
+
+                // Add profile image from Google avatar
+                $newUser->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
+                    ->usingFileName($googleUser->getName() . '.png')
                     ->toMediaCollection('profile-images', 'profile-images');
-                $token = $new_user->createToken('authToken')->plainTextToken;
 
-                return response()->json(['token' => $token, 'user' => $new_user]);
+                // Trigger registration event
+                event(new NewUserRegistered($newUser));
 
-            } else {
-                if ($user->deleted_at) {
-                    $user->restore();
-                }
-                if ($googleUser['verified_email']) {
-                    $user->markEmailAsVerified();
-                }
-                // Generate a token for the user
-                $token = $user->createToken('authToken')->plainTextToken;
+                $token = $newUser->createToken('authToken')->plainTextToken;
 
-                return response()->json(['token' => $token, 'user' => $user]);
+                return response()->json([
+                    'success' => true,
+                    'token' => $token,
+                    'user' => $newUser,
+                ]);
             }
+
+            // Restore user if soft deleted
+            if ($user->trashed()) {
+                $user->restore();
+            }
+
+            if (!empty($googleUser['verified_email'])) {
+                $user->markEmailAsVerified();
+            }
+
+            // Generate token for existing user
+            $token = $user->createToken('authToken')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+                'user' => $user,
+            ]);
         } catch (\Throwable $th) {
+            // Log the error for debugging
+            Log::error('Google login error: ' . $th->getMessage());
 
-            return response()->json(['error' => $th->getMessage()]);
-
+            return response()->json([
+                'success' => false,
+                'message' => 'Google login failed. Please try again.',
+                'error' => $th->getMessage(),
+            ], 500);
         }
-
-
     }
+
 }
 
