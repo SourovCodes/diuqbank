@@ -26,8 +26,9 @@ class QuestionController extends Controller
             'qsearch' => $request->input('qsearch')
         ];
 
-        return QuestionResource::collection(Question::with(['course_names', 'semesters', 'departments', 'exam_types'])
+     return    QuestionResource::collection(Question::with(['course_names', 'semesters', 'departments', 'exam_types','media','user'])
             ->filter($filter)->paginate(50));
+
 
     }
 
