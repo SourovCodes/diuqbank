@@ -16,7 +16,7 @@ class SocialiteController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         $user = Socialite::driver('google')->userFromToken($request->token);
-        return $user;
+        return $user->getEmail();
 
 
     }
