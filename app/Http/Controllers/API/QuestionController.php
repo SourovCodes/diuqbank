@@ -37,7 +37,7 @@ class QuestionController extends Controller
     public function getFilterOptions()
     {
         return [
-            'course_name'=>CourseName::all(),
+            'course_name'=>CourseName::all()->sortBy('name'),
             'department'=>Department::all(),
             'semester'=>Semester::all(),
             'exam_type'=>ExamType::all(),
