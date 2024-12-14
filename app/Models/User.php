@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Filament\Panel;
+use Laravel\Sanctum\HasApiTokens;
 use RalphJSmit\Laravel\SEO\Support\HasSEO;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -21,7 +22,7 @@ use Spatie\Sitemap\Tags\Url;
 
 class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser,Sitemapable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable,HasApiTokens;
     use InteractsWithMedia, SoftDeletes;
     use HasSEO;
 
