@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
@@ -40,6 +41,7 @@ class QuestionController extends Controller
             'department'=>Department::all(),
             'semester'=>Semester::all(),
             'exam_type'=>ExamType::all(),
+            'user'=>User::all(),
         ];
     }
 
