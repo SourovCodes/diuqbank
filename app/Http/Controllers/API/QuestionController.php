@@ -40,8 +40,8 @@ class QuestionController extends Controller
             'course_name'=>CourseName::all(),
             'department'=>Department::all(),
             'semester'=>Semester::all(),
-            'exam_type'=>ExamType::all(),
-            'user'=>User::all(),
+//            'exam_type'=>ExamType::all(),
+//            'user'=>User::all(),
         ];
     }
 
