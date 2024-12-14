@@ -7,8 +7,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+Route::get('/profile', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
 Route::resource('questions', \App\Http\Controllers\API\QuestionController::class);
 Route::get('/getFilterOptions', [\App\Http\Controllers\API\QuestionController::class, 'getFilterOptions']);
 
-Route::get('/auth/google/token', [SocialiteController::class, 'handleGoogleCallback']);
+Route::post('/login', [SocialiteController::class, 'login']);
+Route::post('/social-login', [SocialiteController::class, 'socialLogin']);

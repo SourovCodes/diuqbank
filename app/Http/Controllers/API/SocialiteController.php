@@ -14,82 +14,39 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
 {
-    public function redirectToGoogle()
+    public function login(Request $request)
     {
-        return Socialite::driver('google')->stateless()->redirect();
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $user = Auth::user();
+        $token = $user->createToken('flutter-app-token')->plainTextToken;
+
+        return response()->json(['token' => $token, 'user' => $user]);
     }
 
-    public function handleGoogleCallback(Request $request)
+    public function socialLogin(Request $request)
     {
-        try {
-            $googleUser = Socialite::driver('google')->userFromToken($request->token);
+        $request->validate(['provider' => 'required', 'token' => 'required']);
 
-            $user = User::withTrashed()->where('email', $googleUser->getEmail())->first();
+        $provider = $request->provider;
+        $socialUser = Socialite::driver($provider)->stateless()->userFromToken($request->token);
 
-            if (!$user) {
-                // Generate a unique username
-                $username = Str::slug($googleUser->getName());
-                $i = 1;
-                while (User::where('username', $username)->exists()) {
-                    $username = Str::slug($googleUser->getName()) . $i++;
-                }
+        $user = User::where('email', $socialUser->getEmail())->first();
 
-                // Create a new user
-                $newUser = User::create([
-                    'name' => $googleUser->getName(),
-                    'username' => $username,
-                    'email' => $googleUser->getEmail(),
-                    'role' => $googleUser->getEmail() === 'sourovbuzz@gmail.com' ? UserRole::admin : UserRole::user,
-                ]);
-
-                if (!empty($googleUser['verified_email'])) {
-                    $newUser->markEmailAsVerified();
-                }
-
-                // Add profile image from Google avatar
-                $newUser->addMediaFromUrl(str_replace('=s96-c', '', $googleUser->avatar))
-                    ->usingFileName($googleUser->getName() . '.png')
-                    ->toMediaCollection('profile-images', 'profile-images');
-
-                // Trigger registration event
-                event(new NewUserRegistered($newUser));
-
-                $token = $newUser->createToken('authToken')->plainTextToken;
-
-                return response()->json([
-                    'success' => true,
-                    'token' => $token,
-                    'user' => $newUser,
-                ]);
-            }
-
-            // Restore user if soft deleted
-            if ($user->trashed()) {
-                $user->restore();
-            }
-
-            if (!empty($googleUser['verified_email'])) {
-                $user->markEmailAsVerified();
-            }
-
-            // Generate token for existing user
-            $token = $user->createToken('authToken')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'token' => $token,
-                'user' => $user,
-            ]);
-        } catch (\Throwable $th) {
-            // Log the error for debugging
-            Log::error('Google login error: ' . $th->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Google login failed. Please try again.',
-                'error' => $th->getMessage(),
-            ], 500);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
+
+        $token = $user->createToken('flutter-app-token')->plainTextToken;
+
+        return response()->json(['token' => $token, 'user' => $user]);
     }
 
 }
