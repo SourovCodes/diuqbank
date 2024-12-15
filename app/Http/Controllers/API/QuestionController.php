@@ -19,7 +19,7 @@ class QuestionController extends Controller
      */
     public function index(Request $request)
     {
-        $filter = (object) [
+        $filter = (object)[
             'semester' => $request->input('semester'),
             'course_name' => $request->input('course_name'),
             'department' => $request->input('department'),
@@ -27,21 +27,60 @@ class QuestionController extends Controller
             'qsearch' => $request->input('qsearch')
         ];
 
-     return    QuestionResource::collection(Question::with(['course_names', 'semesters', 'departments', 'exam_types','media','user'])
+        return QuestionResource::collection(Question::with(['course_names', 'semesters', 'departments', 'exam_types', 'media', 'user'])
             ->filter($filter)->paginate(50));
 
 
     }
 
+    public function formOptions()
+    {
+
+        return [
+            [
+                'label' => "Question File",
+                'key' => "dep",
+                'type' => 'file',
+                'filetype' => ['application/pdf'],
+                'temp_upload_endpoint' => route('home') . '/api/temp_upload'
+            ],
+
+            [
+                'label' => "Departments",
+                'key' => "dep",
+                'type' => 'select',
+                'options' => Department::all()->sortBy('name')->values(),
+            ],
+            [
+                'label' => "Course Names",
+                'key' => "course",
+                'type' => 'multiselect',
+                'options' => CourseName::all()->sortBy('name')->values(),
+            ],
+            [
+                'label' => "Semesters",
+                'key' => "sem",
+                'type' => 'multiselect',
+                'options' => Semester::all()->sortBy('name')->values(),
+            ],
+            [
+                'label' => "Exam Types",
+                'key' => "exm",
+                'type' => 'multiselect',
+                'options' => ExamType::all()->sortBy('name')->values(),
+            ]
+        ];
+
+    }
 
     public function getFilterOptions()
     {
         return [
-            'course_name'=>CourseName::all()->sortBy('name')->values(),
-            'department'=>Department::all(),
-            'semester'=>Semester::all(),
-            'exam_type'=>ExamType::all(),
-            'empty'=>[],
+            'course_name' => CourseName::all()->sortBy('name')->values(),
+            'department' => Department::all(),
+            'semester' => Semester::all(),
+            'exam_type' => ExamType::all(),
+            'empty' => [],
 //            'user'=>User::all(),
         ];
     }

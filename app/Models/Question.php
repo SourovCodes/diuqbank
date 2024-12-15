@@ -133,10 +133,6 @@ class Question extends Model implements HasMedia ,Sitemapable
     public static function getForm(): array
     {
         return [
-            // Select::make('user_id')
-            //     ->relationship('user', 'name')
-            //     ->nullable(false)
-            //     ->default(auth()->id()),
 
             Section::make('Submit Question')
                 ->columns(2)
