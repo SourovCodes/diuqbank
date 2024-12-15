@@ -11,6 +11,7 @@ use App\Models\Question;
 use App\Models\Semester;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class QuestionController extends Controller
 {
@@ -42,7 +43,7 @@ class QuestionController extends Controller
                 'key' => "dep",
                 'type' => 'file',
                 'filetype' => ['application/pdf'],
-                'temp_upload_endpoint' => route('home') . '/api/temp_upload'
+                'temp_upload_endpoint' => route('questions.temp_upload')
             ],
 
             [
@@ -72,6 +73,46 @@ class QuestionController extends Controller
         ];
 
     }
+
+    public function tempUpload(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|max:10240', // 10MB max size
+            ]);
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+
+                // Generate unique filename
+                $filename = Str::uuid() . '.' . $extension;
+
+                // Store in temp directory
+                $path = $file->storeAs('temp', $filename, 'public');
+
+                return response()->json([
+                    'success' => true,
+                    'path' => $path,
+                    'original_name' => $originalName,
+                    'message' => 'File uploaded successfully'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No file provided'
+            ], 400);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function getFilterOptions()
     {
