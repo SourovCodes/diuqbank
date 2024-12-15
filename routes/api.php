@@ -15,7 +15,7 @@ Route::get('/profile', function (Request $request) {
 Route::prefix('questions')->name('questions.')->group(function () {
     Route::get('/', [QuestionController::class, 'index'])->name('index');
     Route::get('/form-options', [QuestionController::class, 'formOptions'])->name('form-options');
-    Route::get('/temp_upload', [QuestionController::class, 'tempUpload'])->name('temp_upload');
+    Route::post('/temp_upload', [QuestionController::class, 'tempUpload'])->name('temp_upload');
 
 
 
