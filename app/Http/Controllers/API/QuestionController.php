@@ -40,7 +40,7 @@ class QuestionController extends Controller
         return [
             [
                 'label' => "Question File",
-                'key' => "dep",
+                'key' => "qfile",
                 'type' => 'file',
                 'filetype' => ['application/pdf'],
                 'temp_upload_endpoint' => route('questions.temp_upload')
@@ -56,7 +56,7 @@ class QuestionController extends Controller
                 'label' => "Course Names",
                 'key' => "course",
                 'type' => 'multiselect',
-                'options' => CourseName::all()->sortBy('name')->values(),
+                'options' => CourseName::take(3)->get()->sortBy('name')->values(),
             ],
             [
                 'label' => "Semesters",
