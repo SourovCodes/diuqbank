@@ -14,8 +14,8 @@ Route::get('/profile', function (Request $request) {
 
 Route::prefix('questions')->name('questions.')->group(function () {
     Route::get('/', [QuestionController::class, 'index'])->name('index');
-    Route::get('/form-options', [QuestionController::class, 'formOptions'])->name('form-options');
-    Route::post('/temp_upload', [QuestionController::class, 'tempUpload'])->name('temp_upload');
+    Route::get('/form-options', [QuestionController::class, 'formOptions'])->middleware('auth:sanctum')->name('form-options');
+    Route::post('/temp_upload', [QuestionController::class, 'tempUpload'])->middleware('auth:sanctum')->name('temp_upload');
 
 
 
