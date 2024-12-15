@@ -14,5 +14,6 @@ Route::get('/profile', function (Request $request) {
 Route::resource('questions', \App\Http\Controllers\API\QuestionController::class);
 Route::get('/getFilterOptions', [\App\Http\Controllers\API\QuestionController::class, 'getFilterOptions']);
 
+Route::post('/logout', [SocialiteController::class, 'logout'])->middleware('auth:sanctum');;
 Route::post('/login', [SocialiteController::class, 'login']);
 Route::post('/social-login', [SocialiteController::class, 'socialLogin']);
