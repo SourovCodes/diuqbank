@@ -25,7 +25,7 @@ Route::prefix('migrate')->name('migrate.')->group(function () {
     });
     Route::get('/users', function (Request $request) {
         return \App\Models\User::with(['media'])->get();
-    });
+    })->middleware('auth');
     Route::get('/departments', function (Request $request) {
         return \App\Models\Department::all();
     });

@@ -56,7 +56,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail, Filamen
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
+//        'password',
         'remember_token',
     ];
 
@@ -69,7 +69,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail, Filamen
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+//            'password' => 'hashed',
         ];
     }
 
