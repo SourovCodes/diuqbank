@@ -17,10 +17,32 @@ Route::prefix('questions')->name('questions.')->group(function () {
     Route::get('/form-options', [QuestionController::class, 'formOptions'])->middleware('auth:sanctum')->name('form-options');
     Route::post('/temp_upload', [QuestionController::class, 'tempUpload'])->middleware('auth:sanctum')->name('temp_upload');
 
-
-
-
 });
+
+Route::prefix('migrate')->name('migrate.')->group(function () {
+    Route::get('/questions', function (Request $request) {
+        return \App\Models\Question::with(['media','user'])->get();
+    });
+    Route::get('/users', function (Request $request) {
+        return \App\Models\User::with(['media'])->get();
+    });
+    Route::get('/departments', function (Request $request) {
+        return \App\Models\Department::all();
+    });
+    Route::get('/semesters', function (Request $request) {
+        return \App\Models\Semester::all();
+    });
+    Route::get('/exam-types', function (Request $request) {
+        return \App\Models\ExamType::all();
+    });
+    Route::get('/course-names', function (Request $request) {
+        return \App\Models\CourseName::all();
+    });
+    Route::get('/users', function (Request $request) {
+        return \App\Models\User::all();
+    });
+});
+
 
 Route::get('/getFilterOptions', [\App\Http\Controllers\API\QuestionController::class, 'getFilterOptions']);
 
