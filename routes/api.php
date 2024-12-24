@@ -39,7 +39,7 @@ Route::prefix('migrate')->name('migrate.')->group(function () {
         return \App\Models\CourseName::all();
     });
     Route::get('/users', function (Request $request) {
-        return \App\Models\User::all();
+        return \App\Models\User::with('media')->get();
     });
 });
 
