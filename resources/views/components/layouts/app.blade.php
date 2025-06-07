@@ -7,8 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ isset($title)?($title. " | DIU ACM " ): "DIU ACM | Official Website for DIU ACM LAB" }}</title>
-    <meta name="description" content="We do competitive programming, and ICPC is our main focus.">
+    <title>{{ isset($title)?($title. " | DIUQBank " ): "DIU Question Bank | Official Question Bank of Daffodil International University (DIU)" }}</title>
+    <meta name="description"
+          content="Practice and prepare for your exams with the official question bank of Daffodil International University (DIU).">
 
 
     {{-- @filamentStyles --}}
