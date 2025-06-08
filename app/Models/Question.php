@@ -4,9 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Question extends Model
+
+class Question extends Model implements HasMedia
 {
+
+    use InteractsWithMedia;
+
     protected $fillable = [
         'department_id',
         'course_id',
@@ -40,4 +46,6 @@ class Question extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
 }
