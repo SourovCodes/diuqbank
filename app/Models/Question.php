@@ -13,6 +13,7 @@ class Question extends Model implements HasMedia
 
     use InteractsWithMedia;
 
+
     protected $fillable = [
         'department_id',
         'course_id',
@@ -21,6 +22,20 @@ class Question extends Model implements HasMedia
         'user_id',
         'view_count',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('question-files')
+            ->useFallbackUrl(asset('no-content.pdf'))
+            ->useFallbackPath(public_path('/no-content.pdf'));
+
+    }
+
+    public function getPdfUrlAttribute(): string
+    {
+        return $this->getFirstMediaUrl('question-files');
+    }
 
     public function department(): BelongsTo
     {
