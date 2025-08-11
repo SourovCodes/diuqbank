@@ -2,202 +2,66 @@
 
 namespace App\Models;
 
-
-use Filament\Forms\Components\Select;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\MediaLibrary\HasMedia;
-
-use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Spatie\Sitemap\Contracts\Sitemapable;
-use Spatie\Sitemap\Tags\Url;
 
-class Question extends Model implements HasMedia ,Sitemapable
+
+class Question extends Model implements HasMedia
 {
+
     use InteractsWithMedia;
 
-    use SoftDeletes;
 
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
+        'department_id',
+        'course_id',
+        'semester_id',
+        'exam_type_id',
         'user_id',
-        'title',
-        'view_count'
-
+        'view_count',
     ];
 
     public function registerMediaCollections(): void
     {
         $this
             ->addMediaCollection('question-files')
-            ->useFallbackUrl(asset('images/user.png'))
-            ->useFallbackPath(public_path('/images/user.png'));
+            ->useFallbackUrl(asset('no-content.pdf'))
+            ->useFallbackPath(public_path('/no-content.pdf'));
 
     }
-    public function scopeFilter($query, $request)
+
+    public function getPdfUrlAttribute(): string
     {
-
-
-
-        if ($request->course_name && $request->course_name != 'all') {
-            $query->whereHas('course_names', function ($query) use ($request) {
-                $query->whereIn('course_name_id', [$request->course_name]);
-            });
-        }
-
-        if ($request->semester && $request->semester != 'all') {
-
-            $query->whereHas('semesters', function ($query) use ($request) {
-                $query->whereIn('semester_id', [$request->semester]);
-            });
-        }
-        if ($request->department && $request->department != 'all') {
-            $query->whereHas('departments', function ($query) use ($request) {
-                $query->whereIn('department_id', [$request->department]);
-            });
-        }
-
-        if ($request->exam_type && $request->exam_type != 'all') {
-            $query->whereHas('exam_types', function ($query) use ($request) {
-                $query->whereIn('exam_type_id', [$request->exam_type]);
-            });
-        }
-        if ($request->qsearch) {
-            $searchText = $request->qsearch;
-
-            $query->where(function ($query) use ($searchText) {
-
-                $query->where('title', 'like', "%$searchText%")
-                    ->orWhereHas('course_names', function ($query) use ($searchText) {
-                        $query->where('name', 'like', '%' . $searchText . '%');
-                    });
-            });
-        }
-
-
+        return $this->getFirstMediaUrl('question-files');
     }
 
-    public function user()
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    public function examType(): BelongsTo
+    {
+        return $this->belongsTo(ExamType::class);
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-    public function comments()
-    {
-        return $this->hasMany(Comment::class)->whereNull('parent_id')->with(['user.media', 'replies.user.media'])->withTrashed();
-    }
-
-    public function semesters()
-    {
-        return $this->belongsToMany(Semester::class);
-    }
-    public function departments()
-    {
-        return $this->belongsToMany(Department::class);
-    }
-
-
-
-    public function course_names()
-    {
-        return $this->belongsToMany(CourseName::class);
-    }
-
-    public function exam_types(): BelongsToMany
-    {
-        return $this->belongsToMany(ExamType::class);
-    }
-
-
-
-    public function toSitemapTag(): Url|string|array
-    {
-
-        // Simple return:
-        return Url::create(route('questions.show', $this))
-            ->setLastModificationDate(\Carbon\Carbon::create($this->updated_at))
-            ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-            ;
-
 
     }
-    public static function getForm(): array
-    {
-        return [
 
-            Section::make('Submit Question')
-                ->columns(2)
-                ->description('Please try to be responsible')
-                ->schema([
-                    TextInput::make('title')
-                        ->placeholder("Data structure Fall 23 Final 'or' Fall 23 Final all questions CSE 65")
-                        ->required()
-                        ->maxLength(255)
-                        ->live()
-                        ->debounce()
-                        ->columnSpanFull()
-                    ,
-                    SpatieMediaLibraryFileUpload::make('Question file')
-                        ->hint("upload pdf")
-
-                        ->collection('question-files')
-                        ->disk('questions')
-                        ->preserveFilenames()
-                        ->acceptedFileTypes(['application/pdf'])
-
-                        ->visibility('public')
-                        ->required(),
-
-
-
-
-
-                    Select::make('departments')
-                        ->relationship('departments', 'name')
-                        ->createOptionModalHeading("Add New Department")
-                        ->createOptionForm(Department::getForm())
-                        ->searchable()
-                        ->required()
-                        ->preload(),
-
-                    Select::make('semesters')
-                        ->relationship('semesters', 'name')
-                        ->createOptionModalHeading("Add New Semester")
-                        ->createOptionForm(Semester::getForm())
-                        ->searchable()
-                        ->multiple()
-                        ->required()
-                        ->preload(),
-
-                    Select::make('course_names')
-                        ->relationship('course_names', 'name')
-                        ->createOptionModalHeading("Add New Course Name")
-                        ->createOptionForm(CourseName::getForm())
-                        ->searchable()
-                        ->multiple()
-                        ->required()
-                        ->preload(),
-                    Select::make('exam_types')
-                        ->relationship('exam_types', 'name')
-                        ->createOptionModalHeading("Add New Exam Type")
-                        ->searchable()
-                        ->multiple()
-                        ->createOptionForm(ExamType::getForm())
-                        ->required()
-                        ->preload(),
-
-                ])
-
-        ];
-    }
 
 }

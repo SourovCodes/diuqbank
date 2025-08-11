@@ -32,8 +32,10 @@ return [
 
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app'),
+            'root' => storage_path('app/private'),
+            'serve' => true,
             'throw' => false,
+            'report' => false,
         ],
 
         'public' => [
@@ -42,6 +44,7 @@ return [
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
+            'report' => false,
         ],
 
         's3' => [
@@ -54,50 +57,7 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
-        ],
-        'questions' => [
-            'driver' => 's3',
-            'key' => env('DO_ACCESS_KEY_ID'),
-            'secret' => env('DO_SECRET_ACCESS_KEY'),
-            'region' => env('DO_DEFAULT_REGION'),
-            'bucket' => env('DO_BUCKET'),
-            // 'root' => env('DO_FOLDER'),
-            'cdn_endpoint' => env('DO_CDN_ENDPOINT'),
-            'url' => env('DO_QUESTION_URL'),
-            'endpoint' => env('DO_ENDPOINT'),
-            'use_path_style_endpoint' => env('DO_USE_PATH_STYLE_ENDPOINT', false),
-            'root' => env('DO_FOLDER', 'questionbank') . '/questions',
-            'visibility' => 'public',
-
-        ],
-
-        'profile-images' => [
-            'driver' => 's3',
-            'key' => env('DO_ACCESS_KEY_ID'),
-            'secret' => env('DO_SECRET_ACCESS_KEY'),
-            'region' => env('DO_DEFAULT_REGION'),
-            'bucket' => env('DO_BUCKET'),
-            // 'root' => env('DO_FOLDER'),
-            'cdn_endpoint' => env('DO_CDN_ENDPOINT'),
-            'url' => env('DO_URL'),
-            'endpoint' => env('DO_ENDPOINT'),
-            'use_path_style_endpoint' => env('DO_USE_PATH_STYLE_ENDPOINT', false),
-            'root' => env('DO_FOLDER', 'questionbank') . '/profile-images',
-            'visibility' => 'public',
-        ],
-        'cover-photos' => [
-            'driver' => 's3',
-            'key' => env('DO_ACCESS_KEY_ID'),
-            'secret' => env('DO_SECRET_ACCESS_KEY'),
-            'region' => env('DO_DEFAULT_REGION'),
-            'bucket' => env('DO_BUCKET'),
-            // 'root' => env('DO_FOLDER'),
-            'cdn_endpoint' => env('DO_CDN_ENDPOINT'),
-            'url' => env('DO_URL'),
-            'endpoint' => env('DO_ENDPOINT'),
-            'use_path_style_endpoint' => env('DO_USE_PATH_STYLE_ENDPOINT', false),
-            'root' => env('DO_FOLDER', 'questionbank') . '/cover-photos',
-            'visibility' => 'public',
+            'report' => false,
         ],
 
     ],
