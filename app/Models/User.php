@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Enums\UserRole;
+use Filament\Panel;
+use Laravel\Sanctum\HasApiTokens;
+use RalphJSmit\Laravel\SEO\Support\HasSEO;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -14,9 +18,20 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class User extends Authenticatable implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
-    use InteractsWithMedia;
+
+    use HasFactory, Notifiable,HasApiTokens;
+    use InteractsWithMedia, SoftDeletes;
+    use HasSEO;
+
+
+
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return ($this->email == 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail()) || $this->role == UserRole::admin;
+        // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
+    }
+
 
 
     /**
