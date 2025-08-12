@@ -13,6 +13,7 @@ import {
 import {
   presignedUrlSchema,
   type PresignedUrlRequest,
+  type QuestionStatus,
 } from "./schemas/question";
 import { eq, and, count, asc, desc, sql } from "drizzle-orm";
 import {
@@ -29,8 +30,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 // session will be obtained via ensurePermission when needed
 
-// Types for better type safety
-type QuestionStatus = "published" | "duplicate" | "pending review" | "rejected";
+// Types for better type safety come from schema
 
 interface CreateQuestionAdminParams {
   departmentId: number;

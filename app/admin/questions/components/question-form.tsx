@@ -5,7 +5,14 @@ import { useRouter } from "nextjs-toploader/app";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { z } from "zod";
+import {
+  questionFormSchema,
+  type QuestionFormValues,
+  type QuestionStatus,
+  questionStatusEnum,
+  MAX_PDF_FILE_SIZE_BYTES,
+  PDF_MIME_TYPE,
+} from "../schemas/question";
 
 import {
   generatePresignedUrl,
@@ -38,33 +45,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText } from "lucide-react";
 
-const questionFormSchema = z.object({
-  // Coerce select values (strings) to numbers and validate
-  departmentId: z.coerce
-    .number({ message: "Department is required" })
-    .min(1, "Department is required"),
-  courseId: z.coerce
-    .number({ message: "Course is required" })
-    .min(1, "Course is required"),
-  semesterId: z.coerce
-    .number({ message: "Semester is required" })
-    .min(1, "Semester is required"),
-  examTypeId: z.coerce
-    .number({ message: "Exam type is required" })
-    .min(1, "Exam type is required"),
-  status: z.enum(["published", "duplicate", "pending review", "rejected"]),
-  pdfFile: z
-    .instanceof(File, { message: "PDF file is required" })
-    .refine((file) => file.size > 0, "PDF file cannot be empty")
-    .refine(
-      (file) => file.size <= 10 * 1024 * 1024,
-      "PDF file size must not exceed 10MB"
-    )
-    .refine((file) => file.type === "application/pdf", "File must be a PDF")
-    .optional(), // Make optional for editing
-});
-
-type QuestionFormValues = z.infer<typeof questionFormSchema>;
+// Schema and types are imported from ../schemas/question to avoid duplication
 
 interface QuestionData {
   id: number;
@@ -72,7 +53,7 @@ interface QuestionData {
   courseId: number;
   semesterId: number;
   examTypeId: number;
-  status: "published" | "duplicate" | "pending review" | "rejected";
+  status: QuestionStatus;
   pdfKey: string;
   pdfFileSizeInBytes: number;
 }
@@ -170,7 +151,7 @@ export function QuestionForm({
         const presignedResult = await generatePresignedUrl({
           fileName: values.pdfFile.name,
           fileSize: values.pdfFile.size,
-          contentType: values.pdfFile.type as "application/pdf",
+          contentType: values.pdfFile.type as typeof PDF_MIME_TYPE,
         });
 
         if (!presignedResult.success || !presignedResult.data) {
@@ -272,12 +253,12 @@ export function QuestionForm({
         const file = files[0];
 
         // Validate file type and size
-        if (file.type !== "application/pdf") {
+        if (file.type !== PDF_MIME_TYPE) {
           toast.error("Only PDF files are allowed");
           return;
         }
 
-        if (file.size > 10 * 1024 * 1024) {
+        if (file.size > MAX_PDF_FILE_SIZE_BYTES) {
           toast.error("File size must not exceed 10MB");
           return;
         }
@@ -434,12 +415,13 @@ export function QuestionForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="pending review">
-                        Pending Review
-                      </SelectItem>
-                      <SelectItem value="duplicate">Duplicate</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
+                      {questionStatusEnum.options.map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {value === "pending review"
+                            ? "Pending Review"
+                            : value.charAt(0).toUpperCase() + value.slice(1)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -534,13 +516,13 @@ export function QuestionForm({
                               const file = e.target.files?.[0];
                               if (file) {
                                 // Validate file type and size (same validation as drag & drop)
-                                if (file.type !== "application/pdf") {
+                                if (file.type !== PDF_MIME_TYPE) {
                                   toast.error("Only PDF files are allowed");
                                   e.target.value = ""; // Clear the input
                                   return;
                                 }
 
-                                if (file.size > 10 * 1024 * 1024) {
+                                if (file.size > MAX_PDF_FILE_SIZE_BYTES) {
                                   toast.error("File size must not exceed 10MB");
                                   e.target.value = ""; // Clear the input
                                   return;

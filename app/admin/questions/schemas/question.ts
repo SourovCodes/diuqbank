@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+// Shared constants for question PDF validation
+export const MAX_PDF_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+export const PDF_MIME_TYPE = "application/pdf" as const;
+
+// Shared status enum
+export const questionStatusEnum = z.enum([
+  "published",
+  "duplicate",
+  "pending review",
+  "rejected",
+]);
+export type QuestionStatus = z.infer<typeof questionStatusEnum>;
+
 // Schema for question form validation
 export const questionFormSchema = z.object({
   departmentId: z.coerce
@@ -14,15 +27,15 @@ export const questionFormSchema = z.object({
   examTypeId: z.coerce
     .number({ message: "Exam type is required" })
     .min(1, "Exam type is required"),
-  status: z.enum(["published", "duplicate", "pending review", "rejected"]),
+  status: questionStatusEnum,
   pdfFile: z
     .instanceof(File, { message: "PDF file is required" })
     .refine((file) => file.size > 0, "PDF file cannot be empty")
     .refine(
-      (file) => file.size <= 10 * 1024 * 1024,
+      (file) => file.size <= MAX_PDF_FILE_SIZE_BYTES,
       "PDF file size must not exceed 10MB"
     )
-    .refine((file) => file.type === "application/pdf", "File must be a PDF")
+    .refine((file) => file.type === PDF_MIME_TYPE, "File must be a PDF")
     .optional(), // Optional for edit forms
 });
 
@@ -34,10 +47,10 @@ export const questionEditFormSchema = questionFormSchema
       .instanceof(File)
       .refine((file) => file.size > 0, "PDF file cannot be empty")
       .refine(
-        (file) => file.size <= 10 * 1024 * 1024,
+        (file) => file.size <= MAX_PDF_FILE_SIZE_BYTES,
         "PDF file size must not exceed 10MB"
       )
-      .refine((file) => file.type === "application/pdf", "File must be a PDF")
+      .refine((file) => file.type === PDF_MIME_TYPE, "File must be a PDF")
       .optional(),
   });
 
@@ -45,7 +58,7 @@ export const questionEditFormSchema = questionFormSchema
 export const presignedUrlSchema = z.object({
   fileName: z.string().min(1, "File name is required"),
   fileSize: z.number().min(1, "File size must be greater than 0"),
-  contentType: z.literal("application/pdf"),
+  contentType: z.literal(PDF_MIME_TYPE),
 });
 
 // Type for the question form values
