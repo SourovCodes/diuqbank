@@ -9,7 +9,7 @@ import {
   questionFormSchema,
   type QuestionFormValues,
   type QuestionStatus,
-  questionStatusEnum,
+  QUESTION_STATUS_VALUES,
   MAX_PDF_FILE_SIZE_BYTES,
   PDF_MIME_TYPE,
 } from "../schemas/question";
@@ -415,7 +415,7 @@ export function QuestionForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {questionStatusEnum.options.map((value) => (
+                      {QUESTION_STATUS_VALUES.map((value) => (
                         <SelectItem key={value} value={value}>
                           {value === "pending review"
                             ? "Pending Review"
