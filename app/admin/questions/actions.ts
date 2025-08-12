@@ -16,7 +16,11 @@ import {
   type PresignedUrlRequest,
 } from "./schemas/question";
 import { eq, and, count, asc, desc, sql } from "drizzle-orm";
-import { hasPermission } from "@/lib/authorization";
+import {
+  ensurePermission,
+  getPaginationMeta,
+  parseNumericId,
+} from "@/lib/action-utils";
 import { s3 } from "@/lib/s3";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -49,9 +53,8 @@ interface UpdateQuestionParams {
 // Generate presigned URL for S3 upload
 export async function generatePresignedUrl(request: PresignedUrlRequest) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const validatedFields = presignedUrlSchema.parse(request);
 
@@ -84,7 +87,7 @@ export async function generatePresignedUrl(request: PresignedUrlRequest) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
+      return { success: false, error: "Invalid input." };
     }
 
     console.error("Error generating presigned URL:", error);
@@ -98,9 +101,8 @@ export async function generatePresignedUrl(request: PresignedUrlRequest) {
 // Create a new question (Admin creates via presigned URL)
 export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -153,14 +155,12 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
 // Update a question's status
 export async function updateQuestionStatus(id: string, status: string) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
-    const numericId = parseInt(id);
-    if (isNaN(numericId)) {
-      return { success: false, error: "Invalid question ID." };
-    }
+    const parsed = parseNumericId(id, "Question");
+    if (!parsed.success) return parsed;
+    const numericId = parsed.data!;
 
     await db
       .update(questions)
@@ -184,9 +184,8 @@ export async function getPaginatedQuestions(
   status?: string
 ) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const skip = (page - 1) * pageSize;
     const whereConditions = [];
@@ -260,18 +259,11 @@ export async function getPaginatedQuestions(
     ]);
 
     const totalCount = totalCountResult[0].count;
-    const totalPages = Math.ceil(totalCount / pageSize);
-
     return {
       success: true,
       data: {
         questions: questionsResult,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalCount,
-          pageSize,
-        },
+        pagination: getPaginationMeta(totalCount, page, pageSize),
       },
     };
   } catch (error) {
@@ -286,14 +278,12 @@ export async function getPaginatedQuestions(
 // Delete a question
 export async function deleteQuestion(id: string) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
-    const numericId = parseInt(id);
-    if (isNaN(numericId)) {
-      return { success: false, error: "Invalid question ID." };
-    }
+    const parsed = parseNumericId(id, "Question");
+    if (!parsed.success) return parsed;
+    const numericId = parsed.data!;
 
     const existingQuestion = await db
       .select()
@@ -334,9 +324,8 @@ export async function deleteQuestion(id: string) {
 // Get dropdown data
 export async function getDepartmentsForDropdown() {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const allDepartments = await db
       .select({
@@ -356,9 +345,8 @@ export async function getDepartmentsForDropdown() {
 
 export async function getCoursesForDropdown() {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const allCourses = await db
       .select({
@@ -377,9 +365,8 @@ export async function getCoursesForDropdown() {
 
 export async function getSemestersForDropdown() {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const allSemesters = await db
       .select({
@@ -398,9 +385,8 @@ export async function getSemestersForDropdown() {
 
 export async function getExamTypesForDropdown() {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
     const allExamTypes = await db
       .select({
@@ -420,14 +406,12 @@ export async function getExamTypesForDropdown() {
 // Get a single question by ID for editing
 export async function getQuestion(id: string) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
-    const numericId = parseInt(id);
-    if (isNaN(numericId)) {
-      return { success: false, error: "Invalid question ID." };
-    }
+    const parsed = parseNumericId(id, "Question");
+    if (!parsed.success) return parsed;
+    const numericId = parsed.data!;
 
     const questionData = await db
       .select({
@@ -476,14 +460,12 @@ export async function getQuestion(id: string) {
 // Update an existing question
 export async function updateQuestion(id: string, values: UpdateQuestionParams) {
   try {
-    if (!(await hasPermission("QUESTIONS:MANAGE"))) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
 
-    const numericId = parseInt(id);
-    if (isNaN(numericId)) {
-      return { success: false, error: "Invalid question ID." };
-    }
+    const parsed = parseNumericId(id, "Question");
+    if (!parsed.success) return parsed;
+    const numericId = parsed.data!;
 
     // Check if question exists
     const existingQuestion = await db
