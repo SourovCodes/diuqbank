@@ -31,16 +31,11 @@ export async function createSemester(values: SemesterFormValues) {
 
     const validatedFields = semesterFormSchema.parse(values);
 
-    // Check if semester with same name already exists for this user (case insensitive)
+    // Check if semester with same name already exists globally (case insensitive)
     const existingSemester = await db
       .select()
       .from(semesters)
-      .where(
-        and(
-          sql`LOWER(${semesters.name}) = LOWER(${validatedFields.name})`,
-          eq(semesters.userId, session.user.id)
-        )
-      )
+      .where(sql`LOWER(${semesters.name}) = LOWER(${validatedFields.name})`)
       .limit(1);
 
     if (existingSemester.length > 0) {
@@ -110,14 +105,13 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
       };
     }
 
-    // Check if another semester with the same name exists for this user (except this one)
+    // Check if another semester with the same name exists globally (except this one)
     const duplicateName = await db
       .select()
       .from(semesters)
       .where(
         and(
           sql`LOWER(${semesters.name}) = LOWER(${validatedFields.name})`,
-          eq(semesters.userId, session.user.id),
           ne(semesters.id, numericId)
         )
       )

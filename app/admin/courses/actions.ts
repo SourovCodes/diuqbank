@@ -28,16 +28,11 @@ export async function createCourse(values: CourseFormValues) {
 
     const validatedFields = courseFormSchema.parse(values);
 
-    // Check if course with same name already exists for this user (case insensitive)
+    // Check if course with same name already exists globally (case insensitive)
     const existingCourse = await db
       .select()
       .from(courses)
-      .where(
-        and(
-          sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`,
-          eq(courses.userId, session.user.id)
-        )
-      )
+      .where(sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`)
       .limit(1);
 
     if (existingCourse.length > 0) {
@@ -107,14 +102,13 @@ export async function updateCourse(id: string, values: CourseFormValues) {
       };
     }
 
-    // Check if another course with the same name exists for this user (except this one)
+    // Check if another course with the same name exists globally (except this one)
     const duplicateName = await db
       .select()
       .from(courses)
       .where(
         and(
           sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`,
-          eq(courses.userId, session.user.id),
           ne(courses.id, numericId)
         )
       )
