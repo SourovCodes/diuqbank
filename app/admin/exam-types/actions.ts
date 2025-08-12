@@ -21,7 +21,7 @@ export async function createExamType(values: ExamTypeFormValues) {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const validatedFields = examTypeFormSchema.parse(values);
 
@@ -70,7 +70,7 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const validatedFields = examTypeFormSchema.parse(values);
     const parsed = parseNumericId(id, "exam type ID");
@@ -143,7 +143,7 @@ export async function deleteExamType(id: string) {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "exam type ID");
     if (!parsed.success) return { success: false, error: parsed.error };
@@ -194,7 +194,7 @@ export async function getExamType(id: string) {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "exam type ID");
     if (!parsed.success) return { success: false, error: parsed.error };
@@ -229,7 +229,7 @@ export async function getPaginatedExamTypes(
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const skip = (page - 1) * pageSize;
 
@@ -280,7 +280,7 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: String(perm.error) };
+    if (!perm.success) return perm;
 
     const fromParsed = parseNumericId(fromId, "from exam type ID");
     if (!fromParsed.success) return { success: false, error: fromParsed.error };
@@ -344,7 +344,7 @@ export async function getAllExamTypes() {
   try {
     // Check if the user has permission to manage exam types
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
-    if (!perm.success) return { success: false, error: String(perm.error) };
+    if (!perm.success) return perm;
 
     const allExamTypes = await db
       .select({

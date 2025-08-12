@@ -22,7 +22,7 @@ export async function createSemester(values: SemesterFormValues) {
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -77,7 +77,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -159,7 +159,7 @@ export async function deleteSemester(id: string) {
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -221,7 +221,7 @@ export async function getSemester(id: string) {
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -263,7 +263,7 @@ export async function getPaginatedSemesters(
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -323,7 +323,7 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
   try {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {

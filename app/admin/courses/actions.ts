@@ -19,7 +19,7 @@ export async function createCourse(values: CourseFormValues) {
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -74,7 +74,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -156,7 +156,7 @@ export async function deleteCourse(id: string) {
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -218,7 +218,7 @@ export async function getCourse(id: string) {
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
@@ -265,7 +265,7 @@ export async function getPaginatedCourses(
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
-    if (!perm.success) return { success: false, error: perm.error };
+    if (!perm.success) return perm;
 
     const session = await auth();
     if (!session?.user?.id) {
