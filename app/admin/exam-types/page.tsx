@@ -18,6 +18,12 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import {
+  defaultPagination,
+  formatTotalLabel,
+  parseListSearchParams,
+  SearchParamsBase,
+} from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Exam Types Management | DIU QBank Admin",
@@ -25,28 +31,18 @@ export const metadata: Metadata = {
 };
 
 interface ExamTypesPageProps {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<SearchParamsBase>;
 }
 
 export default async function ExamTypesPage({
   searchParams,
 }: ExamTypesPageProps) {
-  const awaitedSearchParams = await searchParams;
-  const page = parseInt(awaitedSearchParams.page ?? "1", 10);
-  const search = awaitedSearchParams.search || undefined;
+  const { page, search } = await parseListSearchParams(searchParams);
 
   const { data } = await getPaginatedExamTypes(page, 10, search);
 
   const examTypes = data?.examTypes ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -70,9 +66,7 @@ export default async function ExamTypesPage({
       <Card>
         <AdminListHeader
           title="Exam Types List"
-          description={`Total: ${pagination.totalCount} exam type${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("exam type", pagination.totalCount)}
           searchPlaceholder="Search exam types..."
         />
         <CardContent>

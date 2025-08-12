@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import { defaultPagination, formatTotalLabel } from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Questions Management | DIU QBank Admin",
@@ -76,12 +77,7 @@ export default async function QuestionsPage({
   );
 
   const questions = data?.questions ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -105,9 +101,7 @@ export default async function QuestionsPage({
       <Card>
         <AdminListHeader
           title="Questions List"
-          description={`Total: ${pagination.totalCount} question${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("question", pagination.totalCount)}
           searchPlaceholder="Search questions..."
         />
         <CardContent>

@@ -18,6 +18,12 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import {
+  defaultPagination,
+  formatTotalLabel,
+  parseListSearchParams,
+  SearchParamsBase,
+} from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Courses Management | DIU QBank Admin",
@@ -25,26 +31,16 @@ export const metadata: Metadata = {
 };
 
 interface CoursesPageProps {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<SearchParamsBase>;
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
-  const awaitedSearchParams = await searchParams;
-  const page = parseInt(awaitedSearchParams.page ?? "1", 10);
-  const search = awaitedSearchParams.search || undefined;
+  const { page, search } = await parseListSearchParams(searchParams);
 
   const { data } = await getPaginatedCourses(page, 10, search);
 
   const courses = data?.courses ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -65,9 +61,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       <Card>
         <AdminListHeader
           title="Courses List"
-          description={`Total: ${pagination.totalCount} course${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("course", pagination.totalCount)}
           searchPlaceholder="Search courses..."
         />
         <CardContent>

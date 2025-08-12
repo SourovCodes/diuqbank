@@ -19,6 +19,12 @@ import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  defaultPagination,
+  formatTotalLabel,
+  parseListSearchParams,
+  SearchParamsBase,
+} from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Users Management | DIU QBank Admin",
@@ -26,26 +32,16 @@ export const metadata: Metadata = {
 };
 
 interface UsersPageProps {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<SearchParamsBase>;
 }
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
-  const awaitedSearchParams = await searchParams;
-  const page = parseInt(awaitedSearchParams.page ?? "1", 10);
-  const search = awaitedSearchParams.search || undefined;
+  const { page, search } = await parseListSearchParams(searchParams);
 
   const { data } = await getPaginatedUsers(page, 10, search);
 
   const users = data?.users ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -66,9 +62,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       <Card>
         <AdminListHeader
           title="Users List"
-          description={`Total: ${pagination.totalCount} user${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("user", pagination.totalCount)}
           searchPlaceholder="Search users..."
         />
         <CardContent>

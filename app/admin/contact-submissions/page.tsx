@@ -17,6 +17,12 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import {
+  defaultPagination,
+  formatTotalLabel,
+  parseListSearchParams,
+  SearchParamsBase,
+} from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Contact Submissions | DIU QBank Admin",
@@ -24,28 +30,18 @@ export const metadata: Metadata = {
 };
 
 interface ContactSubmissionsPageProps {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<SearchParamsBase>;
 }
 
 export default async function ContactSubmissionsPage({
   searchParams,
 }: ContactSubmissionsPageProps) {
-  const awaitedSearchParams = await searchParams;
-  const page = parseInt(awaitedSearchParams.page ?? "1", 10);
-  const search = awaitedSearchParams.search || undefined;
+  const { page, search } = await parseListSearchParams(searchParams);
 
   const { data } = await getPaginatedSubmissions(page, 10, search);
 
   const submissions = data?.submissions ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -61,9 +57,7 @@ export default async function ContactSubmissionsPage({
       <Card>
         <AdminListHeader
           title="Submissions List"
-          description={`Total: ${pagination.totalCount} submission${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("submission", pagination.totalCount)}
           searchPlaceholder="Search submissions..."
         />
         <CardContent>

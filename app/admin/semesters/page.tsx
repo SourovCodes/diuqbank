@@ -18,6 +18,12 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { EmptyState } from "@/components/admin/empty-state";
+import {
+  defaultPagination,
+  formatTotalLabel,
+  parseListSearchParams,
+  SearchParamsBase,
+} from "@/lib/action-utils";
 
 export const metadata: Metadata = {
   title: "Semesters Management | DIU QBank Admin",
@@ -25,28 +31,18 @@ export const metadata: Metadata = {
 };
 
 interface SemestersPageProps {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<SearchParamsBase>;
 }
 
 export default async function SemestersPage({
   searchParams,
 }: SemestersPageProps) {
-  const awaitedSearchParams = await searchParams;
-  const page = parseInt(awaitedSearchParams.page ?? "1", 10);
-  const search = awaitedSearchParams.search || undefined;
+  const { page, search } = await parseListSearchParams(searchParams);
 
   const { data } = await getPaginatedSemesters(page, 10, search);
 
   const semesters = data?.semesters ?? [];
-  const pagination = data?.pagination ?? {
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    pageSize: 10,
-  };
+  const pagination = data?.pagination ?? defaultPagination;
 
   return (
     <div className="space-y-6">
@@ -70,9 +66,7 @@ export default async function SemestersPage({
       <Card>
         <AdminListHeader
           title="Semesters List"
-          description={`Total: ${pagination.totalCount} semester${
-            pagination.totalCount !== 1 ? "s" : ""
-          }`}
+          description={formatTotalLabel("semester", pagination.totalCount)}
           searchPlaceholder="Search semesters..."
         />
         <CardContent>
