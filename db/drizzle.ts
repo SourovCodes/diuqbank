@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-import { drizzle } from "drizzle-orm/node-postgres";
-config({ path: ".env.local" });
+import { drizzle } from "drizzle-orm/mysql2";
 
-const db = drizzle(process.env.DATABASE_URL!);
-export default db;
+export const db = drizzle(process.env.DATABASE_URL!);

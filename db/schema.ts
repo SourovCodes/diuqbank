@@ -1,92 +1,178 @@
 import {
-  boolean,
+  int,
   timestamp,
-  pgTable,
-  text,
+  mysqlTable,
   primaryKey,
-  integer,
-} from "drizzle-orm/pg-core";
-import type { AdapterAccountType } from "@auth/core/adapters";
+  varchar,
+  boolean,
+  mysqlEnum,
+} from "drizzle-orm/mysql-core";
+import type { AdapterAccountType } from "next-auth/adapters";
 
-export const users = pgTable("user", {
-  id: text("id")
+// Enums for type safety with better autocomplete
+export const QuestionStatus = {
+  PUBLISHED: "published",
+  DUPLICATE: "duplicate",
+  PENDING_REVIEW: "pending review",
+  REJECTED: "rejected",
+} as const;
+
+export const ReportStatus = {
+  PENDING_REVIEW: "pending review",
+  RESOLVED: "resolved",
+} as const;
+
+export const questionStatusEnum = Object.values(QuestionStatus);
+export const reportStatusEnum = Object.values(ReportStatus);
+
+export type QuestionStatus =
+  (typeof QuestionStatus)[keyof typeof QuestionStatus];
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
+
+export const users = mysqlTable("user", {
+  id: varchar("id", { length: 255 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: text("name"),
-  email: text("email").unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
-  image: text("image"),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 255 }).unique(),
+  emailVerified: timestamp("emailVerified", {
+    mode: "date",
+    fsp: 3,
+  }),
+  image: varchar("image", { length: 255 }),
+  username: varchar("username", { length: 100 }),
+  studentId: varchar("studentId", { length: 50 }),
 });
 
-export const accounts = pgTable(
+export const accounts = mysqlTable(
   "account",
   {
-    userId: text("userId")
+    userId: varchar("userId", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").$type<AdapterAccountType>().notNull(),
-    provider: text("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
-    refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: text("token_type"),
-    scope: text("scope"),
-    id_token: text("id_token"),
-    session_state: text("session_state"),
+    type: varchar("type", { length: 255 })
+      .$type<AdapterAccountType>()
+      .notNull(),
+    provider: varchar("provider", { length: 255 }).notNull(),
+    providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
+    refresh_token: varchar("refresh_token", { length: 255 }),
+    access_token: varchar("access_token", { length: 255 }),
+    expires_at: int("expires_at"),
+    token_type: varchar("token_type", { length: 255 }),
+    scope: varchar("scope", { length: 255 }),
+    id_token: varchar("id_token", { length: 2048 }),
+    session_state: varchar("session_state", { length: 255 }),
   },
-  (account) => [
-    {
-      compoundKey: primaryKey({
-        columns: [account.provider, account.providerAccountId],
-      }),
-    },
+  (table) => [
+    primaryKey({
+      columns: [table.provider, table.providerAccountId],
+    }),
   ]
 );
 
-export const sessions = pgTable("session", {
-  sessionToken: text("sessionToken").primaryKey(),
-  userId: text("userId")
+export const sessions = mysqlTable("session", {
+  sessionToken: varchar("sessionToken", { length: 255 }).primaryKey(),
+  userId: varchar("userId", { length: 255 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
-export const verificationTokens = pgTable(
+export const verificationTokens = mysqlTable(
   "verificationToken",
   {
-    identifier: text("identifier").notNull(),
-    token: text("token").notNull(),
+    identifier: varchar("identifier", { length: 255 }).notNull(),
+    token: varchar("token", { length: 255 }).notNull(),
     expires: timestamp("expires", { mode: "date" }).notNull(),
   },
-  (verificationToken) => [
-    {
-      compositePk: primaryKey({
-        columns: [verificationToken.identifier, verificationToken.token],
-      }),
-    },
+  (table) => [
+    primaryKey({
+      columns: [table.identifier, table.token],
+    }),
   ]
 );
 
-export const authenticators = pgTable(
-  "authenticator",
-  {
-    credentialID: text("credentialID").notNull().unique(),
-    userId: text("userId")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    providerAccountId: text("providerAccountId").notNull(),
-    credentialPublicKey: text("credentialPublicKey").notNull(),
-    counter: integer("counter").notNull(),
-    credentialDeviceType: text("credentialDeviceType").notNull(),
-    credentialBackedUp: boolean("credentialBackedUp").notNull(),
-    transports: text("transports"),
-  },
-  (authenticator) => [
-    {
-      compositePK: primaryKey({
-        columns: [authenticator.userId, authenticator.credentialID],
-      }),
-    },
-  ]
-);
+export const departments = mysqlTable("department", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  shortName: varchar("shortName", { length: 50 }).notNull().unique(),
+});
+
+export const courses = mysqlTable("course", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const semesters = mysqlTable("semester", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const examTypes = mysqlTable("examType", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+});
+
+export const questions = mysqlTable("question", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  departmentId: int("departmentId")
+    .notNull()
+    .references(() => departments.id, { onDelete: "cascade" }),
+  courseId: int("courseId")
+    .notNull()
+    .references(() => courses.id, { onDelete: "cascade" }),
+  semesterId: int("semesterId")
+    .notNull()
+    .references(() => semesters.id, { onDelete: "cascade" }),
+  examTypeId: int("examTypeId")
+    .notNull()
+    .references(() => examTypes.id, { onDelete: "cascade" }),
+  status: mysqlEnum("status", QuestionStatus)
+    .notNull()
+    .default(QuestionStatus.PENDING_REVIEW),
+  pdfKey: varchar("pdfKey", { length: 255 }).notNull(),
+  pdfFileSizeInBytes: int("pdfFileSizeInBytes").notNull(),
+  viewCount: int("viewCount").notNull().default(0),
+  isReviewed: boolean("isReviewed").notNull().default(false),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
+});
+
+export const reports = mysqlTable("report", {
+  id: int("id").primaryKey().autoincrement(),
+  questionId: int("questionId")
+    .notNull()
+    .references(() => questions.id, { onDelete: "cascade" }),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  content: varchar("content", { length: 1000 }).notNull(),
+  status: mysqlEnum("status", ReportStatus)
+    .notNull()
+    .default(ReportStatus.PENDING_REVIEW),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
+});
+
+export const contactFormSubmissions = mysqlTable("contactFormSubmission", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  message: varchar("message", { length: 2000 }).notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+});
