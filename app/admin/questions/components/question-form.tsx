@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,10 +18,6 @@ import {
   generatePresignedUrl,
   createQuestionAdmin,
   updateQuestion,
-  getDepartmentsForDropdown,
-  getCoursesForDropdown,
-  getSemestersForDropdown,
-  getExamTypesForDropdown,
 } from "../actions";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +43,9 @@ import { Upload, FileText } from "lucide-react";
 
 // Schema and types are imported from ../schemas/question to avoid duplication
 
+type DepartmentOption = { id: number; name: string; shortName: string };
+type BasicOption = { id: number; name: string };
+
 interface QuestionData {
   id: number;
   departmentId: number;
@@ -62,23 +61,24 @@ interface QuestionFormProps {
   initialData?: QuestionData;
   isEditing?: boolean;
   questionId?: string;
+  dropdowns: {
+    departments: DepartmentOption[];
+    courses: BasicOption[];
+    semesters: BasicOption[];
+    examTypes: BasicOption[];
+  };
 }
 
 export function QuestionForm({
   initialData,
   isEditing = false,
   questionId,
+  dropdowns,
 }: QuestionFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [dropdownData, setDropdownData] = useState({
-    departments: [] as Array<{ id: number; name: string; shortName: string }>,
-    courses: [] as Array<{ id: number; name: string }>,
-    semesters: [] as Array<{ id: number; name: string }>,
-    examTypes: [] as Array<{ id: number; name: string }>,
-  });
 
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(
@@ -93,32 +93,6 @@ export function QuestionForm({
         (initialData?.status as QuestionFormValues["status"]) || "published",
     },
   });
-
-  useEffect(() => {
-    const loadDropdownData = async () => {
-      try {
-        const [deptResult, courseResult, semesterResult, examTypeResult] =
-          await Promise.all([
-            getDepartmentsForDropdown(),
-            getCoursesForDropdown(),
-            getSemestersForDropdown(),
-            getExamTypesForDropdown(),
-          ]);
-
-        setDropdownData({
-          departments: deptResult.success ? deptResult.data || [] : [],
-          courses: courseResult.success ? courseResult.data || [] : [],
-          semesters: semesterResult.success ? semesterResult.data || [] : [],
-          examTypes: examTypeResult.success ? examTypeResult.data || [] : [],
-        });
-      } catch (error) {
-        console.error("Error loading dropdown data:", error);
-        toast.error("Failed to load form data");
-      }
-    };
-
-    loadDropdownData();
-  }, []);
 
   const uploadFileToS3 = useCallback(
     async (file: File, presignedUrl: string) => {
@@ -296,7 +270,7 @@ export function QuestionForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dropdownData.departments.map((dept) => (
+                        {dropdowns.departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id.toString()}>
                             {dept.name} ({dept.shortName})
                           </SelectItem>
@@ -324,7 +298,7 @@ export function QuestionForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dropdownData.courses.map((course) => (
+                        {dropdowns.courses.map((course) => (
                           <SelectItem
                             key={course.id}
                             value={course.id.toString()}
@@ -355,7 +329,7 @@ export function QuestionForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dropdownData.semesters.map((semester) => (
+                        {dropdowns.semesters.map((semester) => (
                           <SelectItem
                             key={semester.id}
                             value={semester.id.toString()}
@@ -386,7 +360,7 @@ export function QuestionForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {dropdownData.examTypes.map((examType) => (
+                        {dropdowns.examTypes.map((examType) => (
                           <SelectItem
                             key={examType.id}
                             value={examType.id.toString()}
