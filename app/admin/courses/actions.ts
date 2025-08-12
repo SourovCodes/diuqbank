@@ -271,7 +271,6 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const fromIdNumeric = parseInt(fromId);
@@ -281,25 +280,10 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
       return fail("Invalid course IDs.");
     }
 
-    // Check if both courses exist and belong to the user
+    // Check if both courses exist (admin can migrate across any courses)
     const [fromCourse, toCourse] = await Promise.all([
-      db
-        .select()
-        .from(courses)
-        .where(
-          and(
-            eq(courses.id, fromIdNumeric),
-            eq(courses.userId, session.user.id)
-          )
-        )
-        .limit(1),
-      db
-        .select()
-        .from(courses)
-        .where(
-          and(eq(courses.id, toIdNumeric), eq(courses.userId, session.user.id))
-        )
-        .limit(1),
+      db.select().from(courses).where(eq(courses.id, fromIdNumeric)).limit(1),
+      db.select().from(courses).where(eq(courses.id, toIdNumeric)).limit(1),
     ]);
 
     if (fromCourse.length === 0 || toCourse.length === 0) {
@@ -332,13 +316,12 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
   }
 }
 
-// Get all user's courses for migration dropdown
+// Get all courses for migration dropdown
 export async function getAllUserCourses() {
   try {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const allCourses = await db
@@ -349,7 +332,6 @@ export async function getAllUserCourses() {
       })
       .from(courses)
       .leftJoin(questions, eq(courses.id, questions.courseId))
-      .where(eq(courses.userId, session.user.id))
       .groupBy(courses.id, courses.name)
       .orderBy(asc(courses.name));
 
