@@ -1,18 +1,28 @@
 import { hasPermission } from "./authorization";
+import type { Session } from "next-auth";
 
 // Standard action result shape used across server actions
 export type ActionResult<T = unknown> =
   | { success: true; data?: T }
   | { success: false; error: string };
 
+// Result for permission checks that also returns the session for reuse
+export type ActionPermissionResult =
+  | { success: true; session: Session & { user: { id: string } } }
+  | { success: false; error: string };
+
 // Ensure the current user has a specific permission
 export async function ensurePermission(
   permission: string
-): Promise<ActionResult<void>> {
-  if (!(await hasPermission(permission))) {
+): Promise<ActionPermissionResult> {
+  const { allowed, session } = await hasPermission(permission);
+  if (!allowed || !session?.user?.id) {
     return { success: false, error: "Unauthorized" };
   }
-  return { success: true };
+  return {
+    success: true,
+    session: session as Session & { user: { id: string } },
+  };
 }
 
 // Parse a numeric id safely with a consistent error message

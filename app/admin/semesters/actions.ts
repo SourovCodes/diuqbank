@@ -15,7 +15,7 @@ import {
   getPaginationMeta,
   parseNumericId,
 } from "@/lib/action-utils";
-import { auth } from "@/lib/auth";
+// auth is provided via ensurePermission result
 
 // Create a new semester
 export async function createSemester(values: SemesterFormValues) {
@@ -23,11 +23,7 @@ export async function createSemester(values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
 
@@ -78,11 +74,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
     const parsed = parseNumericId(id, "semester ID");
@@ -160,11 +152,7 @@ export async function deleteSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return parsed;
@@ -222,11 +210,7 @@ export async function getSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return parsed;
@@ -264,11 +248,7 @@ export async function getPaginatedSemesters(
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
 
     const skip = (page - 1) * pageSize;
 
@@ -325,7 +305,7 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const session = await auth();
+    const session = perm.session;
     if (!session?.user?.id) {
       return { success: false, error: "Not authenticated" };
     }
@@ -411,7 +391,7 @@ export async function getAllUserSemesters() {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const session = await auth();
+    const session = perm.session;
     if (!session?.user?.id) {
       return { success: false, error: "Not authenticated" };
     }

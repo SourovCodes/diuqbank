@@ -12,7 +12,7 @@ import {
   getPaginationMeta,
   parseNumericId,
 } from "@/lib/action-utils";
-import { auth } from "@/lib/auth";
+// auth is provided via ensurePermission result
 
 // Create a new course
 export async function createCourse(values: CourseFormValues) {
@@ -20,11 +20,8 @@ export async function createCourse(values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
 
@@ -75,11 +72,8 @@ export async function updateCourse(id: string, values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
     const parsed = parseNumericId(id, "course ID");
@@ -157,11 +151,8 @@ export async function deleteCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const parsed = parseNumericId(id, "course ID");
     if (!parsed.success) return { success: false, error: parsed.error };
@@ -219,11 +210,8 @@ export async function getCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const numericId = parseInt(id);
 
@@ -266,11 +254,8 @@ export async function getPaginatedCourses(
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const skip = (page - 1) * pageSize;
 
@@ -328,11 +313,8 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const fromIdNumeric = parseInt(fromId);
     const toIdNumeric = parseInt(toId);
@@ -411,11 +393,8 @@ export async function getAllUserCourses() {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const session = perm.session;
+    // Authentication check is redundant, relying on ensurePermission
 
     const allCourses = await db
       .select({

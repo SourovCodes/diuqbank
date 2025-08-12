@@ -25,7 +25,7 @@ import { s3 } from "@/lib/s3";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
-import { auth } from "@/lib/auth";
+// session will be obtained via ensurePermission when needed
 
 // Types for better type safety
 type QuestionStatus = "published" | "duplicate" | "pending review" | "rejected";
@@ -103,11 +103,7 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
   try {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
     if (!perm.success) return perm;
-
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "User session not found" };
-    }
+    const session = perm.session;
 
     // Check for duplicate question
     const existingQuestion = await db
