@@ -2,13 +2,7 @@ import Link from "next/link";
 import { FileText, Plus, Eye, Pencil } from "lucide-react";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,10 +13,11 @@ import {
 } from "@/components/ui/table";
 import { CustomPagination } from "@/components/custom-pagination";
 import { getPaginatedQuestions, deleteQuestion } from "./actions";
-import { GenericSearch } from "@/components/admin/generic-search";
 import { GenericDeleteButton } from "@/components/admin/generic-delete-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { AdminListHeader } from "@/components/admin/admin-list-header";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const metadata: Metadata = {
   title: "Questions Management | DIU QBank Admin",
@@ -108,40 +103,30 @@ export default async function QuestionsPage({
       />
 
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-          <div>
-            <CardTitle className="text-xl">Questions List</CardTitle>
-            <CardDescription>
-              Total: {pagination.totalCount} question
-              {pagination.totalCount !== 1 ? "s" : ""}
-            </CardDescription>
-          </div>
-          <GenericSearch placeholder="Search questions..." />
-        </CardHeader>
+        <AdminListHeader
+          title="Questions List"
+          description={`Total: ${pagination.totalCount} question${pagination.totalCount !== 1 ? "s" : ""}`}
+          searchPlaceholder="Search questions..."
+        />
         <CardContent>
           {questions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <div className="rounded-full bg-muted p-3">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">No questions found</h3>
-              {search || departmentFilter || statusFilter ? (
-                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                  No questions match your search criteria. Try adjusting your
-                  filters or create a new question.
-                </p>
-              ) : (
-                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                  Get started by creating your first question.
-                </p>
-              )}
-              <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/questions/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Question
-                </Link>
-              </Button>
-            </div>
+            <EmptyState
+              icon={<FileText className="h-6 w-6" />}
+              title="No questions found"
+              description={
+                search || departmentFilter || statusFilter
+                  ? "No questions match your search criteria. Try adjusting your filters or create a new question."
+                  : "Get started by creating your first question."
+              }
+              action={
+                <Button asChild variant="outline">
+                  <Link href="/admin/questions/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Question
+                  </Link>
+                </Button>
+              }
+            />
           ) : (
             <>
               <div className="rounded-md border overflow-hidden">

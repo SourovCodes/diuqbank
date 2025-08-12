@@ -2,13 +2,7 @@ import Link from "next/link";
 import { FileText, Plus, Pencil } from "lucide-react";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,10 +13,11 @@ import {
 } from "@/components/ui/table";
 import { CustomPagination } from "@/components/custom-pagination";
 import { getPaginatedExamTypes, deleteExamType } from "./actions";
-import { GenericSearch } from "@/components/admin/generic-search";
 import { GenericDeleteButton } from "@/components/admin/generic-delete-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { AdminListHeader } from "@/components/admin/admin-list-header";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const metadata: Metadata = {
   title: "Exam Types Management | DIU QBank Admin",
@@ -73,42 +68,30 @@ export default async function ExamTypesPage({
       />
 
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-          <div>
-            <CardTitle className="text-xl">Exam Types List</CardTitle>
-            <CardDescription>
-              Total: {pagination.totalCount} exam type
-              {pagination.totalCount !== 1 ? "s" : ""}
-            </CardDescription>
-          </div>
-          <GenericSearch placeholder="Search exam types..." />
-        </CardHeader>
+        <AdminListHeader
+          title="Exam Types List"
+          description={`Total: ${pagination.totalCount} exam type${pagination.totalCount !== 1 ? "s" : ""}`}
+          searchPlaceholder="Search exam types..."
+        />
         <CardContent>
           {examTypes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <div className="rounded-full bg-muted p-3">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">
-                No exam types found
-              </h3>
-              {search ? (
-                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                  No exam types match your search criteria. Try a different
-                  search query or create a new exam type.
-                </p>
-              ) : (
-                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                  Get started by creating your first exam type.
-                </p>
-              )}
-              <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/exam-types/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Exam Type
-                </Link>
-              </Button>
-            </div>
+            <EmptyState
+              icon={<FileText className="h-6 w-6" />}
+              title="No exam types found"
+              description={
+                search
+                  ? "No exam types match your search criteria. Try a different search query or create a new exam type."
+                  : "Get started by creating your first exam type."
+              }
+              action={
+                <Button asChild variant="outline">
+                  <Link href="/admin/exam-types/create">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Exam Type
+                  </Link>
+                </Button>
+              }
+            />
           ) : (
             <>
               <div className="rounded-md border overflow-hidden">

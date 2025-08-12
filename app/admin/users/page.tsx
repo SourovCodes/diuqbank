@@ -2,13 +2,7 @@ import Link from "next/link";
 import { Users, Plus, Pencil } from "lucide-react";
 import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,9 +13,9 @@ import {
 } from "@/components/ui/table";
 import { CustomPagination } from "@/components/custom-pagination";
 import { getPaginatedUsers, deleteUser } from "./actions";
-import { GenericSearch } from "@/components/admin/generic-search";
 import { GenericDeleteButton } from "@/components/admin/generic-delete-button";
 import { EmptyState } from "@/components/admin/empty-state";
+import { AdminListHeader } from "@/components/admin/admin-list-header";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -70,16 +64,11 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       />
 
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-          <div>
-            <CardTitle className="text-xl">Users List</CardTitle>
-            <CardDescription>
-              Total: {pagination.totalCount} user
-              {pagination.totalCount !== 1 ? "s" : ""}
-            </CardDescription>
-          </div>
-          <GenericSearch placeholder="Search users..." />
-        </CardHeader>
+        <AdminListHeader
+          title="Users List"
+          description={`Total: ${pagination.totalCount} user${pagination.totalCount !== 1 ? "s" : ""}`}
+          searchPlaceholder="Search users..."
+        />
         <CardContent>
           {users.length === 0 ? (
             <EmptyState
