@@ -5,7 +5,7 @@ import { useRouter } from "nextjs-toploader/app";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { examTypes } from "@/db/schema";
+import { type ExamType as ExamTypeModel } from "@/db/schema";
 
 import {
   examTypeFormSchema,
@@ -13,7 +13,6 @@ import {
 } from "../schemas/exam-type";
 import { createExamType, updateExamType } from "../actions";
 
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -25,9 +24,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormActions } from "@/components/admin/form-actions";
 
 // Type for ExamType based on Drizzle schema
-type ExamType = typeof examTypes.$inferSelect;
+type ExamType = ExamTypeModel;
 
 interface ExamTypeFormProps {
   initialData?: ExamType | null;
@@ -104,7 +104,8 @@ export function ExamTypeForm({
                       <Input placeholder="Enter exam type name" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Exam type name should be unique. Example: &quot;Final&quot;, &quot;Midterm&quot;, &quot;Quiz&quot;
+                      Exam type name should be unique. Example:
+                      &quot;Final&quot;, &quot;Midterm&quot;, &quot;Quiz&quot;
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -112,23 +113,11 @@ export function ExamTypeForm({
               />
             </div>
 
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/exam-types")}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? "Saving..."
-                  : isEditing
-                    ? "Update Exam Type"
-                    : "Create Exam Type"}
-              </Button>
-            </div>
+            <FormActions
+              backHref="/admin/exam-types"
+              isLoading={isLoading}
+              submitLabel={isEditing ? "Update Exam Type" : "Create Exam Type"}
+            />
           </form>
         </Form>
       </CardContent>

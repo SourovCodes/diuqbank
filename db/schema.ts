@@ -8,6 +8,7 @@ import {
   mysqlEnum,
 } from "drizzle-orm/mysql-core";
 import type { AdapterAccountType } from "next-auth/adapters";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 // Enums for type safety with better autocomplete
 export const QuestionStatus = {
@@ -176,3 +177,40 @@ export const contactFormSubmissions = mysqlTable("contactFormSubmission", {
   message: varchar("message", { length: 2000 }).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
 });
+
+// ----------
+// Type exports for better reuse across the app (InferSelect/InferInsert)
+// ----------
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
+export type Account = InferSelectModel<typeof accounts>;
+export type NewAccount = InferInsertModel<typeof accounts>;
+
+export type Session = InferSelectModel<typeof sessions>;
+export type NewSession = InferInsertModel<typeof sessions>;
+
+export type Department = InferSelectModel<typeof departments>;
+export type NewDepartment = InferInsertModel<typeof departments>;
+
+export type Course = InferSelectModel<typeof courses>;
+export type NewCourse = InferInsertModel<typeof courses>;
+
+export type Semester = InferSelectModel<typeof semesters>;
+export type NewSemester = InferInsertModel<typeof semesters>;
+
+export type ExamType = InferSelectModel<typeof examTypes>;
+export type NewExamType = InferInsertModel<typeof examTypes>;
+
+export type Question = InferSelectModel<typeof questions>;
+export type NewQuestion = InferInsertModel<typeof questions>;
+
+export type Report = InferSelectModel<typeof reports>;
+export type NewReport = InferInsertModel<typeof reports>;
+
+export type ContactFormSubmission = InferSelectModel<
+  typeof contactFormSubmissions
+>;
+export type NewContactFormSubmission = InferInsertModel<
+  typeof contactFormSubmissions
+>;

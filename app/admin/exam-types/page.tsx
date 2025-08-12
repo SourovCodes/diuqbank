@@ -21,13 +21,7 @@ import { CustomPagination } from "@/components/custom-pagination";
 import { getPaginatedExamTypes, deleteExamType } from "./actions";
 import { GenericSearch } from "@/components/admin/generic-search";
 import { GenericDeleteButton } from "@/components/admin/generic-delete-button";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
@@ -61,37 +55,22 @@ export default async function ExamTypesPage({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="/admin">Dashboard</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink className="text-foreground font-medium">
-                Exam Types
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Exam Types</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage exam types in the system
-            </p>
-          </div>
+      <PageHeader
+        title="Exam Types"
+        description="Manage exam types in the system"
+        crumbs={[
+          { href: "/admin", label: "Dashboard" },
+          { label: "Exam Types" },
+        ]}
+        actions={
           <Button asChild className="w-full sm:w-auto">
             <Link href="/admin/exam-types/create">
               <Plus className="h-4 w-4 mr-2" />
               Create Exam Type
             </Link>
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
