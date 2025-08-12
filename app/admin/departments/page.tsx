@@ -39,10 +39,12 @@ export default async function DepartmentsPage({
 }: DepartmentsPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedDepartments(page, 10, search);
+  const result = await getPaginatedDepartments(page, 10, search);
 
-  const departments = data?.departments ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const departments = result.success ? result.data?.departments ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

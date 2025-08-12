@@ -1,12 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { users, questions } from "@/db/schema";
 import { userFormSchema, type UserFormValues } from "./schemas/user";
 import { eq, and, ne, count, asc, sql } from "drizzle-orm";
-import { ensurePermission, getPaginationMeta } from "@/lib/action-utils";
+import {
+  ensurePermission,
+  getPaginationMeta,
+  ok,
+  fail,
+  fromZodError,
+} from "@/lib/action-utils";
 
 // Create a new user
 export async function createUser(values: UserFormValues) {
@@ -25,10 +30,7 @@ export async function createUser(values: UserFormValues) {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return {
-        success: false,
-        error: "A user with this email already exists.",
-      };
+      return fail("A user with this email already exists.");
     }
 
     // Check if username already exists (case insensitive)
@@ -56,10 +58,7 @@ export async function createUser(values: UserFormValues) {
         .limit(1);
 
       if (existingStudentId.length > 0) {
-        return {
-          success: false,
-          error: "A user with this student ID already exists.",
-        };
+        return fail("A user with this student ID already exists.");
       }
     }
 
@@ -82,17 +81,10 @@ export async function createUser(values: UserFormValues) {
       .limit(1);
 
     revalidatePath("/admin/users");
-    return { success: true, data: user };
+    return ok(user);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: "Invalid input." };
-    }
-
     console.error("Error creating user:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -113,10 +105,7 @@ export async function updateUser(id: string, values: UserFormValues) {
       .limit(1);
 
     if (existingUser.length === 0) {
-      return {
-        success: false,
-        error: "User not found.",
-      };
+      return fail("User not found.");
     }
 
     // Check if another user with the same email exists (except this one)
@@ -132,10 +121,7 @@ export async function updateUser(id: string, values: UserFormValues) {
       .limit(1);
 
     if (duplicateEmail.length > 0) {
-      return {
-        success: false,
-        error: "Another user with this email already exists.",
-      };
+      return fail("Another user with this email already exists.");
     }
 
     // Check if another user with the same username exists (except this one)
@@ -151,10 +137,7 @@ export async function updateUser(id: string, values: UserFormValues) {
       .limit(1);
 
     if (duplicateUsername.length > 0) {
-      return {
-        success: false,
-        error: "Another user with this username already exists.",
-      };
+      return fail("Another user with this username already exists.");
     }
 
     // Check if student ID is provided and another user with the same student ID exists (except this one)
@@ -171,10 +154,7 @@ export async function updateUser(id: string, values: UserFormValues) {
         .limit(1);
 
       if (duplicateStudentId.length > 0) {
-        return {
-          success: false,
-          error: "Another user with this student ID already exists.",
-        };
+        return fail("Another user with this student ID already exists.");
       }
     }
 
@@ -197,17 +177,10 @@ export async function updateUser(id: string, values: UserFormValues) {
 
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${id}/edit`);
-    return { success: true, data: user };
+    return ok(user);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: "Invalid input." };
-    }
-
     console.error("Error updating user:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -226,10 +199,7 @@ export async function deleteUser(id: string) {
       .limit(1);
 
     if (existingUser.length === 0) {
-      return {
-        success: false,
-        error: "User not found.",
-      };
+      return fail("User not found.");
     }
 
     // Check if user is associated with any questions
@@ -239,22 +209,16 @@ export async function deleteUser(id: string) {
       .where(eq(questions.userId, id));
 
     if (associatedQuestions[0].count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete user that has associated questions.",
-      };
+      return fail("Cannot delete user that has associated questions.");
     }
 
     await db.delete(users).where(eq(users.id, id));
 
     revalidatePath("/admin/users");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting user:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -268,16 +232,13 @@ export async function getUser(id: string) {
     const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
     if (user.length === 0) {
-      return { success: false, error: "User not found" };
+      return fail("User not found");
     }
 
-    return { success: true, data: user[0] };
+    return ok(user[0]);
   } catch (error) {
     console.error("Error fetching user:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -338,19 +299,13 @@ export async function getPaginatedUsers(
 
     // Calculate pagination info
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        users: usersResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      users: usersResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching users:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -373,15 +328,9 @@ export async function getAllUsers() {
       .groupBy(users.id, users.name, users.email)
       .orderBy(asc(users.name));
 
-    return {
-      success: true,
-      data: allUsers,
-    };
+    return ok(allUsers);
   } catch (error) {
     console.error("Error fetching all users:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

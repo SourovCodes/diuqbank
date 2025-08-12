@@ -174,10 +174,11 @@ export function QuestionForm({
         });
 
         if (!presignedResult.success || !presignedResult.data) {
+          const err = !presignedResult.success
+            ? presignedResult.error
+            : undefined;
           toast.error(
-            typeof presignedResult.error === "string"
-              ? presignedResult.error
-              : "Failed to prepare file upload"
+            typeof err === "string" ? err : "Failed to prepare file upload"
           );
           return;
         }
@@ -222,10 +223,17 @@ export function QuestionForm({
         );
         router.push("/admin/questions");
       } else {
-        toast.error(
-          response.error ||
-            `Failed to ${isEditing ? "update" : "create"} question`
-        );
+        const err = response.error as unknown;
+        let message = `Failed to ${isEditing ? "update" : "create"} question`;
+        if (typeof err === "string") {
+          message = err;
+        } else if (err && typeof err === "object") {
+          const parts = Object.entries(err as Record<string, string[]>).map(
+            ([field, msgs]) => `${field}: ${msgs?.[0] ?? "Invalid"}`
+          );
+          if (parts.length > 0) message = parts.join("; ");
+        }
+        toast.error(message);
       }
     } catch (error) {
       console.error("Error submitting form:", error);

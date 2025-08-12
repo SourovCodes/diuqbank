@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { examTypes, questions } from "@/db/schema";
 import {
@@ -14,6 +13,9 @@ import {
   ensurePermission,
   getPaginationMeta,
   parseNumericId,
+  ok,
+  fail,
+  fromZodError,
 } from "@/lib/action-utils";
 
 // Create a new exam type
@@ -33,10 +35,7 @@ export async function createExamType(values: ExamTypeFormValues) {
       .limit(1);
 
     if (existingExamType.length > 0) {
-      return {
-        success: false,
-        error: "An exam type with this name already exists.",
-      };
+      return fail("An exam type with this name already exists.");
     }
 
     const [insertResult] = await db.insert(examTypes).values({
@@ -51,17 +50,10 @@ export async function createExamType(values: ExamTypeFormValues) {
       .limit(1);
 
     revalidatePath("/admin/exam-types");
-    return { success: true, data: examType };
+    return ok(examType);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error creating exam type:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -74,7 +66,7 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
 
     const validatedFields = examTypeFormSchema.parse(values);
     const parsed = parseNumericId(id, "exam type ID");
-    if (!parsed.success) return { success: false, error: parsed.error };
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if exam type exists
@@ -85,10 +77,7 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
       .limit(1);
 
     if (existingExamType.length === 0) {
-      return {
-        success: false,
-        error: "Exam type not found.",
-      };
+      return fail("Exam type not found.");
     }
 
     // Check if another exam type with the same name exists (except this one)
@@ -104,10 +93,7 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
       .limit(1);
 
     if (duplicateName.length > 0) {
-      return {
-        success: false,
-        error: "Another exam type with this name already exists.",
-      };
+      return fail("Another exam type with this name already exists.");
     }
 
     await db
@@ -124,17 +110,10 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
 
     revalidatePath("/admin/exam-types");
     revalidatePath(`/admin/exam-types/${id}/edit`);
-    return { success: true, data: examType };
+    return ok(examType);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error updating exam type:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -146,7 +125,7 @@ export async function deleteExamType(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "exam type ID");
-    if (!parsed.success) return { success: false, error: parsed.error };
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if exam type exists
@@ -157,10 +136,7 @@ export async function deleteExamType(id: string) {
       .limit(1);
 
     if (existingExamType.length === 0) {
-      return {
-        success: false,
-        error: "Exam type not found.",
-      };
+      return fail("Exam type not found.");
     }
 
     // Check if exam type is associated with any questions
@@ -170,22 +146,16 @@ export async function deleteExamType(id: string) {
       .where(eq(questions.examTypeId, numericId));
 
     if (associatedQuestions[0].count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete exam type that is associated with questions.",
-      };
+      return fail("Cannot delete exam type that is associated with questions.");
     }
 
     await db.delete(examTypes).where(eq(examTypes.id, numericId));
 
     revalidatePath("/admin/exam-types");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting exam type:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -197,7 +167,7 @@ export async function getExamType(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "exam type ID");
-    if (!parsed.success) return { success: false, error: parsed.error };
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     const examType = await db
@@ -207,16 +177,13 @@ export async function getExamType(id: string) {
       .limit(1);
 
     if (examType.length === 0) {
-      return { success: false, error: "Exam type not found" };
+      return fail("Exam type not found");
     }
 
-    return { success: true, data: examType[0] };
+    return ok(examType[0]);
   } catch (error) {
     console.error("Error fetching exam type:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -259,19 +226,13 @@ export async function getPaginatedExamTypes(
 
     // Calculate pagination info
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        examTypes: examTypesResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      examTypes: examTypesResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching exam types:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -283,9 +244,9 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
     if (!perm.success) return perm;
 
     const fromParsed = parseNumericId(fromId, "from exam type ID");
-    if (!fromParsed.success) return { success: false, error: fromParsed.error };
+    if (!fromParsed.success) return fail(fromParsed.error);
     const toParsed = parseNumericId(toId, "to exam type ID");
-    if (!toParsed.success) return { success: false, error: toParsed.error };
+    if (!toParsed.success) return fail(toParsed.error);
     const fromIdNumeric = fromParsed.data!;
     const toIdNumeric = toParsed.data!;
 
@@ -300,10 +261,7 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
     ]);
 
     if (fromExamType.length === 0 || toExamType.length === 0) {
-      return {
-        success: false,
-        error: "One or both exam types not found.",
-      };
+      return fail("One or both exam types not found.");
     }
 
     // Count questions to be migrated
@@ -313,10 +271,7 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
       .where(eq(questions.examTypeId, fromIdNumeric));
 
     if (questionCount.count === 0) {
-      return {
-        success: true,
-        migratedCount: 0,
-      };
+      return ok<{ migratedCount: number }>({ migratedCount: 0 });
     }
 
     // Migrate questions
@@ -326,16 +281,12 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
       .where(eq(questions.examTypeId, fromIdNumeric));
 
     revalidatePath("/admin/exam-types");
-    return {
-      success: true,
+    return ok<{ migratedCount: number }>({
       migratedCount: questionCount.count,
-    };
+    });
   } catch (error) {
     console.error("Error migrating exam type questions:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -357,15 +308,9 @@ export async function getAllExamTypes() {
       .groupBy(examTypes.id, examTypes.name)
       .orderBy(asc(examTypes.name));
 
-    return {
-      success: true,
-      data: allExamTypes,
-    };
+    return ok(allExamTypes);
   } catch (error) {
     console.error("Error fetching all exam types:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

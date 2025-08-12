@@ -4,7 +4,12 @@ import { db } from "@/db/drizzle";
 import { contactFormSubmissions } from "@/db/schema";
 import { desc, eq, like, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getPaginationMeta, parseNumericId } from "@/lib/action-utils";
+import {
+  getPaginationMeta,
+  parseNumericId,
+  ok,
+  fail,
+} from "@/lib/action-utils";
 
 export async function getPaginatedSubmissions(
   page: number = 1,
@@ -37,38 +42,29 @@ export async function getPaginatedSubmissions(
       .limit(pageSize)
       .offset(offset);
 
-    return {
-      success: true,
-      data: {
-        submissions,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      submissions,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching contact submissions:", error);
-    return {
-      success: false,
-      error: "Failed to fetch contact submissions",
-    };
+    return fail("Failed to fetch contact submissions");
   }
 }
 
 export async function deleteSubmission(id: string) {
   try {
     const parsed = parseNumericId(id, "Submission");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     await db
       .delete(contactFormSubmissions)
       .where(eq(contactFormSubmissions.id, numericId));
     revalidatePath("/admin/contact-submissions");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting contact submission:", error);
-    return {
-      success: false,
-      error: "Failed to delete contact submission",
-    };
+    return fail("Failed to delete contact submission");
   }
 }

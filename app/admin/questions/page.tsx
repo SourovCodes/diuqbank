@@ -68,7 +68,7 @@ export default async function QuestionsPage({
     : undefined;
   const statusFilter = awaitedSearchParams.status || undefined;
 
-  const { data } = await getPaginatedQuestions(
+  const result = await getPaginatedQuestions(
     page,
     10,
     search,
@@ -76,8 +76,10 @@ export default async function QuestionsPage({
     statusFilter
   );
 
-  const questions = data?.questions ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const questions = result.success ? result.data?.questions ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

@@ -37,10 +37,12 @@ interface CoursesPageProps {
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedCourses(page, 10, search);
+  const result = await getPaginatedCourses(page, 10, search);
 
-  const courses = data?.courses ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const courses = result.success ? result.data?.courses ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

@@ -38,10 +38,12 @@ export default async function ContactSubmissionsPage({
 }: ContactSubmissionsPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedSubmissions(page, 10, search);
+  const result = await getPaginatedSubmissions(page, 10, search);
 
-  const submissions = data?.submissions ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const submissions = result.success ? result.data?.submissions ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

@@ -19,11 +19,12 @@ export default async function EditQuestionPage({
   params,
 }: EditQuestionPageProps) {
   const awaitedParams = await params;
-  const { data } = await getQuestion(awaitedParams.id);
+  const res = await getQuestion(awaitedParams.id);
 
-  if (!data) {
+  if (!res.success || !res.data) {
     notFound();
   }
+  const data = res.data;
 
   return (
     <div className="space-y-6">

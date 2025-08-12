@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { courses, questions, users } from "@/db/schema";
 import { courseFormSchema, type CourseFormValues } from "./schemas/course";
@@ -11,6 +10,9 @@ import {
   ensurePermission,
   getPaginationMeta,
   parseNumericId,
+  ok,
+  fail,
+  fromZodError,
 } from "@/lib/action-utils";
 // auth is provided via ensurePermission result
 
@@ -33,10 +35,7 @@ export async function createCourse(values: CourseFormValues) {
       .limit(1);
 
     if (existingCourse.length > 0) {
-      return {
-        success: false,
-        error: "A course with this name already exists.",
-      };
+      return fail("A course with this name already exists.");
     }
 
     const [insertResult] = await db.insert(courses).values({
@@ -52,17 +51,10 @@ export async function createCourse(values: CourseFormValues) {
       .limit(1);
 
     revalidatePath("/admin/courses");
-    return { success: true, data: course };
+    return ok(course);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error creating course:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -77,7 +69,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
 
     const validatedFields = courseFormSchema.parse(values);
     const parsed = parseNumericId(id, "course ID");
-    if (!parsed.success) return { success: false, error: parsed.error };
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if course exists and belongs to the user
@@ -90,10 +82,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
       .limit(1);
 
     if (existingCourse.length === 0) {
-      return {
-        success: false,
-        error: "Course not found.",
-      };
+      return fail("Course not found.");
     }
 
     // Check if another course with the same name exists globally (except this one)
@@ -109,10 +98,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
       .limit(1);
 
     if (duplicateName.length > 0) {
-      return {
-        success: false,
-        error: "Another course with this name already exists.",
-      };
+      return fail("Another course with this name already exists.");
     }
 
     await db
@@ -131,17 +117,10 @@ export async function updateCourse(id: string, values: CourseFormValues) {
 
     revalidatePath("/admin/courses");
     revalidatePath(`/admin/courses/${id}/edit`);
-    return { success: true, data: course };
+    return ok(course);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error updating course:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -155,7 +134,7 @@ export async function deleteCourse(id: string) {
     // Authentication check is redundant, relying on ensurePermission
 
     const parsed = parseNumericId(id, "course ID");
-    if (!parsed.success) return { success: false, error: parsed.error };
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if course exists and belongs to the user
@@ -168,10 +147,7 @@ export async function deleteCourse(id: string) {
       .limit(1);
 
     if (existingCourse.length === 0) {
-      return {
-        success: false,
-        error: "Course not found.",
-      };
+      return fail("Course not found.");
     }
 
     // Check if course is associated with any questions
@@ -181,10 +157,7 @@ export async function deleteCourse(id: string) {
       .where(eq(questions.courseId, numericId));
 
     if (associatedQuestions[0].count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete course that is associated with questions.",
-      };
+      return fail("Cannot delete course that is associated with questions.");
     }
 
     await db
@@ -194,13 +167,10 @@ export async function deleteCourse(id: string) {
       );
 
     revalidatePath("/admin/courses");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting course:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -216,10 +186,7 @@ export async function getCourse(id: string) {
     const numericId = parseInt(id);
 
     if (isNaN(numericId)) {
-      return {
-        success: false,
-        error: "Invalid course ID.",
-      };
+      return fail("Invalid course ID.");
     }
 
     const course = await db
@@ -231,16 +198,13 @@ export async function getCourse(id: string) {
       .limit(1);
 
     if (course.length === 0) {
-      return { success: false, error: "Course not found" };
+      return fail("Course not found");
     }
 
-    return { success: true, data: course[0] };
+    return ok(course[0]);
   } catch (error) {
     console.error("Error fetching course:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -291,19 +255,13 @@ export async function getPaginatedCourses(
 
     // Calculate pagination info
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        courses: coursesResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      courses: coursesResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching courses:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -320,10 +278,7 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
     const toIdNumeric = parseInt(toId);
 
     if (isNaN(fromIdNumeric) || isNaN(toIdNumeric)) {
-      return {
-        success: false,
-        error: "Invalid course IDs.",
-      };
+      return fail("Invalid course IDs.");
     }
 
     // Check if both courses exist and belong to the user
@@ -348,10 +303,7 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
     ]);
 
     if (fromCourse.length === 0 || toCourse.length === 0) {
-      return {
-        success: false,
-        error: "One or both courses not found.",
-      };
+      return fail("One or both courses not found.");
     }
 
     // Count questions to be migrated
@@ -361,10 +313,7 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
       .where(eq(questions.courseId, fromIdNumeric));
 
     if (questionCount.count === 0) {
-      return {
-        success: true,
-        migratedCount: 0,
-      };
+      return ok<{ migratedCount: number }>({ migratedCount: 0 });
     }
 
     // Migrate questions
@@ -374,16 +323,12 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
       .where(eq(questions.courseId, fromIdNumeric));
 
     revalidatePath("/admin/courses");
-    return {
-      success: true,
+    return ok<{ migratedCount: number }>({
       migratedCount: questionCount.count,
-    };
+    });
   } catch (error) {
     console.error("Error migrating course questions:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -408,15 +353,9 @@ export async function getAllUserCourses() {
       .groupBy(courses.id, courses.name)
       .orderBy(asc(courses.name));
 
-    return {
-      success: true,
-      data: allCourses,
-    };
+    return ok(allCourses);
   } catch (error) {
     console.error("Error fetching all courses:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

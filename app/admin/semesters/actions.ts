@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { semesters, questions } from "@/db/schema";
 import {
@@ -14,6 +13,9 @@ import {
   ensurePermission,
   getPaginationMeta,
   parseNumericId,
+  ok,
+  fail,
+  fromZodError,
 } from "@/lib/action-utils";
 // auth is provided via ensurePermission result
 
@@ -35,10 +37,7 @@ export async function createSemester(values: SemesterFormValues) {
       .limit(1);
 
     if (existingSemester.length > 0) {
-      return {
-        success: false,
-        error: "A semester with this name already exists.",
-      };
+      return fail("A semester with this name already exists.");
     }
 
     const [insertResult] = await db.insert(semesters).values({
@@ -54,17 +53,10 @@ export async function createSemester(values: SemesterFormValues) {
       .limit(1);
 
     revalidatePath("/admin/semesters");
-    return { success: true, data: semester };
+    return ok(semester);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error creating semester:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -78,7 +70,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
 
     const validatedFields = semesterFormSchema.parse(values);
     const parsed = parseNumericId(id, "semester ID");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if semester exists and belongs to the user
@@ -91,10 +83,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
       .limit(1);
 
     if (existingSemester.length === 0) {
-      return {
-        success: false,
-        error: "Semester not found.",
-      };
+      return fail("Semester not found.");
     }
 
     // Check if another semester with the same name exists globally (except this one)
@@ -110,10 +99,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
       .limit(1);
 
     if (duplicateName.length > 0) {
-      return {
-        success: false,
-        error: "Another semester with this name already exists.",
-      };
+      return fail("Another semester with this name already exists.");
     }
 
     await db
@@ -132,17 +118,10 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
 
     revalidatePath("/admin/semesters");
     revalidatePath(`/admin/semesters/${id}/edit`);
-    return { success: true, data: semester };
+    return ok(semester);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error updating semester:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -155,7 +134,7 @@ export async function deleteSemester(id: string) {
     const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if semester exists and belongs to the user
@@ -168,10 +147,7 @@ export async function deleteSemester(id: string) {
       .limit(1);
 
     if (existingSemester.length === 0) {
-      return {
-        success: false,
-        error: "Semester not found.",
-      };
+      return fail("Semester not found.");
     }
 
     // Check if semester is associated with any questions
@@ -181,10 +157,7 @@ export async function deleteSemester(id: string) {
       .where(eq(questions.semesterId, numericId));
 
     if (associatedQuestions[0].count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete semester that is associated with questions.",
-      };
+      return fail("Cannot delete semester that is associated with questions.");
     }
 
     await db
@@ -194,13 +167,10 @@ export async function deleteSemester(id: string) {
       );
 
     revalidatePath("/admin/semesters");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting semester:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -213,7 +183,7 @@ export async function getSemester(id: string) {
     const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     const semester = await db
@@ -225,16 +195,13 @@ export async function getSemester(id: string) {
       .limit(1);
 
     if (semester.length === 0) {
-      return { success: false, error: "Semester not found" };
+      return fail("Semester not found");
     }
 
-    return { success: true, data: semester[0] };
+    return ok(semester[0]);
   } catch (error) {
     console.error("Error fetching semester:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -282,19 +249,13 @@ export async function getPaginatedSemesters(
 
     // Calculate pagination info
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        semesters: semestersResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      semesters: semestersResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching semesters:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -305,22 +266,15 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const session = perm.session;
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
-
     const fromIdNumeric = parseInt(fromId);
     const toIdNumeric = parseInt(toId);
 
     if (isNaN(fromIdNumeric) || isNaN(toIdNumeric)) {
-      return {
-        success: false,
-        error: "Invalid semester IDs.",
-      };
+      return fail("Invalid semester IDs.");
     }
 
     // Check if both semesters exist and belong to the user
+    const session = perm.session;
     const [fromSemester, toSemester] = await Promise.all([
       db
         .select()
@@ -345,10 +299,7 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
     ]);
 
     if (fromSemester.length === 0 || toSemester.length === 0) {
-      return {
-        success: false,
-        error: "One or both semesters not found.",
-      };
+      return fail("One or both semesters not found.");
     }
 
     // Count questions to be migrated
@@ -358,10 +309,7 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
       .where(eq(questions.semesterId, fromIdNumeric));
 
     if (questionCount.count === 0) {
-      return {
-        success: true,
-        migratedCount: 0,
-      };
+      return ok<{ migratedCount: number }>({ migratedCount: 0 });
     }
 
     // Migrate questions
@@ -371,16 +319,12 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
       .where(eq(questions.semesterId, fromIdNumeric));
 
     revalidatePath("/admin/semesters");
-    return {
-      success: true,
+    return ok<{ migratedCount: number }>({
       migratedCount: questionCount.count,
-    };
+    });
   } catch (error) {
     console.error("Error migrating semester questions:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -391,11 +335,6 @@ export async function getAllUserSemesters() {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const session = perm.session;
-    if (!session?.user?.id) {
-      return { success: false, error: "Not authenticated" };
-    }
-
     const allSemesters = await db
       .select({
         id: semesters.id,
@@ -404,19 +343,13 @@ export async function getAllUserSemesters() {
       })
       .from(semesters)
       .leftJoin(questions, eq(semesters.id, questions.semesterId))
-      .where(eq(semesters.userId, session.user.id))
+      .where(eq(semesters.userId, perm.session.user.id))
       .groupBy(semesters.id, semesters.name)
       .orderBy(asc(semesters.name));
 
-    return {
-      success: true,
-      data: allSemesters,
-    };
+    return ok(allSemesters);
   } catch (error) {
     console.error("Error fetching all semesters:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

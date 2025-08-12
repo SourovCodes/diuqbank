@@ -39,10 +39,12 @@ export default async function SemestersPage({
 }: SemestersPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedSemesters(page, 10, search);
+  const result = await getPaginatedSemesters(page, 10, search);
 
-  const semesters = data?.semesters ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const semesters = result.success ? result.data?.semesters ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

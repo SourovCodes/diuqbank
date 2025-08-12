@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { departments, questions } from "@/db/schema";
 import {
@@ -14,6 +13,9 @@ import {
   ensurePermission,
   getPaginationMeta,
   parseNumericId,
+  ok,
+  fail,
+  fromZodError,
 } from "@/lib/action-utils";
 
 // Create a new department
@@ -35,10 +37,7 @@ export async function createDepartment(values: DepartmentFormValues) {
       .limit(1);
 
     if (existingDepartment.length > 0) {
-      return {
-        success: false,
-        error: "A department with this name or short name already exists.",
-      };
+      return fail("A department with this name or short name already exists.");
     }
 
     const [insertResult] = await db.insert(departments).values({
@@ -54,17 +53,10 @@ export async function createDepartment(values: DepartmentFormValues) {
       .limit(1);
 
     revalidatePath("/admin/departments");
-    return { success: true, data: department };
+    return ok(department);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error creating department:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -80,7 +72,7 @@ export async function updateDepartment(
 
     const validatedFields = departmentFormSchema.parse(values);
     const parsed = parseNumericId(id, "department ID");
-    if (!parsed.success) return { success: false, error: String(parsed.error) };
+    if (!parsed.success) return fail(String(parsed.error));
     const numericId = parsed.data!;
 
     // Check if department exists
@@ -91,10 +83,7 @@ export async function updateDepartment(
       .limit(1);
 
     if (existingDepartment.length === 0) {
-      return {
-        success: false,
-        error: "Department not found.",
-      };
+      return fail("Department not found.");
     }
 
     // Check if another department with the same name or short name exists (except this one)
@@ -110,11 +99,9 @@ export async function updateDepartment(
       .limit(1);
 
     if (duplicateName.length > 0) {
-      return {
-        success: false,
-        error:
-          "Another department with this name or short name already exists.",
-      };
+      return fail(
+        "Another department with this name or short name already exists."
+      );
     }
 
     await db
@@ -134,17 +121,10 @@ export async function updateDepartment(
 
     revalidatePath("/admin/departments");
     revalidatePath(`/admin/departments/${id}/edit`);
-    return { success: true, data: department };
+    return ok(department);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.flatten().fieldErrors };
-    }
-
     console.error("Error updating department:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -156,7 +136,7 @@ export async function deleteDepartment(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "department ID");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if department exists
@@ -167,10 +147,7 @@ export async function deleteDepartment(id: string) {
       .limit(1);
 
     if (existingDepartment.length === 0) {
-      return {
-        success: false,
-        error: "Department not found.",
-      };
+      return fail("Department not found.");
     }
 
     // Check if department is associated with any questions
@@ -180,22 +157,18 @@ export async function deleteDepartment(id: string) {
       .where(eq(questions.departmentId, numericId));
 
     if (associatedQuestions[0].count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete department that is associated with questions.",
-      };
+      return fail(
+        "Cannot delete department that is associated with questions."
+      );
     }
 
     await db.delete(departments).where(eq(departments.id, numericId));
 
     revalidatePath("/admin/departments");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting department:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -207,7 +180,7 @@ export async function getDepartment(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "department ID");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     const department = await db
@@ -217,16 +190,13 @@ export async function getDepartment(id: string) {
       .limit(1);
 
     if (department.length === 0) {
-      return { success: false, error: "Department not found" };
+      return fail("Department not found");
     }
 
-    return { success: true, data: department[0] };
+    return ok(department[0]);
   } catch (error) {
     console.error("Error fetching department:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -274,19 +244,13 @@ export async function getPaginatedDepartments(
 
     // Calculate pagination info
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        departments: departmentsResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      departments: departmentsResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching departments:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -298,9 +262,9 @@ export async function migrateDepartmentQuestions(fromId: string, toId: string) {
     if (!perm.success) return perm;
 
     const fromParsed = parseNumericId(fromId, "from department ID");
-    if (!fromParsed.success) return fromParsed;
+    if (!fromParsed.success) return fail(fromParsed.error);
     const toParsed = parseNumericId(toId, "to department ID");
-    if (!toParsed.success) return toParsed;
+    if (!toParsed.success) return fail(toParsed.error);
     const fromIdNumeric = fromParsed.data!;
     const toIdNumeric = toParsed.data!;
 
@@ -319,10 +283,7 @@ export async function migrateDepartmentQuestions(fromId: string, toId: string) {
     ]);
 
     if (fromDepartment.length === 0 || toDepartment.length === 0) {
-      return {
-        success: false,
-        error: "One or both departments not found.",
-      };
+      return fail("One or both departments not found.");
     }
 
     // Count questions to be migrated
@@ -332,10 +293,7 @@ export async function migrateDepartmentQuestions(fromId: string, toId: string) {
       .where(eq(questions.departmentId, fromIdNumeric));
 
     if (questionCount.count === 0) {
-      return {
-        success: true,
-        migratedCount: 0,
-      };
+      return ok<{ migratedCount: number }>({ migratedCount: 0 });
     }
 
     // Migrate questions
@@ -345,16 +303,12 @@ export async function migrateDepartmentQuestions(fromId: string, toId: string) {
       .where(eq(questions.departmentId, fromIdNumeric));
 
     revalidatePath("/admin/departments");
-    return {
-      success: true,
+    return ok<{ migratedCount: number }>({
       migratedCount: questionCount.count,
-    };
+    });
   } catch (error) {
     console.error("Error migrating department questions:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -376,15 +330,9 @@ export async function getAllDepartments() {
       .groupBy(departments.id, departments.name)
       .orderBy(asc(departments.name));
 
-    return {
-      success: true,
-      data: allDepartments,
-    };
+    return ok(allDepartments);
   } catch (error) {
     console.error("Error fetching all departments:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

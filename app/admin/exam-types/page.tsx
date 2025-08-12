@@ -39,10 +39,12 @@ export default async function ExamTypesPage({
 }: ExamTypesPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedExamTypes(page, 10, search);
+  const result = await getPaginatedExamTypes(page, 10, search);
 
-  const examTypes = data?.examTypes ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const examTypes = result.success ? result.data?.examTypes ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

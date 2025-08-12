@@ -36,11 +36,10 @@ export default async function EditDepartmentPage({
     getAllDepartments(),
   ]);
 
-  const { data: department, error } = departmentResult;
-
-  if (error || !department) {
+  if (!departmentResult.success || !departmentResult.data) {
     notFound();
   }
+  const department = departmentResult.data;
 
   const allDepartments = allDepartmentsResult.success
     ? allDepartmentsResult.data || []

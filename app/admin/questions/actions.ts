@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/db/drizzle";
 import {
   questions,
@@ -20,6 +19,9 @@ import {
   ensurePermission,
   getPaginationMeta,
   parseNumericId,
+  ok,
+  fail,
+  fromZodError,
 } from "@/lib/action-utils";
 import { s3 } from "@/lib/s3";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
@@ -78,23 +80,10 @@ export async function generatePresignedUrl(request: PresignedUrlRequest) {
 
     const presignedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
-    return {
-      success: true,
-      data: {
-        presignedUrl,
-        pdfKey,
-      },
-    };
+    return ok({ presignedUrl, pdfKey });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: "Invalid input." };
-    }
-
     console.error("Error generating presigned URL:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fromZodError(error, "Something went wrong. Please try again.");
   }
 }
 
@@ -120,10 +109,7 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
       .limit(1);
 
     if (existingQuestion.length > 0) {
-      return {
-        success: false,
-        error: "A question with this combination already exists.",
-      };
+      return fail("A question with this combination already exists.");
     }
 
     const [insertResult] = await db.insert(questions).values({
@@ -138,13 +124,10 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
     });
 
     revalidatePath("/admin/questions");
-    return { success: true, data: { id: insertResult.insertId } };
+    return ok({ id: insertResult.insertId });
   } catch (error) {
     console.error("Error creating question:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -155,7 +138,7 @@ export async function updateQuestionStatus(id: string, status: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "Question");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     await db
@@ -164,10 +147,10 @@ export async function updateQuestionStatus(id: string, status: string) {
       .where(eq(questions.id, numericId));
 
     revalidatePath("/admin/questions");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error updating question status:", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -255,19 +238,13 @@ export async function getPaginatedQuestions(
     ]);
 
     const totalCount = totalCountResult[0].count;
-    return {
-      success: true,
-      data: {
-        questions: questionsResult,
-        pagination: getPaginationMeta(totalCount, page, pageSize),
-      },
-    };
+    return ok({
+      questions: questionsResult,
+      pagination: getPaginationMeta(totalCount, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching questions:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -278,7 +255,7 @@ export async function deleteQuestion(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "Question");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     const existingQuestion = await db
@@ -288,7 +265,7 @@ export async function deleteQuestion(id: string) {
       .limit(1);
 
     if (existingQuestion.length === 0) {
-      return { success: false, error: "Question not found." };
+      return fail("Question not found.");
     }
 
     if (existingQuestion[0].pdfKey) {
@@ -307,13 +284,10 @@ export async function deleteQuestion(id: string) {
     await db.delete(questions).where(eq(questions.id, numericId));
 
     revalidatePath("/admin/questions");
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error deleting question:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -332,10 +306,10 @@ export async function getDepartmentsForDropdown() {
       .from(departments)
       .orderBy(asc(departments.name));
 
-    return { success: true, data: allDepartments };
+    return ok(allDepartments);
   } catch (error) {
     console.error("Error fetching departments:", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -352,10 +326,10 @@ export async function getCoursesForDropdown() {
       .from(courses)
       .orderBy(asc(courses.name));
 
-    return { success: true, data: allCourses };
+    return ok(allCourses);
   } catch (error) {
     console.error("Error fetching courses:", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -372,10 +346,10 @@ export async function getSemestersForDropdown() {
       .from(semesters)
       .orderBy(asc(semesters.name));
 
-    return { success: true, data: allSemesters };
+    return ok(allSemesters);
   } catch (error) {
     console.error("Error fetching semesters:", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -392,10 +366,10 @@ export async function getExamTypesForDropdown() {
       .from(examTypes)
       .orderBy(asc(examTypes.name));
 
-    return { success: true, data: allExamTypes };
+    return ok(allExamTypes);
   } catch (error) {
     console.error("Error fetching exam types:", error);
-    return { success: false, error: "Something went wrong. Please try again." };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -406,7 +380,7 @@ export async function getQuestion(id: string) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "Question");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     const questionData = await db
@@ -440,16 +414,13 @@ export async function getQuestion(id: string) {
       .limit(1);
 
     if (questionData.length === 0) {
-      return { success: false, error: "Question not found" };
+      return fail("Question not found");
     }
 
-    return { success: true, data: questionData[0] };
+    return ok(questionData[0]);
   } catch (error) {
     console.error("Error fetching question:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }
 
@@ -460,7 +431,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
     if (!perm.success) return perm;
 
     const parsed = parseNumericId(id, "Question");
-    if (!parsed.success) return parsed;
+    if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if question exists
@@ -471,7 +442,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
       .limit(1);
 
     if (existingQuestion.length === 0) {
-      return { success: false, error: "Question not found." };
+      return fail("Question not found.");
     }
 
     // Check for duplicate question (except this one)
@@ -518,12 +489,9 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
 
     revalidatePath("/admin/questions");
     revalidatePath(`/admin/questions/${id}/edit`);
-    return { success: true };
+    return ok();
   } catch (error) {
     console.error("Error updating question:", error);
-    return {
-      success: false,
-      error: "Something went wrong. Please try again.",
-    };
+    return fail("Something went wrong. Please try again.");
   }
 }

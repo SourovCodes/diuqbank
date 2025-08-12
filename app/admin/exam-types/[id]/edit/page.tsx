@@ -36,11 +36,10 @@ export default async function EditExamTypePage({
     getAllExamTypes(),
   ]);
 
-  const { data: examType, error } = examTypeResult;
-
-  if (error || !examType) {
+  if (!examTypeResult.success || !examTypeResult.data) {
     notFound();
   }
+  const examType = examTypeResult.data;
 
   const allExamTypes = allExamTypesResult.success
     ? allExamTypesResult.data || []

@@ -34,11 +34,10 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
     getAllUserCourses(),
   ]);
 
-  const { data: course, error } = courseResult;
-
-  if (error || !course) {
+  if (!courseResult.success || !courseResult.data) {
     notFound();
   }
+  const course = courseResult.data;
 
   const allCourses = allCoursesResult.success
     ? allCoursesResult.data || []

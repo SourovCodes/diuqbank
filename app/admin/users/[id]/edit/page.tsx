@@ -24,11 +24,11 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
     notFound();
   }
 
-  const { data: user, error } = await getUser(userId);
-
-  if (error || !user) {
+  const userResult = await getUser(userId);
+  if (!userResult.success || !userResult.data) {
     notFound();
   }
+  const user = userResult.data;
 
   return (
     <div className="space-y-6">

@@ -36,11 +36,10 @@ export default async function EditSemesterPage({
     getAllUserSemesters(),
   ]);
 
-  const { data: semester, error } = semesterResult;
-
-  if (error || !semester) {
+  if (!semesterResult.success || !semesterResult.data) {
     notFound();
   }
+  const semester = semesterResult.data;
 
   const allSemesters = allSemestersResult.success
     ? allSemestersResult.data || []

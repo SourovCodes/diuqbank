@@ -38,10 +38,12 @@ interface UsersPageProps {
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const { page, search } = await parseListSearchParams(searchParams);
 
-  const { data } = await getPaginatedUsers(page, 10, search);
+  const result = await getPaginatedUsers(page, 10, search);
 
-  const users = data?.users ?? [];
-  const pagination = data?.pagination ?? defaultPagination;
+  const users = result.success ? result.data?.users ?? [] : [];
+  const pagination = result.success
+    ? result.data?.pagination ?? defaultPagination
+    : defaultPagination;
 
   return (
     <div className="space-y-6">

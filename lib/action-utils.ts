@@ -1,10 +1,34 @@
 import { hasPermission } from "./authorization";
 import type { Session } from "next-auth";
+import { ZodError } from "zod";
 
 // Standard action result shape used across server actions
+// Allow either a string message or field error map (e.g., Zod field errors)
+export type ActionError = string | Record<string, string[]>;
 export type ActionResult<T = unknown> =
   | { success: true; data?: T }
-  | { success: false; error: string };
+  | { success: false; error: ActionError };
+
+// Small helpers for consistent results
+export function ok<T = unknown>(data?: T): ActionResult<T> {
+  return { success: true, data };
+}
+
+export function fail(message: ActionError): ActionResult<never> {
+  return { success: false, error: message };
+}
+
+export function fromZodError(
+  error: unknown,
+  fallback = "Invalid input."
+): ActionResult<never> {
+  if (error instanceof ZodError) {
+    // Flatten to fieldErrors to keep a consistent shape across actions
+    const fieldErrors = error.flatten().fieldErrors as Record<string, string[]>;
+    return fail(fieldErrors);
+  }
+  return fail(fallback);
+}
 
 // Result for permission checks that also returns the session for reuse
 export type ActionPermissionResult =
