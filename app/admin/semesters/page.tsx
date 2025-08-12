@@ -70,7 +70,9 @@ export default async function SemestersPage({
       <Card>
         <AdminListHeader
           title="Semesters List"
-          description={`Total: ${pagination.totalCount} semester${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} semester${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search semesters..."
         />
         <CardContent>

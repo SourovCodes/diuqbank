@@ -70,7 +70,9 @@ export default async function DepartmentsPage({
       <Card>
         <AdminListHeader
           title="Departments List"
-          description={`Total: ${pagination.totalCount} department${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} department${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search departments..."
         />
         <CardContent>

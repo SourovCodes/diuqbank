@@ -9,7 +9,12 @@ interface AdminListHeaderProps {
   right?: ReactNode; // optional extra controls next to search
 }
 
-export function AdminListHeader({ title, description, searchPlaceholder = "Search...", right }: AdminListHeaderProps) {
+export function AdminListHeader({
+  title,
+  description,
+  searchPlaceholder = "Search...",
+  right,
+}: AdminListHeaderProps) {
   return (
     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
       <div>

@@ -1,12 +1,8 @@
-import Link from "next/link";
 import { FileText, Mail } from "lucide-react";
 import { Metadata } from "next";
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import {
     Table,
@@ -18,17 +14,12 @@ import {
 } from "@/components/ui/table";
 import { CustomPagination } from "@/components/custom-pagination";
 import { getPaginatedSubmissions, deleteSubmission } from "./actions";
-import { GenericSearch } from "@/components/admin/generic-search";
 import { GenericDeleteButton } from "@/components/admin/generic-delete-button";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { AdminListHeader } from "@/components/admin/admin-list-header";
+import { EmptyState } from "@/components/admin/empty-state";
 
 export const metadata: Metadata = {
     title: "Contact Submissions | DIU QBank Admin",
@@ -61,61 +52,29 @@ export default async function ContactSubmissionsPage({
 
     return (
         <div className="space-y-6">
-            <div className="space-y-2">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                                <Link href="/admin">Dashboard</Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbLink className="text-foreground font-medium">
-                                Contact Submissions
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Contact Submissions</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        View and manage contact form submissions
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Contact Submissions"
+                description="View and manage contact form submissions"
+                crumbs={[{ href: "/admin", label: "Dashboard" }, { label: "Contact Submissions" }]}
+            />
 
             <Card>
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-                    <div>
-                        <CardTitle className="text-xl">Submissions List</CardTitle>
-                        <CardDescription>
-                            Total: {pagination.totalCount} submission
-                            {pagination.totalCount !== 1 ? "s" : ""}
-                        </CardDescription>
-                    </div>
-                    <GenericSearch placeholder="Search submissions..." />
-                </CardHeader>
+                <AdminListHeader
+                    title="Submissions List"
+                    description={`Total: ${pagination.totalCount} submission${pagination.totalCount !== 1 ? "s" : ""}`}
+                    searchPlaceholder="Search submissions..."
+                />
                 <CardContent>
                     {submissions.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                            <div className="rounded-full bg-muted p-3">
-                                <FileText className="h-6 w-6" />
-                            </div>
-                            <h3 className="mt-4 text-lg font-semibold">
-                                No submissions found
-                            </h3>
-                            {search ? (
-                                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                                    No submissions match your search criteria. Try a different
-                                    search query.
-                                </p>
-                            ) : (
-                                <p className="mb-4 mt-2 text-center text-sm text-muted-foreground max-w-xs">
-                                    No contact form submissions yet.
-                                </p>
-                            )}
-                        </div>
+                        <EmptyState
+                            icon={<FileText className="h-6 w-6" />}
+                            title="No submissions found"
+                            description={
+                                search
+                                    ? "No submissions match your search criteria. Try a different search query."
+                                    : "No contact form submissions yet."
+                            }
+                        />
                     ) : (
                         <>
                             <div className="rounded-md border overflow-hidden">

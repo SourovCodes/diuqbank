@@ -105,7 +105,9 @@ export default async function QuestionsPage({
       <Card>
         <AdminListHeader
           title="Questions List"
-          description={`Total: ${pagination.totalCount} question${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} question${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search questions..."
         />
         <CardContent>

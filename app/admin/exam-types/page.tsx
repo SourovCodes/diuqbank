@@ -70,7 +70,9 @@ export default async function ExamTypesPage({
       <Card>
         <AdminListHeader
           title="Exam Types List"
-          description={`Total: ${pagination.totalCount} exam type${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} exam type${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search exam types..."
         />
         <CardContent>

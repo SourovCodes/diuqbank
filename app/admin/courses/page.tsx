@@ -65,7 +65,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       <Card>
         <AdminListHeader
           title="Courses List"
-          description={`Total: ${pagination.totalCount} course${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} course${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search courses..."
         />
         <CardContent>

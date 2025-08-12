@@ -5,7 +5,7 @@ import { useRouter } from "nextjs-toploader/app";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { users } from "@/db/schema";
+import type { User } from "@/db/schema";
 
 import {
     userFormSchema,
@@ -13,7 +13,6 @@ import {
 } from "../schemas/user";
 import { createUser, updateUser } from "../actions";
 
-import { Button } from "@/components/ui/button";
 import {
     Form,
     FormControl,
@@ -25,9 +24,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormActions } from "@/components/admin/form-actions";
 
-// Type for User based on Drizzle schema
-type User = typeof users.$inferSelect;
+// Using exported User type from schema
 
 interface UserFormProps {
     initialData?: User | null;
@@ -170,23 +169,11 @@ export function UserForm({
                             />
                         </div>
 
-                        <div className="flex justify-end gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => router.push("/admin/users")}
-                                disabled={isLoading}
-                            >
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading
-                                    ? "Saving..."
-                                    : isEditing
-                                        ? "Update User"
-                                        : "Create User"}
-                            </Button>
-                        </div>
+                        <FormActions
+                            backHref="/admin/users"
+                            isLoading={isLoading}
+                            submitLabel={isEditing ? "Update User" : "Create User"}
+                        />
                     </form>
                 </Form>
             </CardContent>

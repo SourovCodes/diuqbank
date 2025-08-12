@@ -66,7 +66,9 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       <Card>
         <AdminListHeader
           title="Users List"
-          description={`Total: ${pagination.totalCount} user${pagination.totalCount !== 1 ? "s" : ""}`}
+          description={`Total: ${pagination.totalCount} user${
+            pagination.totalCount !== 1 ? "s" : ""
+          }`}
           searchPlaceholder="Search users..."
         />
         <CardContent>
