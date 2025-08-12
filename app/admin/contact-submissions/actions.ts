@@ -27,14 +27,17 @@ export async function getPaginatedSubmissions(
       ? baseQuery.where(like(contactFormSubmissions.name, `%${search}%`))
       : baseQuery;
 
-    // Get total count for pagination
-    const totalCountResult = await db
-      .select({
-        count: sql<number>`count(${contactFormSubmissions.id})`,
-      })
-      .from(contactFormSubmissions);
+    // Get total count for pagination (respect search condition)
+    const totalCountResult = await (search
+      ? db
+          .select({ count: sql<number>`count(${contactFormSubmissions.id})` })
+          .from(contactFormSubmissions)
+          .where(like(contactFormSubmissions.name, `%${search}%`))
+      : db
+          .select({ count: sql<number>`count(${contactFormSubmissions.id})` })
+          .from(contactFormSubmissions));
 
-    const totalCount = Number(totalCountResult[0].count);
+    const totalCount = Number(totalCountResult[0].count ?? 0);
 
     // Get paginated results
     const submissions = await query

@@ -227,14 +227,17 @@ export async function getPaginatedQuestions(
         .limit(pageSize)
         .offset(skip),
 
-      db
-        .select({ count: count() })
-        .from(questions)
-        .leftJoin(departments, eq(questions.departmentId, departments.id))
-        .leftJoin(courses, eq(questions.courseId, courses.id))
-        .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-        .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-        .where(whereCondition),
+      // If no search text is used, we can count directly from questions with simple filters
+      search
+        ? db
+            .select({ count: count() })
+            .from(questions)
+            .leftJoin(departments, eq(questions.departmentId, departments.id))
+            .leftJoin(courses, eq(questions.courseId, courses.id))
+            .leftJoin(semesters, eq(questions.semesterId, semesters.id))
+            .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
+            .where(whereCondition)
+        : db.select({ count: count() }).from(questions).where(whereCondition),
     ]);
 
     const totalCount = totalCountResult[0].count;
