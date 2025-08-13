@@ -319,12 +319,12 @@ export async function getDepartmentsForDropdown() {
   }
 }
 
-export async function getCoursesForDropdown() {
+export async function getCoursesForDropdown(departmentId: number) {
   try {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
     if (!perm.success) return perm;
 
-    const allCourses = await db
+    const baseQuery = db
       .select({
         id: courses.id,
         name: courses.name,
@@ -335,7 +335,14 @@ export async function getCoursesForDropdown() {
       })
       .from(courses)
       .leftJoin(departments, eq(courses.departmentId, departments.id))
-      .leftJoin(questions, eq(courses.id, questions.courseId))
+      .leftJoin(questions, eq(courses.id, questions.courseId));
+
+    // Apply department filter if provided
+    const query = departmentId
+      ? baseQuery.where(eq(courses.departmentId, departmentId))
+      : baseQuery;
+
+    const allCourses = await query
       .groupBy(
         courses.id,
         courses.name,

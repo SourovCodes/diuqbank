@@ -1,12 +1,6 @@
 import { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
 import { QuestionForm } from "../components/question-form";
-import {
-  getDepartmentsForDropdown,
-  getCoursesForDropdown,
-  getSemestersForDropdown,
-  getExamTypesForDropdown,
-} from "../actions";
 
 // This page reads auth/session via server actions and NextAuth (uses headers/cookies),
 // so opt out of static rendering to prevent build-time dynamic server usage errors.
@@ -18,21 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateQuestionPage() {
-  const [deptResult, courseResult, semesterResult, examTypeResult] =
-    await Promise.all([
-      getDepartmentsForDropdown(),
-      getCoursesForDropdown(),
-      getSemestersForDropdown(),
-      getExamTypesForDropdown(),
-    ]);
-
-  const dropdowns = {
-    departments: deptResult.success ? deptResult.data || [] : [],
-    courses: courseResult.success ? courseResult.data || [] : [],
-    semesters: semesterResult.success ? semesterResult.data || [] : [],
-    examTypes: examTypeResult.success ? examTypeResult.data || [] : [],
-  } as const;
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -44,7 +23,7 @@ export default async function CreateQuestionPage() {
           { label: "Create" },
         ]}
       />
-      <QuestionForm dropdowns={dropdowns} />
+      <QuestionForm />
     </div>
   );
 }
