@@ -242,7 +242,6 @@ export async function getPaginatedCourses(
           departmentName: departments.name,
           departmentShortName: departments.shortName,
           questionCount: count(questions.id),
-          createdBy: sql<string>`NULL`,
         })
         .from(courses)
         .leftJoin(departments, eq(courses.departmentId, departments.id))

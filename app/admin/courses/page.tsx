@@ -95,9 +95,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                       <TableHead className="hidden md:table-cell">
                         Department
                       </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Created By
-                      </TableHead>
+
                       <TableHead className="hidden md:table-cell">
                         Questions
                       </TableHead>
@@ -117,11 +115,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                               ` (${course.departmentShortName})`}
                           </span>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span className="text-muted-foreground">
-                            {course.createdBy || "Unknown"}
-                          </span>
-                        </TableCell>
+
                         <TableCell className="hidden md:table-cell">
                           <Badge variant="secondary">
                             {course.questionCount}
