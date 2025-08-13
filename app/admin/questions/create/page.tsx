@@ -8,6 +8,10 @@ import {
   getExamTypesForDropdown,
 } from "../actions";
 
+// This page reads auth/session via server actions and NextAuth (uses headers/cookies),
+// so opt out of static rendering to prevent build-time dynamic server usage errors.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Create Question | DIU QBank Admin",
   description: "Create a new question",
