@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -107,6 +107,7 @@ export function QuestionForm({
 
   // Watch for department changes to filter courses
   const selectedDepartmentId = form.watch("departmentId");
+  const isFirstDeptWatch = useRef(true);
 
   // Load initial dropdown data
   useEffect(() => {
@@ -156,14 +157,24 @@ export function QuestionForm({
         }
       } else {
         setCourses([]);
-        // Clear course selection when department is cleared
-        if (form.getValues("courseId")) {
-          form.setValue("courseId", 0);
-        }
       }
     };
 
     loadCourses();
+  }, [selectedDepartmentId, form]);
+
+  // Reset course selection to placeholder when department changes (skip initial mount)
+  useEffect(() => {
+    if (isFirstDeptWatch.current) {
+      isFirstDeptWatch.current = false;
+      return;
+    }
+    // Clear course selection so the placeholder shows
+    form.setValue("courseId", undefined as unknown as number, {
+      shouldValidate: false,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
   }, [selectedDepartmentId, form]);
 
   const uploadFileToS3 = useCallback(
