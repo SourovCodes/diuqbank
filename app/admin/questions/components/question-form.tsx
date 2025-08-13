@@ -9,7 +9,6 @@ import {
   questionFormSchema,
   type QuestionFormValues,
   type QuestionStatus,
-  QUESTION_STATUS_VALUES,
   MAX_PDF_FILE_SIZE_BYTES,
   PDF_MIME_TYPE,
 } from "../schemas/question";
@@ -40,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText } from "lucide-react";
+import { questionStatusEnum } from "@/db/schema";
 
 // Schema and types are imported from ../schemas/question to avoid duplication
 
@@ -389,7 +389,7 @@ export function QuestionForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {QUESTION_STATUS_VALUES.map((value) => (
+                      {questionStatusEnum.map((value) => (
                         <SelectItem key={value} value={value}>
                           {value === "pending review"
                             ? "Pending Review"

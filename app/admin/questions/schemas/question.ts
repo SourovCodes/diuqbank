@@ -5,9 +5,6 @@ import { QuestionStatus as DBQuestionStatus } from "@/db/schema";
 export const MAX_PDF_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 export const PDF_MIME_TYPE = "application/pdf" as const;
 
-// Values array derived from DB enum-like for UI lists
-export const QUESTION_STATUS_VALUES = Object.values(DBQuestionStatus);
-
 // Schema for question form validation
 export const questionFormSchema = z.object({
   departmentId: z.coerce
@@ -22,7 +19,7 @@ export const questionFormSchema = z.object({
   examTypeId: z.coerce
     .number({ message: "Exam type is required" })
     .min(1, "Exam type is required"),
-  status: z.nativeEnum(DBQuestionStatus),
+  status: z.enum(DBQuestionStatus),
   pdfFile: z
     .instanceof(File, { message: "PDF file is required" })
     .refine((file) => file.size > 0, "PDF file cannot be empty")
