@@ -262,7 +262,7 @@ export async function deleteQuestion(id: string) {
     const numericId = parsed.data!;
 
     const existingQuestion = await db
-      .select()
+      .select({ pdfKey: questions.pdfKey })
       .from(questions)
       .where(eq(questions.id, numericId))
       .limit(1);
@@ -300,17 +300,11 @@ export async function getDepartmentsForDropdown() {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
     if (!perm.success) return perm;
 
+    // Return just id and a single display name (prefer shortName for brevity)
     const allDepartments = await db
-      .select({
-        id: departments.id,
-        name: departments.name,
-        shortName: departments.shortName,
-        questionCount: count(questions.id),
-      })
+      .select({ id: departments.id, name: departments.shortName })
       .from(departments)
-      .leftJoin(questions, eq(departments.id, questions.departmentId))
-      .groupBy(departments.id, departments.name, departments.shortName)
-      .orderBy(asc(departments.name));
+      .orderBy(asc(departments.shortName));
 
     return ok(allDepartments);
   } catch (error) {
@@ -324,32 +318,11 @@ export async function getCoursesForDropdown(departmentId: number) {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
     if (!perm.success) return perm;
 
-    const baseQuery = db
-      .select({
-        id: courses.id,
-        name: courses.name,
-        departmentId: courses.departmentId,
-        departmentName: departments.name,
-        departmentShortName: departments.shortName,
-        questionCount: count(questions.id),
-      })
+    // Minimal payload: id and name for the selected department only
+    const allCourses = await db
+      .select({ id: courses.id, name: courses.name })
       .from(courses)
-      .leftJoin(departments, eq(courses.departmentId, departments.id))
-      .leftJoin(questions, eq(courses.id, questions.courseId));
-
-    // Apply department filter if provided
-    const query = departmentId
-      ? baseQuery.where(eq(courses.departmentId, departmentId))
-      : baseQuery;
-
-    const allCourses = await query
-      .groupBy(
-        courses.id,
-        courses.name,
-        courses.departmentId,
-        departments.name,
-        departments.shortName
-      )
+      .where(eq(courses.departmentId, departmentId))
       .orderBy(asc(courses.name));
 
     return ok(allCourses);
@@ -365,14 +338,8 @@ export async function getSemestersForDropdown() {
     if (!perm.success) return perm;
 
     const allSemesters = await db
-      .select({
-        id: semesters.id,
-        name: semesters.name,
-        questionCount: count(questions.id),
-      })
+      .select({ id: semesters.id, name: semesters.name })
       .from(semesters)
-      .leftJoin(questions, eq(semesters.id, questions.semesterId))
-      .groupBy(semesters.id, semesters.name)
       .orderBy(asc(semesters.name));
 
     return ok(allSemesters);
@@ -388,14 +355,8 @@ export async function getExamTypesForDropdown() {
     if (!perm.success) return perm;
 
     const allExamTypes = await db
-      .select({
-        id: examTypes.id,
-        name: examTypes.name,
-        questionCount: count(questions.id),
-      })
+      .select({ id: examTypes.id, name: examTypes.name })
       .from(examTypes)
-      .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
-      .groupBy(examTypes.id, examTypes.name)
       .orderBy(asc(examTypes.name));
 
     return ok(allExamTypes);
@@ -468,7 +429,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
 
     // Check if question exists
     const existingQuestion = await db
-      .select()
+      .select({ id: questions.id })
       .from(questions)
       .where(eq(questions.id, numericId))
       .limit(1);

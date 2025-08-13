@@ -52,11 +52,10 @@ import { DropdownWithAdd } from "@/components/admin/dropdown-with-add";
 
 type DepartmentOption = {
   id: number;
+  // After action simplification, name carries the department shortName
   name: string;
-  shortName: string;
-  questionCount?: number;
 };
-type BasicOption = { id: number; name: string; questionCount?: number };
+type BasicOption = { id: number; name: string };
 
 interface QuestionData {
   id: number;
@@ -345,12 +344,7 @@ export function QuestionForm({
                       <SelectContent>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id.toString()}>
-                            {dept.name} ({dept.shortName})
-                            {dept.questionCount !== undefined
-                              ? ` - ${dept.questionCount} question${
-                                  dept.questionCount !== 1 ? "s" : ""
-                                }`
-                              : ""}
+                            {dept.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -399,7 +393,6 @@ export function QuestionForm({
                                 data: {
                                   id: result.data.id,
                                   name: result.data.name,
-                                  questionCount: 0,
                                 },
                               };
                             }
@@ -464,7 +457,6 @@ export function QuestionForm({
                                 data: {
                                   id: result.data.id,
                                   name: result.data.name,
-                                  questionCount: 0,
                                 },
                               };
                             }
@@ -528,11 +520,6 @@ export function QuestionForm({
                             value={examType.id.toString()}
                           >
                             {examType.name}
-                            {examType.questionCount !== undefined
-                              ? ` (${examType.questionCount} question${
-                                  examType.questionCount !== 1 ? "s" : ""
-                                })`
-                              : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
