@@ -13,7 +13,7 @@ import {
   updateCourse,
   getDepartmentsForDropdown,
 } from "../actions";
-import { createDepartment } from "../../departments/actions";
+// Removed createDepartment to use a simple select without add-new option
 
 import {
   Form,
@@ -27,7 +27,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormActions } from "@/components/admin/form-actions";
-import { DropdownWithAdd } from "@/components/admin/dropdown-with-add";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Type for Course based on Drizzle schema
 type Course = CourseModel;
@@ -73,36 +79,7 @@ export function CourseForm({
     loadDepartments();
   }, []);
 
-  const handleCreateDepartment = async (name: string) => {
-    // For department creation, we need both name and shortName
-    // We'll extract shortName from the name or ask user to provide it
-    // For simplicity, let's derive shortName from name
-    const shortName = name
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase())
-      .join("")
-      .slice(0, 10); // Limit to 10 characters
-
-    const result = await createDepartment({ name, shortName });
-    if (result.success) {
-      return {
-        success: true,
-        data: {
-          id: result.data!.id,
-          name: result.data!.name,
-          shortName: result.data!.shortName,
-        },
-      };
-    } else {
-      return {
-        success: false,
-        error:
-          typeof result.error === "string"
-            ? result.error
-            : "Failed to create department",
-      };
-    }
-  };
+  // Removed add-new department flow; using a simple Select instead
 
   const onSubmit = async (values: CourseFormValues) => {
     setIsLoading(true);
@@ -153,19 +130,26 @@ export function CourseForm({
                   <FormItem>
                     <FormLabel>Department</FormLabel>
                     <FormControl>
-                      <DropdownWithAdd
-                        label="Department"
-                        placeholder="Select department"
-                        options={departments}
-                        value={field.value?.toString()}
-                        onValueChange={(value) =>
-                          field.onChange(parseInt(value))
+                      <Select
+                        value={
+                          field.value !== undefined
+                            ? String(field.value)
+                            : undefined
                         }
-                        onAddNew={handleCreateDepartment}
-                        addDialogTitle="Create New Department"
-                        addDialogDescription="Add a new department to organize courses"
+                        onValueChange={(val) => field.onChange(parseInt(val))}
                         disabled={isLoading}
-                      />
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.id} value={String(dept.id)}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormDescription>
                       Select the department this course belongs to
