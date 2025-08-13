@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
-import { courses, questions, users } from "@/db/schema";
+import { courses, questions, users, departments } from "@/db/schema";
 import { courseFormSchema, type CourseFormValues } from "./schemas/course";
 import { eq, and, ne, count, asc, sql } from "drizzle-orm";
 // permission handled by ensurePermission helper
@@ -27,19 +27,25 @@ export async function createCourse(values: CourseFormValues) {
 
     const validatedFields = courseFormSchema.parse(values);
 
-    // Check if course with same name already exists globally (case insensitive)
+    // Check if course with same name already exists in the same department (case insensitive)
     const existingCourse = await db
       .select()
       .from(courses)
-      .where(sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`)
+      .where(
+        and(
+          eq(courses.departmentId, validatedFields.departmentId),
+          sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`
+        )
+      )
       .limit(1);
 
     if (existingCourse.length > 0) {
-      return fail("A course with this name already exists.");
+      return fail("A course with this name already exists in this department.");
     }
 
     const [insertResult] = await db.insert(courses).values({
       name: validatedFields.name,
+      departmentId: validatedFields.departmentId,
       userId: session.user.id,
     });
 
@@ -85,12 +91,13 @@ export async function updateCourse(id: string, values: CourseFormValues) {
       return fail("Course not found.");
     }
 
-    // Check if another course with the same name exists globally (except this one)
+    // Check if another course with the same name exists in the same department (except this one)
     const duplicateName = await db
       .select()
       .from(courses)
       .where(
         and(
+          eq(courses.departmentId, validatedFields.departmentId),
           sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`,
           ne(courses.id, numericId)
         )
@@ -98,12 +105,17 @@ export async function updateCourse(id: string, values: CourseFormValues) {
       .limit(1);
 
     if (duplicateName.length > 0) {
-      return fail("Another course with this name already exists.");
+      return fail(
+        "Another course with this name already exists in this department."
+      );
     }
 
     await db
       .update(courses)
-      .set({ name: validatedFields.name })
+      .set({
+        name: validatedFields.name,
+        departmentId: validatedFields.departmentId,
+      })
       .where(
         and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
       );
@@ -228,7 +240,8 @@ export async function getPaginatedCourses(
     const whereCondition = search
       ? and(
           baseCondition,
-          sql`LOWER(${courses.name}) LIKE LOWER(${"%" + search + "%"})`
+          sql`(LOWER(${courses.name}) LIKE LOWER(${"%" + search + "%"}) OR 
+               LOWER(${departments.name}) LIKE LOWER(${"%" + search + "%"}))`
         )
       : baseCondition;
 
@@ -238,19 +251,34 @@ export async function getPaginatedCourses(
         .select({
           id: courses.id,
           name: courses.name,
+          departmentId: courses.departmentId,
+          departmentName: departments.name,
+          departmentShortName: departments.shortName,
           questionCount: count(questions.id),
           createdBy: users.name,
         })
         .from(courses)
+        .leftJoin(departments, eq(courses.departmentId, departments.id))
         .leftJoin(questions, eq(courses.id, questions.courseId))
         .leftJoin(users, eq(courses.userId, users.id))
         .where(whereCondition)
-        .groupBy(courses.id, courses.name, users.name)
+        .groupBy(
+          courses.id,
+          courses.name,
+          courses.departmentId,
+          departments.name,
+          departments.shortName,
+          users.name
+        )
         .orderBy(asc(courses.name))
         .limit(pageSize)
         .offset(skip),
 
-      db.select({ count: count() }).from(courses).where(whereCondition),
+      db
+        .select({ count: count() })
+        .from(courses)
+        .leftJoin(departments, eq(courses.departmentId, departments.id))
+        .where(whereCondition),
     ]);
 
     // Calculate pagination info
@@ -328,16 +356,51 @@ export async function getAllUserCourses() {
       .select({
         id: courses.id,
         name: courses.name,
+        departmentId: courses.departmentId,
+        departmentName: departments.name,
+        departmentShortName: departments.shortName,
         questionCount: count(questions.id),
       })
       .from(courses)
+      .leftJoin(departments, eq(courses.departmentId, departments.id))
       .leftJoin(questions, eq(courses.id, questions.courseId))
-      .groupBy(courses.id, courses.name)
+      .groupBy(
+        courses.id,
+        courses.name,
+        courses.departmentId,
+        departments.name,
+        departments.shortName
+      )
       .orderBy(asc(courses.name));
 
     return ok(allCourses);
   } catch (error) {
     console.error("Error fetching all courses:", error);
+    return fail("Something went wrong. Please try again.");
+  }
+}
+
+// Get departments for dropdown
+export async function getDepartmentsForDropdown() {
+  try {
+    const perm = await ensurePermission("COURSES:MANAGE");
+    if (!perm.success) return perm;
+
+    const allDepartments = await db
+      .select({
+        id: departments.id,
+        name: departments.name,
+        shortName: departments.shortName,
+        questionCount: count(questions.id),
+      })
+      .from(departments)
+      .leftJoin(questions, eq(departments.id, questions.departmentId))
+      .groupBy(departments.id, departments.name, departments.shortName)
+      .orderBy(asc(departments.name));
+
+    return ok(allDepartments);
+  } catch (error) {
+    console.error("Error fetching departments:", error);
     return fail("Something went wrong. Please try again.");
   }
 }

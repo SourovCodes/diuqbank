@@ -93,6 +93,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                     <TableRow>
                       <TableHead className="w-[300px]">Name</TableHead>
                       <TableHead className="hidden md:table-cell">
+                        Department
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
                         Created By
                       </TableHead>
                       <TableHead className="hidden md:table-cell">
@@ -106,6 +109,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                       <TableRow key={course.id}>
                         <TableCell>
                           <div className="font-medium">{course.name}</div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-muted-foreground">
+                            {course.departmentName || "Unknown"}
+                            {course.departmentShortName &&
+                              ` (${course.departmentShortName})`}
+                          </span>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <span className="text-muted-foreground">

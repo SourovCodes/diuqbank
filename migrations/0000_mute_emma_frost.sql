@@ -25,9 +25,10 @@ CREATE TABLE `contactFormSubmission` (
 CREATE TABLE `course` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`name` varchar(255) NOT NULL,
+	`departmentId` int NOT NULL,
 	`userId` varchar(255) NOT NULL,
 	CONSTRAINT `course_id` PRIMARY KEY(`id`),
-	CONSTRAINT `course_name_unique` UNIQUE(`name`)
+	CONSTRAINT `unique_course_name_per_department` UNIQUE(`departmentId`,`name`)
 );
 --> statement-breakpoint
 CREATE TABLE `department` (
@@ -109,6 +110,7 @@ CREATE TABLE `verificationToken` (
 );
 --> statement-breakpoint
 ALTER TABLE `account` ADD CONSTRAINT `account_userId_user_id_fk` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `course` ADD CONSTRAINT `course_departmentId_department_id_fk` FOREIGN KEY (`departmentId`) REFERENCES `department`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `course` ADD CONSTRAINT `course_userId_user_id_fk` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `question` ADD CONSTRAINT `question_userId_user_id_fk` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `question` ADD CONSTRAINT `question_departmentId_department_id_fk` FOREIGN KEY (`departmentId`) REFERENCES `department`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

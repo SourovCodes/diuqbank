@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c23a676e-3cf1-4766-962b-8379539c377d",
+  "id": "d2c5bcec-776d-43ac-9a46-6012373658dc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -183,6 +183,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "departmentId": {
+          "name": "departmentId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "userId": {
           "name": "userId",
           "type": "varchar(255)",
@@ -193,6 +200,19 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "course_departmentId_department_id_fk": {
+          "name": "course_departmentId_department_id_fk",
+          "tableFrom": "course",
+          "tableTo": "department",
+          "columnsFrom": [
+            "departmentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "course_userId_user_id_fk": {
           "name": "course_userId_user_id_fk",
           "tableFrom": "course",
@@ -216,9 +236,10 @@
         }
       },
       "uniqueConstraints": {
-        "course_name_unique": {
-          "name": "course_name_unique",
+        "unique_course_name_per_department": {
+          "name": "unique_course_name_per_department",
           "columns": [
+            "departmentId",
             "name"
           ]
         }

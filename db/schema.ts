@@ -6,6 +6,7 @@ import {
   varchar,
   boolean,
   mysqlEnum,
+  unique,
 } from "drizzle-orm/mysql-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
@@ -99,13 +100,25 @@ export const departments = mysqlTable("department", {
   shortName: varchar("shortName", { length: 50 }).notNull().unique(),
 });
 
-export const courses = mysqlTable("course", {
-  id: int("id").primaryKey().autoincrement(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  userId: varchar("userId", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-});
+export const courses = mysqlTable(
+  "course",
+  {
+    id: int("id").primaryKey().autoincrement(),
+    name: varchar("name", { length: 255 }).notNull(),
+    departmentId: int("departmentId")
+      .notNull()
+      .references(() => departments.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (table) => ({
+    uniqueNamePerDepartment: unique("unique_course_name_per_department").on(
+      table.departmentId,
+      table.name
+    ),
+  })
+);
 
 export const semesters = mysqlTable("semester", {
   id: int("id").primaryKey().autoincrement(),

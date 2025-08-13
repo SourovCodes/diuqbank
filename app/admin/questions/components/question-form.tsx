@@ -312,7 +312,17 @@ export function QuestionForm({
                         }}
                         onAddNew={async (name) => {
                           try {
-                            const result = await createCourse({ name });
+                            const departmentId = form.getValues("departmentId");
+                            if (!departmentId) {
+                              return {
+                                success: false,
+                                error: "Please select a department first",
+                              };
+                            }
+                            const result = await createCourse({
+                              name,
+                              departmentId,
+                            });
                             if (result.success && result.data) {
                               return {
                                 success: true,

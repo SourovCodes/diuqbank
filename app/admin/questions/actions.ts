@@ -328,11 +328,21 @@ export async function getCoursesForDropdown() {
       .select({
         id: courses.id,
         name: courses.name,
+        departmentId: courses.departmentId,
+        departmentName: departments.name,
+        departmentShortName: departments.shortName,
         questionCount: count(questions.id),
       })
       .from(courses)
+      .leftJoin(departments, eq(courses.departmentId, departments.id))
       .leftJoin(questions, eq(courses.id, questions.courseId))
-      .groupBy(courses.id, courses.name)
+      .groupBy(
+        courses.id,
+        courses.name,
+        courses.departmentId,
+        departments.name,
+        departments.shortName
+      )
       .orderBy(asc(courses.name));
 
     return ok(allCourses);
