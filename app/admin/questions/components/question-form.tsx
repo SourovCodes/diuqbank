@@ -108,6 +108,8 @@ export function QuestionForm({
   // Watch for department changes to filter courses
   const selectedDepartmentId = form.watch("departmentId");
   const isFirstDeptWatch = useRef(true);
+  // Remember the last selected course for each department to restore when switching back
+  const lastCourseByDeptRef = useRef<Map<number, number>>(new Map());
 
   // Load initial dropdown data
   useEffect(() => {
@@ -140,41 +142,80 @@ export function QuestionForm({
     loadDropdownData();
   }, []);
 
-  // Load courses when department changes
+  // Initialize last selected course for the initial department (edit mode)
+  useEffect(() => {
+    if (initialData?.departmentId && initialData?.courseId) {
+      lastCourseByDeptRef.current.set(
+        initialData.departmentId,
+        initialData.courseId
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load courses when department changes and keep course selection in sync
   useEffect(() => {
     const loadCourses = async () => {
+      // On first render we don't want to forcibly clear the course value
+      const isInitial = isFirstDeptWatch.current;
+      if (isInitial) {
+        isFirstDeptWatch.current = false;
+      }
+
       if (selectedDepartmentId) {
         try {
           const courseResult = await getCoursesForDropdown(
             selectedDepartmentId
           );
           if (courseResult.success) {
-            setCourses(courseResult.data || []);
+            const newCourses = courseResult.data || [];
+            setCourses(newCourses);
+
+            // Try to restore last selected course for this department
+            const remembered =
+              lastCourseByDeptRef.current.get(selectedDepartmentId);
+            const currentFormValue = form.getValues("courseId");
+
+            // If the current form value is not valid for this department, adjust it
+            const isCurrentValid = newCourses.some(
+              (c) => c.id === currentFormValue
+            );
+
+            if (!isCurrentValid) {
+              if (remembered && newCourses.some((c) => c.id === remembered)) {
+                // Restore remembered selection for this department
+                form.setValue("courseId", remembered, {
+                  shouldValidate: false,
+                  shouldDirty: !isInitial, // don't dirty on initial load
+                  shouldTouch: !isInitial,
+                });
+              } else {
+                // Clear selection if nothing valid to select
+                form.setValue("courseId", undefined as unknown as number, {
+                  shouldValidate: false,
+                  shouldDirty: !isInitial,
+                  shouldTouch: !isInitial,
+                });
+              }
+            }
           }
         } catch (error) {
           console.error("Error loading courses:", error);
           toast.error("Failed to load courses");
+          setCourses([]);
         }
       } else {
         setCourses([]);
+        // Clear course when no department selected
+        form.setValue("courseId", undefined as unknown as number, {
+          shouldValidate: false,
+          shouldDirty: !isInitial,
+          shouldTouch: !isInitial,
+        });
       }
     };
 
     loadCourses();
-  }, [selectedDepartmentId, form]);
-
-  // Reset course selection to placeholder when department changes (skip initial mount)
-  useEffect(() => {
-    if (isFirstDeptWatch.current) {
-      isFirstDeptWatch.current = false;
-      return;
-    }
-    // Clear course selection so the placeholder shows
-    form.setValue("courseId", undefined as unknown as number, {
-      shouldValidate: false,
-      shouldDirty: true,
-      shouldTouch: true,
-    });
   }, [selectedDepartmentId, form]);
 
   const uploadFileToS3 = useCallback(
@@ -382,7 +423,13 @@ export function QuestionForm({
                         options={courses}
                         value={field.value?.toString()}
                         onValueChange={(value) => {
-                          field.onChange(parseInt(value));
+                          const parsed = parseInt(value);
+                          field.onChange(parsed);
+                          // Remember the last picked course for this department
+                          const deptId = form.getValues("departmentId");
+                          if (deptId) {
+                            lastCourseByDeptRef.current.set(deptId, parsed);
+                          }
                         }}
                         disabled={!selectedDepartmentId || isLoading}
                         onAddNew={async (name) => {
