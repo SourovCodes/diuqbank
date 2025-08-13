@@ -305,8 +305,11 @@ export async function getDepartmentsForDropdown() {
         id: departments.id,
         name: departments.name,
         shortName: departments.shortName,
+        questionCount: count(questions.id),
       })
       .from(departments)
+      .leftJoin(questions, eq(departments.id, questions.departmentId))
+      .groupBy(departments.id, departments.name, departments.shortName)
       .orderBy(asc(departments.name));
 
     return ok(allDepartments);
@@ -325,8 +328,11 @@ export async function getCoursesForDropdown() {
       .select({
         id: courses.id,
         name: courses.name,
+        questionCount: count(questions.id),
       })
       .from(courses)
+      .leftJoin(questions, eq(courses.id, questions.courseId))
+      .groupBy(courses.id, courses.name)
       .orderBy(asc(courses.name));
 
     return ok(allCourses);
@@ -345,8 +351,11 @@ export async function getSemestersForDropdown() {
       .select({
         id: semesters.id,
         name: semesters.name,
+        questionCount: count(questions.id),
       })
       .from(semesters)
+      .leftJoin(questions, eq(semesters.id, questions.semesterId))
+      .groupBy(semesters.id, semesters.name)
       .orderBy(asc(semesters.name));
 
     return ok(allSemesters);
@@ -365,8 +374,11 @@ export async function getExamTypesForDropdown() {
       .select({
         id: examTypes.id,
         name: examTypes.name,
+        questionCount: count(questions.id),
       })
       .from(examTypes)
+      .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
+      .groupBy(examTypes.id, examTypes.name)
       .orderBy(asc(examTypes.name));
 
     return ok(allExamTypes);

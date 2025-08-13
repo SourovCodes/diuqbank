@@ -18,6 +18,8 @@ import {
   createQuestionAdmin,
   updateQuestion,
 } from "../actions";
+import { createCourse } from "../../courses/actions";
+import { createSemester } from "../../semesters/actions";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,11 +42,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText } from "lucide-react";
 import { questionStatusEnum } from "@/db/schema";
+import { DropdownWithAdd } from "@/components/admin/dropdown-with-add";
 
 // Schema and types are imported from ../schemas/question to avoid duplication
 
-type DepartmentOption = { id: number; name: string; shortName: string };
-type BasicOption = { id: number; name: string };
+type DepartmentOption = {
+  id: number;
+  name: string;
+  shortName: string;
+  questionCount?: number;
+};
+type BasicOption = { id: number; name: string; questionCount?: number };
 
 interface QuestionData {
   id: number;
@@ -273,6 +281,11 @@ export function QuestionForm({
                         {dropdowns.departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id.toString()}>
                             {dept.name} ({dept.shortName})
+                            {dept.questionCount !== undefined
+                              ? ` - ${dept.questionCount} question${
+                                  dept.questionCount !== 1 ? "s" : ""
+                                }`
+                              : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -288,26 +301,61 @@ export function QuestionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Course</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select course" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {dropdowns.courses.map((course) => (
-                          <SelectItem
-                            key={course.id}
-                            value={course.id.toString()}
-                          >
-                            {course.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <DropdownWithAdd
+                        label="Course"
+                        placeholder="Select course"
+                        options={dropdowns.courses}
+                        value={field.value?.toString()}
+                        onValueChange={(value) => {
+                          field.onChange(parseInt(value));
+                        }}
+                        onAddNew={async (name) => {
+                          try {
+                            const result = await createCourse({ name });
+                            if (result.success && result.data) {
+                              return {
+                                success: true,
+                                data: {
+                                  id: result.data.id,
+                                  name: result.data.name,
+                                  questionCount: 0,
+                                },
+                              };
+                            }
+                            let errorMessage = "Failed to create course";
+                            if (!result.success) {
+                              if (typeof result.error === "string") {
+                                errorMessage = result.error;
+                              } else if (
+                                result.error &&
+                                typeof result.error === "object"
+                              ) {
+                                const firstError = Object.values(
+                                  result.error
+                                )[0];
+                                errorMessage = Array.isArray(firstError)
+                                  ? firstError[0]
+                                  : "Failed to create course";
+                              }
+                            }
+                            return {
+                              success: false,
+                              error: errorMessage,
+                            };
+                          } catch (err) {
+                            console.error("Error creating course:", err);
+                            return {
+                              success: false,
+                              error: "Something went wrong. Please try again.",
+                            };
+                          }
+                        }}
+                        addDialogTitle="Create New Course"
+                        addDialogDescription="Add a new course to the system."
+                        disabled={isLoading}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -319,26 +367,61 @@ export function QuestionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Semester</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select semester" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {dropdowns.semesters.map((semester) => (
-                          <SelectItem
-                            key={semester.id}
-                            value={semester.id.toString()}
-                          >
-                            {semester.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <DropdownWithAdd
+                        label="Semester"
+                        placeholder="Select semester"
+                        options={dropdowns.semesters}
+                        value={field.value?.toString()}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
+                        onAddNew={async (name) => {
+                          try {
+                            const result = await createSemester({ name });
+                            if (result.success && result.data) {
+                              return {
+                                success: true,
+                                data: {
+                                  id: result.data.id,
+                                  name: result.data.name,
+                                  questionCount: 0,
+                                },
+                              };
+                            }
+                            let errorMessage = "Failed to create semester";
+                            if (!result.success) {
+                              if (typeof result.error === "string") {
+                                errorMessage = result.error;
+                              } else if (
+                                result.error &&
+                                typeof result.error === "object"
+                              ) {
+                                const firstError = Object.values(
+                                  result.error
+                                )[0];
+                                errorMessage = Array.isArray(firstError)
+                                  ? firstError[0]
+                                  : "Failed to create semester";
+                              }
+                            }
+                            return {
+                              success: false,
+                              error: errorMessage,
+                            };
+                          } catch (err) {
+                            console.error("Error creating semester:", err);
+                            return {
+                              success: false,
+                              error: "Something went wrong. Please try again.",
+                            };
+                          }
+                        }}
+                        addDialogTitle="Create New Semester"
+                        addDialogDescription="Add a new semester to the system."
+                        disabled={isLoading}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -366,6 +449,11 @@ export function QuestionForm({
                             value={examType.id.toString()}
                           >
                             {examType.name}
+                            {examType.questionCount !== undefined
+                              ? ` (${examType.questionCount} question${
+                                  examType.questionCount !== 1 ? "s" : ""
+                                })`
+                              : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
