@@ -136,7 +136,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
         <CardHeader className="border-b border-slate-200 dark:border-slate-700">
           <CardTitle className="flex items-center gap-3 text-xl text-slate-900 dark:text-white">
@@ -183,70 +183,49 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
               </div>
 
-              {/* Basic Information Section */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    Basic Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name *</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isSaving} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              {/* Combined Information Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={isSaving} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username *</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isSaving} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username *</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={isSaving} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    {/* Removed fields not present in schema */}
-                  </div>
-                </div>
-              </div>
-
-              {/* Academic Information Section */}
-              <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    Academic Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="studentId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Student ID</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isSaving} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="studentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Student ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={isSaving} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Removed competitive programming handles not present in schema */}
