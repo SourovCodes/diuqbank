@@ -71,6 +71,7 @@ export async function createUser(values: UserFormValues) {
       email: validatedFields.email,
       username: validatedFields.username,
       studentId: validatedFields.studentId || null,
+      image: validatedFields.image ? validatedFields.image : null,
     });
 
     // Fetch the created user
@@ -165,6 +166,7 @@ export async function updateUser(id: string, values: UserFormValues) {
         email: validatedFields.email,
         username: validatedFields.username,
         studentId: validatedFields.studentId || null,
+        image: validatedFields.image ? validatedFields.image : null,
       })
       .where(eq(users.id, id));
 

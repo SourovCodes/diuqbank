@@ -46,6 +46,7 @@ export function UserForm({
       email: initialData?.email || "",
       username: initialData?.username || "",
       studentId: initialData?.studentId || "",
+      image: initialData?.image || "",
     },
   });
 
@@ -158,6 +159,27 @@ export function UserForm({
                     </FormControl>
                     <FormDescription>
                       Optional student identification number
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="https://example.com/avatar.jpg (optional)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional URL to the user&apos;s avatar image
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
