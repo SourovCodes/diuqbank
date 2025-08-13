@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import type { Session } from "next-auth";
 
 /**
  * Checks if the current user has the specified permission
@@ -8,15 +7,14 @@ import type { Session } from "next-auth";
  */
 export async function hasPermission(permissionName: string): Promise<{
   allowed: boolean;
-  session: Session | null;
 }> {
-  const session = (await auth()) as Session | null;
+  const session = await auth();
 
   console.log("Checking permission for:", permissionName);
 
   // If no session, user is not logged in
   if (!session?.user?.email) {
-    return { allowed: false, session };
+    return { allowed: false };
   }
 
   // Check if user is super admin
@@ -24,5 +22,5 @@ export async function hasPermission(permissionName: string): Promise<{
   const allowed = Boolean(
     superAdminEmail && session.user.email === superAdminEmail
   );
-  return { allowed, session };
+  return { allowed };
 }

@@ -1,5 +1,4 @@
 import { hasPermission } from "./authorization";
-import type { Session } from "next-auth";
 import { ZodError } from "zod";
 
 // Standard action result shape used across server actions
@@ -32,21 +31,18 @@ export function fromZodError(
 
 // Result for permission checks that also returns the session for reuse
 export type ActionPermissionResult =
-  | { success: true; session: Session & { user: { id: string } } }
+  | { success: true }
   | { success: false; error: string };
 
 // Ensure the current user has a specific permission
 export async function ensurePermission(
   permission: string
 ): Promise<ActionPermissionResult> {
-  const { allowed, session } = await hasPermission(permission);
-  if (!allowed || !session?.user?.id) {
+  const { allowed } = await hasPermission(permission);
+  if (!allowed) {
     return { success: false, error: "Unauthorized" };
   }
-  return {
-    success: true,
-    session: session as Session & { user: { id: string } },
-  };
+  return { success: true };
 }
 
 // Parse a numeric id safely with a consistent error message
