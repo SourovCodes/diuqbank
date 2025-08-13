@@ -19,6 +19,7 @@ export const questionFormSchema = z.object({
   examTypeId: z.coerce
     .number({ message: "Exam type is required" })
     .min(1, "Exam type is required"),
+  userId: z.string({ message: "User is required" }).min(1, "User is required"),
   status: z.enum(DBQuestionStatus),
   pdfFile: z
     .instanceof(File, { message: "PDF file is required" })

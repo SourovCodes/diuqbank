@@ -21,6 +21,7 @@ import {
   getCoursesForDropdown,
   getSemestersForDropdown,
   getExamTypesForDropdown,
+  getUsersForDropdown,
 } from "../actions";
 import { createCourse } from "../../courses/actions";
 import { createSemester } from "../../semesters/actions";
@@ -56,9 +57,11 @@ type DepartmentOption = {
   name: string;
 };
 type BasicOption = { id: number; name: string };
+type UserOption = { id: string; name: string | null; email: string | null };
 
 interface QuestionData {
   id: number;
+  userId: string;
   departmentId: number;
   courseId: number;
   semesterId: number;
@@ -89,6 +92,7 @@ export function QuestionForm({
   const [courses, setCourses] = useState<BasicOption[]>([]);
   const [semesters, setSemesters] = useState<BasicOption[]>([]);
   const [examTypes, setExamTypes] = useState<BasicOption[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [, setLoadingDropdowns] = useState(true);
 
   const form = useForm<QuestionFormValues>({
@@ -100,6 +104,7 @@ export function QuestionForm({
       courseId: initialData?.courseId,
       semesterId: initialData?.semesterId,
       examTypeId: initialData?.examTypeId,
+      userId: initialData?.userId,
       status:
         (initialData?.status as QuestionFormValues["status"]) || "published",
     },
@@ -116,11 +121,13 @@ export function QuestionForm({
     const loadDropdownData = async () => {
       setLoadingDropdowns(true);
       try {
-        const [deptResult, semesterResult, examTypeResult] = await Promise.all([
-          getDepartmentsForDropdown(),
-          getSemestersForDropdown(),
-          getExamTypesForDropdown(),
-        ]);
+        const [deptResult, semesterResult, examTypeResult, userResult] =
+          await Promise.all([
+            getDepartmentsForDropdown(),
+            getSemestersForDropdown(),
+            getExamTypesForDropdown(),
+            getUsersForDropdown(),
+          ]);
 
         if (deptResult.success) {
           setDepartments(deptResult.data || []);
@@ -130,6 +137,9 @@ export function QuestionForm({
         }
         if (examTypeResult.success) {
           setExamTypes(examTypeResult.data || []);
+        }
+        if (userResult.success) {
+          setUsers(userResult.data || []);
         }
       } catch (error) {
         console.error("Error loading dropdown data:", error);
@@ -275,6 +285,7 @@ export function QuestionForm({
           courseId: values.courseId,
           semesterId: values.semesterId,
           examTypeId: values.examTypeId,
+          userId: values.userId,
           status: values.status,
           ...(values.pdfFile && { pdfKey, pdfFileSizeInBytes }),
         });
@@ -288,6 +299,7 @@ export function QuestionForm({
           courseId: values.courseId,
           semesterId: values.semesterId,
           examTypeId: values.examTypeId,
+          userId: values.userId,
           status: values.status,
           pdfKey,
           pdfFileSizeInBytes,
@@ -748,6 +760,31 @@ export function QuestionForm({
                       ? "Upload a new PDF file to replace the current one. Leave empty to keep the existing file."
                       : "Upload a PDF file containing the question paper. Maximum file size is 10MB."}
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="userId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>User</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name || user.email || user.id} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

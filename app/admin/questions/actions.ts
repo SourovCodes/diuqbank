@@ -37,6 +37,7 @@ interface CreateQuestionAdminParams {
   courseId: number;
   semesterId: number;
   examTypeId: number;
+  userId: string;
   status: string;
   pdfKey: string;
   pdfFileSizeInBytes: number;
@@ -47,6 +48,7 @@ interface UpdateQuestionParams {
   courseId: number;
   semesterId: number;
   examTypeId: number;
+  userId: string;
   status: string;
   pdfKey?: string;
   pdfFileSizeInBytes?: number;
@@ -92,7 +94,6 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
   try {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
 
     // Check for duplicate question
     const existingQuestion = await db
@@ -113,7 +114,7 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
     }
 
     const [insertResult] = await db.insert(questions).values({
-      userId: session.user.id,
+      userId: values.userId,
       departmentId: values.departmentId,
       courseId: values.courseId,
       semesterId: values.semesterId,
@@ -366,6 +367,27 @@ export async function getExamTypesForDropdown() {
   }
 }
 
+export async function getUsersForDropdown() {
+  try {
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
+
+    const allUsers = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      })
+      .from(users)
+      .orderBy(asc(users.email));
+
+    return ok(allUsers);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return fail("Something went wrong. Please try again.");
+  }
+}
+
 // Get a single question by ID for editing
 export async function getQuestion(id: string) {
   try {
@@ -462,6 +484,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
 
     // Build update data
     const updateData: Partial<typeof questions.$inferInsert> = {
+      userId: values.userId,
       departmentId: values.departmentId,
       courseId: values.courseId,
       semesterId: values.semesterId,
