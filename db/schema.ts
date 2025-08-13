@@ -108,9 +108,6 @@ export const courses = mysqlTable(
     departmentId: int("departmentId")
       .notNull()
       .references(() => departments.id, { onDelete: "cascade" }),
-    userId: varchar("userId", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
   },
   (table) => ({
     uniqueNamePerDepartment: unique("unique_course_name_per_department").on(
@@ -123,9 +120,6 @@ export const courses = mysqlTable(
 export const semesters = mysqlTable("semester", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 255 }).notNull().unique(),
-  userId: varchar("userId", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const examTypes = mysqlTable("examType", {

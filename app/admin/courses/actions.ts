@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
-import { courses, questions, users, departments } from "@/db/schema";
+import { courses, questions, departments } from "@/db/schema";
 import { courseFormSchema, type CourseFormValues } from "./schemas/course";
 import { eq, and, ne, count, asc, sql } from "drizzle-orm";
 // permission handled by ensurePermission helper
@@ -22,7 +22,7 @@ export async function createCourse(values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
@@ -46,7 +46,6 @@ export async function createCourse(values: CourseFormValues) {
     const [insertResult] = await db.insert(courses).values({
       name: validatedFields.name,
       departmentId: validatedFields.departmentId,
-      userId: session.user.id,
     });
 
     // Fetch the created course
@@ -70,7 +69,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
@@ -78,13 +77,11 @@ export async function updateCourse(id: string, values: CourseFormValues) {
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    // Check if course exists and belongs to the user
+    // Check if course exists
     const existingCourse = await db
       .select()
       .from(courses)
-      .where(
-        and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
-      )
+      .where(eq(courses.id, numericId))
       .limit(1);
 
     if (existingCourse.length === 0) {
@@ -116,9 +113,7 @@ export async function updateCourse(id: string, values: CourseFormValues) {
         name: validatedFields.name,
         departmentId: validatedFields.departmentId,
       })
-      .where(
-        and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
-      );
+      .where(eq(courses.id, numericId));
 
     // Fetch the updated course
     const [course] = await db
@@ -142,20 +137,18 @@ export async function deleteCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const parsed = parseNumericId(id, "course ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    // Check if course exists and belongs to the user
+    // Check if course exists
     const existingCourse = await db
       .select()
       .from(courses)
-      .where(
-        and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
-      )
+      .where(eq(courses.id, numericId))
       .limit(1);
 
     if (existingCourse.length === 0) {
@@ -172,11 +165,7 @@ export async function deleteCourse(id: string) {
       return fail("Cannot delete course that is associated with questions.");
     }
 
-    await db
-      .delete(courses)
-      .where(
-        and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
-      );
+    await db.delete(courses).where(eq(courses.id, numericId));
 
     revalidatePath("/admin/courses");
     return ok();
@@ -192,7 +181,7 @@ export async function getCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const numericId = parseInt(id);
@@ -204,9 +193,7 @@ export async function getCourse(id: string) {
     const course = await db
       .select()
       .from(courses)
-      .where(
-        and(eq(courses.id, numericId), eq(courses.userId, session.user.id))
-      )
+      .where(eq(courses.id, numericId))
       .limit(1);
 
     if (course.length === 0) {
@@ -230,13 +217,13 @@ export async function getPaginatedCourses(
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
     // Authentication check is redundant, relying on ensurePermission
 
     const skip = (page - 1) * pageSize;
 
     // Build where conditions - only show user's own courses
-    const baseCondition = eq(courses.userId, session.user.id);
+    const baseCondition = sql`1=1`;
     const whereCondition = search
       ? and(
           baseCondition,
@@ -255,20 +242,18 @@ export async function getPaginatedCourses(
           departmentName: departments.name,
           departmentShortName: departments.shortName,
           questionCount: count(questions.id),
-          createdBy: users.name,
+          createdBy: sql<string>`NULL`,
         })
         .from(courses)
         .leftJoin(departments, eq(courses.departmentId, departments.id))
         .leftJoin(questions, eq(courses.id, questions.courseId))
-        .leftJoin(users, eq(courses.userId, users.id))
         .where(whereCondition)
         .groupBy(
           courses.id,
           courses.name,
           courses.departmentId,
           departments.name,
-          departments.shortName,
-          users.name
+          departments.shortName
         )
         .orderBy(asc(courses.name))
         .limit(pageSize)

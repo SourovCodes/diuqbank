@@ -25,7 +25,7 @@ export async function createSemester(values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
 
@@ -40,10 +40,9 @@ export async function createSemester(values: SemesterFormValues) {
       return fail("A semester with this name already exists.");
     }
 
-    const [insertResult] = await db.insert(semesters).values({
-      name: validatedFields.name,
-      userId: session.user.id,
-    });
+    const [insertResult] = await db
+      .insert(semesters)
+      .values({ name: validatedFields.name });
 
     // Fetch the created semester
     const [semester] = await db
@@ -66,20 +65,18 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    // Check if semester exists and belongs to the user
+    // Check if semester exists
     const existingSemester = await db
       .select()
       .from(semesters)
-      .where(
-        and(eq(semesters.id, numericId), eq(semesters.userId, session.user.id))
-      )
+      .where(eq(semesters.id, numericId))
       .limit(1);
 
     if (existingSemester.length === 0) {
@@ -105,9 +102,7 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
     await db
       .update(semesters)
       .set({ name: validatedFields.name })
-      .where(
-        and(eq(semesters.id, numericId), eq(semesters.userId, session.user.id))
-      );
+      .where(eq(semesters.id, numericId));
 
     // Fetch the updated semester
     const [semester] = await db
@@ -131,19 +126,17 @@ export async function deleteSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    // Check if semester exists and belongs to the user
+    // Check if semester exists
     const existingSemester = await db
       .select()
       .from(semesters)
-      .where(
-        and(eq(semesters.id, numericId), eq(semesters.userId, session.user.id))
-      )
+      .where(eq(semesters.id, numericId))
       .limit(1);
 
     if (existingSemester.length === 0) {
@@ -160,11 +153,7 @@ export async function deleteSemester(id: string) {
       return fail("Cannot delete semester that is associated with questions.");
     }
 
-    await db
-      .delete(semesters)
-      .where(
-        and(eq(semesters.id, numericId), eq(semesters.userId, session.user.id))
-      );
+    await db.delete(semesters).where(eq(semesters.id, numericId));
 
     revalidatePath("/admin/semesters");
     return ok();
@@ -180,7 +169,7 @@ export async function getSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return fail(parsed.error);
@@ -189,9 +178,7 @@ export async function getSemester(id: string) {
     const semester = await db
       .select()
       .from(semesters)
-      .where(
-        and(eq(semesters.id, numericId), eq(semesters.userId, session.user.id))
-      )
+      .where(eq(semesters.id, numericId))
       .limit(1);
 
     if (semester.length === 0) {
@@ -215,12 +202,12 @@ export async function getPaginatedSemesters(
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    const session = perm.session;
+    // const session = perm.session;
 
     const skip = (page - 1) * pageSize;
 
-    // Build where conditions - only show user's own semesters
-    const baseCondition = eq(semesters.userId, session.user.id);
+    // Build where conditions
+    const baseCondition = sql`1=1`;
     const whereCondition = search
       ? and(
           baseCondition,
@@ -273,29 +260,14 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
       return fail("Invalid semester IDs.");
     }
 
-    // Check if both semesters exist and belong to the user
-    const session = perm.session;
+    // Check if both semesters exist
     const [fromSemester, toSemester] = await Promise.all([
       db
         .select()
         .from(semesters)
-        .where(
-          and(
-            eq(semesters.id, fromIdNumeric),
-            eq(semesters.userId, session.user.id)
-          )
-        )
+        .where(eq(semesters.id, fromIdNumeric))
         .limit(1),
-      db
-        .select()
-        .from(semesters)
-        .where(
-          and(
-            eq(semesters.id, toIdNumeric),
-            eq(semesters.userId, session.user.id)
-          )
-        )
-        .limit(1),
+      db.select().from(semesters).where(eq(semesters.id, toIdNumeric)).limit(1),
     ]);
 
     if (fromSemester.length === 0 || toSemester.length === 0) {
@@ -343,7 +315,6 @@ export async function getAllUserSemesters() {
       })
       .from(semesters)
       .leftJoin(questions, eq(semesters.id, questions.semesterId))
-      .where(eq(semesters.userId, perm.session.user.id))
       .groupBy(semesters.id, semesters.name)
       .orderBy(asc(semesters.name));
 
