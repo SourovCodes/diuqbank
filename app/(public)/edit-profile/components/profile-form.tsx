@@ -92,7 +92,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
       form.setValue("image", urlResult.data.fileUrl);
       setShowImageCropper(false);
 
-      toast.success("Profile picture updated successfully");
+      toast.success(
+        "Profile picture updated successfully. Click save to apply changes."
+      );
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error(
@@ -236,7 +238,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
                 <Button
                   type="submit"
-                  disabled={isSaving || isUploading}
+                  disabled={isSaving}
                   size="lg"
                   className="min-w-[160px] order-1 sm:order-2 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium"
                 >
@@ -244,11 +246,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
-                    </>
-                  ) : isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading image...
                     </>
                   ) : (
                     "Save Changes"
