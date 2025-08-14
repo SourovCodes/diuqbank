@@ -60,21 +60,16 @@ async function QuestionDetailContent({ params }: QuestionDetailPageProps) {
   const pdfUrl = `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${question.pdfKey}`;
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Header Section */}
-      <div className="space-y-4 md:space-y-6">
-        {/* Question Header */}
-        <QuestionHeader question={question} pdfUrl={pdfUrl} />
-      </div>
+    <div className="space-y-5">
+      {/* Question Header */}
+      <QuestionHeader question={question} pdfUrl={pdfUrl} />
 
       {/* PDF Viewer Section */}
-      <div className="space-y-4 md:space-y-6">
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 md:p-8">
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white mb-4">
-            Question Paper
-          </h2>
-          <PDFViewer url={pdfUrl} />
-        </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Question Paper
+        </h2>
+        <PDFViewer url={pdfUrl} />
       </div>
     </div>
   );
@@ -84,7 +79,7 @@ export default async function QuestionDetailPage(
   props: QuestionDetailPageProps
 ) {
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 py-8">
       <QuestionDetailContent {...props} />
     </div>
   );

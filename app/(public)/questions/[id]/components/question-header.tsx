@@ -67,40 +67,40 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-0">
-        <CardTitle className="text-2xl md:text-3xl font-semibold leading-snug">
+    <Card className="shadow-sm py-4">
+      <CardHeader className="pb-0 px-6 pt-0">
+        <CardTitle className="text-lg font-semibold leading-snug">
           {question.courseName || "Unknown Course"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4 space-y-5">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="flex items-center gap-1.5">
-            <Building2 className="h-3.5 w-3.5" />
+      <CardContent className="pt-3 px-6 pb-0 space-y-4">
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="secondary" className="h-6 px-2 text-xs flex items-center gap-1">
+            <Building2 className="h-3 w-3" />
             {question.departmentShortName || "N/A"}
           </Badge>
-          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 flex items-center gap-1.5">
+          <Badge className="h-6 px-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
             {question.examTypeName || "N/A"}
           </Badge>
-          <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5" />
+          <Badge className="h-6 px-2 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
             {question.semesterName || "N/A"}
           </Badge>
-          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1.5 ml-auto">
+          <Badge className="h-6 px-2 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ml-auto">
             {question.viewCount} views
           </Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           {question.createdAt && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
               {formatDate(question.createdAt)}
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
+              className="h-3 w-3"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -115,10 +115,10 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             {formatFileSize(question.pdfFileSizeInBytes)}
           </div>
           {question.userName && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
+                className="h-3 w-3"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -134,19 +134,19 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             </div>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             onClick={handleDownload}
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow rounded-full px-6 h-10"
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow rounded-md px-4 h-8 text-sm"
           >
-            <Download className="h-4 w-4 mr-2" /> Download PDF
+            <Download className="h-3 w-3 mr-1.5" /> Download PDF
           </Button>
           <Button
             variant="outline"
             onClick={handleShare}
-            className="rounded-full h-10 border-slate-200 dark:border-slate-700 bg-background hover:bg-accent hover:text-accent-foreground"
+            className="rounded-md h-8 px-4 text-sm border-slate-200 dark:border-slate-700 bg-background hover:bg-accent hover:text-accent-foreground"
           >
-            <Share2 className="h-4 w-4 mr-2" /> Share
+            <Share2 className="h-3 w-3 mr-1.5" /> Share
           </Button>
         </div>
       </CardContent>
