@@ -132,16 +132,13 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
     <div className="space-y-4">
       {/* Filter Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-semibold text-lg">Filter Questions</h3>
-        </div>
+        <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100">Filters</h3>
         {hasActiveFilters && (
           <Button
             variant="outline"
             size="sm"
             onClick={clearAllFilters}
-            className="h-8 px-3 text-xs"
+            className="text-xs"
           >
             <FilterX className="h-3 w-3 mr-1" />
             Clear All
@@ -150,7 +147,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
       </div>
 
       {/* Filters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Department Filter */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground">
@@ -237,43 +234,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
         </div>
       </div>
 
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {selectedDepartment && (
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
-              <span className="font-medium">Department:</span>
-              <span>
-                {filterOptions.departments.find(d => d.id.toString() === selectedDepartment)?.shortName}
-              </span>
-            </div>
-          )}
-          {selectedCourse && (
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs rounded-md border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
-              <span className="font-medium">Course:</span>
-              <span>
-                {filterOptions.courses.find(c => c.id.toString() === selectedCourse)?.name}
-              </span>
-            </div>
-          )}
-          {selectedSemester && (
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800">
-              <span className="font-medium">Semester:</span>
-              <span>
-                {filterOptions.semesters.find(s => s.id.toString() === selectedSemester)?.name}
-              </span>
-            </div>
-          )}
-          {selectedExamType && (
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-md border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800">
-              <span className="font-medium">Exam Type:</span>
-              <span>
-                {filterOptions.examTypes.find(e => e.id.toString() === selectedExamType)?.name}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+
     </div>
   );
 }

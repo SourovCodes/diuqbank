@@ -167,6 +167,47 @@ export async function getPublicQuestions(
   }
 }
 
+// Get a single published question by ID
+export async function getPublicQuestion(questionId: number) {
+  try {
+    const questionResult = await db
+      .select({
+        id: questions.id,
+        pdfKey: questions.pdfKey,
+        pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
+        viewCount: questions.viewCount,
+        createdAt: questions.createdAt,
+        status: questions.status,
+        departmentName: departments.name,
+        departmentShortName: departments.shortName,
+        courseName: courses.name,
+        semesterName: semesters.name,
+        examTypeName: examTypes.name,
+        userName: users.name,
+      })
+      .from(questions)
+      .leftJoin(departments, eq(questions.departmentId, departments.id))
+      .leftJoin(courses, eq(questions.courseId, courses.id))
+      .leftJoin(semesters, eq(questions.semesterId, semesters.id))
+      .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
+      .leftJoin(users, eq(questions.userId, users.id))
+      .where(and(
+        eq(questions.id, questionId),
+        eq(questions.status, QuestionStatus.PUBLISHED)
+      ))
+      .limit(1);
+
+    if (questionResult.length === 0) {
+      return fail("Question not found or not published");
+    }
+
+    return ok(questionResult[0]);
+  } catch (error) {
+    console.error("Error fetching question:", error);
+    return fail("Something went wrong. Please try again.");
+  }
+}
+
 // Increment view count when a question is viewed
 export async function incrementViewCount(questionId: number) {
   try {
