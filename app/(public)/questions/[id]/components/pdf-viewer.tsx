@@ -36,17 +36,17 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end mb-3 md:mb-4">
         <Button
           onClick={toggleFullscreen}
           variant="outline"
           size="sm"
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors rounded-full"
         >
           {isFullscreen ? (
             <>
               <Minimize2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Exit</span>
+              <span className="hidden sm:inline">Exit Fullscreen</span>
             </>
           ) : (
             <>
@@ -59,8 +59,8 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm transition-colors",
-          isFullscreen && "h-screen"
+          "relative w-full rounded-2xl overflow-hidden border border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-900 shadow-lg shadow-blue-500/5 dark:shadow-blue-500/10 transition-all duration-300",
+          isFullscreen && "h-screen rounded-none"
         )}
       >
         {/* Primary embed */}

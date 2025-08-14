@@ -129,16 +129,21 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
   }, [searchParams]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 md:space-y-6">
       {/* Filter Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100">Filters</h3>
+        <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+            Filter
+          </span>{" "}
+          Questions
+        </h3>
         {hasActiveFilters && (
           <Button
             variant="outline"
             size="sm"
             onClick={clearAllFilters}
-            className="text-xs"
+            className="text-xs bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-700 dark:hover:text-red-400 transition-colors rounded-full"
           >
             <FilterX className="h-3 w-3 mr-1" />
             Clear All
@@ -147,17 +152,17 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
       </div>
 
       {/* Filters Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Department Filter */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Department
           </label>
           <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               {filterOptions.departments.map((department) => (
                 <SelectItem key={department.id} value={department.id.toString()}>
                   <div className="flex items-center gap-2">
@@ -174,7 +179,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Course Filter */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Course
           </label>
           <Select 
@@ -182,10 +187,10 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             onValueChange={handleCourseChange}
             disabled={!selectedDepartment}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl disabled:opacity-50">
               <SelectValue placeholder={selectedDepartment ? "All Courses" : "Select Department First"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               {availableCourses.map((course) => (
                 <SelectItem key={course.id} value={course.id.toString()}>
                   {course.name}
@@ -197,14 +202,14 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Semester Filter */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Semester
           </label>
           <Select value={selectedSemester} onValueChange={handleSemesterChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
               <SelectValue placeholder="All Semesters" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               {filterOptions.semesters.map((semester) => (
                 <SelectItem key={semester.id} value={semester.id.toString()}>
                   {semester.name}
@@ -216,14 +221,14 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Exam Type Filter */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Exam Type
           </label>
           <Select value={selectedExamType} onValueChange={handleExamTypeChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
               <SelectValue placeholder="All Exam Types" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               {filterOptions.examTypes.map((examType) => (
                 <SelectItem key={examType.id} value={examType.id.toString()}>
                   {examType.name}
