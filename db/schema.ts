@@ -35,14 +35,14 @@ export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 255 }).unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: timestamp("emailVerified", {
     mode: "date",
     fsp: 3,
   }),
   image: varchar("image", { length: 255 }),
-  username: varchar("username", { length: 100 }),
+  username: varchar("username", { length: 100 }).notNull(),
   studentId: varchar("studentId", { length: 50 }),
 });
 

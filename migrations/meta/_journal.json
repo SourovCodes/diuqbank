@@ -15,6 +15,13 @@
       "when": 1755088412382,
       "tag": "0001_awesome_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1755152189648,
+      "tag": "0002_old_red_ghost",
+      "breakpoints": true
     }
   ]
 }
