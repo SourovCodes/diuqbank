@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Building2, Calendar, Clock } from "lucide-react";
 import { PublicQuestion } from "../actions";
 
@@ -126,14 +125,6 @@ export function QuestionCard({ question }: QuestionCardProps) {
               />
             </svg>
           </div>
-
-          {/* View PDF button - visible on hover */}
-          <Button
-            size="sm"
-            className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-full px-3 py-1 text-xs font-medium opacity-0 group-hover:opacity-100"
-          >
-            View PDF
-          </Button>
         </div>
       </div>
     </Link>
