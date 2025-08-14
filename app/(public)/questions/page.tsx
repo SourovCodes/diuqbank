@@ -104,11 +104,6 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
       <div className="space-y-6 md:space-y-8">
         {pagination.totalCount > 0 && (
           <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
-            {/* Subtle gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 opacity-50 -z-10"></div>
-            {/* Decorative accent circle */}
-            <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-green-100/40 dark:bg-green-900/10 -z-10"></div>
-
             <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
