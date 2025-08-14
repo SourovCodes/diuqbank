@@ -1,178 +1,91 @@
 "use client";
 
-import { useState } from "react";
+// Minimal PDF viewer: fullscreen toggle + embedded object with graceful fallback.
+
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Download,
-  ExternalLink,
-  Maximize2,
-  Minimize2,
-  AlertCircle,
-} from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PDFViewerProps {
-  pdfUrl: string;
-  fileName: string;
-  fileSize: number;
+  url: string;
   className?: string;
 }
 
-function formatFileSize(bytes: number): string {
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  if (bytes === 0) return "0 Bytes";
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
-}
-
-export function PDFViewer({
-  pdfUrl,
-  fileName,
-  fileSize,
-  className,
-}: PDFViewerProps) {
+export function PDFViewer({ url, className }: PDFViewerProps) {
+  const src = url;
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [embedFailed, setEmbedFailed] = useState(false);
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = fileName;
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleOpenExternal = () => {
-    window.open(pdfUrl, "_blank", "noopener,noreferrer");
-  };
+  // Track native fullscreen changes (user may press ESC)
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
-  const handleEmbedError = () => {
-    setHasError(true);
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(console.error);
+    } else {
+      document.exitFullscreen().catch(console.error);
+    }
   };
 
   return (
-    <div
-      className={cn(
-        "relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-xl",
-        isFullscreen && "fixed inset-0 z-50 rounded-none border-0",
-        className
-      )}
-    >
-      {/* PDF Viewer Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200/60 dark:border-slate-600/60">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 truncate">
-            {fileName}
-          </h3>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="text-xs">
-              PDF • {formatFileSize(fileSize)}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Action Buttons */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleFullscreen}
-            className="h-8 px-3"
-          >
-            {isFullscreen ? (
+    <div className={cn("w-full", className)}>
+      <div className="flex justify-end mb-2">
+        <Button
+          onClick={toggleFullscreen}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1"
+        >
+          {isFullscreen ? (
+            <>
               <Minimize2 className="h-4 w-4" />
-            ) : (
+              <span className="hidden sm:inline">Exit</span>
+            </>
+          ) : (
+            <>
               <Maximize2 className="h-4 w-4" />
-            )}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenExternal}
-            className="h-8 px-3"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-
-          <Button
-            onClick={handleDownload}
-            size="sm"
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-sm h-8 px-4"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Download</span>
-          </Button>
-        </div>
+              <span className="hidden sm:inline">Fullscreen</span>
+            </>
+          )}
+        </Button>
       </div>
-
-      {/* PDF Viewer Content */}
       <div
+        ref={containerRef}
         className={cn(
-          "relative bg-slate-100 dark:bg-slate-800",
-          isFullscreen
-            ? "h-[calc(100vh-88px)]"
-            : "h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]"
+          "relative w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm transition-colors",
+          isFullscreen && "h-screen"
         )}
       >
-        {hasError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-900">
-            <div className="text-center space-y-4 p-8">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
-                <AlertCircle className="h-8 w-8 text-red-500" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-slate-900 dark:text-slate-100">
-                  Unable to display PDF
-                </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md">
-                  The PDF could not be embedded. You can still download or open
-                  it in a new tab.
-                </p>
-              </div>
-              <div className="flex gap-3 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={handleOpenExternal}
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open in New Tab
-                </Button>
-                <Button
-                  onClick={handleDownload}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download PDF
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
+        {/* Primary embed */}
+        {!embedFailed && (
+          <object
+            data={src}
+            type="application/pdf"
+            className="w-full h-full min-h-[500px] md:min-h-[700px]"
+            aria-label="PDF Document"
+            onError={() => setEmbedFailed(true)}
+          >
+            {/* Fallback will render below if object unsupported */}
+          </object>
+        )}
+        {/* Fallback (or if object errors) using Google viewer */}
+        {embedFailed && (
           <iframe
-            src={pdfUrl}
-            className="w-full h-full border-0"
-            title={fileName}
-            onError={handleEmbedError}
+            src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(
+              src
+            )}`}
+            className="w-full h-full min-h-[500px] md:min-h-[700px]"
+            title="PDF Document"
           />
         )}
       </div>
-
-      {/* Fullscreen Overlay */}
-      {isFullscreen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={toggleFullscreen}
-        />
-      )}
     </div>
   );
 }
