@@ -110,14 +110,14 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                           <Avatar className="h-8 w-8">
                             <AvatarImage
                               src={user.image || undefined}
-                              alt={user.name || "User"}
+                              alt={user.name}
                             />
                             <AvatarFallback>
                               {user.name
-                                ?.split(" ")
+                                .split(" ")
                                 .map((n) => n[0])
                                 .join("")
-                                .toUpperCase() || "U"}
+                                .toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                         </TableCell>
@@ -167,7 +167,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                             </Button>
                             <GenericDeleteButton
                               id={user.id}
-                              name={user.name || user.email || "Unknown User"}
+                              name={user.name}
                               entityName="User"
                               deleteAction={deleteUser}
                               isDisabled={user.questionCount > 0}

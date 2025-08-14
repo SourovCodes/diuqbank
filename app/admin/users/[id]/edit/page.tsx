@@ -33,7 +33,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Edit User: ${user.name || user.email}`}
+        title={`Edit User: ${user.name}`}
         description="Modify user details"
         crumbs={[
           { href: "/admin", label: "Dashboard" },

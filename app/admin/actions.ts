@@ -105,6 +105,7 @@ export async function getRecentQuestions(): Promise<RecentQuestion[]> {
 
   return recentQuestions.map((q) => ({
     ...q,
-    userName: q.userName || "Unknown User",
+    // name is now NOT NULL at the DB level
+    userName: q.userName,
   }));
 }

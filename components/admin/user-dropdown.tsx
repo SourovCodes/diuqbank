@@ -45,7 +45,7 @@ export function UserDropdown({
         <Button variant="ghost" size="sm" className="h-9 gap-2 px-2">
           <Avatar className="h-6 w-6">
             {user?.image ? (
-              <AvatarImage src={user.image} alt={user.name || "User"} />
+              <AvatarImage src={user.image} alt={user?.name ?? "User"} />
             ) : null}
             <AvatarFallback className="text-xs">
               {getInitials(user?.name)}

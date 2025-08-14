@@ -28,7 +28,7 @@ export function UserAvatar({ className }: UserAvatarProps) {
       {user?.image ? (
         <AvatarImage
           src={user.image}
-          alt={user.name || "User"}
+          alt={user?.name ?? "User"}
           className="object-cover"
         />
       ) : null}

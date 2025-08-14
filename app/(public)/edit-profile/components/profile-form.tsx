@@ -52,8 +52,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user.name || "",
-      username: user.username || "",
+      name: user.name, // now guaranteed
+      username: user.username, // now guaranteed
       studentId: user.studentId || "",
       image: user.image || "",
     },
