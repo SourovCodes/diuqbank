@@ -1,11 +1,8 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { getPublicQuestion, incrementViewCount } from "../actions";
 import { PDFViewer } from "./components/pdf-viewer";
 import { QuestionHeader } from "./components/question-header";
-import { Button } from "@/components/ui/button";
 
 export async function generateMetadata({
   params,
@@ -66,16 +63,6 @@ async function QuestionDetailContent({ params }: QuestionDetailPageProps) {
     <div className="space-y-8">
       {/* Header Section */}
       <div className="space-y-6">
-        {/* Back Navigation */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild className="h-9 px-4">
-            <Link href="/questions" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Questions
-            </Link>
-          </Button>
-        </div>
-
         {/* Question Header */}
         <QuestionHeader question={question} pdfUrl={pdfUrl} />
       </div>
