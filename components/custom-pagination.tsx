@@ -52,11 +52,6 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
           }}
           isActive={currentPage === 1}
           href="#"
-          className={
-            currentPage === 1
-              ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30 font-medium"
-              : "hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          }
         >
           1
         </PaginationLink>
@@ -95,11 +90,6 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
             }}
             isActive={currentPage === i}
             href="#"
-            className={
-              currentPage === i
-                ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30 font-medium"
-                : "hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            }
           >
             {i}
           </PaginationLink>
@@ -127,11 +117,6 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
             }}
             isActive={currentPage === totalPages}
             href="#"
-            className={
-              currentPage === totalPages
-                ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30 font-medium"
-                : "hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            }
           >
             {totalPages}
           </PaginationLink>
@@ -144,7 +129,7 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
 
   return (
     <Pagination>
-      <PaginationContent className="bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 rounded-xl p-1.5">
+      <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
             href="#"
@@ -155,11 +140,9 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
               }
             }}
             aria-disabled={currentPage === 1}
-            className={`rounded-lg transition-colors ${
-              currentPage === 1
-                ? "pointer-events-none opacity-50"
-                : "hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400"
-            }`}
+            className={
+              currentPage === 1 ? "pointer-events-none opacity-50" : ""
+            }
             tabIndex={currentPage === 1 ? -1 : 0}
           />
         </PaginationItem>
@@ -176,11 +159,9 @@ export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
               }
             }}
             aria-disabled={currentPage === totalPages}
-            className={`rounded-lg transition-colors ${
-              currentPage === totalPages
-                ? "pointer-events-none opacity-50"
-                : "hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400"
-            }`}
+            className={
+              currentPage === totalPages ? "pointer-events-none opacity-50" : ""
+            }
             tabIndex={currentPage === totalPages ? -1 : 0}
           />
         </PaginationItem>
