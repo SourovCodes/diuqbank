@@ -11,6 +11,7 @@ import {
   QuestionStatus,
 } from "@/db/schema";
 import { sql, desc, eq, and, count } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { ok, fail, getPaginationMeta } from "@/lib/action-utils";
 
 export interface PublicQuestion {
@@ -102,27 +103,31 @@ export async function getPublicQuestions(
 ) {
   try {
     const skip = (page - 1) * pageSize;
-    const whereConditions = [eq(questions.status, QuestionStatus.PUBLISHED)];
+    const whereConditions: SQL<unknown>[] = [eq(questions.status, QuestionStatus.PUBLISHED) as unknown as SQL<unknown>];
 
     if (departmentId) {
-      whereConditions.push(eq(questions.departmentId, departmentId));
+      whereConditions.push(eq(questions.departmentId, departmentId) as unknown as SQL<unknown>);
     }
 
     if (courseId) {
-      whereConditions.push(eq(questions.courseId, courseId));
+      whereConditions.push(eq(questions.courseId, courseId) as unknown as SQL<unknown>);
     }
 
     if (semesterId) {
-      whereConditions.push(eq(questions.semesterId, semesterId));
+      whereConditions.push(eq(questions.semesterId, semesterId) as unknown as SQL<unknown>);
     }
 
     if (examTypeId) {
-      whereConditions.push(eq(questions.examTypeId, examTypeId));
+      whereConditions.push(eq(questions.examTypeId, examTypeId) as unknown as SQL<unknown>);
     }
 
-    const whereCondition = whereConditions.length > 1 
-      ? whereConditions.reduce((acc, condition) => and(acc, condition))
-      : whereConditions[0];
+    // Reduce where clauses into a single SQL condition, avoiding undefined types
+    const whereCondition: SQL<unknown> = whereConditions.reduce<SQL<unknown>>(
+      (acc, cond) => (and(acc, cond) as unknown as SQL<unknown>),
+      sql`1=1` as unknown as SQL<unknown>
+    );
+
+    
 
     const [questionsResult, totalCountResult] = await Promise.all([
       db

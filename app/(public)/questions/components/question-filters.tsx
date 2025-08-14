@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FilterX, Filter } from "lucide-react";
+import { FilterX } from "lucide-react";
 import { FilterOptions } from "../actions";
 
 interface QuestionFiltersProps {

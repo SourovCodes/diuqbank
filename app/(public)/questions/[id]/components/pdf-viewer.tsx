@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -8,13 +8,15 @@ import {
   ExternalLink, 
   ZoomIn, 
   ZoomOut, 
-  RotateCw,
   Maximize2,
   Minimize2,
   Loader2,
   AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Document, Page, pdfjs } from "react-pdf";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -31,17 +33,33 @@ function formatFileSize(bytes: number): string {
 }
 
 export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(800);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [scale, setScale] = useState(1);
 
-  const handleLoad = () => {
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  const onDocumentLoadSuccess = ({ numPages: nextNumPages }: { numPages: number }) => {
+    setNumPages(nextNumPages);
     setIsLoading(false);
     setError(null);
   };
 
-  const handleError = () => {
+  const onDocumentLoadError = () => {
     setIsLoading(false);
     setError("Failed to load PDF. Please try downloading it directly.");
   };
@@ -72,9 +90,8 @@ export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerPr
     setScale(prev => Math.max(prev - 0.25, 0.5));
   };
 
-  const resetZoom = () => {
-    setScale(1);
-  };
+  // resetZoom currently not shown in UI; keep internal for future use
+  // const resetZoom = () => setScale(1);
 
   // Handle fullscreen mode
   useEffect(() => {
@@ -92,7 +109,7 @@ export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerPr
   return (
     <div className={cn(
       "relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-xl",
-      isFullscreen && "fixed inset-4 z-50 rounded-none border-0",
+      isFullscreen && "fixed inset-0 z-50 rounded-none border-0",
       className
     )}>
       {/* PDF Viewer Header */}
@@ -134,6 +151,31 @@ export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerPr
             </Button>
           </div>
 
+          {/* Page Nav */}
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber <= 1}
+              className="h-8 px-2"
+            >
+              Prev
+            </Button>
+            <span className="text-xs font-medium px-2 text-slate-600 dark:text-slate-400">
+              Page {pageNumber} / {numPages || "–"}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+              disabled={numPages === 0 || pageNumber >= numPages}
+              className="h-8 px-2"
+            >
+              Next
+            </Button>
+          </div>
+
           {/* Action Buttons */}
           <Button
             variant="outline"
@@ -169,9 +211,9 @@ export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerPr
       </div>
 
       {/* PDF Viewer Content */}
-      <div className={cn(
+      <div ref={containerRef} className={cn(
         "relative bg-slate-100 dark:bg-slate-800",
-        isFullscreen ? "h-[calc(100vh-120px)]" : "h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]"
+        isFullscreen ? "h-[calc(100vh-88px)]" : "h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]"
       )}>
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-900/80">
@@ -217,20 +259,24 @@ export function PDFViewer({ pdfUrl, fileName, fileSize, className }: PDFViewerPr
           </div>
         )}
 
-        {/* PDF Embed */}
-        <iframe
-          src={`${pdfUrl}#zoom=${scale * 100}&toolbar=1&navpanes=1&scrollbar=1&page=1&view=FitH`}
-          className="w-full h-full border-0"
-          title={fileName}
-          onLoad={handleLoad}
-          onError={handleError}
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            width: `${100 / scale}%`,
-            height: `${100 / scale}%`,
-          }}
-        />
+        {!error && (
+          <div className="h-full overflow-auto flex items-start justify-center p-4">
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={null}
+              error={null}
+            >
+              <Page
+                pageNumber={pageNumber}
+                width={Math.floor(containerWidth * scale)}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+          </div>
+        )}
       </div>
 
       {/* Fullscreen Overlay */}

@@ -4,7 +4,6 @@ import { getPublicQuestions, getFilterOptions } from "./actions";
 import { QuestionFilters } from "./components/question-filters";
 import { QuestionCard } from "./components/question-card";
 import { CustomPagination } from "@/components/custom-pagination";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Questions",
