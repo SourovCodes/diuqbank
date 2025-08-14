@@ -143,16 +143,16 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 shadow-sm flex items-center justify-center ring-1 ring-inset ring-white/50 dark:ring-white/10">
-            <Filter className="h-6 w-6 text-white" />
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+            <Filter className="h-5 w-5 text-slate-600 dark:text-slate-300" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl md:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            <h3 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white">
               Search Questions
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Filter by department, course, semester and exam type.
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">
+              Refine by department, course, semester & exam type.
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             variant="outline"
             size="sm"
             onClick={clearAllFilters}
-            className="sm:self-start rounded-full shadow-sm border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-700"
+            className="sm:self-start rounded-full border-slate-200 dark:border-slate-700 hover:bg-red-50/60 hover:border-red-300 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-700 dark:hover:text-red-400"
           >
             <FilterX className="h-3.5 w-3.5 mr-1.5" /> Reset
           </Button>
@@ -172,18 +172,18 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
         {/* Department */}
         <div className="space-y-2.5">
-          <Label className="text-slate-700 dark:text-slate-300">
-            <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <Label className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium text-sm">
+            <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             Department
           </Label>
           <Select
             value={selectedDepartment}
             onValueChange={handleDepartmentChange}
           >
-            <SelectTrigger className="w-full rounded-xl shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <SelectTrigger className="w-full rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-blue-400 dark:focus:border-blue-500">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-slate-800">
+            <SelectContent className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               {filterOptions.departments.map((department) => (
                 <SelectItem
                   key={department.id}
@@ -203,8 +203,8 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Course */}
         <div className="space-y-2.5">
-          <Label className="text-slate-700 dark:text-slate-300">
-            <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <Label className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium text-sm">
+            <BookOpen className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             Course
           </Label>
           <Select
@@ -212,14 +212,14 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             onValueChange={handleCourseChange}
             disabled={!selectedDepartment}
           >
-            <SelectTrigger className="w-full rounded-xl shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <SelectTrigger className="w-full rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 disabled:opacity-50 focus:ring-0 focus:border-blue-400 dark:focus:border-blue-500">
               <SelectValue
                 placeholder={
                   selectedDepartment ? "All Courses" : "Select Department First"
                 }
               />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-slate-800">
+            <SelectContent className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               {availableCourses.map((course) => (
                 <SelectItem key={course.id} value={course.id.toString()}>
                   {course.name}
@@ -231,15 +231,15 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Semester */}
         <div className="space-y-2.5">
-          <Label className="text-slate-700 dark:text-slate-300">
-            <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          <Label className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium text-sm">
+            <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             Semester
           </Label>
           <Select value={selectedSemester} onValueChange={handleSemesterChange}>
-            <SelectTrigger className="w-full rounded-xl shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <SelectTrigger className="w-full rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-blue-400 dark:focus:border-blue-500">
               <SelectValue placeholder="All Semesters" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-slate-800">
+            <SelectContent className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               {filterOptions.semesters.map((semester) => (
                 <SelectItem key={semester.id} value={semester.id.toString()}>
                   {semester.name}
@@ -251,15 +251,15 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
 
         {/* Exam Type */}
         <div className="space-y-2.5">
-          <Label className="text-slate-700 dark:text-slate-300">
-            <Shapes className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          <Label className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-medium text-sm">
+            <Shapes className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             Exam Type
           </Label>
           <Select value={selectedExamType} onValueChange={handleExamTypeChange}>
-            <SelectTrigger className="w-full rounded-xl shadow-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <SelectTrigger className="w-full rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-blue-400 dark:focus:border-blue-500">
               <SelectValue placeholder="All Exam Types" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl bg-white dark:bg-slate-800">
+            <SelectContent className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
               {filterOptions.examTypes.map((examType) => (
                 <SelectItem key={examType.id} value={examType.id.toString()}>
                   {examType.name}

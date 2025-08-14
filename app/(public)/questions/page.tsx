@@ -94,7 +94,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Filters Section */}
-      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
         <CardContent className="p-6 md:p-8">
           <QuestionFilters filterOptions={filterOptions} />
         </CardContent>
@@ -103,21 +103,18 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
       {/* Results Section */}
       <div className="space-y-6 md:space-y-8">
         {pagination.totalCount > 0 && (
-          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md mb-6 py-0">
+          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm mb-6 py-0">
             <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                  <Library className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                  <Library className="h-5 w-5 text-slate-600 dark:text-slate-300" />
                 </div>
-                <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 font-bold">
-                    {pagination.totalCount}
-                  </span>{" "}
-                  Questions Found
+                <h2 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">
+                  {pagination.totalCount} Questions Found
                 </h2>
               </div>
-              <div className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
-                Page {pagination.currentPage} of {pagination.totalPages}
+              <div className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+                Page {pagination.currentPage} / {pagination.totalPages}
               </div>
             </CardContent>
           </Card>
@@ -128,7 +125,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
           <EmptyState />
         ) : (
           <>
-            <div className="grid gap-6 md:gap-8">
+            <div className="grid gap-5 md:gap-6">
               {questions.map((question) => (
                 <QuestionCard key={question.id} question={question} />
               ))}
