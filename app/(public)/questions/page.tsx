@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { FileText, AlertCircle } from "lucide-react";
+import { FileText, AlertCircle, Library } from "lucide-react";
 import { getPublicQuestions, getFilterOptions } from "./actions";
 import { QuestionFilters } from "./components/question-filters";
 import { QuestionCard } from "./components/question-card";
@@ -103,37 +103,24 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
       {/* Results Section */}
       <div className="space-y-6 md:space-y-8">
         {pagination.totalCount > 0 && (
-          <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
-            <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                    />
-                  </svg>
+          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md mb-6 py-0">
+            <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                  <Library className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+                <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 font-bold">
                     {pagination.totalCount}
                   </span>{" "}
                   Questions Found
                 </h2>
               </div>
-              <div className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
+              <div className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
                 Page {pagination.currentPage} of {pagination.totalPages}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Questions Grid */}
