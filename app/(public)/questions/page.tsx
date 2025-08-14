@@ -93,45 +93,6 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Header Section */}
-      <div className="relative text-center mb-16">
-        {/* Decorative elements */}
-        <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-20 h-20 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-xl -z-10"></div>
-        <div className="absolute top-1/4 right-10 w-16 h-16 bg-purple-100/50 dark:bg-purple-900/20 rounded-full blur-xl -z-10"></div>
-        <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-green-100/50 dark:bg-green-900/20 rounded-full blur-xl -z-10"></div>
-
-        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        </div>
-
-        <h1 className="text-4xl md:text-5xl font-bold mb-5 text-slate-900 dark:text-white">
-          Exam{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
-            Questions
-          </span>
-        </h1>
-
-        <div className="mx-auto w-24 h-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
-
-        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Browse and download exam question papers from our comprehensive
-          collection to help with your exam preparation
-        </p>
-      </div>
-
       {/* Filters Section */}
       <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
         <CardContent className="p-6 md:p-8">
