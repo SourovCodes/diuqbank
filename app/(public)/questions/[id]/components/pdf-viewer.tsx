@@ -36,22 +36,23 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex justify-end mb-3 md:mb-4">
+      <div className="flex justify-end mb-4 md:mb-5">
         <Button
           onClick={toggleFullscreen}
           variant="outline"
-          size="sm"
-          className="flex items-center gap-1 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors rounded-full"
+          className="flex items-center gap-2 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors rounded-full px-5 py-2"
         >
           {isFullscreen ? (
             <>
               <Minimize2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Exit Fullscreen</span>
+              <span className="hidden sm:inline font-medium">
+                Exit Fullscreen
+              </span>
             </>
           ) : (
             <>
               <Maximize2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Fullscreen</span>
+              <span className="hidden sm:inline font-medium">Fullscreen</span>
             </>
           )}
         </Button>
@@ -59,7 +60,7 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-md transition-all duration-300",
+          "relative w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-md transition-all duration-300",
           isFullscreen && "h-screen rounded-none"
         )}
       >

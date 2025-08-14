@@ -28,69 +28,112 @@ function formatDate(date: Date): string {
 export function QuestionCard({ question }: QuestionCardProps) {
   return (
     <Link href={`/questions/${question.id}`} className="block group">
-      <div className="relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-600 hover:-translate-y-0.5 h-full">
-
-        
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all overflow-hidden group hover:shadow-lg h-full hover:-translate-y-1">
         {/* Card Content */}
-        <div className="relative p-4 md:p-5">
-          {/* Header with badges */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 font-medium px-2 py-1"
-              >
-                <Building2 className="size-3 mr-1" />
-                {question.departmentShortName || "N/A"}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="text-xs bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600"
-              >
-                {question.examTypeName || "N/A"}
-              </Badge>
-            </div>
-            
-            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">
-              {question.viewCount} views
-            </div>
-          </div>
-
+        <div className="p-5 md:p-6 relative z-10">
           {/* Course title */}
-          <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100 mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+          <h3 className="font-semibold text-base sm:text-lg text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-4">
             {question.courseName || "Unknown Course"}
           </h3>
 
-          {/* Bottom section */}
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <Badge
-                variant="outline"
-                className="text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 w-fit"
-              >
-                <Calendar className="size-3 mr-1" />
-                {question.semesterName || "N/A"}
-              </Badge>
-              <div className="flex items-center gap-3 text-xs">
-                {question.createdAt && (
-                  <span className="flex items-center">
-                    <Clock className="size-3 mr-1 text-slate-400" />
-                    {formatDate(question.createdAt)}
-                  </span>
-                )}
-                <span title="File size">
-                  {formatFileSize(question.pdfFileSizeInBytes)}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-full px-4 text-xs font-medium opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+          {/* Categorization with badges */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {/* Department badge */}
+            <Badge
+              variant="secondary"
+              className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 flex items-center gap-1"
             >
-              View PDF
-            </Button>
+              <Building2 className="h-3.5 w-3.5" />
+              {question.departmentShortName || "N/A"}
+            </Badge>
+
+            {/* Exam type badge */}
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 flex items-center gap-1">
+              {question.examTypeName || "N/A"}
+            </Badge>
+
+            {/* Semester badge */}
+            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 flex items-center gap-1">
+              <Calendar className="h-3 w-3 mr-1" />
+              {question.semesterName || "N/A"}
+            </Badge>
           </div>
+
+          {/* Stats row */}
+          <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex flex-wrap gap-x-4 gap-y-2 mb-3">
+            {question.createdAt && (
+              <div className="flex items-center">
+                <Clock className="mr-1.5 h-3.5 w-3.5" />
+                <span>{formatDate(question.createdAt)}</span>
+              </div>
+            )}
+            <div className="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mr-1.5 h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              <span>{question.viewCount} views</span>
+            </div>
+            <div className="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mr-1.5 h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span>{formatFileSize(question.pdfFileSizeInBytes)}</span>
+            </div>
+          </div>
+
+          {/* Arrow indicator for clickable card */}
+          <div className="absolute bottom-4 right-4 h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3 w-3 text-blue-700 dark:text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+
+          {/* View PDF button - visible on hover */}
+          <Button
+            size="sm"
+            className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-full px-3 py-1 text-xs font-medium opacity-0 group-hover:opacity-100"
+          >
+            View PDF
+          </Button>
         </div>
       </div>
     </Link>

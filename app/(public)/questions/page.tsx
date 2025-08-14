@@ -4,6 +4,7 @@ import { getPublicQuestions, getFilterOptions } from "./actions";
 import { QuestionFilters } from "./components/question-filters";
 import { QuestionCard } from "./components/question-card";
 import { CustomPagination } from "@/components/custom-pagination";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Questions",
@@ -24,34 +25,38 @@ interface QuestionsPageProps {
 // Empty state component
 function EmptyState() {
   return (
-    <div className="text-center py-16">
-      <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-        <FileText className="h-8 w-8 text-slate-400" />
-      </div>
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-        No questions found
-      </h3>
-      <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-        Try adjusting your filters to see more questions.
-      </p>
-    </div>
+    <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+      <CardContent className="p-10 text-center">
+        <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
+          <FileText className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+          No questions found
+        </h3>
+        <p className="text-slate-600 dark:text-slate-300 max-w-md mx-auto">
+          Try adjusting your filters to see more questions.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
 // Error state component
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="text-center py-16">
-      <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-        <AlertCircle className="h-8 w-8 text-red-500" />
-      </div>
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-        Something went wrong
-      </h3>
-      <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-        {message}
-      </p>
-    </div>
+    <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900/30 shadow-md">
+      <CardContent className="p-10 text-center">
+        <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+          Something went wrong
+        </h3>
+        <p className="text-slate-600 dark:text-slate-300 max-w-md mx-auto">
+          {message}
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -89,39 +94,88 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header Section */}
-      <div className="text-center space-y-4 md:space-y-6">
-        <div className="relative">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100">
-            Exam{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
-              Questions
-            </span>
-          </h1>
-          <div className="mx-auto w-16 md:w-20 h-1 md:h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mt-4"></div>
+      <div className="relative text-center mb-16">
+        {/* Decorative elements */}
+        <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-20 h-20 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-xl -z-10"></div>
+        <div className="absolute top-1/4 right-10 w-16 h-16 bg-purple-100/50 dark:bg-purple-900/20 rounded-full blur-xl -z-10"></div>
+        <div className="absolute bottom-0 left-1/4 w-24 h-24 bg-green-100/50 dark:bg-green-900/20 rounded-full blur-xl -z-10"></div>
+
+        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
         </div>
-        <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+
+        <h1 className="text-4xl md:text-5xl font-bold mb-5 text-slate-900 dark:text-white">
+          Exam{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+            Questions
+          </span>
+        </h1>
+
+        <div className="mx-auto w-24 h-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
+
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
           Browse and download exam question papers from our comprehensive
-          collection
+          collection to help with your exam preparation
         </p>
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 md:p-6 shadow-md">
-        <QuestionFilters filterOptions={filterOptions} />
-      </div>
+      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+        <CardContent className="p-6 md:p-8">
+          <QuestionFilters filterOptions={filterOptions} />
+        </CardContent>
+      </Card>
 
       {/* Results Section */}
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-6 md:space-y-8">
         {pagination.totalCount > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
-                {pagination.totalCount}
-              </span>{" "}
-              Questions Found
-            </h2>
-            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
-              Page {pagination.currentPage} of {pagination.totalPages}
+          <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 opacity-50 -z-10"></div>
+            {/* Decorative accent circle */}
+            <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-green-100/40 dark:bg-green-900/10 -z-10"></div>
+
+            <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-blue-600 dark:text-blue-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+                    {pagination.totalCount}
+                  </span>{" "}
+                  Questions Found
+                </h2>
+              </div>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
+                Page {pagination.currentPage} of {pagination.totalPages}
+              </div>
             </div>
           </div>
         )}
@@ -131,7 +185,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
           <EmptyState />
         ) : (
           <>
-            <div className="grid gap-4 md:gap-6">
+            <div className="grid gap-6 md:gap-8">
               {questions.map((question) => (
                 <QuestionCard key={question.id} question={question} />
               ))}
@@ -139,7 +193,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="flex justify-center pt-6 md:pt-8">
+              <div className="flex justify-center pt-8 md:pt-10">
                 <CustomPagination
                   currentPage={pagination.currentPage}
                   totalPages={pagination.totalPages}
@@ -155,7 +209,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
 
 export default async function QuestionsPage(props: QuestionsPageProps) {
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+    <div className="container mx-auto px-4 py-16">
       <QuestionsContent {...props} />
     </div>
   );
