@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Download, Share2, Calendar, Clock } from "lucide-react";
 
 interface QuestionHeaderProps {
@@ -66,16 +67,15 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-      <div className="p-6 md:p-8">
-        <h1 className="font-semibold text-2xl md:text-3xl text-slate-900 dark:text-white mb-4 leading-snug">
+    <Card className="shadow-sm">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-2xl md:text-3xl font-semibold leading-snug">
           {question.courseName || "Unknown Course"}
-        </h1>
-        <div className="flex flex-wrap gap-2 mb-5">
-          <Badge
-            variant="secondary"
-            className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-          >
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-5">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary" className="flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5" />
             {question.departmentShortName || "N/A"}
           </Badge>
@@ -90,17 +90,17 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             {question.viewCount} views
           </Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-600 dark:text-slate-300 mb-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
           {question.createdAt && (
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-slate-400" />
+              <Clock className="h-4 w-4" />
               {formatDate(question.createdAt)}
             </div>
           )}
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 text-slate-400"
+              className="h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -118,7 +118,7 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             <div className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-slate-400"
+                className="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -144,12 +144,12 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
           <Button
             variant="outline"
             onClick={handleShare}
-            className="rounded-full h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="rounded-full h-10 border-slate-200 dark:border-slate-700 bg-background hover:bg-accent hover:text-accent-foreground"
           >
             <Share2 className="h-4 w-4 mr-2" /> Share
           </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -94,8 +94,8 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Filters Section */}
-      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
-        <CardContent className="p-6 md:p-8">
+      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm gap-4 py-4">
+        <CardContent className="px-6 md:px-8 py-0">
           <QuestionFilters filterOptions={filterOptions} />
         </CardContent>
       </Card>
