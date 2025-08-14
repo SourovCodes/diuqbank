@@ -92,7 +92,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
   const { questions, pagination } = questionsResult.data!;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 md:space-y-8">
       {/* Filters Section */}
       <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm py-4">
         <CardContent className="px-4 py-0">
@@ -101,19 +101,19 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
       </Card>
 
       {/* Results Section */}
-      <div className="space-y-4">
+      <div className="space-y-6 md:space-y-8">
         {pagination.totalCount > 0 && (
-          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm py-3">
-            <CardContent className="px-4 py-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                  <Library className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm py-6">
+            <CardContent className="px-6 py-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                  <Library className="h-5 w-5 text-slate-600 dark:text-slate-300" />
                 </div>
-                <h2 className="text-sm font-medium text-slate-900 dark:text-white">
+                <h2 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">
                   {pagination.totalCount} Questions Found
                 </h2>
               </div>
-              <div className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+              <div className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
                 Page {pagination.currentPage} / {pagination.totalPages}
               </div>
             </CardContent>
@@ -125,7 +125,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
           <EmptyState />
         ) : (
           <>
-            <div className="grid gap-4">
+            <div className="grid gap-5 md:gap-6">
               {questions.map((question) => (
                 <QuestionCard key={question.id} question={question} />
               ))}
@@ -133,7 +133,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="flex justify-center pt-6">
+              <div className="flex justify-center pt-8 md:pt-10">
                 <CustomPagination
                   currentPage={pagination.currentPage}
                   totalPages={pagination.totalPages}

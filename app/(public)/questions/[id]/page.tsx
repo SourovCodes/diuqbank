@@ -60,16 +60,20 @@ async function QuestionDetailContent({ params }: QuestionDetailPageProps) {
   const pdfUrl = `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${question.pdfKey}`;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 md:space-y-8">
       {/* Question Header */}
       <QuestionHeader question={question} pdfUrl={pdfUrl} />
 
       {/* PDF Viewer Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Question Paper
-        </h2>
-        <PDFViewer url={pdfUrl} />
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 py-6">
+        <div className="px-6">
+          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white mb-4">
+            Question Paper
+          </h2>
+        </div>
+        <div className="px-6">
+          <PDFViewer url={pdfUrl} />
+        </div>
       </div>
     </div>
   );
