@@ -72,14 +72,17 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
           {question.courseName || "Unknown Course"}
         </h1>
         <div className="flex flex-wrap gap-2 mb-5">
-          <Badge variant="secondary" className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <Badge
+            variant="secondary"
+            className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+          >
             <Building2 className="h-3.5 w-3.5" />
             {question.departmentShortName || "N/A"}
           </Badge>
           <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 flex items-center gap-1.5">
             {question.examTypeName || "N/A"}
           </Badge>
-            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 flex items-center gap-1.5">
+          <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
             {question.semesterName || "N/A"}
           </Badge>
@@ -95,25 +98,54 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             {formatFileSize(question.pdfFileSizeInBytes)}
           </div>
           {question.userName && (
             <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
               {question.userName}
             </div>
           )}
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={handleDownload} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow rounded-full px-6 h-10">
+          <Button
+            onClick={handleDownload}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow rounded-full px-6 h-10"
+          >
             <Download className="h-4 w-4 mr-2" /> Download PDF
           </Button>
-          <Button variant="outline" onClick={handleShare} className="rounded-full h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700">
+          <Button
+            variant="outline"
+            onClick={handleShare}
+            className="rounded-full h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
+          >
             <Share2 className="h-4 w-4 mr-2" /> Share
           </Button>
         </div>

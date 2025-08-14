@@ -36,11 +36,11 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
 
   return (
     <div className={cn("w-full", className)}>
-    <div className="flex justify-end mb-4 md:mb-5">
+      <div className="flex justify-end mb-4 md:mb-5">
         <Button
           onClick={toggleFullscreen}
           variant="outline"
-      className="flex items-center gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full h-10 px-5"
+          className="flex items-center gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full h-10 px-5"
         >
           {isFullscreen ? (
             <>
