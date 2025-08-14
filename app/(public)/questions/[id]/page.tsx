@@ -69,14 +69,13 @@ async function QuestionDetailContent({ params }: QuestionDetailPageProps) {
 
       {/* PDF Viewer Section */}
       <div className="space-y-4 md:space-y-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 md:p-6 shadow-md">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 md:mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 md:p-6 shadow-sm">
+          <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4 md:mb-5 flex items-center gap-2">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
               Question
-            </span>{" "}
-            Paper
+            </span>
+            <span>Paper</span>
           </h2>
-
           <PDFViewer url={pdfUrl} />
         </div>
       </div>
