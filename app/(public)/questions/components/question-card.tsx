@@ -28,9 +28,8 @@ function formatDate(date: Date): string {
 export function QuestionCard({ question }: QuestionCardProps) {
   return (
     <Link href={`/questions/${question.id}`} className="block group">
-      <div className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10 dark:shadow-blue-500/5 dark:hover:shadow-blue-500/20 transition-all duration-300 hover:border-blue-300/50 dark:hover:border-blue-600/50 hover:-translate-y-1 h-full">
-        {/* Gradient overlay */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -translate-y-8 translate-x-8" />
+      <div className="relative bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-600 hover:-translate-y-0.5 h-full">
+
         
         {/* Card Content */}
         <div className="relative p-4 md:p-5">
@@ -39,26 +38,26 @@ export function QuestionCard({ question }: QuestionCardProps) {
             <div className="flex flex-wrap items-center gap-2">
               <Badge
                 variant="secondary"
-                className="text-xs bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-200/50 dark:from-blue-900/30 dark:to-cyan-900/30 dark:text-blue-300 dark:border-blue-700/50 font-medium px-2 py-1"
+                className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 font-medium px-2 py-1"
               >
                 <Building2 className="size-3 mr-1" />
                 {question.departmentShortName || "N/A"}
               </Badge>
               <Badge
                 variant="outline"
-                className="text-xs bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50"
+                className="text-xs bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600"
               >
                 {question.examTypeName || "N/A"}
               </Badge>
             </div>
             
-            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-700/50 px-2 py-1 rounded-full">
+            <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">
               {question.viewCount} views
             </div>
           </div>
 
           {/* Course title */}
-          <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100 mb-3 line-clamp-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-cyan-500 dark:group-hover:from-blue-400 dark:group-hover:to-cyan-300 transition-all duration-300">
+          <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100 mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
             {question.courseName || "Unknown Course"}
           </h3>
 
@@ -67,7 +66,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <Badge
                 variant="outline"
-                className="text-xs bg-slate-50/50 dark:bg-slate-800/50 border-slate-200/50 dark:border-slate-600/50 w-fit"
+                className="text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 w-fit"
               >
                 <Calendar className="size-3 mr-1" />
                 {question.semesterName || "N/A"}
@@ -87,7 +86,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
             <Button
               size="sm"
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg transition-all duration-300 rounded-full px-4 text-xs font-medium opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 rounded-full px-4 text-xs font-medium opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
             >
               View PDF
             </Button>

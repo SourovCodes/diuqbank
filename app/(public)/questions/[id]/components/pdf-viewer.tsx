@@ -41,7 +41,7 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
           onClick={toggleFullscreen}
           variant="outline"
           size="sm"
-          className="flex items-center gap-1 bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors rounded-full"
+          className="flex items-center gap-1 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:border-blue-700 dark:hover:text-blue-400 transition-colors rounded-full"
         >
           {isFullscreen ? (
             <>
@@ -59,7 +59,7 @@ export function PDFViewer({ url, className }: PDFViewerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full rounded-2xl overflow-hidden border border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-900 shadow-lg shadow-blue-500/5 dark:shadow-blue-500/10 transition-all duration-300",
+          "relative w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-md transition-all duration-300",
           isFullscreen && "h-screen rounded-none"
         )}
       >

@@ -133,7 +133,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
       {/* Filter Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+          <span className="text-blue-600 dark:text-blue-400">
             Filter
           </span>{" "}
           Questions
@@ -143,7 +143,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             variant="outline"
             size="sm"
             onClick={clearAllFilters}
-            className="text-xs bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-700 dark:hover:text-red-400 transition-colors rounded-full"
+            className="text-xs bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-700 dark:hover:text-red-400 transition-colors rounded-full"
           >
             <FilterX className="h-3 w-3 mr-1" />
             Clear All
@@ -159,7 +159,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             Department
           </label>
           <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
-            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
+            <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -187,7 +187,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             onValueChange={handleCourseChange}
             disabled={!selectedDepartment}
           >
-            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl disabled:opacity-50">
+            <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl disabled:opacity-50">
               <SelectValue placeholder={selectedDepartment ? "All Courses" : "Select Department First"} />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -206,7 +206,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             Semester
           </label>
           <Select value={selectedSemester} onValueChange={handleSemesterChange}>
-            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
+            <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl">
               <SelectValue placeholder="All Semesters" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -225,7 +225,7 @@ export function QuestionFilters({ filterOptions }: QuestionFiltersProps) {
             Exam Type
           </label>
           <Select value={selectedExamType} onValueChange={handleExamTypeChange}>
-            <SelectTrigger className="w-full bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 rounded-xl">
+            <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-xl">
               <SelectValue placeholder="All Exam Types" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">

@@ -95,21 +95,21 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white/70 backdrop-blur-sm dark:bg-slate-800/70 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-4 md:p-6 shadow-lg shadow-blue-500/5 dark:shadow-blue-500/10">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 md:p-6 shadow-md">
         <QuestionFilters filterOptions={filterOptions} />
       </div>
 
       {/* Results Section */}
       <div className="space-y-4 md:space-y-6">
         {pagination.totalCount > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
             <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
                 {pagination.totalCount}
               </span>{" "}
               Questions Found
             </h2>
-            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-700/50 px-3 py-1 rounded-full">
+            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
               Page {pagination.currentPage} of {pagination.totalPages}
             </div>
           </div>
@@ -129,7 +129,7 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
             {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-center pt-6 md:pt-8">
-                <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg shadow-blue-500/5 dark:shadow-blue-500/10">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-md">
                   <CustomPagination
                     currentPage={pagination.currentPage}
                     totalPages={pagination.totalPages}
@@ -146,10 +146,8 @@ async function QuestionsContent({ searchParams }: QuestionsPageProps) {
 
 export default async function QuestionsPage(props: QuestionsPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
-        <QuestionsContent {...props} />
-      </div>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+      <QuestionsContent {...props} />
     </div>
   );
 }

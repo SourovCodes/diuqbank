@@ -57,9 +57,7 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
   };
 
   return (
-    <div className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-lg shadow-blue-500/5 dark:shadow-blue-500/10">
-      {/* Gradient overlay */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10 rounded-full blur-3xl -translate-y-16 translate-x-16" />
+    <div className="relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-md">
       
       <div className="relative p-6 md:p-8">
         <div className="space-y-4 md:space-y-6">
@@ -68,20 +66,20 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge
                 variant="secondary"
-                className="bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border-blue-200/50 dark:from-blue-900/30 dark:to-cyan-900/30 dark:text-blue-300 dark:border-blue-700/50 font-medium px-3 py-1.5"
+                className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 font-medium px-3 py-1.5"
               >
                 <Building2 className="h-3 w-3 mr-1" />
                 {question.departmentShortName || "N/A"}
               </Badge>
               <Badge
                 variant="outline"
-                className="bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 px-3 py-1.5"
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 px-3 py-1.5"
               >
                 {question.examTypeName || "N/A"}
               </Badge>
               <Badge
                 variant="outline"
-                className="bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 px-3 py-1.5"
+                className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 px-3 py-1.5"
               >
                 {question.semesterName || "N/A"}
               </Badge>
@@ -109,7 +107,7 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <Button
               onClick={handleDownload}
               size="lg"
@@ -123,7 +121,7 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
               variant="outline"
               size="lg"
               onClick={handleShare}
-              className="bg-white/50 dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/50 hover:bg-slate-50 dark:hover:bg-slate-600/50 rounded-full font-medium"
+              className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-full font-medium"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share Question
