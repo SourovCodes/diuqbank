@@ -17,25 +17,23 @@ export default async function CreateQuestionPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
       {/* Header section */}
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">
+      <div className="mb-8 md:mb-12 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
           Submit{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
             Question
           </span>
         </h1>
         <div className="mx-auto w-20 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
-        <p className="text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
+        <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
           Help fellow students by sharing question papers. Your contributions
           make exam preparation easier for everyone in the DIU community.
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <QuestionForm />
-      </div>
+      <QuestionForm />
     </div>
   );
 }

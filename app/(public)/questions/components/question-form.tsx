@@ -361,16 +361,16 @@ export function QuestionForm({
 
   return (
     <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
-      <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center space-x-4">
+      <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+        <div className="flex items-center space-x-3 sm:space-x-4">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
             <Plus className="h-6 w-6 text-white" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
               {isEditing ? "Edit Question" : "Submit New Question"}
             </CardTitle>
-            <p className="text-slate-600 dark:text-slate-300 mt-1">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-1">
               {isEditing 
                 ? "Update your question details. Changes will be reviewed before publishing."
                 : "Share a question paper to help fellow students. Your submission will be reviewed before publishing."
@@ -379,10 +379,10 @@ export function QuestionForm({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-8">
+      <CardContent className="p-4 sm:p-6 lg:p-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <FormField
                 control={form.control}
                 name="departmentId"
@@ -636,7 +636,7 @@ export function QuestionForm({
                       >
                         <label
                           htmlFor="pdf-upload"
-                          className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                          className={`flex flex-col items-center justify-center w-full h-32 sm:h-36 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                             isDragOver
                               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                               : "border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
@@ -651,7 +651,7 @@ export function QuestionForm({
                             <p
                               className={`mb-2 text-sm ${
                                 isDragOver ? "text-blue-600" : "text-slate-500 dark:text-slate-400"
-                              }`}
+                              } text-center`}
                             >
                               <span className="font-semibold">
                                 {isDragOver
@@ -660,12 +660,14 @@ export function QuestionForm({
                                   ? "Click to replace PDF"
                                   : "Click to upload"}
                               </span>
-                              {!isDragOver && " or drag and drop"}
+                              {!isDragOver && (
+                                <span className="hidden sm:inline"> or drag and drop</span>
+                              )}
                             </p>
                             <p
                               className={`text-xs ${
                                 isDragOver ? "text-blue-500" : "text-slate-500 dark:text-slate-400"
-                              }`}
+                              } text-center`}
                             >
                               PDF files only (Max 10MB)
                             </p>
@@ -731,16 +733,17 @@ export function QuestionForm({
               )}
             />
 
-            <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-700">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push("/questions")}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading
                   ? isUploading
                     ? "Uploading..."
