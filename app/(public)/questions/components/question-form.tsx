@@ -361,24 +361,6 @@ export function QuestionForm({
 
   return (
     <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
-      <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6">
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
-            <Plus className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              {isEditing ? "Edit Question" : "Submit New Question"}
-            </CardTitle>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mt-1">
-              {isEditing 
-                ? "Update your question details. Changes will be reviewed before publishing."
-                : "Share a question paper to help fellow students. Your submission will be reviewed before publishing."
-              }
-            </p>
-          </div>
-        </div>
-      </CardHeader>
       <CardContent className="p-4 sm:p-6 lg:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
