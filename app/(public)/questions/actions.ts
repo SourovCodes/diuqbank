@@ -26,6 +26,8 @@ export interface PublicQuestion {
   semesterName: string | null;
   examTypeName: string | null;
   userName: string | null;
+  userId: string | null;
+  userUsername: string | null;
 }
 
 export interface FilterOptions {
@@ -38,7 +40,7 @@ export interface FilterOptions {
 // Get filter options for the dropdowns
 export async function getFilterOptions(): Promise<FilterOptions> {
   try {
-    const [departmentsResult, coursesResult, semestersResult, examTypesResult] = 
+    const [departmentsResult, coursesResult, semestersResult, examTypesResult] =
       await Promise.all([
         db
           .select({
@@ -103,31 +105,39 @@ export async function getPublicQuestions(
 ) {
   try {
     const skip = (page - 1) * pageSize;
-    const whereConditions: SQL<unknown>[] = [eq(questions.status, QuestionStatus.PUBLISHED) as unknown as SQL<unknown>];
+    const whereConditions: SQL<unknown>[] = [
+      eq(questions.status, QuestionStatus.PUBLISHED) as unknown as SQL<unknown>,
+    ];
 
     if (departmentId) {
-      whereConditions.push(eq(questions.departmentId, departmentId) as unknown as SQL<unknown>);
+      whereConditions.push(
+        eq(questions.departmentId, departmentId) as unknown as SQL<unknown>
+      );
     }
 
     if (courseId) {
-      whereConditions.push(eq(questions.courseId, courseId) as unknown as SQL<unknown>);
+      whereConditions.push(
+        eq(questions.courseId, courseId) as unknown as SQL<unknown>
+      );
     }
 
     if (semesterId) {
-      whereConditions.push(eq(questions.semesterId, semesterId) as unknown as SQL<unknown>);
+      whereConditions.push(
+        eq(questions.semesterId, semesterId) as unknown as SQL<unknown>
+      );
     }
 
     if (examTypeId) {
-      whereConditions.push(eq(questions.examTypeId, examTypeId) as unknown as SQL<unknown>);
+      whereConditions.push(
+        eq(questions.examTypeId, examTypeId) as unknown as SQL<unknown>
+      );
     }
 
     // Reduce where clauses into a single SQL condition, avoiding undefined types
     const whereCondition: SQL<unknown> = whereConditions.reduce<SQL<unknown>>(
-      (acc, cond) => (and(acc, cond) as unknown as SQL<unknown>),
+      (acc, cond) => and(acc, cond) as unknown as SQL<unknown>,
       sql`1=1` as unknown as SQL<unknown>
     );
-
-    
 
     const [questionsResult, totalCountResult] = await Promise.all([
       db
@@ -143,6 +153,8 @@ export async function getPublicQuestions(
           semesterName: semesters.name,
           examTypeName: examTypes.name,
           userName: users.name,
+          userId: users.id,
+          userUsername: users.username,
         })
         .from(questions)
         .leftJoin(departments, eq(questions.departmentId, departments.id))
@@ -155,10 +167,7 @@ export async function getPublicQuestions(
         .limit(pageSize)
         .offset(skip),
 
-      db
-        .select({ count: count() })
-        .from(questions)
-        .where(whereCondition),
+      db.select({ count: count() }).from(questions).where(whereCondition),
     ]);
 
     const totalCount = totalCountResult[0].count;
@@ -189,6 +198,8 @@ export async function getPublicQuestion(questionId: number) {
         semesterName: semesters.name,
         examTypeName: examTypes.name,
         userName: users.name,
+        userId: users.id,
+        userUsername: users.username,
       })
       .from(questions)
       .leftJoin(departments, eq(questions.departmentId, departments.id))
@@ -196,10 +207,12 @@ export async function getPublicQuestion(questionId: number) {
       .leftJoin(semesters, eq(questions.semesterId, semesters.id))
       .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
       .leftJoin(users, eq(questions.userId, users.id))
-      .where(and(
-        eq(questions.id, questionId),
-        eq(questions.status, QuestionStatus.PUBLISHED)
-      ))
+      .where(
+        and(
+          eq(questions.id, questionId),
+          eq(questions.status, QuestionStatus.PUBLISHED)
+        )
+      )
       .limit(1);
 
     if (questionResult.length === 0) {

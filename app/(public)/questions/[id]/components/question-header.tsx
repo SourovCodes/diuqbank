@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,8 @@ interface QuestionHeaderProps {
     semesterName: string | null;
     examTypeName: string | null;
     userName: string | null;
+    userId: string | null;
+    userUsername: string | null;
   };
   pdfUrl: string;
 }
@@ -114,8 +117,11 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
             </svg>
             {formatFileSize(question.pdfFileSizeInBytes)}
           </div>
-          {question.userName && (
-            <div className="flex items-center gap-2">
+          {question.userName && question.userUsername && (
+            <Link
+              href={`/contributors/${question.userUsername}`}
+              className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"
@@ -131,7 +137,7 @@ export function QuestionHeader({ question, pdfUrl }: QuestionHeaderProps) {
                 />
               </svg>
               {question.userName}
-            </div>
+            </Link>
           )}
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
