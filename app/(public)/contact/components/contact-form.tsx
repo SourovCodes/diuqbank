@@ -48,10 +48,14 @@ export function ContactForm() {
       const result = await submitContactForm(data);
 
       if (result.success) {
-        toast.success(result.message);
+        toast.success("Message sent successfully! We'll get back to you soon.");
         form.reset();
       } else {
-        toast.error(result.message);
+        if (typeof result.error === "string") {
+          toast.error(result.error);
+        } else {
+          toast.error("Please check the form for errors.");
+        }
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -63,7 +67,10 @@ export function ContactForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 md:space-y-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <FormField
             control={form.control}
