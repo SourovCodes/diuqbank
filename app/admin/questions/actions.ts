@@ -62,13 +62,8 @@ export async function generatePresignedUrl(request: PresignedUrlRequest) {
 
     const validatedFields = presignedUrlSchema.parse(request);
 
-    const timestamp = Date.now();
-    const randomBytes = crypto.randomBytes(8).toString("hex");
-    const sanitizedFileName = validatedFields.fileName.replace(
-      /[^a-zA-Z0-9.-]/g,
-      "_"
-    );
-    const pdfKey = `questions/admin-${timestamp}-${randomBytes}-${sanitizedFileName}`;
+    const randomId = crypto.randomBytes(16).toString("hex");
+    const pdfKey = `questions/${randomId}.pdf`;
 
     // Ensure ContentType matches the AWS SDK typing (string | undefined)
     const contentType: string =
