@@ -361,16 +361,16 @@ export function QuestionForm({
 
   return (
     <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
-            <Plus className="h-5 w-5 text-white" />
+      <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
+            <Plus className="h-6 w-6 text-white" />
           </div>
           <div>
-            <CardTitle className="text-xl text-slate-900 dark:text-white">
+            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
               {isEditing ? "Edit Question" : "Submit New Question"}
             </CardTitle>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+            <p className="text-slate-600 dark:text-slate-300 mt-1">
               {isEditing 
                 ? "Update your question details. Changes will be reviewed before publishing."
                 : "Share a question paper to help fellow students. Your submission will be reviewed before publishing."
@@ -379,10 +379,10 @@ export function QuestionForm({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="departmentId"
@@ -731,7 +731,7 @@ export function QuestionForm({
               )}
             />
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-700">
               <Button
                 type="button"
                 variant="outline"
