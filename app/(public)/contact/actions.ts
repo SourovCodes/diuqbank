@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { db } from "@/db/drizzle";
 import { contactFormSubmissions } from "@/db/schema";
+import { type ActionResult, ok, fail, fromZodError } from "@/lib/action-utils";
 
 // Contact form validation schema
 const ContactFormSchema = z.object({
@@ -13,7 +14,9 @@ const ContactFormSchema = z.object({
 
 export type ContactFormValues = z.infer<typeof ContactFormSchema>;
 
-export async function submitContactForm(formData: ContactFormValues) {
+export async function submitContactForm(
+  formData: ContactFormValues
+): Promise<ActionResult> {
   try {
     // Validate the form data
     const validatedData = ContactFormSchema.parse(formData);
@@ -25,19 +28,13 @@ export async function submitContactForm(formData: ContactFormValues) {
       message: validatedData.message,
     });
 
-    return { success: true, message: "Message sent successfully!" };
+    return ok();
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        message: "Validation failed",
-        errors: error.issues,
-      };
+      return fromZodError(error);
     }
 
-    return {
-      success: false,
-      message: "Failed to send message. Please try again later.",
-    };
+    console.error("Contact form submission error:", error);
+    return fail("Failed to send message. Please try again later.");
   }
 }
