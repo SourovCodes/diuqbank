@@ -57,13 +57,13 @@ export default function ContactPage() {
                   <Mail className="h-5 w-5 mt-0.5 text-blue-500 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-200">
-                      Contact Email
+                      Developer Email
                     </p>
                     <a
-                      href="mailto:info@diuacm.com"
+                      href="mailto:sourov2305101004@diu.edu.bd"
                       className="text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors break-all"
                     >
-                      info@diuacm.com
+                      sourov2305101004@diu.edu.bd
                     </a>
                   </div>
                 </div>
@@ -72,15 +72,15 @@ export default function ContactPage() {
                   <MessageCircle className="h-5 w-5 mt-0.5 text-blue-500 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-200">
-                      Telegram Channel
+                      Facebook Page
                     </p>
                     <a
-                      href="https://t.me/+AH0gg2-V5xIxYjA9"
+                      href="https://fb.com/diuqbank"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors break-all"
                     >
-                      https://t.me/+AH0gg2-V5xIxYjA9
+                      fb.com/diuqbank
                     </a>
                   </div>
                 </div>
@@ -98,7 +98,8 @@ export default function ContactPage() {
               </h2>
               <p className="text-slate-600 dark:text-slate-300 mt-3">
                 We typically respond to inquiries within 24-48 hours during
-                weekdays.
+                weekdays. For urgent matters, please message us directly on our
+                Facebook page.
               </p>
             </CardContent>
           </Card>
