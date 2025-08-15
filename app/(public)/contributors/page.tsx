@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Users, AlertCircle, UserCheck } from "lucide-react";
+import { Users, AlertCircle } from "lucide-react";
 import { getPublicContributors } from "./actions";
 import { ContributorCard } from "./components/contributor-card";
 import { CustomPagination } from "@/components/custom-pagination";
@@ -69,45 +69,21 @@ async function ContributorsContent({ searchParams }: ContributorsPageProps) {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Page Header */}
-      <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm py-6">
-        <CardContent className="px-6 py-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
-                Contributors
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-1">
-                Meet the amazing people who share knowledge with our community
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Header section */}
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+            Contributors
+          </span>
+        </h1>
+        <div className="mx-auto w-20 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
+        <p className="text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
+          Meet the amazing people who share knowledge with our community
+        </p>
+      </div>
 
       {/* Results Section */}
       <div className="space-y-6 md:space-y-8">
-        {pagination.totalCount > 0 && (
-          <Card className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm py-6">
-            <CardContent className="px-6 py-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                  <UserCheck className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-                </div>
-                <h2 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">
-                  {pagination.totalCount} Contributors Found
-                </h2>
-              </div>
-              <div className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
-                Page {pagination.currentPage} / {pagination.totalPages}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Contributors Grid */}
         {contributors.length === 0 ? (
           <EmptyState />
@@ -140,7 +116,7 @@ async function ContributorsContent({ searchParams }: ContributorsPageProps) {
 
 export default async function ContributorsPage(props: ContributorsPageProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-16">
       <ContributorsContent {...props} />
     </div>
   );
