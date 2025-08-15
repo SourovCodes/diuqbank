@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { QuestionForm } from "../components/question-form";
-import { Plus } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Submit Question | DIU QBank",
@@ -11,13 +10,13 @@ export const metadata: Metadata = {
 
 export default async function CreateQuestionPage() {
   const session = await auth();
-  
+
   if (!session?.user) {
     redirect("/login?callbackUrl=/questions/create");
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+    <div className="container mx-auto px-4 py-16">
       {/* Header section */}
       <div className="mb-8 md:mb-12 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">

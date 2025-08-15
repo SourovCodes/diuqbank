@@ -3,7 +3,6 @@ import { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { QuestionForm } from "../../components/question-form";
 import { getQuestionForEdit } from "../../actions";
-import { Pencil } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Edit Question | DIU QBank",
@@ -20,7 +19,7 @@ export default async function EditQuestionPage({
   params,
 }: EditQuestionPageProps) {
   const session = await auth();
-  
+
   if (!session?.user) {
     redirect("/login");
   }
@@ -31,11 +30,11 @@ export default async function EditQuestionPage({
   if (!res.success || !res.data) {
     notFound();
   }
-  
+
   const data = res.data;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+    <div className="container mx-auto px-4 py-16">
       {/* Header section */}
       <div className="mb-8 md:mb-12 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
