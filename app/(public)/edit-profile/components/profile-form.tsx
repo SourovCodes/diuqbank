@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Camera, UserIcon } from "lucide-react";
+import { Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 // Removed unused Select imports since gender/department aren't in schema
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropper } from "@/components/image-cropper";
 import { updateProfile, generatePresignedUrl } from "../actions";
@@ -138,21 +138,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
   };
 
   return (
-    <div className="w-full">
+    <>
       <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
-        <CardHeader className="border-b border-slate-200 dark:border-slate-700">
-          <CardTitle className="flex items-center gap-3 text-xl text-slate-900 dark:text-white">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
-              <UserIcon className="h-5 w-5 text-white" />
-            </div>
-            Edit Profile
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 lg:p-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
               {/* Profile Picture Section */}
-              <div className="flex flex-col items-center space-y-4 pb-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col items-center space-y-4 pb-4 sm:pb-6 border-b border-slate-200 dark:border-slate-700">
                 <div className="relative">
                   <Avatar className="h-32 w-32 ring-4 ring-slate-100 dark:ring-slate-800">
                     <AvatarImage
@@ -186,7 +178,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               </div>
 
               {/* Combined Information Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 <FormField
                   control={form.control}
                   name="name"
@@ -230,18 +222,18 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 />
               </div>
 
-              {/* Removed competitive programming handles not present in schema */}
-
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row justify-between gap-4 pt-8 border-t border-slate-200 dark:border-slate-700">
-                {/* Removed external links that don't exist in this project */}
-
+              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-700">
                 <Button
-                  type="submit"
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.history.back()}
                   disabled={isSaving}
-                  size="lg"
-                  className="min-w-[160px] order-1 sm:order-2 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium"
+                  className="w-full sm:w-auto"
                 >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -263,6 +255,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
           onCancel={() => setShowImageCropper(false)}
         />
       )}
-    </div>
+    </>
   );
 }
