@@ -5,3 +5,4 @@ export * from "./base-repository";
 export * from "./department-repository";
 export * from "./course-repository";
 export * from "./semester-repository";
+export * from "./exam-type-repository";

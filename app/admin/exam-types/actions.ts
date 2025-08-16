@@ -1,14 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/drizzle";
-import { examTypes, questions } from "@/db/schema";
 import {
   examTypeFormSchema,
   type ExamTypeFormValues,
 } from "./schemas/exam-type";
-import { eq, and, ne, count, asc, sql } from "drizzle-orm";
-// using shared helpers for permission and pagination
 import {
   ensurePermission,
   getPaginationMeta,
@@ -17,6 +13,7 @@ import {
   fail,
   fromZodError,
 } from "@/lib/action-utils";
+import { examTypeRepository } from "@/lib/repositories";
 
 // Create a new exam type
 export async function createExamType(values: ExamTypeFormValues) {
@@ -27,27 +24,16 @@ export async function createExamType(values: ExamTypeFormValues) {
 
     const validatedFields = examTypeFormSchema.parse(values);
 
-    // Check if exam type with same name already exists (case insensitive)
-    const existingExamType = await db
-      .select()
-      .from(examTypes)
-      .where(sql`LOWER(${examTypes.name}) = LOWER(${validatedFields.name})`)
-      .limit(1);
+    // Check if exam type with same name already exists globally
+    const isNameTaken = await examTypeRepository.isNameTaken(validatedFields.name);
 
-    if (existingExamType.length > 0) {
+    if (isNameTaken) {
       return fail("An exam type with this name already exists.");
     }
 
-    const [insertResult] = await db.insert(examTypes).values({
+    const examType = await examTypeRepository.create({
       name: validatedFields.name,
     });
-
-    // Fetch the created exam type
-    const [examType] = await db
-      .select()
-      .from(examTypes)
-      .where(eq(examTypes.id, insertResult.insertId))
-      .limit(1);
 
     revalidatePath("/admin/exam-types");
     return ok(examType);
@@ -70,43 +56,28 @@ export async function updateExamType(id: string, values: ExamTypeFormValues) {
     const numericId = parsed.data!;
 
     // Check if exam type exists
-    const existingExamType = await db
-      .select()
-      .from(examTypes)
-      .where(eq(examTypes.id, numericId))
-      .limit(1);
-
-    if (existingExamType.length === 0) {
+    const existingExamType = await examTypeRepository.findById(numericId);
+    if (!existingExamType) {
       return fail("Exam type not found.");
     }
 
     // Check if another exam type with the same name exists (except this one)
-    const duplicateName = await db
-      .select()
-      .from(examTypes)
-      .where(
-        and(
-          sql`LOWER(${examTypes.name}) = LOWER(${validatedFields.name})`,
-          ne(examTypes.id, numericId)
-        )
-      )
-      .limit(1);
+    const isNameTaken = await examTypeRepository.isNameTaken(
+      validatedFields.name,
+      numericId
+    );
 
-    if (duplicateName.length > 0) {
+    if (isNameTaken) {
       return fail("Another exam type with this name already exists.");
     }
 
-    await db
-      .update(examTypes)
-      .set({ name: validatedFields.name })
-      .where(eq(examTypes.id, numericId));
+    const examType = await examTypeRepository.update(numericId, {
+      name: validatedFields.name,
+    });
 
-    // Fetch the updated exam type
-    const [examType] = await db
-      .select()
-      .from(examTypes)
-      .where(eq(examTypes.id, numericId))
-      .limit(1);
+    if (!examType) {
+      return fail("Failed to update exam type.");
+    }
 
     revalidatePath("/admin/exam-types");
     revalidatePath(`/admin/exam-types/${id}/edit`);
@@ -129,27 +100,22 @@ export async function deleteExamType(id: string) {
     const numericId = parsed.data!;
 
     // Check if exam type exists
-    const existingExamType = await db
-      .select()
-      .from(examTypes)
-      .where(eq(examTypes.id, numericId))
-      .limit(1);
-
-    if (existingExamType.length === 0) {
+    const existingExamType = await examTypeRepository.findById(numericId);
+    if (!existingExamType) {
       return fail("Exam type not found.");
     }
 
     // Check if exam type is associated with any questions
-    const associatedQuestions = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.examTypeId, numericId));
+    const questionCount = await examTypeRepository.getQuestionCount(numericId);
 
-    if (associatedQuestions[0].count > 0) {
+    if (questionCount > 0) {
       return fail("Cannot delete exam type that is associated with questions.");
     }
 
-    await db.delete(examTypes).where(eq(examTypes.id, numericId));
+    const deleted = await examTypeRepository.delete(numericId);
+    if (!deleted) {
+      return fail("Failed to delete exam type.");
+    }
 
     revalidatePath("/admin/exam-types");
     return ok();
@@ -170,17 +136,13 @@ export async function getExamType(id: string) {
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    const examType = await db
-      .select()
-      .from(examTypes)
-      .where(eq(examTypes.id, numericId))
-      .limit(1);
+    const examType = await examTypeRepository.findById(numericId);
 
-    if (examType.length === 0) {
+    if (!examType) {
       return fail("Exam type not found");
     }
 
-    return ok(examType[0]);
+    return ok(examType);
   } catch (error) {
     console.error("Error fetching exam type:", error);
     return fail("Something went wrong. Please try again.");
@@ -198,37 +160,15 @@ export async function getPaginatedExamTypes(
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
     if (!perm.success) return perm;
 
-    const skip = (page - 1) * pageSize;
+    const result = await examTypeRepository.findManyWithQuestionCounts({
+      page,
+      pageSize,
+      search,
+    });
 
-    // Build where conditions
-    const whereCondition = search
-      ? sql`LOWER(${examTypes.name}) LIKE LOWER(${"%" + search + "%"})`
-      : undefined;
-
-    // Execute the queries
-    const [examTypesResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: examTypes.id,
-          name: examTypes.name,
-          questionCount: count(questions.id),
-        })
-        .from(examTypes)
-        .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
-        .where(whereCondition)
-        .groupBy(examTypes.id, examTypes.name)
-        .orderBy(asc(examTypes.name))
-        .limit(pageSize)
-        .offset(skip),
-
-      db.select({ count: count() }).from(examTypes).where(whereCondition),
-    ]);
-
-    // Calculate pagination info
-    const totalCount = totalCountResult[0].count;
     return ok({
-      examTypes: examTypesResult,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      examTypes: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching exam types:", error);
@@ -252,38 +192,22 @@ export async function migrateExamTypeQuestions(fromId: string, toId: string) {
 
     // Check if both exam types exist
     const [fromExamType, toExamType] = await Promise.all([
-      db
-        .select()
-        .from(examTypes)
-        .where(eq(examTypes.id, fromIdNumeric))
-        .limit(1),
-      db.select().from(examTypes).where(eq(examTypes.id, toIdNumeric)).limit(1),
+      examTypeRepository.findById(fromIdNumeric),
+      examTypeRepository.findById(toIdNumeric),
     ]);
 
-    if (fromExamType.length === 0 || toExamType.length === 0) {
+    if (!fromExamType || !toExamType) {
       return fail("One or both exam types not found.");
     }
 
-    // Count questions to be migrated
-    const [questionCount] = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.examTypeId, fromIdNumeric));
-
-    if (questionCount.count === 0) {
-      return ok<{ migratedCount: number }>({ migratedCount: 0 });
-    }
-
     // Migrate questions
-    await db
-      .update(questions)
-      .set({ examTypeId: toIdNumeric })
-      .where(eq(questions.examTypeId, fromIdNumeric));
+    const migratedCount = await examTypeRepository.migrateQuestions(
+      fromIdNumeric,
+      toIdNumeric
+    );
 
     revalidatePath("/admin/exam-types");
-    return ok<{ migratedCount: number }>({
-      migratedCount: questionCount.count,
-    });
+    return ok<{ migratedCount: number }>({ migratedCount });
   } catch (error) {
     console.error("Error migrating exam type questions:", error);
     return fail("Something went wrong. Please try again.");
@@ -297,16 +221,7 @@ export async function getAllExamTypes() {
     const perm = await ensurePermission("EXAMTYPES:MANAGE");
     if (!perm.success) return perm;
 
-    const allExamTypes = await db
-      .select({
-        id: examTypes.id,
-        name: examTypes.name,
-        questionCount: count(questions.id),
-      })
-      .from(examTypes)
-      .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
-      .groupBy(examTypes.id, examTypes.name)
-      .orderBy(asc(examTypes.name));
+    const allExamTypes = await examTypeRepository.findAllWithQuestionCounts();
 
     return ok(allExamTypes);
   } catch (error) {
