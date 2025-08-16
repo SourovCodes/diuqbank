@@ -1,28 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/drizzle";
-import {
-  departments,
-  courses,
-  semesters,
-  examTypes,
-  questions,
-  users,
-  QuestionStatus,
-} from "@/db/schema";
-import { sql, desc, eq, and, count, asc } from "drizzle-orm";
-import type { SQL } from "drizzle-orm";
+import { QuestionStatus } from "@/db/schema";
 import { ok, fail, getPaginationMeta, parseNumericId, fromZodError } from "@/lib/action-utils";
 import { auth } from "@/lib/auth";
 import { s3 } from "@/lib/s3";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
-import { 
-  presignedUrlSchema, 
+import {
+  presignedUrlSchema,
   type PresignedUrlRequest
 } from "./schemas/question";
+import {
+  questionRepository,
+  courseRepository,
+  semesterRepository
+} from "@/lib/repositories";
 
 export interface PublicQuestion {
   id: number;
@@ -50,49 +44,7 @@ export interface FilterOptions {
 // Get filter options for the dropdowns
 export async function getFilterOptions(): Promise<FilterOptions> {
   try {
-    const [departmentsResult, coursesResult, semestersResult, examTypesResult] =
-      await Promise.all([
-        db
-          .select({
-            id: departments.id,
-            name: departments.name,
-            shortName: departments.shortName,
-          })
-          .from(departments)
-          .orderBy(departments.name),
-
-        db
-          .select({
-            id: courses.id,
-            name: courses.name,
-            departmentId: courses.departmentId,
-          })
-          .from(courses)
-          .orderBy(courses.name),
-
-        db
-          .select({
-            id: semesters.id,
-            name: semesters.name,
-          })
-          .from(semesters)
-          .orderBy(semesters.name),
-
-        db
-          .select({
-            id: examTypes.id,
-            name: examTypes.name,
-          })
-          .from(examTypes)
-          .orderBy(examTypes.name),
-      ]);
-
-    return {
-      departments: departmentsResult,
-      courses: coursesResult,
-      semesters: semestersResult,
-      examTypes: examTypesResult,
-    };
+    return await questionRepository.getFilterOptions();
   } catch (error) {
     console.error("Error fetching filter options:", error);
     return {
@@ -114,76 +66,18 @@ export async function getPublicQuestions(
   examTypeId?: number
 ) {
   try {
-    const skip = (page - 1) * pageSize;
-    const whereConditions: SQL<unknown>[] = [
-      eq(questions.status, QuestionStatus.PUBLISHED) as unknown as SQL<unknown>,
-    ];
+    const result = await questionRepository.findPublishedQuestions({
+      page,
+      pageSize,
+      departmentId,
+      courseId,
+      semesterId,
+      examTypeId,
+    });
 
-    if (departmentId) {
-      whereConditions.push(
-        eq(questions.departmentId, departmentId) as unknown as SQL<unknown>
-      );
-    }
-
-    if (courseId) {
-      whereConditions.push(
-        eq(questions.courseId, courseId) as unknown as SQL<unknown>
-      );
-    }
-
-    if (semesterId) {
-      whereConditions.push(
-        eq(questions.semesterId, semesterId) as unknown as SQL<unknown>
-      );
-    }
-
-    if (examTypeId) {
-      whereConditions.push(
-        eq(questions.examTypeId, examTypeId) as unknown as SQL<unknown>
-      );
-    }
-
-    // Reduce where clauses into a single SQL condition, avoiding undefined types
-    const whereCondition: SQL<unknown> = whereConditions.reduce<SQL<unknown>>(
-      (acc, cond) => and(acc, cond) as unknown as SQL<unknown>,
-      sql`1=1` as unknown as SQL<unknown>
-    );
-
-    const [questionsResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: questions.id,
-          pdfKey: questions.pdfKey,
-          pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-          viewCount: questions.viewCount,
-          createdAt: questions.createdAt,
-          departmentName: departments.name,
-          departmentShortName: departments.shortName,
-          courseName: courses.name,
-          semesterName: semesters.name,
-          examTypeName: examTypes.name,
-          userName: users.name,
-          userId: users.id,
-          userUsername: users.username,
-        })
-        .from(questions)
-        .leftJoin(departments, eq(questions.departmentId, departments.id))
-        .leftJoin(courses, eq(questions.courseId, courses.id))
-        .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-        .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-        .leftJoin(users, eq(questions.userId, users.id))
-        .where(whereCondition)
-        .orderBy(desc(questions.createdAt))
-        .limit(pageSize)
-        .offset(skip),
-
-      db.select({ count: count() }).from(questions).where(whereCondition),
-    ]);
-
-    const totalCount = totalCountResult[0].count;
     return ok({
-      questions: questionsResult,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      questions: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching public questions:", error);
@@ -194,42 +88,13 @@ export async function getPublicQuestions(
 // Get a single published question by ID
 export async function getPublicQuestion(questionId: number) {
   try {
-    const questionResult = await db
-      .select({
-        id: questions.id,
-        pdfKey: questions.pdfKey,
-        pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-        viewCount: questions.viewCount,
-        createdAt: questions.createdAt,
-        status: questions.status,
-        departmentName: departments.name,
-        departmentShortName: departments.shortName,
-        courseName: courses.name,
-        semesterName: semesters.name,
-        examTypeName: examTypes.name,
-        userName: users.name,
-        userId: users.id,
-        userUsername: users.username,
-      })
-      .from(questions)
-      .leftJoin(departments, eq(questions.departmentId, departments.id))
-      .leftJoin(courses, eq(questions.courseId, courses.id))
-      .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-      .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-      .leftJoin(users, eq(questions.userId, users.id))
-      .where(
-        and(
-          eq(questions.id, questionId),
-          eq(questions.status, QuestionStatus.PUBLISHED)
-        )
-      )
-      .limit(1);
+    const questionResult = await questionRepository.findPublishedById(questionId);
 
-    if (questionResult.length === 0) {
+    if (!questionResult) {
       return fail("Question not found or not published");
     }
 
-    return ok(questionResult[0]);
+    return ok(questionResult);
   } catch (error) {
     console.error("Error fetching question:", error);
     return fail("Something went wrong. Please try again.");
@@ -239,12 +104,11 @@ export async function getPublicQuestion(questionId: number) {
 // Increment view count when a question is viewed
 export async function incrementViewCount(questionId: number) {
   try {
-    await db
-      .update(questions)
-      .set({
-        viewCount: sql`${questions.viewCount} + 1`,
-      })
-      .where(eq(questions.id, questionId));
+    const updated = await questionRepository.incrementViewCount(questionId);
+
+    if (!updated) {
+      return fail("Failed to update view count");
+    }
 
     return ok("View count updated");
   } catch (error) {
@@ -312,24 +176,18 @@ export async function createQuestionPublic(values: CreateQuestionPublicParams) {
     }
 
     // Check for duplicate question
-    const existingQuestion = await db
-      .select({ id: questions.id })
-      .from(questions)
-      .where(
-        and(
-          eq(questions.departmentId, values.departmentId),
-          eq(questions.semesterId, values.semesterId),
-          eq(questions.courseId, values.courseId),
-          eq(questions.examTypeId, values.examTypeId)
-        )
-      )
-      .limit(1);
+    const isDuplicate = await questionRepository.isDuplicateQuestion(
+      values.departmentId,
+      values.courseId,
+      values.semesterId,
+      values.examTypeId
+    );
 
-    if (existingQuestion.length > 0) {
+    if (isDuplicate) {
       return fail("A question with this combination already exists.");
     }
 
-    const [insertResult] = await db.insert(questions).values({
+    const question = await questionRepository.create({
       userId: session.user.id,
       departmentId: values.departmentId,
       courseId: values.courseId,
@@ -341,7 +199,7 @@ export async function createQuestionPublic(values: CreateQuestionPublicParams) {
     });
 
     revalidatePath("/questions");
-    return ok({ id: insertResult.insertId });
+    return ok({ id: question.id });
   } catch (error) {
     console.error("Error creating question:", error);
     return fail("Something went wrong. Please try again.");
@@ -351,11 +209,7 @@ export async function createQuestionPublic(values: CreateQuestionPublicParams) {
 // Get dropdown data for public users
 export async function getDepartmentsForDropdownPublic() {
   try {
-    const allDepartments = await db
-      .select({ id: departments.id, name: departments.shortName })
-      .from(departments)
-      .orderBy(asc(departments.shortName));
-
+    const allDepartments = await questionRepository.getDepartmentOptions();
     return ok(allDepartments);
   } catch (error) {
     console.error("Error fetching departments:", error);
@@ -365,12 +219,7 @@ export async function getDepartmentsForDropdownPublic() {
 
 export async function getCoursesForDropdownPublic(departmentId: number) {
   try {
-    const allCourses = await db
-      .select({ id: courses.id, name: courses.name })
-      .from(courses)
-      .where(eq(courses.departmentId, departmentId))
-      .orderBy(asc(courses.name));
-
+    const allCourses = await questionRepository.getCourseOptions(departmentId);
     return ok(allCourses);
   } catch (error) {
     console.error("Error fetching courses:", error);
@@ -380,11 +229,7 @@ export async function getCoursesForDropdownPublic(departmentId: number) {
 
 export async function getSemestersForDropdownPublic() {
   try {
-    const allSemesters = await db
-      .select({ id: semesters.id, name: semesters.name })
-      .from(semesters)
-      .orderBy(asc(semesters.name));
-
+    const allSemesters = await questionRepository.getSemesterOptions();
     return ok(allSemesters);
   } catch (error) {
     console.error("Error fetching semesters:", error);
@@ -394,11 +239,7 @@ export async function getSemestersForDropdownPublic() {
 
 export async function getExamTypesForDropdownPublic() {
   try {
-    const allExamTypes = await db
-      .select({ id: examTypes.id, name: examTypes.name })
-      .from(examTypes)
-      .orderBy(asc(examTypes.name));
-
+    const allExamTypes = await questionRepository.getExamTypeOptions();
     return ok(allExamTypes);
   } catch (error) {
     console.error("Error fetching exam types:", error);
@@ -418,46 +259,18 @@ export async function getQuestionForEdit(id: string) {
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    const questionData = await db
-      .select({
-        id: questions.id,
-        userId: questions.userId,
-        departmentId: questions.departmentId,
-        courseId: questions.courseId,
-        semesterId: questions.semesterId,
-        examTypeId: questions.examTypeId,
-        status: questions.status,
-        pdfKey: questions.pdfKey,
-        pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-        viewCount: questions.viewCount,
-        isReviewed: questions.isReviewed,
-        createdAt: questions.createdAt,
-        updatedAt: questions.updatedAt,
-        departmentName: departments.name,
-        courseName: courses.name,
-        semesterName: semesters.name,
-        examTypeName: examTypes.name,
-        userName: users.name,
-      })
-      .from(questions)
-      .leftJoin(departments, eq(questions.departmentId, departments.id))
-      .leftJoin(courses, eq(questions.courseId, courses.id))
-      .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-      .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-      .leftJoin(users, eq(questions.userId, users.id))
-      .where(eq(questions.id, numericId))
-      .limit(1);
+    const questionData = await questionRepository.findByIdWithDetails(numericId);
 
-    if (questionData.length === 0) {
+    if (!questionData) {
       return fail("Question not found");
     }
 
     // Check if user owns this question
-    if (questionData[0].userId !== session.user.id) {
+    if (questionData.userId !== session.user.id) {
       return fail("You can only edit your own questions");
     }
 
-    return ok(questionData[0]);
+    return ok(questionData);
   } catch (error) {
     console.error("Error fetching question:", error);
     return fail("Something went wrong. Please try again.");
@@ -477,41 +290,26 @@ export async function updateQuestionPublic(id: string, values: UpdateQuestionPub
     const numericId = parsed.data!;
 
     // Check if question exists and user owns it
-    const existingQuestion = await db
-      .select({ id: questions.id, userId: questions.userId })
-      .from(questions)
-      .where(eq(questions.id, numericId))
-      .limit(1);
-
-    if (existingQuestion.length === 0) {
-      return fail("Question not found.");
-    }
-
-    if (existingQuestion[0].userId !== session.user.id) {
+    const isOwned = await questionRepository.isQuestionOwnedByUser(numericId, session.user.id);
+    if (!isOwned) {
       return fail("You can only edit your own questions");
     }
 
     // Check for duplicate question (except this one)
-    const duplicateQuestion = await db
-      .select({ id: questions.id })
-      .from(questions)
-      .where(
-        and(
-          eq(questions.departmentId, values.departmentId),
-          eq(questions.semesterId, values.semesterId),
-          eq(questions.courseId, values.courseId),
-          eq(questions.examTypeId, values.examTypeId),
-          sql`${questions.id} != ${numericId}`
-        )
-      )
-      .limit(1);
+    const isDuplicate = await questionRepository.isDuplicateQuestion(
+      values.departmentId,
+      values.courseId,
+      values.semesterId,
+      values.examTypeId,
+      numericId
+    );
 
-    if (duplicateQuestion.length > 0) {
+    if (isDuplicate) {
       return fail("Another question with this combination already exists.");
     }
 
     // Build update data
-    const updateData: Partial<typeof questions.$inferInsert> = {
+    const updateData = {
       departmentId: values.departmentId,
       courseId: values.courseId,
       semesterId: values.semesterId,
@@ -521,14 +319,17 @@ export async function updateQuestionPublic(id: string, values: UpdateQuestionPub
 
     // If new PDF is provided, update file info
     if (values.pdfKey && values.pdfFileSizeInBytes) {
-      updateData.pdfKey = values.pdfKey;
-      updateData.pdfFileSizeInBytes = values.pdfFileSizeInBytes;
+      Object.assign(updateData, {
+        pdfKey: values.pdfKey,
+        pdfFileSizeInBytes: values.pdfFileSizeInBytes,
+      });
     }
 
-    await db
-      .update(questions)
-      .set(updateData)
-      .where(eq(questions.id, numericId));
+    const updatedQuestion = await questionRepository.update(numericId, updateData);
+
+    if (!updatedQuestion) {
+      return fail("Failed to update question.");
+    }
 
     revalidatePath("/questions");
     revalidatePath(`/questions/${id}/edit`);
@@ -548,32 +349,19 @@ export async function createCoursePublic(values: { name: string; departmentId: n
     }
 
     // Check if course with same name already exists in the same department (case insensitive)
-    const existingCourse = await db
-      .select()
-      .from(courses)
-      .where(
-        and(
-          eq(courses.departmentId, values.departmentId),
-          sql`LOWER(${courses.name}) = LOWER(${values.name})`
-        )
-      )
-      .limit(1);
+    const isNameTaken = await courseRepository.isNameTakenInDepartment(
+      values.name,
+      values.departmentId
+    );
 
-    if (existingCourse.length > 0) {
+    if (isNameTaken) {
       return fail("A course with this name already exists in this department.");
     }
 
-    const [insertResult] = await db.insert(courses).values({
+    const course = await courseRepository.create({
       name: values.name,
       departmentId: values.departmentId,
     });
-
-    // Fetch the created course
-    const [course] = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, insertResult.insertId))
-      .limit(1);
 
     revalidatePath("/questions");
     return ok(course);
@@ -592,26 +380,15 @@ export async function createSemesterPublic(values: { name: string }) {
     }
 
     // Check if semester with same name already exists globally (case insensitive)
-    const existingSemester = await db
-      .select()
-      .from(semesters)
-      .where(sql`LOWER(${semesters.name}) = LOWER(${values.name})`)
-      .limit(1);
+    const isNameTaken = await semesterRepository.isNameTaken(values.name);
 
-    if (existingSemester.length > 0) {
+    if (isNameTaken) {
       return fail("A semester with this name already exists.");
     }
 
-    const [insertResult] = await db
-      .insert(semesters)
-      .values({ name: values.name });
-
-    // Fetch the created semester
-    const [semester] = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, insertResult.insertId))
-      .limit(1);
+    const semester = await semesterRepository.create({
+      name: values.name,
+    });
 
     revalidatePath("/questions");
     return ok(semester);
