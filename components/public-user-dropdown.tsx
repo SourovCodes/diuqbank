@@ -14,17 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, LayoutDashboard, LogOut, LogIn } from "lucide-react";
 
-interface UserDropdownProps {
-  align?: "start" | "end" | "center";
+interface PublicUserDropdownProps {
+  align?: "start" | "center" | "end";
   sideOffset?: number;
 }
 
-export function UserDropdown({
+export function PublicUserDropdown({
   align = "end",
   sideOffset = 8,
-}: UserDropdownProps) {
+}: PublicUserDropdownProps) {
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -39,6 +39,19 @@ export function UserDropdown({
       .slice(0, 2);
   };
 
+  // If user is not logged in, show login button
+  if (!user) {
+    return (
+      <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Link href="/login">
+          <LogIn className="w-4 h-4 mr-2" />
+          Sign In
+        </Link>
+      </Button>
+    );
+  }
+
+  // If user is logged in, show user dropdown
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -74,17 +87,17 @@ export function UserDropdown({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
+            <Link href="/dashboard">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>Dashboard</span>
+              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/dashboard?tab=profile">
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
               <DropdownMenuShortcut>⇧P</DropdownMenuShortcut>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

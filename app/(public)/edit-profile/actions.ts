@@ -118,7 +118,7 @@ export async function updateProfile(
       })
       .where(eq(users.id, userId));
 
-    revalidatePath("/edit-profile");
+    revalidatePath("/dashboard");
 
     return {
       success: true,

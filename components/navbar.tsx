@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PublicUserDropdown } from "./public-user-dropdown";
 import {
   Moon,
   Sun,
@@ -132,6 +133,7 @@ export default function Navbar() {
                   <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 </Button>
+                <PublicUserDropdown />
               </div>
             </nav>
 
@@ -182,15 +184,20 @@ export default function Navbar() {
           <div className="flex flex-col h-full">
             {/* Menu header with profile or sign in */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMenuOpen(false)}
-                className="absolute top-4 right-4 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
-                aria-label="Close menu"
-              >
-                <X className="h-5 w-5 text-slate-700 dark:text-slate-300" />
-              </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <PublicUserDropdown align="start" />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                </Button>
+              </div>
             </div>
 
             {/* Navigation menu with improved active state */}

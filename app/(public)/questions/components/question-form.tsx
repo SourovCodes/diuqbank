@@ -42,8 +42,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, FileText } from "lucide-react";
 import { DropdownWithAdd } from "@/components/admin/dropdown-with-add";
 
 type DepartmentOption = {
