@@ -1,8 +1,5 @@
 "use server";
 
-import { db } from "@/db/drizzle";
-import { contactFormSubmissions } from "@/db/schema";
-import { desc, eq, like, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   getPaginationMeta,
@@ -10,6 +7,7 @@ import {
   ok,
   fail,
 } from "@/lib/action-utils";
+import { contactFormSubmissionRepository } from "@/lib/repositories";
 
 export async function getPaginatedSubmissions(
   page: number = 1,
@@ -17,37 +15,15 @@ export async function getPaginatedSubmissions(
   search?: string
 ) {
   try {
-    const offset = (page - 1) * pageSize;
-
-    // Base query
-    const baseQuery = db.select().from(contactFormSubmissions);
-
-    // Add search condition if search term is provided
-    const query = search
-      ? baseQuery.where(like(contactFormSubmissions.name, `%${search}%`))
-      : baseQuery;
-
-    // Get total count for pagination (respect search condition)
-    const totalCountResult = await (search
-      ? db
-          .select({ count: sql<number>`count(${contactFormSubmissions.id})` })
-          .from(contactFormSubmissions)
-          .where(like(contactFormSubmissions.name, `%${search}%`))
-      : db
-          .select({ count: sql<number>`count(${contactFormSubmissions.id})` })
-          .from(contactFormSubmissions));
-
-    const totalCount = Number(totalCountResult[0].count ?? 0);
-
-    // Get paginated results
-    const submissions = await query
-      .orderBy(desc(contactFormSubmissions.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+    const result = await contactFormSubmissionRepository.findManyPaginated({
+      page,
+      pageSize,
+      search,
+    });
 
     return ok({
-      submissions,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      submissions: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching contact submissions:", error);
@@ -61,9 +37,11 @@ export async function deleteSubmission(id: string) {
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    await db
-      .delete(contactFormSubmissions)
-      .where(eq(contactFormSubmissions.id, numericId));
+    const deleted = await contactFormSubmissionRepository.delete(numericId);
+    if (!deleted) {
+      return fail("Failed to delete contact submission");
+    }
+
     revalidatePath("/admin/contact-submissions");
     return ok();
   } catch (error) {

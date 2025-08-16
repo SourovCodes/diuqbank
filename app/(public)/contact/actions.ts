@@ -1,9 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { db } from "@/db/drizzle";
-import { contactFormSubmissions } from "@/db/schema";
 import { type ActionResult, ok, fail, fromZodError } from "@/lib/action-utils";
+import { contactFormSubmissionRepository } from "@/lib/repositories";
 
 // Contact form validation schema
 const ContactFormSchema = z.object({
@@ -21,8 +20,8 @@ export async function submitContactForm(
     // Validate the form data
     const validatedData = ContactFormSchema.parse(formData);
 
-    // Save to database
-    await db.insert(contactFormSubmissions).values({
+    // Save to database using repository
+    await contactFormSubmissionRepository.submit({
       name: validatedData.name,
       email: validatedData.email,
       message: validatedData.message,
