@@ -401,6 +401,7 @@ export function QuestionForm({
                     <FormLabel>Course</FormLabel>
                     <FormControl>
                       <DropdownWithAdd
+                        key={`course-${selectedDepartmentId || 'none'}`}
                         label="Course"
                         placeholder={
                           !selectedDepartmentId

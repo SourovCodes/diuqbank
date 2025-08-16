@@ -85,17 +85,9 @@ export function DropdownWithAdd({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentOptions, setCurrentOptions] = useState(options);
-  const justAddedItemRef = useRef<number | null>(null);
 
-  // Keep currentOptions in sync with props, but preserve any newly added items
+  // Keep currentOptions in sync with props
   useEffect(() => {
-    // If we just added an item, don't override the currentOptions
-    if (justAddedItemRef.current !== null) {
-      justAddedItemRef.current = null;
-      return;
-    }
-
-    // Otherwise, sync with props
     setCurrentOptions(options);
   }, [options]);
 
@@ -118,15 +110,9 @@ export function DropdownWithAdd({
         // Update the options first
         setCurrentOptions((prev) => [...prev, newOption]);
 
-        // Mark that we just added an item to prevent useEffect override
-        justAddedItemRef.current = newOption.id;
-
         // Close dialog and reset form first
         setIsDialogOpen(false);
         form.reset();
-
-        // Wait for the next tick to ensure state has updated
-        await new Promise((resolve) => setTimeout(resolve, 10));
 
         // Then select the newly created option
         onValueChange(newOption.id.toString());
