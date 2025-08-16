@@ -1,14 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/drizzle";
-import { semesters, questions } from "@/db/schema";
 import {
   semesterFormSchema,
   type SemesterFormValues,
 } from "./schemas/semester";
-import { eq, and, ne, count, asc, sql } from "drizzle-orm";
-// permission checks handled by ensurePermission helper
 import {
   ensurePermission,
   getPaginationMeta,
@@ -17,7 +13,7 @@ import {
   fail,
   fromZodError,
 } from "@/lib/action-utils";
-// auth is provided via ensurePermission result
+import { semesterRepository } from "@/lib/repositories";
 
 // Create a new semester
 export async function createSemester(values: SemesterFormValues) {
@@ -25,31 +21,19 @@ export async function createSemester(values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
 
-    // Check if semester with same name already exists globally (case insensitive)
-    const existingSemester = await db
-      .select()
-      .from(semesters)
-      .where(sql`LOWER(${semesters.name}) = LOWER(${validatedFields.name})`)
-      .limit(1);
+    // Check if semester with same name already exists globally
+    const isNameTaken = await semesterRepository.isNameTaken(validatedFields.name);
 
-    if (existingSemester.length > 0) {
+    if (isNameTaken) {
       return fail("A semester with this name already exists.");
     }
 
-    const [insertResult] = await db
-      .insert(semesters)
-      .values({ name: validatedFields.name });
-
-    // Fetch the created semester
-    const [semester] = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, insertResult.insertId))
-      .limit(1);
+    const semester = await semesterRepository.create({
+      name: validatedFields.name,
+    });
 
     revalidatePath("/admin/semesters");
     return ok(semester);
@@ -65,7 +49,6 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
 
     const validatedFields = semesterFormSchema.parse(values);
     const parsed = parseNumericId(id, "semester ID");
@@ -73,43 +56,28 @@ export async function updateSemester(id: string, values: SemesterFormValues) {
     const numericId = parsed.data!;
 
     // Check if semester exists
-    const existingSemester = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, numericId))
-      .limit(1);
-
-    if (existingSemester.length === 0) {
+    const existingSemester = await semesterRepository.findById(numericId);
+    if (!existingSemester) {
       return fail("Semester not found.");
     }
 
     // Check if another semester with the same name exists globally (except this one)
-    const duplicateName = await db
-      .select()
-      .from(semesters)
-      .where(
-        and(
-          sql`LOWER(${semesters.name}) = LOWER(${validatedFields.name})`,
-          ne(semesters.id, numericId)
-        )
-      )
-      .limit(1);
+    const isNameTaken = await semesterRepository.isNameTaken(
+      validatedFields.name,
+      numericId
+    );
 
-    if (duplicateName.length > 0) {
+    if (isNameTaken) {
       return fail("Another semester with this name already exists.");
     }
 
-    await db
-      .update(semesters)
-      .set({ name: validatedFields.name })
-      .where(eq(semesters.id, numericId));
+    const semester = await semesterRepository.update(numericId, {
+      name: validatedFields.name,
+    });
 
-    // Fetch the updated semester
-    const [semester] = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, numericId))
-      .limit(1);
+    if (!semester) {
+      return fail("Failed to update semester.");
+    }
 
     revalidatePath("/admin/semesters");
     revalidatePath(`/admin/semesters/${id}/edit`);
@@ -126,34 +94,28 @@ export async function deleteSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if semester exists
-    const existingSemester = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, numericId))
-      .limit(1);
-
-    if (existingSemester.length === 0) {
+    const existingSemester = await semesterRepository.findById(numericId);
+    if (!existingSemester) {
       return fail("Semester not found.");
     }
 
     // Check if semester is associated with any questions
-    const associatedQuestions = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.semesterId, numericId));
+    const questionCount = await semesterRepository.getQuestionCount(numericId);
 
-    if (associatedQuestions[0].count > 0) {
+    if (questionCount > 0) {
       return fail("Cannot delete semester that is associated with questions.");
     }
 
-    await db.delete(semesters).where(eq(semesters.id, numericId));
+    const deleted = await semesterRepository.delete(numericId);
+    if (!deleted) {
+      return fail("Failed to delete semester.");
+    }
 
     revalidatePath("/admin/semesters");
     return ok();
@@ -169,23 +131,18 @@ export async function getSemester(id: string) {
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
 
     const parsed = parseNumericId(id, "semester ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    const semester = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, numericId))
-      .limit(1);
+    const semester = await semesterRepository.findById(numericId);
 
-    if (semester.length === 0) {
+    if (!semester) {
       return fail("Semester not found");
     }
 
-    return ok(semester[0]);
+    return ok(semester);
   } catch (error) {
     console.error("Error fetching semester:", error);
     return fail("Something went wrong. Please try again.");
@@ -202,43 +159,16 @@ export async function getPaginatedSemesters(
     // Check if the user has permission to manage semesters
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
 
-    const skip = (page - 1) * pageSize;
+    const result = await semesterRepository.findManyWithQuestionCounts({
+      page,
+      pageSize,
+      search,
+    });
 
-    // Build where conditions
-    const baseCondition = sql`1=1`;
-    const whereCondition = search
-      ? and(
-          baseCondition,
-          sql`LOWER(${semesters.name}) LIKE LOWER(${"%" + search + "%"})`
-        )
-      : baseCondition;
-
-    // Execute the queries
-    const [semestersResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: semesters.id,
-          name: semesters.name,
-          questionCount: count(questions.id),
-        })
-        .from(semesters)
-        .leftJoin(questions, eq(semesters.id, questions.semesterId))
-        .where(whereCondition)
-        .groupBy(semesters.id, semesters.name)
-        .orderBy(asc(semesters.name))
-        .limit(pageSize)
-        .offset(skip),
-
-      db.select({ count: count() }).from(semesters).where(whereCondition),
-    ]);
-
-    // Calculate pagination info
-    const totalCount = totalCountResult[0].count;
     return ok({
-      semesters: semestersResult,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      semesters: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching semesters:", error);
@@ -253,47 +183,31 @@ export async function migrateSemesterQuestions(fromId: string, toId: string) {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const fromIdNumeric = parseInt(fromId);
-    const toIdNumeric = parseInt(toId);
-
-    if (isNaN(fromIdNumeric) || isNaN(toIdNumeric)) {
-      return fail("Invalid semester IDs.");
-    }
+    const fromParsed = parseNumericId(fromId, "from semester ID");
+    if (!fromParsed.success) return fail(fromParsed.error);
+    const toParsed = parseNumericId(toId, "to semester ID");
+    if (!toParsed.success) return fail(toParsed.error);
+    const fromIdNumeric = fromParsed.data!;
+    const toIdNumeric = toParsed.data!;
 
     // Check if both semesters exist
     const [fromSemester, toSemester] = await Promise.all([
-      db
-        .select()
-        .from(semesters)
-        .where(eq(semesters.id, fromIdNumeric))
-        .limit(1),
-      db.select().from(semesters).where(eq(semesters.id, toIdNumeric)).limit(1),
+      semesterRepository.findById(fromIdNumeric),
+      semesterRepository.findById(toIdNumeric),
     ]);
 
-    if (fromSemester.length === 0 || toSemester.length === 0) {
+    if (!fromSemester || !toSemester) {
       return fail("One or both semesters not found.");
     }
 
-    // Count questions to be migrated
-    const [questionCount] = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.semesterId, fromIdNumeric));
-
-    if (questionCount.count === 0) {
-      return ok<{ migratedCount: number }>({ migratedCount: 0 });
-    }
-
     // Migrate questions
-    await db
-      .update(questions)
-      .set({ semesterId: toIdNumeric })
-      .where(eq(questions.semesterId, fromIdNumeric));
+    const migratedCount = await semesterRepository.migrateQuestions(
+      fromIdNumeric,
+      toIdNumeric
+    );
 
     revalidatePath("/admin/semesters");
-    return ok<{ migratedCount: number }>({
-      migratedCount: questionCount.count,
-    });
+    return ok<{ migratedCount: number }>({ migratedCount });
   } catch (error) {
     console.error("Error migrating semester questions:", error);
     return fail("Something went wrong. Please try again.");
@@ -307,16 +221,7 @@ export async function getAllUserSemesters() {
     const perm = await ensurePermission("SEMESTERS:MANAGE");
     if (!perm.success) return perm;
 
-    const allSemesters = await db
-      .select({
-        id: semesters.id,
-        name: semesters.name,
-        questionCount: count(questions.id),
-      })
-      .from(semesters)
-      .leftJoin(questions, eq(semesters.id, questions.semesterId))
-      .groupBy(semesters.id, semesters.name)
-      .orderBy(asc(semesters.name));
+    const allSemesters = await semesterRepository.findAllWithQuestionCounts();
 
     return ok(allSemesters);
   } catch (error) {
