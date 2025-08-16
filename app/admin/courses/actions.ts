@@ -1,11 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/drizzle";
-import { courses, questions, departments } from "@/db/schema";
 import { courseFormSchema, type CourseFormValues } from "./schemas/course";
-import { eq, and, ne, count, asc, sql } from "drizzle-orm";
-// permission handled by ensurePermission helper
 import {
   ensurePermission,
   getPaginationMeta,
@@ -14,7 +10,7 @@ import {
   fail,
   fromZodError,
 } from "@/lib/action-utils";
-// auth is provided via ensurePermission result
+import { courseRepository, departmentRepository } from "@/lib/repositories";
 
 // Create a new course
 export async function createCourse(values: CourseFormValues) {
@@ -22,38 +18,23 @@ export async function createCourse(values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
-    // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
 
-    // Check if course with same name already exists in the same department (case insensitive)
-    const existingCourse = await db
-      .select()
-      .from(courses)
-      .where(
-        and(
-          eq(courses.departmentId, validatedFields.departmentId),
-          sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`
-        )
-      )
-      .limit(1);
+    // Check if course with same name already exists in the same department
+    const isNameTaken = await courseRepository.isNameTakenInDepartment(
+      validatedFields.name,
+      validatedFields.departmentId
+    );
 
-    if (existingCourse.length > 0) {
+    if (isNameTaken) {
       return fail("A course with this name already exists in this department.");
     }
 
-    const [insertResult] = await db.insert(courses).values({
+    const course = await courseRepository.create({
       name: validatedFields.name,
       departmentId: validatedFields.departmentId,
     });
-
-    // Fetch the created course
-    const [course] = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, insertResult.insertId))
-      .limit(1);
 
     revalidatePath("/admin/courses");
     return ok(course);
@@ -69,8 +50,6 @@ export async function updateCourse(id: string, values: CourseFormValues) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
-    // Authentication check is redundant, relying on ensurePermission
 
     const validatedFields = courseFormSchema.parse(values);
     const parsed = parseNumericId(id, "course ID");
@@ -78,49 +57,32 @@ export async function updateCourse(id: string, values: CourseFormValues) {
     const numericId = parsed.data!;
 
     // Check if course exists
-    const existingCourse = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, numericId))
-      .limit(1);
-
-    if (existingCourse.length === 0) {
+    const existingCourse = await courseRepository.findById(numericId);
+    if (!existingCourse) {
       return fail("Course not found.");
     }
 
     // Check if another course with the same name exists in the same department (except this one)
-    const duplicateName = await db
-      .select()
-      .from(courses)
-      .where(
-        and(
-          eq(courses.departmentId, validatedFields.departmentId),
-          sql`LOWER(${courses.name}) = LOWER(${validatedFields.name})`,
-          ne(courses.id, numericId)
-        )
-      )
-      .limit(1);
+    const isNameTaken = await courseRepository.isNameTakenInDepartment(
+      validatedFields.name,
+      validatedFields.departmentId,
+      numericId
+    );
 
-    if (duplicateName.length > 0) {
+    if (isNameTaken) {
       return fail(
         "Another course with this name already exists in this department."
       );
     }
 
-    await db
-      .update(courses)
-      .set({
-        name: validatedFields.name,
-        departmentId: validatedFields.departmentId,
-      })
-      .where(eq(courses.id, numericId));
+    const course = await courseRepository.update(numericId, {
+      name: validatedFields.name,
+      departmentId: validatedFields.departmentId,
+    });
 
-    // Fetch the updated course
-    const [course] = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, numericId))
-      .limit(1);
+    if (!course) {
+      return fail("Failed to update course.");
+    }
 
     revalidatePath("/admin/courses");
     revalidatePath(`/admin/courses/${id}/edit`);
@@ -137,35 +99,28 @@ export async function deleteCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
-    // Authentication check is redundant, relying on ensurePermission
 
     const parsed = parseNumericId(id, "course ID");
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
     // Check if course exists
-    const existingCourse = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, numericId))
-      .limit(1);
-
-    if (existingCourse.length === 0) {
+    const existingCourse = await courseRepository.findById(numericId);
+    if (!existingCourse) {
       return fail("Course not found.");
     }
 
     // Check if course is associated with any questions
-    const associatedQuestions = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.courseId, numericId));
+    const questionCount = await courseRepository.getQuestionCount(numericId);
 
-    if (associatedQuestions[0].count > 0) {
+    if (questionCount > 0) {
       return fail("Cannot delete course that is associated with questions.");
     }
 
-    await db.delete(courses).where(eq(courses.id, numericId));
+    const deleted = await courseRepository.delete(numericId);
+    if (!deleted) {
+      return fail("Failed to delete course.");
+    }
 
     revalidatePath("/admin/courses");
     return ok();
@@ -181,26 +136,18 @@ export async function getCourse(id: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
-    // Authentication check is redundant, relying on ensurePermission
 
-    const numericId = parseInt(id);
+    const parsed = parseNumericId(id, "course ID");
+    if (!parsed.success) return fail(parsed.error);
+    const numericId = parsed.data!;
 
-    if (isNaN(numericId)) {
-      return fail("Invalid course ID.");
-    }
+    const course = await courseRepository.findById(numericId);
 
-    const course = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, numericId))
-      .limit(1);
-
-    if (course.length === 0) {
+    if (!course) {
       return fail("Course not found");
     }
 
-    return ok(course[0]);
+    return ok(course);
   } catch (error) {
     console.error("Error fetching course:", error);
     return fail("Something went wrong. Please try again.");
@@ -217,59 +164,16 @@ export async function getPaginatedCourses(
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // const session = perm.session;
-    // Authentication check is redundant, relying on ensurePermission
 
-    const skip = (page - 1) * pageSize;
+    const result = await courseRepository.findManyWithDetails({
+      page,
+      pageSize,
+      search,
+    });
 
-    // Build where conditions - only show user's own courses
-    const baseCondition = sql`1=1`;
-    const whereCondition = search
-      ? and(
-          baseCondition,
-          sql`(LOWER(${courses.name}) LIKE LOWER(${"%" + search + "%"}) OR 
-               LOWER(${departments.name}) LIKE LOWER(${"%" + search + "%"}))`
-        )
-      : baseCondition;
-
-    // Execute the queries
-    const [coursesResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: courses.id,
-          name: courses.name,
-          departmentId: courses.departmentId,
-          departmentName: departments.name,
-          departmentShortName: departments.shortName,
-          questionCount: count(questions.id),
-        })
-        .from(courses)
-        .leftJoin(departments, eq(courses.departmentId, departments.id))
-        .leftJoin(questions, eq(courses.id, questions.courseId))
-        .where(whereCondition)
-        .groupBy(
-          courses.id,
-          courses.name,
-          courses.departmentId,
-          departments.name,
-          departments.shortName
-        )
-        .orderBy(asc(courses.name))
-        .limit(pageSize)
-        .offset(skip),
-
-      db
-        .select({ count: count() })
-        .from(courses)
-        .leftJoin(departments, eq(courses.departmentId, departments.id))
-        .where(whereCondition),
-    ]);
-
-    // Calculate pagination info
-    const totalCount = totalCountResult[0].count;
     return ok({
-      courses: coursesResult,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      courses: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching courses:", error);
@@ -283,45 +187,32 @@ export async function migrateCourseQuestions(fromId: string, toId: string) {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // Authentication check is redundant, relying on ensurePermission
 
-    const fromIdNumeric = parseInt(fromId);
-    const toIdNumeric = parseInt(toId);
+    const fromParsed = parseNumericId(fromId, "from course ID");
+    if (!fromParsed.success) return fail(fromParsed.error);
+    const toParsed = parseNumericId(toId, "to course ID");
+    if (!toParsed.success) return fail(toParsed.error);
+    const fromIdNumeric = fromParsed.data!;
+    const toIdNumeric = toParsed.data!;
 
-    if (isNaN(fromIdNumeric) || isNaN(toIdNumeric)) {
-      return fail("Invalid course IDs.");
-    }
-
-    // Check if both courses exist (admin can migrate across any courses)
+    // Check if both courses exist
     const [fromCourse, toCourse] = await Promise.all([
-      db.select().from(courses).where(eq(courses.id, fromIdNumeric)).limit(1),
-      db.select().from(courses).where(eq(courses.id, toIdNumeric)).limit(1),
+      courseRepository.findById(fromIdNumeric),
+      courseRepository.findById(toIdNumeric),
     ]);
 
-    if (fromCourse.length === 0 || toCourse.length === 0) {
+    if (!fromCourse || !toCourse) {
       return fail("One or both courses not found.");
     }
 
-    // Count questions to be migrated
-    const [questionCount] = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.courseId, fromIdNumeric));
-
-    if (questionCount.count === 0) {
-      return ok<{ migratedCount: number }>({ migratedCount: 0 });
-    }
-
     // Migrate questions
-    await db
-      .update(questions)
-      .set({ courseId: toIdNumeric })
-      .where(eq(questions.courseId, fromIdNumeric));
+    const migratedCount = await courseRepository.migrateQuestions(
+      fromIdNumeric,
+      toIdNumeric
+    );
 
     revalidatePath("/admin/courses");
-    return ok<{ migratedCount: number }>({
-      migratedCount: questionCount.count,
-    });
+    return ok<{ migratedCount: number }>({ migratedCount });
   } catch (error) {
     console.error("Error migrating course questions:", error);
     return fail("Something went wrong. Please try again.");
@@ -334,28 +225,8 @@ export async function getAllUserCourses() {
     // Check if the user has permission to manage courses
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
-    // Authentication check is redundant, relying on ensurePermission
 
-    const allCourses = await db
-      .select({
-        id: courses.id,
-        name: courses.name,
-        departmentId: courses.departmentId,
-        departmentName: departments.name,
-        departmentShortName: departments.shortName,
-        questionCount: count(questions.id),
-      })
-      .from(courses)
-      .leftJoin(departments, eq(courses.departmentId, departments.id))
-      .leftJoin(questions, eq(courses.id, questions.courseId))
-      .groupBy(
-        courses.id,
-        courses.name,
-        courses.departmentId,
-        departments.name,
-        departments.shortName
-      )
-      .orderBy(asc(courses.name));
+    const allCourses = await courseRepository.findAllWithDetails();
 
     return ok(allCourses);
   } catch (error) {
@@ -370,17 +241,7 @@ export async function getDepartmentsForDropdown() {
     const perm = await ensurePermission("COURSES:MANAGE");
     if (!perm.success) return perm;
 
-    const allDepartments = await db
-      .select({
-        id: departments.id,
-        name: departments.name,
-        shortName: departments.shortName,
-        questionCount: count(questions.id),
-      })
-      .from(departments)
-      .leftJoin(questions, eq(departments.id, questions.departmentId))
-      .groupBy(departments.id, departments.name, departments.shortName)
-      .orderBy(asc(departments.name));
+    const allDepartments = await departmentRepository.findAllWithQuestionCounts();
 
     return ok(allDepartments);
   } catch (error) {
