@@ -1,14 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/db/drizzle";
-import { departments, questions } from "@/db/schema";
 import {
   departmentFormSchema,
   type DepartmentFormValues,
 } from "./schemas/department";
-import { eq, and, ne, count, asc, sql } from "drizzle-orm";
-// permission checks handled by ensurePermission helper
 import {
   ensurePermission,
   getPaginationMeta,
@@ -17,6 +13,7 @@ import {
   fail,
   fromZodError,
 } from "@/lib/action-utils";
+import { departmentRepository } from "@/lib/repositories";
 
 // Create a new department
 export async function createDepartment(values: DepartmentFormValues) {
@@ -27,30 +24,20 @@ export async function createDepartment(values: DepartmentFormValues) {
 
     const validatedFields = departmentFormSchema.parse(values);
 
-    // Check if department with same name already exists (case insensitive)
-    const existingDepartment = await db
-      .select()
-      .from(departments)
-      .where(
-        sql`LOWER(${departments.name}) = LOWER(${validatedFields.name}) OR LOWER(${departments.shortName}) = LOWER(${validatedFields.shortName})`
-      )
-      .limit(1);
+    // Check if department with same name or short name already exists
+    const isNameTaken = await departmentRepository.isNameOrShortNameTaken(
+      validatedFields.name,
+      validatedFields.shortName
+    );
 
-    if (existingDepartment.length > 0) {
+    if (isNameTaken) {
       return fail("A department with this name or short name already exists.");
     }
 
-    const [insertResult] = await db.insert(departments).values({
+    const department = await departmentRepository.create({
       name: validatedFields.name,
       shortName: validatedFields.shortName,
     });
-
-    // Fetch the created department
-    const [department] = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, insertResult.insertId))
-      .limit(1);
 
     revalidatePath("/admin/departments");
     return ok(department);
@@ -76,48 +63,32 @@ export async function updateDepartment(
     const numericId = parsed.data!;
 
     // Check if department exists
-    const existingDepartment = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, numericId))
-      .limit(1);
-
-    if (existingDepartment.length === 0) {
+    const existingDepartment = await departmentRepository.findById(numericId);
+    if (!existingDepartment) {
       return fail("Department not found.");
     }
 
     // Check if another department with the same name or short name exists (except this one)
-    const duplicateName = await db
-      .select()
-      .from(departments)
-      .where(
-        and(
-          sql`(LOWER(${departments.name}) = LOWER(${validatedFields.name}) OR LOWER(${departments.shortName}) = LOWER(${validatedFields.shortName}))`,
-          ne(departments.id, numericId)
-        )
-      )
-      .limit(1);
+    const isNameTaken = await departmentRepository.isNameOrShortNameTaken(
+      validatedFields.name,
+      validatedFields.shortName,
+      numericId
+    );
 
-    if (duplicateName.length > 0) {
+    if (isNameTaken) {
       return fail(
         "Another department with this name or short name already exists."
       );
     }
 
-    await db
-      .update(departments)
-      .set({
-        name: validatedFields.name,
-        shortName: validatedFields.shortName,
-      })
-      .where(eq(departments.id, numericId));
+    const department = await departmentRepository.update(numericId, {
+      name: validatedFields.name,
+      shortName: validatedFields.shortName,
+    });
 
-    // Fetch the updated department
-    const [department] = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, numericId))
-      .limit(1);
+    if (!department) {
+      return fail("Failed to update department.");
+    }
 
     revalidatePath("/admin/departments");
     revalidatePath(`/admin/departments/${id}/edit`);
@@ -140,29 +111,24 @@ export async function deleteDepartment(id: string) {
     const numericId = parsed.data!;
 
     // Check if department exists
-    const existingDepartment = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, numericId))
-      .limit(1);
-
-    if (existingDepartment.length === 0) {
+    const existingDepartment = await departmentRepository.findById(numericId);
+    if (!existingDepartment) {
       return fail("Department not found.");
     }
 
     // Check if department is associated with any questions
-    const associatedQuestions = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.departmentId, numericId));
+    const questionCount = await departmentRepository.getQuestionCount(numericId);
 
-    if (associatedQuestions[0].count > 0) {
+    if (questionCount > 0) {
       return fail(
         "Cannot delete department that is associated with questions."
       );
     }
 
-    await db.delete(departments).where(eq(departments.id, numericId));
+    const deleted = await departmentRepository.delete(numericId);
+    if (!deleted) {
+      return fail("Failed to delete department.");
+    }
 
     revalidatePath("/admin/departments");
     return ok();
@@ -183,17 +149,13 @@ export async function getDepartment(id: string) {
     if (!parsed.success) return fail(parsed.error);
     const numericId = parsed.data!;
 
-    const department = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, numericId))
-      .limit(1);
+    const department = await departmentRepository.findById(numericId);
 
-    if (department.length === 0) {
+    if (!department) {
       return fail("Department not found");
     }
 
-    return ok(department[0]);
+    return ok(department);
   } catch (error) {
     console.error("Error fetching department:", error);
     return fail("Something went wrong. Please try again.");
@@ -211,42 +173,15 @@ export async function getPaginatedDepartments(
     const perm = await ensurePermission("DEPARTMENTS:MANAGE");
     if (!perm.success) return perm;
 
-    const skip = (page - 1) * pageSize;
+    const result = await departmentRepository.findManyWithQuestionCounts({
+      page,
+      pageSize,
+      search,
+    });
 
-    // Build where conditions
-    const whereCondition = search
-      ? sql`(LOWER(${departments.name}) LIKE LOWER(${
-          "%" + search + "%"
-        }) OR LOWER(${departments.shortName}) LIKE LOWER(${
-          "%" + search + "%"
-        }))`
-      : undefined;
-
-    // Execute the queries
-    const [departmentsResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: departments.id,
-          name: departments.name,
-          shortName: departments.shortName,
-          questionCount: count(questions.id),
-        })
-        .from(departments)
-        .leftJoin(questions, eq(departments.id, questions.departmentId))
-        .where(whereCondition)
-        .groupBy(departments.id, departments.name, departments.shortName)
-        .orderBy(asc(departments.name))
-        .limit(pageSize)
-        .offset(skip),
-
-      db.select({ count: count() }).from(departments).where(whereCondition),
-    ]);
-
-    // Calculate pagination info
-    const totalCount = totalCountResult[0].count;
     return ok({
-      departments: departmentsResult,
-      pagination: getPaginationMeta(totalCount, page, pageSize),
+      departments: result.data,
+      pagination: getPaginationMeta(result.pagination.totalCount, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching departments:", error);
@@ -270,42 +205,22 @@ export async function migrateDepartmentQuestions(fromId: string, toId: string) {
 
     // Check if both departments exist
     const [fromDepartment, toDepartment] = await Promise.all([
-      db
-        .select()
-        .from(departments)
-        .where(eq(departments.id, fromIdNumeric))
-        .limit(1),
-      db
-        .select()
-        .from(departments)
-        .where(eq(departments.id, toIdNumeric))
-        .limit(1),
+      departmentRepository.findById(fromIdNumeric),
+      departmentRepository.findById(toIdNumeric),
     ]);
 
-    if (fromDepartment.length === 0 || toDepartment.length === 0) {
+    if (!fromDepartment || !toDepartment) {
       return fail("One or both departments not found.");
     }
 
-    // Count questions to be migrated
-    const [questionCount] = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.departmentId, fromIdNumeric));
-
-    if (questionCount.count === 0) {
-      return ok<{ migratedCount: number }>({ migratedCount: 0 });
-    }
-
     // Migrate questions
-    await db
-      .update(questions)
-      .set({ departmentId: toIdNumeric })
-      .where(eq(questions.departmentId, fromIdNumeric));
+    const migratedCount = await departmentRepository.migrateQuestions(
+      fromIdNumeric,
+      toIdNumeric
+    );
 
     revalidatePath("/admin/departments");
-    return ok<{ migratedCount: number }>({
-      migratedCount: questionCount.count,
-    });
+    return ok<{ migratedCount: number }>({ migratedCount });
   } catch (error) {
     console.error("Error migrating department questions:", error);
     return fail("Something went wrong. Please try again.");
@@ -319,16 +234,7 @@ export async function getAllDepartments() {
     const perm = await ensurePermission("DEPARTMENTS:MANAGE");
     if (!perm.success) return perm;
 
-    const allDepartments = await db
-      .select({
-        id: departments.id,
-        name: departments.name,
-        questionCount: count(questions.id),
-      })
-      .from(departments)
-      .leftJoin(questions, eq(departments.id, questions.departmentId))
-      .groupBy(departments.id, departments.name)
-      .orderBy(asc(departments.name));
+    const allDepartments = await departmentRepository.findAllWithQuestionCounts();
 
     return ok(allDepartments);
   } catch (error) {
