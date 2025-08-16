@@ -495,7 +495,13 @@ export function QuestionForm({
                           }
                         }}
                         addDialogTitle="Create New Course"
-                        addDialogDescription="Add a new course to the system."
+                        addDialogDescription={
+                          selectedDepartmentId
+                            ? `Add a new course under ${
+                                departments.find(d => d.id === selectedDepartmentId)?.name || "this department"
+                              }.`
+                            : "Add a new course to the system."
+                        }
                       />
                     </FormControl>
                     <FormMessage />
