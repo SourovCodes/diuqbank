@@ -1,11 +1,10 @@
 "use server";
 
-import { db } from "@/db/drizzle";
-import { users, type User } from "@/db/schema";
+import { type User } from "@/db/schema";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { userRepository } from "@/lib/repositories";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "@/lib/s3";
@@ -48,18 +47,13 @@ export async function getCurrentUser(): Promise<ActionResult<User>> {
       return { success: false, error: "Not authenticated" };
     }
 
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
+    const user = await userRepository.findByEmail(session.user.email);
 
-    if (!user || user.length === 0) {
+    if (!user) {
       return { success: false, error: "User not found" };
     }
 
-    // Our users table doesn't include password; return record as-is
-    return { success: true, data: user[0] as User };
+    return { success: true, data: user };
   } catch (error) {
     console.error("Error fetching current user:", error);
     return { success: false, error: "Failed to fetch user data" };
@@ -79,27 +73,20 @@ export async function updateProfile(
     const validatedFields = profileUpdateSchema.parse(values);
 
     // Get current user
-    const currentUser = await db
-      .select({ id: users.id, username: users.username })
-      .from(users)
-      .where(eq(users.email, session.user.email))
-      .limit(1);
+    const currentUser = await userRepository.findByEmail(session.user.email);
 
-    if (!currentUser || currentUser.length === 0) {
+    if (!currentUser) {
       return { success: false, error: "User not found" };
     }
 
-    const userId = currentUser[0].id;
-
     // Check if username is taken by another user
-    if (validatedFields.username !== currentUser[0].username) {
-      const existingUser = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.username, validatedFields.username))
-        .limit(1);
+    if (validatedFields.username !== currentUser.username) {
+      const isUsernameTaken = await userRepository.isUsernameTaken(
+        validatedFields.username,
+        currentUser.id
+      );
 
-      if (existingUser.length > 0 && existingUser[0].id !== userId) {
+      if (isUsernameTaken) {
         return {
           success: false,
           error: "Username is already taken",
@@ -108,15 +95,12 @@ export async function updateProfile(
     }
 
     // Update user profile
-    await db
-      .update(users)
-      .set({
-        name: validatedFields.name,
-        username: validatedFields.username,
-        studentId: validatedFields.studentId ?? null,
-        image: validatedFields.image ?? null,
-      })
-      .where(eq(users.id, userId));
+    await userRepository.update(currentUser.id, {
+      name: validatedFields.name,
+      username: validatedFields.username,
+      studentId: validatedFields.studentId ?? null,
+      image: validatedFields.image ?? null,
+    });
 
     revalidatePath("/dashboard");
 

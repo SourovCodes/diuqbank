@@ -1,5 +1,5 @@
-import { eq, asc, sql, count, and } from "drizzle-orm";
-import { users, questions, type User, type NewUser } from "@/db/schema";
+import { eq, asc, sql, count, and, sum } from "drizzle-orm";
+import { users, questions, type User, type NewUser, QuestionStatus } from "@/db/schema";
 import { db } from "@/db/drizzle";
 import { BaseRepository, type PaginatedFindOptions, type PaginatedResult } from "./base-repository";
 
@@ -67,9 +67,19 @@ export interface IUserRepository {
     findAllWithQuestionCounts(): Promise<UserSummary[]>;
 
     /**
-     * Get question count for a user
-     */
+ * Get question count for a user
+ */
     getQuestionCount(userId: string): Promise<number>;
+
+    /**
+     * Get user statistics (total questions, published, pending, views)
+     */
+    getUserStats(userId: string): Promise<{
+        totalQuestions: number;
+        publishedQuestions: number;
+        pendingQuestions: number;
+        totalViews: number;
+    }>;
 
     /**
      * Generate a new UUID for user creation
@@ -286,6 +296,57 @@ export class UserRepository
             .where(eq(questions.userId, userId));
 
         return result[0].count;
+    }
+
+    async getUserStats(userId: string): Promise<{
+        totalQuestions: number;
+        publishedQuestions: number;
+        pendingQuestions: number;
+        totalViews: number;
+    }> {
+        const stats = await Promise.all([
+            // Total questions
+            db
+                .select({ count: count() })
+                .from(questions)
+                .where(eq(questions.userId, userId)),
+
+            // Published questions
+            db
+                .select({ count: count() })
+                .from(questions)
+                .where(and(
+                    eq(questions.userId, userId),
+                    eq(questions.status, QuestionStatus.PUBLISHED)
+                )),
+
+            // Pending questions
+            db
+                .select({ count: count() })
+                .from(questions)
+                .where(and(
+                    eq(questions.userId, userId),
+                    eq(questions.status, QuestionStatus.PENDING_REVIEW)
+                )),
+
+            // Total views
+            db
+                .select({
+                    totalViews: sum(questions.viewCount)
+                })
+                .from(questions)
+                .where(and(
+                    eq(questions.userId, userId),
+                    eq(questions.status, QuestionStatus.PUBLISHED)
+                )),
+        ]);
+
+        return {
+            totalQuestions: stats[0][0].count,
+            publishedQuestions: stats[1][0].count,
+            pendingQuestions: stats[2][0].count,
+            totalViews: Number(stats[3][0].totalViews) || 0,
+        };
     }
 }
 

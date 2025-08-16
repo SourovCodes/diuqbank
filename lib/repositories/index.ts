@@ -9,3 +9,5 @@ export * from "./exam-type-repository";
 export * from "./user-repository";
 export * from "./contact-form-submission-repository";
 export * from "./question-repository";
+export * from "./dashboard-repository";
+export * from "./contributor-repository";
