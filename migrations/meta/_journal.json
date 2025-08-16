@@ -22,6 +22,13 @@
       "when": 1755152189648,
       "tag": "0002_old_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1755356858466,
+      "tag": "0003_lying_kulan_gath",
+      "breakpoints": true
     }
   ]
 }

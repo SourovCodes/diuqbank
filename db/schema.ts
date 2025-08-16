@@ -4,7 +4,6 @@ import {
   mysqlTable,
   primaryKey,
   varchar,
-  boolean,
   mysqlEnum,
   unique,
 } from "drizzle-orm/mysql-core";
@@ -19,17 +18,10 @@ export const QuestionStatus = {
   REJECTED: "rejected",
 } as const;
 
-export const ReportStatus = {
-  PENDING_REVIEW: "pending review",
-  RESOLVED: "resolved",
-} as const;
-
 export const questionStatusEnum = Object.values(QuestionStatus);
-export const reportStatusEnum = Object.values(ReportStatus);
 
 export type QuestionStatus =
   (typeof QuestionStatus)[keyof typeof QuestionStatus];
-export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 })
@@ -150,26 +142,6 @@ export const questions = mysqlTable("question", {
   pdfKey: varchar("pdfKey", { length: 255 }).notNull(),
   pdfFileSizeInBytes: int("pdfFileSizeInBytes").notNull(),
   viewCount: int("viewCount").notNull().default(0),
-  isReviewed: boolean("isReviewed").notNull().default(false),
-  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt", { mode: "date" })
-    .notNull()
-    .defaultNow()
-    .onUpdateNow(),
-});
-
-export const reports = mysqlTable("report", {
-  id: int("id").primaryKey().autoincrement(),
-  questionId: int("questionId")
-    .notNull()
-    .references(() => questions.id, { onDelete: "cascade" }),
-  userId: varchar("userId", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  content: varchar("content", { length: 1000 }).notNull(),
-  status: mysqlEnum("status", ReportStatus)
-    .notNull()
-    .default(ReportStatus.PENDING_REVIEW),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" })
     .notNull()
@@ -211,9 +183,6 @@ export type NewExamType = InferInsertModel<typeof examTypes>;
 
 export type Question = InferSelectModel<typeof questions>;
 export type NewQuestion = InferInsertModel<typeof questions>;
-
-export type Report = InferSelectModel<typeof reports>;
-export type NewReport = InferInsertModel<typeof reports>;
 
 export type ContactFormSubmission = InferSelectModel<
   typeof contactFormSubmissions
