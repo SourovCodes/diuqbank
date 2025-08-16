@@ -117,7 +117,6 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
             {user.name?.split(" ")[0]}
           </span>
         </h1>
-        <div className="mx-auto w-20 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
         <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
           Manage your profile information and track your question contributions to the DIU community.
         </p>
