@@ -20,7 +20,6 @@ export interface DashboardStats {
     questionsByStatus: {
         published: number;
         pending: number;
-        duplicate: number;
         rejected: number;
     };
 }
@@ -63,7 +62,6 @@ export class DashboardRepository {
             .select({
                 published: sql<number>`SUM(${questions.status} = ${QuestionStatus.PUBLISHED})`,
                 pending: sql<number>`SUM(${questions.status} = ${QuestionStatus.PENDING_REVIEW})`,
-                duplicate: sql<number>`SUM(${questions.status} = ${QuestionStatus.DUPLICATE})`,
                 rejected: sql<number>`SUM(${questions.status} = ${QuestionStatus.REJECTED})`,
             })
             .from(questions);
@@ -78,7 +76,6 @@ export class DashboardRepository {
             questionsByStatus: {
                 published: statusAgg?.published ?? 0,
                 pending: statusAgg?.pending ?? 0,
-                duplicate: statusAgg?.duplicate ?? 0,
                 rejected: statusAgg?.rejected ?? 0,
             },
         };

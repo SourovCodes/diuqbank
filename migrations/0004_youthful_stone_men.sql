@@ -1,0 +1,1 @@
+ALTER TABLE `question` MODIFY COLUMN `status` enum('published','pending review','rejected') NOT NULL DEFAULT 'pending review';

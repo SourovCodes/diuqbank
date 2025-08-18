@@ -13,7 +13,6 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 // Enums for type safety with better autocomplete
 export const QuestionStatus = {
   PUBLISHED: "published",
-  DUPLICATE: "duplicate",
   PENDING_REVIEW: "pending review",
   REJECTED: "rejected",
 } as const;

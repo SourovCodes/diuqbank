@@ -12,7 +12,6 @@ export interface DashboardStats {
   questionsByStatus: {
     published: number;
     pending: number;
-    duplicate: number;
     rejected: number;
   };
 }
