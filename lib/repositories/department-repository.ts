@@ -1,197 +1,287 @@
-import { eq, asc, sql, count } from "drizzle-orm";
-import { departments, questions, type Department, type NewDepartment } from "@/db/schema";
+import { sql } from "drizzle-orm";
+import { departments, type Department, type NewDepartment } from "@/db/schema";
 import { db } from "@/db/drizzle";
-import { BaseRepository, type PaginatedFindOptions, type PaginatedResult } from "./base-repository";
+import {
+  BaseRepository,
+  type PaginatedFindOptions,
+  type PaginatedResult,
+} from "./base-repository";
 
 /**
  * Department-specific repository interface
  */
 export interface IDepartmentRepository {
-    /**
-     * Find department by name (case insensitive)
-     */
-    findByName(name: string): Promise<Department | null>;
+  /**
+   * Find department by name (case insensitive)
+   */
+  findByName(name: string): Promise<Department | null>;
 
-    /**
-     * Find department by short name (case insensitive)
-     */
-    findByShortName(shortName: string): Promise<Department | null>;
+  /**
+   * Find department by short name (case insensitive)
+   */
+  findByShortName(shortName: string): Promise<Department | null>;
 
-    /**
-     * Check if name or short name already exists (case insensitive), optionally excluding an ID
-     */
-    isNameOrShortNameTaken(name: string, shortName: string, excludeId?: number): Promise<boolean>;
+  /**
+   * Check if name or short name already exists (case insensitive), optionally excluding an ID
+   */
+  isNameOrShortNameTaken(
+    name: string,
+    shortName: string,
+    excludeId?: number
+  ): Promise<boolean>;
 
-    /**
-     * Get departments with question counts, paginated
-     */
-    findManyWithQuestionCounts(options: PaginatedFindOptions & { search?: string }): Promise<
-        PaginatedResult<Department & { questionCount: number }>
-    >;
+  /**
+   * Get departments with question counts, paginated
+   */
+  findManyWithQuestionCounts(
+    options: PaginatedFindOptions & { search?: string }
+  ): Promise<PaginatedResult<Department & { questionCount: number }>>;
 
-    /**
-     * Get all departments with question counts (for dropdowns, etc.)
-     */
-    findAllWithQuestionCounts(): Promise<Array<Department & { questionCount: number }>>;
+  /**
+   * Get all departments with question counts (for dropdowns, etc.)
+   */
+  findAllWithQuestionCounts(): Promise<
+    Array<Department & { questionCount: number }>
+  >;
 
-    /**
-     * Get question count for a department
-     */
-    getQuestionCount(departmentId: number): Promise<number>;
+  /**
+   * Get question count for a department
+   */
+  getQuestionCount(departmentId: number): Promise<number>;
 
-    /**
-     * Migrate questions from one department to another
-     */
-    migrateQuestions(fromDepartmentId: number, toDepartmentId: number): Promise<number>;
+  /**
+   * Migrate questions from one department to another
+   */
+  migrateQuestions(
+    fromDepartmentId: number,
+    toDepartmentId: number
+  ): Promise<number>;
 }
 
 /**
  * Department repository implementation
  */
 export class DepartmentRepository
-    extends BaseRepository<Department, NewDepartment, Partial<NewDepartment>, number>
-    implements IDepartmentRepository {
-    protected table = departments;
-    protected idColumn = departments.id;
+  extends BaseRepository<
+    Department,
+    NewDepartment,
+    Partial<NewDepartment>,
+    number
+  >
+  implements IDepartmentRepository
+{
+  protected table = departments;
+  protected idColumn = departments.id;
 
-    async create(input: NewDepartment): Promise<Department> {
-        const [insertResult] = await db.insert(departments).values(input);
+  async create(input: NewDepartment): Promise<Department> {
+    // RAW SQL TEMPLATE:
+    // INSERT INTO department (name, shortName) VALUES (?, ?);
+    // SELECT id, name, shortName FROM department WHERE id = LAST_INSERT_ID();
+    const [insertResult] = await db.execute(
+      sql`INSERT INTO department (name, shortName) VALUES (${input.name}, ${input.shortName})`
+    );
+    const insertId = (insertResult as { insertId: number }).insertId;
+    const [rows] = await db.execute(
+      sql`SELECT id, name, shortName FROM department WHERE id = ${insertId} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return {
+      id: Number(data[0].id),
+      name: String(data[0].name),
+      shortName: String(data[0].shortName),
+    };
+  }
 
-        const [department] = await db
-            .select()
-            .from(departments)
-            .where(eq(departments.id, insertResult.insertId))
-            .limit(1);
-
-        return department;
+  async update(
+    id: number,
+    input: Partial<NewDepartment>
+  ): Promise<Department | null> {
+    // RAW SQL TEMPLATE:
+    // UPDATE department SET name = ?, shortName = ? WHERE id = ?; (only provided fields)
+    const hasName = input.name !== undefined;
+    const hasShort = input.shortName !== undefined;
+    if (!hasName && !hasShort) return this.findById(id);
+    if (hasName && hasShort) {
+      await db.execute(
+        sql`UPDATE department SET name = ${input.name}, shortName = ${input.shortName} WHERE id = ${id}`
+      );
+    } else if (hasName) {
+      await db.execute(
+        sql`UPDATE department SET name = ${input.name} WHERE id = ${id}`
+      );
+    } else if (hasShort) {
+      await db.execute(
+        sql`UPDATE department SET shortName = ${input.shortName} WHERE id = ${id}`
+      );
     }
+    return this.findById(id);
+  }
 
-    async update(id: number, input: Partial<NewDepartment>): Promise<Department | null> {
-        await db.update(departments).set(input).where(eq(departments.id, id));
+  async findByName(name: string): Promise<Department | null> {
+    // RAW SQL TEMPLATE:
+    // SELECT id, name, shortName FROM department WHERE LOWER(name)=LOWER(?) LIMIT 1;
+    const [rows] = await db.execute(
+      sql`SELECT id, name, shortName FROM department WHERE LOWER(name) = LOWER(${name}) LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return null;
+    return {
+      id: Number(data[0].id),
+      name: String(data[0].name),
+      shortName: String(data[0].shortName),
+    };
+  }
 
-        return this.findById(id);
+  async findByShortName(shortName: string): Promise<Department | null> {
+    // RAW SQL TEMPLATE:
+    // SELECT id, name, shortName FROM department WHERE LOWER(shortName)=LOWER(?) LIMIT 1;
+    const [rows] = await db.execute(
+      sql`SELECT id, name, shortName FROM department WHERE LOWER(shortName) = LOWER(${shortName}) LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return null;
+    return {
+      id: Number(data[0].id),
+      name: String(data[0].name),
+      shortName: String(data[0].shortName),
+    };
+  }
+
+  async isNameOrShortNameTaken(
+    name: string,
+    shortName: string,
+    excludeId?: number
+  ): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // SELECT 1 FROM department WHERE (LOWER(name)=LOWER(?) OR LOWER(shortName)=LOWER(?)) [AND id!=?] LIMIT 1;
+    let query = sql`SELECT 1 FROM department WHERE (LOWER(name) = LOWER(${name}) OR LOWER(shortName) = LOWER(${shortName}))`;
+    if (excludeId !== undefined) {
+      query = sql`${query} AND id != ${excludeId}`;
     }
+    query = sql`${query} LIMIT 1`;
+    const [rows] = await db.execute(query);
+    const data = rows as unknown as Array<unknown>;
+    return data.length > 0;
+  }
 
-    async findByName(name: string): Promise<Department | null> {
-        const result = await db
-            .select()
-            .from(departments)
-            .where(sql`LOWER(${departments.name}) = LOWER(${name})`)
-            .limit(1);
+  async findManyWithQuestionCounts(
+    options: PaginatedFindOptions & { search?: string }
+  ): Promise<PaginatedResult<Department & { questionCount: number }>> {
+    const { page, pageSize, search } = options;
+    const offset = (page - 1) * pageSize;
 
-        return result[0] || null;
+    // RAW SQL TEMPLATE (paginated departments with counts):
+    // SELECT d.id,d.name,d.shortName, COUNT(q.id) AS questionCount
+    // FROM department d
+    // LEFT JOIN question q ON d.id = q.departmentId
+    // [WHERE (LOWER(d.name) LIKE LOWER(?) OR LOWER(d.shortName) LIKE LOWER(?))]
+    // GROUP BY d.id,d.name,d.shortName
+    // ORDER BY d.name ASC
+    // LIMIT ? OFFSET ?;
+    const searchFilter = search ? `%${search}%` : null;
+    let whereClause = sql``;
+    if (searchFilter) {
+      whereClause = sql`WHERE (LOWER(d.name) LIKE LOWER(${searchFilter}) OR LOWER(d.shortName) LIKE LOWER(${searchFilter}))`;
     }
+    const [rows] = await db.execute(sql`
+            SELECT d.id, d.name, d.shortName, COUNT(q.id) AS questionCount
+            FROM department d
+            LEFT JOIN question q ON d.id = q.departmentId
+            ${whereClause}
+            GROUP BY d.id, d.name, d.shortName
+            ORDER BY d.name ASC
+            LIMIT ${pageSize} OFFSET ${offset}
+        `);
+    const data = (rows as unknown as Array<Record<string, unknown>>).map(
+      (r) => ({
+        id: Number(r.id),
+        name: String(r.name),
+        shortName: String(r.shortName),
+        questionCount:
+          typeof r.questionCount === "number"
+            ? (r.questionCount as number)
+            : parseInt(String(r.questionCount ?? 0), 10),
+      })
+    );
 
-    async findByShortName(shortName: string): Promise<Department | null> {
-        const result = await db
-            .select()
-            .from(departments)
-            .where(sql`LOWER(${departments.shortName}) = LOWER(${shortName})`)
-            .limit(1);
+    // RAW SQL TEMPLATE (total departments count):
+    // SELECT COUNT(*) AS total FROM department d [WHERE ...];
+    const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total FROM department d
+            ${whereClause}
+        `);
+    const totalCount = parseInt(
+      String(
+        (countRows as unknown as Array<Record<string, unknown>>)[0]?.total ?? 0
+      ),
+      10
+    );
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
-        return result[0] || null;
-    }
+    return {
+      data: data as Array<Department & { questionCount: number }>,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        pageSize,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
 
-    async isNameOrShortNameTaken(
-        name: string,
-        shortName: string,
-        excludeId?: number
-    ): Promise<boolean> {
-        return !(await this.areFieldsUniqueCaseInsensitive(
-            [
-                { column: departments.name, value: name },
-                { column: departments.shortName, value: shortName },
-            ],
-            excludeId
-        ));
-    }
+  async findAllWithQuestionCounts(): Promise<
+    Array<Department & { questionCount: number }>
+  > {
+    // RAW SQL TEMPLATE:
+    // SELECT d.id,d.name,d.shortName, COUNT(q.id) AS questionCount
+    // FROM department d
+    // LEFT JOIN question q ON d.id = q.departmentId
+    // GROUP BY d.id,d.name,d.shortName
+    // ORDER BY d.name ASC;
+    const [rows] = await db.execute(sql`
+            SELECT d.id, d.name, d.shortName, COUNT(q.id) AS questionCount
+            FROM department d
+            LEFT JOIN question q ON d.id = q.departmentId
+            GROUP BY d.id, d.name, d.shortName
+            ORDER BY d.name ASC
+        `);
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      shortName: String(r.shortName),
+      questionCount:
+        typeof r.questionCount === "number"
+          ? (r.questionCount as number)
+          : parseInt(String(r.questionCount ?? 0), 10),
+    }));
+  }
 
-    async findManyWithQuestionCounts(
-        options: PaginatedFindOptions & { search?: string }
-    ): Promise<PaginatedResult<Department & { questionCount: number }>> {
-        const { page, pageSize, search, orderBy } = options;
-        const offset = (page - 1) * pageSize;
+  async getQuestionCount(departmentId: number): Promise<number> {
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) AS count FROM question WHERE departmentId=?;
+    const [rows] = await db.execute(
+      sql`SELECT COUNT(*) AS count FROM question WHERE departmentId = ${departmentId}`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return parseInt(String(data[0]?.count ?? 0), 10);
+  }
 
-        // Build where conditions for search
-        const searchCondition = search
-            ? sql`(LOWER(${departments.name}) LIKE LOWER(${`%${search}%`}) OR LOWER(${departments.shortName}) LIKE LOWER(${`%${search}%`}))`
-            : undefined;
-
-        // Execute queries in parallel
-        const [departmentsResult, totalCountResult] = await Promise.all([
-            db
-                .select({
-                    id: departments.id,
-                    name: departments.name,
-                    shortName: departments.shortName,
-                    questionCount: count(questions.id),
-                })
-                .from(departments)
-                .leftJoin(questions, eq(departments.id, questions.departmentId))
-                .where(searchCondition)
-                .groupBy(departments.id, departments.name, departments.shortName)
-                .orderBy(orderBy ? (Array.isArray(orderBy) ? orderBy[0] : orderBy) : asc(departments.name))
-                .limit(pageSize)
-                .offset(offset),
-
-            this.count(searchCondition),
-        ]);
-
-        const totalCount = totalCountResult;
-        const totalPages = Math.ceil(totalCount / pageSize);
-
-        return {
-            data: departmentsResult,
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalCount,
-                pageSize,
-                hasNext: page < totalPages,
-                hasPrevious: page > 1,
-            },
-        };
-    }
-
-    async findAllWithQuestionCounts(): Promise<Array<Department & { questionCount: number }>> {
-        return db
-            .select({
-                id: departments.id,
-                name: departments.name,
-                shortName: departments.shortName,
-                questionCount: count(questions.id),
-            })
-            .from(departments)
-            .leftJoin(questions, eq(departments.id, questions.departmentId))
-            .groupBy(departments.id, departments.name, departments.shortName)
-            .orderBy(asc(departments.name));
-    }
-
-    async getQuestionCount(departmentId: number): Promise<number> {
-        const result = await db
-            .select({ count: count() })
-            .from(questions)
-            .where(eq(questions.departmentId, departmentId));
-
-        return result[0].count;
-    }
-
-    async migrateQuestions(fromDepartmentId: number, toDepartmentId: number): Promise<number> {
-        // First get the count of questions to be migrated
-        const questionCount = await this.getQuestionCount(fromDepartmentId);
-
-        if (questionCount === 0) {
-            return 0;
-        }
-
-        // Migrate the questions
-        await db
-            .update(questions)
-            .set({ departmentId: toDepartmentId })
-            .where(eq(questions.departmentId, fromDepartmentId));
-
-        return questionCount;
-    }
+  async migrateQuestions(
+    fromDepartmentId: number,
+    toDepartmentId: number
+  ): Promise<number> {
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) FROM question WHERE departmentId=?; (store as n)
+    // UPDATE question SET departmentId=? WHERE departmentId=?; (return n)
+    const count = await this.getQuestionCount(fromDepartmentId);
+    if (count === 0) return 0;
+    await db.execute(
+      sql`UPDATE question SET departmentId = ${toDepartmentId} WHERE departmentId = ${fromDepartmentId}`
+    );
+    return count;
+  }
 }
 
 // Export a singleton instance
