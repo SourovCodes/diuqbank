@@ -1,13 +1,5 @@
-import { sql, desc, eq, and, count } from "drizzle-orm";
-import {
-    users,
-    questions,
-    departments,
-    courses,
-    semesters,
-    examTypes,
-    QuestionStatus,
-} from "@/db/schema";
+import { sql } from "drizzle-orm";
+import { QuestionStatus } from "@/db/schema"; // keep enum for status string
 import { db } from "@/db/drizzle";
 import { getPaginationMeta } from "@/lib/action-utils";
 
@@ -68,176 +60,166 @@ export class ContributorRepository {
     ) {
         const skip = (page - 1) * pageSize;
 
-        // Get contributors with their question statistics
-        const contributorsQuery = db
-            .select({
-                id: users.id,
-                name: users.name,
-                username: users.username,
-                studentId: users.studentId,
-                image: users.image,
-                questionCount: count(questions.id),
-                totalViews: sql<number>`COALESCE(SUM(${questions.viewCount}), 0)`,
-                latestQuestionDate: sql<Date>`MAX(${questions.createdAt})`,
-            })
-            .from(users)
-            .leftJoin(
-                questions,
-                and(
-                    eq(users.id, questions.userId),
-                    eq(questions.status, QuestionStatus.PUBLISHED)
-                )
-            )
-            .groupBy(
-                users.id,
-                users.name,
-                users.username,
-                users.studentId,
-                users.image
-            )
-            .having(sql`COUNT(${questions.id}) > 0`) // Only users with published questions
-            .orderBy(desc(count(questions.id))) // Order by question count
-            .limit(pageSize)
-            .offset(skip);
+        // RAW SQL TEMPLATE (contributors list):
+        // SELECT u.id, u.name, u.username, u.studentId, u.image,
+        //        COUNT(q.id) AS questionCount,
+        //        COALESCE(SUM(q.viewCount),0) AS totalViews,
+        //        MAX(q.createdAt) AS latestQuestionDate
+        // FROM user u
+        // LEFT JOIN question q ON u.id = q.userId AND q.status = 'published'
+        // GROUP BY u.id,u.name,u.username,u.studentId,u.image
+        // HAVING COUNT(q.id) > 0
+        // ORDER BY questionCount DESC
+        // LIMIT ? OFFSET ?;
+        const [rows] = await db.execute(sql`
+            SELECT u.id, u.name, u.username, u.studentId, u.image,
+                   COUNT(q.id) AS questionCount,
+                   COALESCE(SUM(q.viewCount), 0) AS totalViews,
+                   MAX(q.createdAt) AS latestQuestionDate
+            FROM user u
+            LEFT JOIN question q ON u.id = q.userId AND q.status = ${QuestionStatus.PUBLISHED}
+            GROUP BY u.id, u.name, u.username, u.studentId, u.image
+            HAVING COUNT(q.id) > 0
+            ORDER BY questionCount DESC
+            LIMIT ${pageSize} OFFSET ${skip}
+        `);
+        const contributors = (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+            id: String(r.id),
+            name: String(r.name),
+            username: String(r.username),
+            studentId: r.studentId === null ? null : String(r.studentId),
+            image: r.image === null ? null : String(r.image),
+            questionCount: typeof r.questionCount === 'number' ? (r.questionCount as number) : parseInt(String(r.questionCount ?? 0), 10),
+            totalViews: typeof r.totalViews === 'number' ? (r.totalViews as number) : parseInt(String(r.totalViews ?? 0), 10),
+            latestQuestionDate: r.latestQuestionDate ? new Date(r.latestQuestionDate as string | Date) : null,
+        })) as PublicContributor[];
 
-        // Get total count of contributors
-        const totalCountQuery = db.select({ count: count() }).from(
-            db
-                .select({ userId: users.id })
-                .from(users)
-                .leftJoin(
-                    questions,
-                    and(
-                        eq(users.id, questions.userId),
-                        eq(questions.status, QuestionStatus.PUBLISHED)
-                    )
-                )
-                .groupBy(users.id)
-                .having(sql`COUNT(${questions.id}) > 0`)
-                .as("contributors_with_questions")
-        );
-
-        const [contributorsResult, totalCountResult] = await Promise.all([
-            contributorsQuery,
-            totalCountQuery,
-        ]);
-
-        const totalCount = totalCountResult[0].count;
+        // RAW SQL TEMPLATE (contributors total count):
+        // SELECT COUNT(*) AS total FROM (
+        //   SELECT u.id FROM user u
+        //   LEFT JOIN question q ON u.id = q.userId AND q.status='published'
+        //   GROUP BY u.id HAVING COUNT(q.id) > 0
+        // ) AS contributors_with_questions;
+        const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total FROM (
+                SELECT u.id
+                FROM user u
+                LEFT JOIN question q ON u.id = q.userId AND q.status = ${QuestionStatus.PUBLISHED}
+                GROUP BY u.id
+                HAVING COUNT(q.id) > 0
+            ) AS contributors_with_questions
+        `);
+    const totalArr = countRows as unknown as Array<Record<string, unknown>>;
+    const totalCount = parseInt(String(totalArr[0]?.total ?? 0), 10);
 
         return {
-            contributors: contributorsResult as PublicContributor[],
+            contributors,
             pagination: getPaginationMeta(totalCount, page, pageSize),
         };
     }
 
     // Get a single contributor's details with their questions
     async findPublicContributorByUsername(username: string): Promise<ContributorDetails | null> {
-        // Get contributor basic info with statistics
-        const contributorResult = await db
-            .select({
-                id: users.id,
-                name: users.name,
-                username: users.username,
-                studentId: users.studentId,
-                image: users.image,
-                questionCount: count(questions.id),
-                totalViews: sql<number>`COALESCE(SUM(${questions.viewCount}), 0)`,
-                joinedAt: sql<Date>`MIN(${questions.createdAt})`, // First question submission as join date
-            })
-            .from(users)
-            .leftJoin(
-                questions,
-                and(
-                    eq(users.id, questions.userId),
-                    eq(questions.status, QuestionStatus.PUBLISHED)
-                )
-            )
-            .where(eq(users.username, username))
-            .groupBy(
-                users.id,
-                users.name,
-                users.username,
-                users.studentId,
-                users.image
-            )
-            .limit(1);
+        // RAW SQL TEMPLATE (single contributor aggregate):
+        // SELECT u.id,u.name,u.username,u.studentId,u.image,
+        //        COUNT(q.id) AS questionCount,
+        //        COALESCE(SUM(q.viewCount),0) AS totalViews,
+        //        MIN(q.createdAt) AS joinedAt
+        // FROM user u
+        // LEFT JOIN question q ON u.id = q.userId AND q.status='published'
+        // WHERE u.username = ?
+        // GROUP BY u.id,u.name,u.username,u.studentId,u.image
+        // LIMIT 1;
+        const [aggRows] = await db.execute(sql`
+            SELECT u.id, u.name, u.username, u.studentId, u.image,
+                   COUNT(q.id) AS questionCount,
+                   COALESCE(SUM(q.viewCount), 0) AS totalViews,
+                   MIN(q.createdAt) AS joinedAt
+            FROM user u
+            LEFT JOIN question q ON u.id = q.userId AND q.status = ${QuestionStatus.PUBLISHED}
+            WHERE u.username = ${username}
+            GROUP BY u.id, u.name, u.username, u.studentId, u.image
+            LIMIT 1
+        `);
+        const agg = (aggRows as unknown as Array<Record<string, unknown>>)[0];
+        if (!agg) return null;
+        const baseContributor = {
+            id: String(agg.id),
+            name: String(agg.name),
+            username: String(agg.username),
+            studentId: agg.studentId === null ? null : String(agg.studentId),
+            image: agg.image === null ? null : String(agg.image),
+            questionCount: typeof agg.questionCount === 'number' ? (agg.questionCount as number) : parseInt(String(agg.questionCount ?? 0), 10),
+            totalViews: typeof agg.totalViews === 'number' ? (agg.totalViews as number) : parseInt(String(agg.totalViews ?? 0), 10),
+            joinedAt: agg.joinedAt ? new Date(agg.joinedAt as string | Date) : null,
+        };
 
-        if (contributorResult.length === 0) {
-            return null;
+        if (baseContributor.questionCount === 0) {
+            return { ...baseContributor, departments: [], courses: [], examTypes: [] } as ContributorDetails;
         }
 
-        const contributor = contributorResult[0];
+        // RAW SQL TEMPLATE (department stats):
+        // SELECT d.name, d.shortName, COUNT(*) AS count FROM question q
+        // LEFT JOIN department d ON q.departmentId = d.id
+        // WHERE q.userId = ? AND q.status='published'
+        // GROUP BY d.id,d.name,d.shortName
+        // ORDER BY count DESC;
+        const [deptRows] = await db.execute(sql`
+            SELECT d.name AS name, d.shortName AS shortName, COUNT(*) AS count
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            WHERE q.userId = ${baseContributor.id} AND q.status = ${QuestionStatus.PUBLISHED}
+            GROUP BY d.id, d.name, d.shortName
+            ORDER BY count DESC
+        `);
+        const departments = (deptRows as unknown as Array<Record<string, unknown>>).map((r) => ({
+            name: r.name === null ? null : String(r.name),
+            shortName: r.shortName === null ? null : String(r.shortName),
+            count: typeof r.count === 'number' ? (r.count as number) : parseInt(String(r.count ?? 0), 10),
+        }));
 
-        // If user has no published questions, return basic info
-        if (contributor.questionCount === 0) {
-            return {
-                ...contributor,
-                departments: [],
-                courses: [],
-                examTypes: [],
-            } as ContributorDetails;
-        }
+        // RAW SQL TEMPLATE (course stats):
+        // SELECT c.name, d.name AS departmentName, COUNT(*) AS count FROM question q
+        // LEFT JOIN course c ON q.courseId=c.id
+        // LEFT JOIN department d ON c.departmentId=d.id
+        // WHERE q.userId=? AND q.status='published'
+        // GROUP BY c.id,c.name,d.name
+        // ORDER BY count DESC;
+        const [courseRows] = await db.execute(sql`
+            SELECT c.name AS name, d.name AS departmentName, COUNT(*) AS count
+            FROM question q
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN department d ON c.departmentId = d.id
+            WHERE q.userId = ${baseContributor.id} AND q.status = ${QuestionStatus.PUBLISHED}
+            GROUP BY c.id, c.name, d.name
+            ORDER BY count DESC
+        `);
+        const courses = (courseRows as unknown as Array<Record<string, unknown>>).map((r) => ({
+            name: r.name === null ? null : String(r.name),
+            departmentName: r.departmentName === null ? null : String(r.departmentName),
+            count: typeof r.count === 'number' ? (r.count as number) : parseInt(String(r.count ?? 0), 10),
+        }));
 
-        // Get department statistics
-        const departmentStats = await db
-            .select({
-                name: departments.name,
-                shortName: departments.shortName,
-                count: count(),
-            })
-            .from(questions)
-            .leftJoin(departments, eq(questions.departmentId, departments.id))
-            .where(
-                and(
-                    eq(questions.userId, contributor.id),
-                    eq(questions.status, QuestionStatus.PUBLISHED)
-                )
-            )
-            .groupBy(departments.id, departments.name, departments.shortName)
-            .orderBy(desc(count()));
+        // RAW SQL TEMPLATE (exam type stats):
+        // SELECT e.name, COUNT(*) AS count FROM question q
+        // LEFT JOIN examType e ON q.examTypeId = e.id
+        // WHERE q.userId=? AND q.status='published'
+        // GROUP BY e.id,e.name
+        // ORDER BY count DESC;
+        const [examRows] = await db.execute(sql`
+            SELECT e.name AS name, COUNT(*) AS count
+            FROM question q
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            WHERE q.userId = ${baseContributor.id} AND q.status = ${QuestionStatus.PUBLISHED}
+            GROUP BY e.id, e.name
+            ORDER BY count DESC
+        `);
+        const examTypes = (examRows as unknown as Array<Record<string, unknown>>).map((r) => ({
+            name: r.name === null ? null : String(r.name),
+            count: typeof r.count === 'number' ? (r.count as number) : parseInt(String(r.count ?? 0), 10),
+        }));
 
-        // Get course statistics
-        const courseStats = await db
-            .select({
-                name: courses.name,
-                departmentName: departments.name,
-                count: count(),
-            })
-            .from(questions)
-            .leftJoin(courses, eq(questions.courseId, courses.id))
-            .leftJoin(departments, eq(courses.departmentId, departments.id))
-            .where(
-                and(
-                    eq(questions.userId, contributor.id),
-                    eq(questions.status, QuestionStatus.PUBLISHED)
-                )
-            )
-            .groupBy(courses.id, courses.name, departments.name)
-            .orderBy(desc(count()));
-
-        // Get exam type statistics
-        const examTypeStats = await db
-            .select({
-                name: examTypes.name,
-                count: count(),
-            })
-            .from(questions)
-            .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-            .where(
-                and(
-                    eq(questions.userId, contributor.id),
-                    eq(questions.status, QuestionStatus.PUBLISHED)
-                )
-            )
-            .groupBy(examTypes.id, examTypes.name)
-            .orderBy(desc(count()));
-
-        return {
-            ...contributor,
-            departments: departmentStats,
-            courses: courseStats,
-            examTypes: examTypeStats,
-        } as ContributorDetails;
+        return { ...baseContributor, departments, courses, examTypes } as ContributorDetails;
     }
 
     // Get a contributor's questions with pagination
@@ -248,63 +230,61 @@ export class ContributorRepository {
     ) {
         const skip = (page - 1) * pageSize;
 
-        // First get the user ID from username
-        const userResult = await db
-            .select({ id: users.id })
-            .from(users)
-            .where(eq(users.username, username))
-            .limit(1);
+        // RAW SQL TEMPLATE (lookup user id):
+        // SELECT id FROM user WHERE username = ? LIMIT 1;
+        const [userRows] = await db.execute(sql`SELECT id FROM user WHERE username = ${username} LIMIT 1`);
+        const userData = (userRows as unknown as Array<Record<string, unknown>>)[0];
+        if (!userData) return null;
+        const userId = String(userData.id);
 
-        if (userResult.length === 0) {
-            return null;
-        }
+        // RAW SQL TEMPLATE (questions list):
+        // SELECT q.id,q.pdfKey,q.pdfFileSizeInBytes,q.viewCount,q.createdAt,
+        //        d.name AS departmentName,d.shortName AS departmentShortName,
+        //        c.name AS courseName,s.name AS semesterName,e.name AS examTypeName
+        // FROM question q
+        // LEFT JOIN department d ON q.departmentId=d.id
+        // LEFT JOIN course c ON q.courseId=c.id
+        // LEFT JOIN semester s ON q.semesterId=s.id
+        // LEFT JOIN examType e ON q.examTypeId=e.id
+        // WHERE q.userId=? AND q.status='published'
+        // ORDER BY q.createdAt DESC
+        // LIMIT ? OFFSET ?;
+        const [qRows] = await db.execute(sql`
+            SELECT q.id, q.pdfKey, q.pdfFileSizeInBytes, q.viewCount, q.createdAt,
+                   d.name AS departmentName, d.shortName AS departmentShortName,
+                   c.name AS courseName, s.name AS semesterName, e.name AS examTypeName
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            WHERE q.userId = ${userId} AND q.status = ${QuestionStatus.PUBLISHED}
+            ORDER BY q.createdAt DESC
+            LIMIT ${pageSize} OFFSET ${skip}
+        `);
+        const questions = (qRows as unknown as Array<Record<string, unknown>>).map((r) => ({
+            id: Number(r.id),
+            pdfKey: String(r.pdfKey),
+            pdfFileSizeInBytes: Number(r.pdfFileSizeInBytes),
+            viewCount: Number(r.viewCount),
+            createdAt: new Date(r.createdAt as string | Date),
+            departmentName: r.departmentName === null ? null : String(r.departmentName),
+            departmentShortName: r.departmentShortName === null ? null : String(r.departmentShortName),
+            courseName: r.courseName === null ? null : String(r.courseName),
+            semesterName: r.semesterName === null ? null : String(r.semesterName),
+            examTypeName: r.examTypeName === null ? null : String(r.examTypeName),
+        })) as ContributorQuestion[];
 
-        const userId = userResult[0].id;
-
-        const [questionsResult, totalCountResult] = await Promise.all([
-            db
-                .select({
-                    id: questions.id,
-                    pdfKey: questions.pdfKey,
-                    pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-                    viewCount: questions.viewCount,
-                    createdAt: questions.createdAt,
-                    departmentName: departments.name,
-                    departmentShortName: departments.shortName,
-                    courseName: courses.name,
-                    semesterName: semesters.name,
-                    examTypeName: examTypes.name,
-                })
-                .from(questions)
-                .leftJoin(departments, eq(questions.departmentId, departments.id))
-                .leftJoin(courses, eq(questions.courseId, courses.id))
-                .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-                .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-                .where(
-                    and(
-                        eq(questions.userId, userId),
-                        eq(questions.status, QuestionStatus.PUBLISHED)
-                    )
-                )
-                .orderBy(desc(questions.createdAt))
-                .limit(pageSize)
-                .offset(skip),
-
-            db
-                .select({ count: count() })
-                .from(questions)
-                .where(
-                    and(
-                        eq(questions.userId, userId),
-                        eq(questions.status, QuestionStatus.PUBLISHED)
-                    )
-                ),
-        ]);
-
-        const totalCount = totalCountResult[0].count;
+        // RAW SQL TEMPLATE (questions count):
+        // SELECT COUNT(*) AS total FROM question q WHERE q.userId=? AND q.status='published';
+        const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total FROM question q WHERE q.userId = ${userId} AND q.status = ${QuestionStatus.PUBLISHED}
+        `);
+    const totalArr = countRows as unknown as Array<Record<string, unknown>>;
+    const totalCount = parseInt(String(totalArr[0]?.total ?? 0), 10);
 
         return {
-            questions: questionsResult as ContributorQuestion[],
+            questions,
             pagination: getPaginationMeta(totalCount, page, pageSize),
         };
     }
