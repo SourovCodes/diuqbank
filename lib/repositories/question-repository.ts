@@ -1,643 +1,674 @@
-import { eq, desc, asc, and, count, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import {
-    questions,
-    departments,
-    courses,
-    semesters,
-    examTypes,
-    users,
-    type Question,
-    type NewQuestion,
-    QuestionStatus
+  questions,
+  type Question,
+  type NewQuestion,
+  QuestionStatus,
 } from "@/db/schema";
 import { db } from "@/db/drizzle";
-import { BaseRepository, type PaginatedFindOptions, type PaginatedResult } from "./base-repository";
+import {
+  BaseRepository,
+  type PaginatedFindOptions,
+  type PaginatedResult,
+} from "./base-repository";
 
-interface MySqlUpdateResult {
-    rowsAffected: number;
-}
+// (Removed MySqlUpdateResult interface; using generic affectedRows extraction from db.execute results)
 
 /**
  * Question with full relationship details
  */
 export type QuestionWithDetails = Question & {
-    departmentName: string | null;
-    departmentShortName: string | null;
-    courseName: string | null;
-    semesterName: string | null;
-    examTypeName: string | null;
-    userName: string | null;
-    userUsername?: string | null;
+  departmentName: string | null;
+  departmentShortName: string | null;
+  courseName: string | null;
+  semesterName: string | null;
+  examTypeName: string | null;
+  userName: string | null;
+  userUsername?: string | null;
 };
 
 /**
  * Public question type (filtered fields for public display)
  */
 export type PublicQuestion = {
-    id: number;
-    pdfKey: string;
-    pdfFileSizeInBytes: number;
-    viewCount: number;
-    createdAt: Date;
-    departmentName: string | null;
-    departmentShortName: string | null;
-    courseName: string | null;
-    semesterName: string | null;
-    examTypeName: string | null;
-    userName: string | null;
-    userId: string | null;
-    userUsername: string | null;
+  id: number;
+  pdfKey: string;
+  pdfFileSizeInBytes: number;
+  viewCount: number;
+  createdAt: Date;
+  departmentName: string | null;
+  departmentShortName: string | null;
+  courseName: string | null;
+  semesterName: string | null;
+  examTypeName: string | null;
+  userName: string | null;
+  userId: string | null;
+  userUsername: string | null;
 };
 
 /**
  * Filter options for dropdowns
  */
 export type FilterOptions = {
-    departments: Array<{ id: number; name: string; shortName: string }>;
-    courses: Array<{ id: number; name: string; departmentId: number }>;
-    semesters: Array<{ id: number; name: string }>;
-    examTypes: Array<{ id: number; name: string }>;
+  departments: Array<{ id: number; name: string; shortName: string }>;
+  courses: Array<{ id: number; name: string; departmentId: number }>;
+  semesters: Array<{ id: number; name: string }>;
+  examTypes: Array<{ id: number; name: string }>;
 };
 
 /**
  * Dropdown option type
  */
 export type DropdownOption = {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 };
 
 /**
  * User dropdown option
  */
 export type UserDropdownOption = {
-    id: string;
-    name: string;
-    email: string;
+  id: string;
+  name: string;
+  email: string;
 };
 
 /**
  * Question search and filter options
  */
 export interface QuestionSearchOptions extends PaginatedFindOptions {
-    search?: string;
-    departmentId?: number;
-    courseId?: number;
-    semesterId?: number;
-    examTypeId?: number;
-    status?: keyof typeof QuestionStatus;
-    userId?: string;
+  search?: string;
+  departmentId?: number;
+  courseId?: number;
+  semesterId?: number;
+  examTypeId?: number;
+  status?: keyof typeof QuestionStatus;
+  userId?: string;
 }
 
 /**
  * Question-specific repository interface
  */
 export interface IQuestionRepository {
-    /**
-     * Check if a question with the same combination already exists
-     */
-    isDuplicateQuestion(
-        departmentId: number,
-        courseId: number,
-        semesterId: number,
-        examTypeId: number,
-        excludeId?: number
-    ): Promise<boolean>;
+  /**
+   * Check if a question with the same combination already exists
+   */
+  isDuplicateQuestion(
+    departmentId: number,
+    courseId: number,
+    semesterId: number,
+    examTypeId: number,
+    excludeId?: number
+  ): Promise<boolean>;
 
-    /**
-     * Get questions with full details and filtering
-     */
-    findManyWithDetails(options: QuestionSearchOptions): Promise<PaginatedResult<QuestionWithDetails>>;
+  /**
+   * Get questions with full details and filtering
+   */
+  findManyWithDetails(
+    options: QuestionSearchOptions
+  ): Promise<PaginatedResult<QuestionWithDetails>>;
 
-    /**
-     * Get published questions for public view
-     */
-    findPublishedQuestions(options: Omit<QuestionSearchOptions, 'status' | 'userId'>): Promise<PaginatedResult<PublicQuestion>>;
+  /**
+   * Get published questions for public view
+   */
+  findPublishedQuestions(
+    options: Omit<QuestionSearchOptions, "status" | "userId">
+  ): Promise<PaginatedResult<PublicQuestion>>;
 
-    /**
-     * Get a single question with full details
-     */
-    findByIdWithDetails(id: number): Promise<QuestionWithDetails | null>;
+  /**
+   * Get a single question with full details
+   */
+  findByIdWithDetails(id: number): Promise<QuestionWithDetails | null>;
 
-    /**
-     * Get a single published question for public view
-     */
-    findPublishedById(id: number): Promise<PublicQuestion | null>;
+  /**
+   * Get a single published question for public view
+   */
+  findPublishedById(id: number): Promise<PublicQuestion | null>;
 
-    /**
-     * Update question status
-     */
-    updateStatus(id: number, status: keyof typeof QuestionStatus): Promise<boolean>;
+  /**
+   * Update question status
+   */
+  updateStatus(
+    id: number,
+    status: keyof typeof QuestionStatus
+  ): Promise<boolean>;
 
-    /**
-     * Increment view count
-     */
-    incrementViewCount(id: number): Promise<boolean>;
+  /**
+   * Increment view count
+   */
+  incrementViewCount(id: number): Promise<boolean>;
 
-    /**
-     * Get dropdown options for departments
-     */
-    getDepartmentOptions(): Promise<DropdownOption[]>;
+  /**
+   * Get dropdown options for departments
+   */
+  getDepartmentOptions(): Promise<DropdownOption[]>;
 
-    /**
-     * Get dropdown options for courses (filtered by department)
-     */
-    getCourseOptions(departmentId: number): Promise<DropdownOption[]>;
+  /**
+   * Get dropdown options for courses (filtered by department)
+   */
+  getCourseOptions(departmentId: number): Promise<DropdownOption[]>;
 
-    /**
-     * Get dropdown options for semesters
-     */
-    getSemesterOptions(): Promise<DropdownOption[]>;
+  /**
+   * Get dropdown options for semesters
+   */
+  getSemesterOptions(): Promise<DropdownOption[]>;
 
-    /**
-     * Get dropdown options for exam types
-     */
-    getExamTypeOptions(): Promise<DropdownOption[]>;
+  /**
+   * Get dropdown options for exam types
+   */
+  getExamTypeOptions(): Promise<DropdownOption[]>;
 
-    /**
-     * Get dropdown options for users
-     */
-    getUserOptions(): Promise<UserDropdownOption[]>;
+  /**
+   * Get dropdown options for users
+   */
+  getUserOptions(): Promise<UserDropdownOption[]>;
 
-    /**
-     * Get all filter options at once
-     */
-    getFilterOptions(): Promise<FilterOptions>;
+  /**
+   * Get all filter options at once
+   */
+  getFilterOptions(): Promise<FilterOptions>;
 
-    /**
-     * Check if user owns a question
-     */
-    isQuestionOwnedByUser(questionId: number, userId: string): Promise<boolean>;
+  /**
+   * Check if user owns a question
+   */
+  isQuestionOwnedByUser(questionId: number, userId: string): Promise<boolean>;
 
-    /**
-     * Delete question and return PDF key for S3 cleanup
-     */
-    deleteWithPdfKey(id: number): Promise<{ success: boolean; pdfKey?: string }>;
+  /**
+   * Delete question and return PDF key for S3 cleanup
+   */
+  deleteWithPdfKey(id: number): Promise<{ success: boolean; pdfKey?: string }>;
 }
 
 /**
  * Question repository implementation
  */
 export class QuestionRepository
-    extends BaseRepository<Question, NewQuestion, Partial<NewQuestion>>
-    implements IQuestionRepository {
-    protected table = questions;
-    protected idColumn = questions.id;
+  extends BaseRepository<Question, NewQuestion, Partial<NewQuestion>>
+  implements IQuestionRepository
+{
+  protected table = questions;
+  protected idColumn = questions.id;
 
-    async create(input: NewQuestion): Promise<Question> {
-        const [insertResult] = await db.insert(questions).values(input);
+  private mapQuestionDetails(r: Record<string, unknown>): QuestionWithDetails {
+    return {
+      id: Number(r.id),
+      userId: String(r.userId),
+      departmentId: Number(r.departmentId),
+      courseId: Number(r.courseId),
+      semesterId: Number(r.semesterId),
+      examTypeId: Number(r.examTypeId),
+      status: r.status as Question["status"],
+      pdfKey: String(r.pdfKey),
+      pdfFileSizeInBytes: Number(r.pdfFileSizeInBytes),
+      viewCount: Number(r.viewCount),
+      createdAt: new Date(r.createdAt as string),
+      updatedAt: new Date(r.updatedAt as string),
+      departmentName: r.departmentName ? String(r.departmentName) : null,
+      departmentShortName: r.departmentShortName
+        ? String(r.departmentShortName)
+        : null,
+      courseName: r.courseName ? String(r.courseName) : null,
+      semesterName: r.semesterName ? String(r.semesterName) : null,
+      examTypeName: r.examTypeName ? String(r.examTypeName) : null,
+      userName: r.userName ? String(r.userName) : null,
+    };
+  }
 
-        const [question] = await db
-            .select()
-            .from(questions)
-            .where(eq(questions.id, insertResult.insertId))
-            .limit(1);
+  private mapPublicQuestion(r: Record<string, unknown>): PublicQuestion {
+    return {
+      id: Number(r.id),
+      pdfKey: String(r.pdfKey),
+      pdfFileSizeInBytes: Number(r.pdfFileSizeInBytes),
+      viewCount: Number(r.viewCount),
+      createdAt: new Date(r.createdAt as string),
+      departmentName: r.departmentName ? String(r.departmentName) : null,
+      departmentShortName: r.departmentShortName
+        ? String(r.departmentShortName)
+        : null,
+      courseName: r.courseName ? String(r.courseName) : null,
+      semesterName: r.semesterName ? String(r.semesterName) : null,
+      examTypeName: r.examTypeName ? String(r.examTypeName) : null,
+      userName: r.userName ? String(r.userName) : null,
+      userId: r.userId ? String(r.userId) : null,
+      userUsername: r.userUsername ? String(r.userUsername) : null,
+    };
+  }
 
-        return question;
+  async create(input: NewQuestion): Promise<Question> {
+    // RAW SQL TEMPLATE:
+    // INSERT INTO question (userId,departmentId,courseId,semesterId,examTypeId,status,pdfKey,pdfFileSizeInBytes,viewCount) VALUES (?,?,?,?,?,?,?,?,?);
+    // SELECT * FROM question WHERE id = LAST_INSERT_ID();
+    const [insertResult] = await db.execute(sql`
+            INSERT INTO question (userId, departmentId, courseId, semesterId, examTypeId, status, pdfKey, pdfFileSizeInBytes, viewCount)
+            VALUES (${input.userId}, ${input.departmentId}, ${
+      input.courseId
+    }, ${input.semesterId}, ${input.examTypeId}, ${input.status}, ${
+      input.pdfKey
+    }, ${input.pdfFileSizeInBytes}, ${input.viewCount ?? 0})
+        `);
+    const insertId = (insertResult as { insertId: number }).insertId;
+    const [rows] = await db.execute(
+      sql`SELECT * FROM question WHERE id = ${insertId} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    const r = data[0];
+    return {
+      id: Number(r.id),
+      userId: String(r.userId),
+      departmentId: Number(r.departmentId),
+      courseId: Number(r.courseId),
+      semesterId: Number(r.semesterId),
+      examTypeId: Number(r.examTypeId),
+      status: r.status as Question["status"],
+      pdfKey: String(r.pdfKey),
+      pdfFileSizeInBytes: Number(r.pdfFileSizeInBytes),
+      viewCount: Number(r.viewCount),
+      createdAt: new Date(r.createdAt as string),
+      updatedAt: new Date(r.updatedAt as string),
+    };
+  }
+
+  async update(
+    id: number,
+    input: Partial<NewQuestion>
+  ): Promise<Question | null> {
+    // RAW SQL TEMPLATE:
+    // UPDATE question SET <dynamic columns> WHERE id=?;
+    const setClauses: SQL[] = [];
+    if (input.userId !== undefined)
+      setClauses.push(sql`userId = ${input.userId}`);
+    if (input.departmentId !== undefined)
+      setClauses.push(sql`departmentId = ${input.departmentId}`);
+    if (input.courseId !== undefined)
+      setClauses.push(sql`courseId = ${input.courseId}`);
+    if (input.semesterId !== undefined)
+      setClauses.push(sql`semesterId = ${input.semesterId}`);
+    if (input.examTypeId !== undefined)
+      setClauses.push(sql`examTypeId = ${input.examTypeId}`);
+    if (input.status !== undefined)
+      setClauses.push(sql`status = ${input.status}`);
+    if (input.pdfKey !== undefined)
+      setClauses.push(sql`pdfKey = ${input.pdfKey}`);
+    if (input.pdfFileSizeInBytes !== undefined)
+      setClauses.push(sql`pdfFileSizeInBytes = ${input.pdfFileSizeInBytes}`);
+    if (input.viewCount !== undefined)
+      setClauses.push(sql`viewCount = ${input.viewCount}`);
+    if (setClauses.length > 0) {
+      await db.execute(
+        sql`UPDATE question SET ${sql.join(
+          setClauses,
+          sql`, `
+        )} WHERE id = ${id}`
+      );
     }
+    return this.findById(id);
+  }
 
-    async update(id: number, input: Partial<NewQuestion>): Promise<Question | null> {
-        await db.update(questions).set(input).where(eq(questions.id, id));
-
-        return this.findById(id);
+  async isDuplicateQuestion(
+    departmentId: number,
+    courseId: number,
+    semesterId: number,
+    examTypeId: number,
+    excludeId?: number
+  ): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // SELECT 1 FROM question WHERE departmentId=? AND courseId=? AND semesterId=? AND examTypeId=? [AND id!=?] LIMIT 1;
+    let query = sql`SELECT 1 FROM question WHERE departmentId = ${departmentId} AND courseId = ${courseId} AND semesterId = ${semesterId} AND examTypeId = ${examTypeId}`;
+    if (excludeId !== undefined) {
+      query = sql`${query} AND id != ${excludeId}`;
     }
+    query = sql`${query} LIMIT 1`;
+    const [rows] = await db.execute(query);
+    return (rows as unknown as Array<unknown>).length > 0;
+  }
 
-    async isDuplicateQuestion(
-        departmentId: number,
-        courseId: number,
-        semesterId: number,
-        examTypeId: number,
-        excludeId?: number
-    ): Promise<boolean> {
-        let whereCondition = and(
-            eq(questions.departmentId, departmentId),
-            eq(questions.courseId, courseId),
-            eq(questions.semesterId, semesterId),
-            eq(questions.examTypeId, examTypeId)
-        );
+  async findManyWithDetails(
+    options: QuestionSearchOptions
+  ): Promise<PaginatedResult<QuestionWithDetails>> {
+    const {
+      page,
+      pageSize,
+      search,
+      departmentId,
+      courseId,
+      semesterId,
+      examTypeId,
+      status,
+      userId,
+    } = options;
+    const offset = (page - 1) * pageSize;
 
-        if (excludeId !== undefined) {
-            whereCondition = and(
-                whereCondition,
-                sql`${questions.id} != ${excludeId}`
-            ) as typeof whereCondition;
-        }
-
-        const result = await db
-            .select({ id: questions.id })
-            .from(questions)
-            .where(whereCondition)
-            .limit(1);
-
-        return result.length > 0;
+    // RAW SQL TEMPLATE (detailed list with joins + filters):
+    // SELECT q.*, d.name AS departmentName, d.shortName AS departmentShortName, c.name AS courseName, s.name AS semesterName, e.name AS examTypeName, u.name AS userName
+    // FROM question q
+    // LEFT JOIN department d ON q.departmentId=d.id
+    // LEFT JOIN course c ON q.courseId=c.id
+    // LEFT JOIN semester s ON q.semesterId=s.id
+    // LEFT JOIN examType e ON q.examTypeId=e.id
+    // LEFT JOIN user u ON q.userId=u.id
+    // WHERE 1=1 [AND ...dynamic filters...] [AND (LOWER(d.name) LIKE LOWER(?) OR ...)]
+    // ORDER BY q.createdAt DESC
+    // LIMIT ? OFFSET ?;
+    const conditions: SQL[] = [sql`1=1`];
+    if (departmentId) conditions.push(sql`q.departmentId = ${departmentId}`);
+    if (courseId) conditions.push(sql`q.courseId = ${courseId}`);
+    if (semesterId) conditions.push(sql`q.semesterId = ${semesterId}`);
+    if (examTypeId) conditions.push(sql`q.examTypeId = ${examTypeId}`);
+    if (status) conditions.push(sql`q.status = ${QuestionStatus[status]}`);
+    if (userId) conditions.push(sql`q.userId = ${userId}`);
+    if (search) {
+      const like = `%${search}%`;
+      conditions.push(
+        sql`(LOWER(d.name) LIKE LOWER(${like}) OR LOWER(c.name) LIKE LOWER(${like}) OR LOWER(s.name) LIKE LOWER(${like}) OR LOWER(e.name) LIKE LOWER(${like}))`
+      );
     }
+    const whereClause = sql`${sql.join(conditions, sql` AND `)}`;
+    const [rows] = await db.execute(sql`
+            SELECT q.id, q.userId, q.departmentId, q.courseId, q.semesterId, q.examTypeId, q.status, q.pdfKey, q.pdfFileSizeInBytes, q.viewCount, q.createdAt, q.updatedAt,
+                         d.name AS departmentName, d.shortName AS departmentShortName, c.name AS courseName, s.name AS semesterName, e.name AS examTypeName, u.name AS userName
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            LEFT JOIN user u ON q.userId = u.id
+            WHERE ${whereClause}
+            ORDER BY q.createdAt DESC
+            LIMIT ${pageSize} OFFSET ${offset}
+        `);
+    const data = (rows as unknown as Array<Record<string, unknown>>).map((r) =>
+      this.mapQuestionDetails(r)
+    );
+    const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            LEFT JOIN user u ON q.userId = u.id
+            WHERE ${whereClause}
+        `);
+    const totalCount = parseInt(
+      String(
+        (countRows as unknown as Array<Record<string, unknown>>)[0]?.total ?? 0
+      ),
+      10
+    );
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        pageSize,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
 
-    async findManyWithDetails(options: QuestionSearchOptions): Promise<PaginatedResult<QuestionWithDetails>> {
-        const { page, pageSize, search, departmentId, courseId, semesterId, examTypeId, status, userId, orderBy } = options;
-        const offset = (page - 1) * pageSize;
+  async findPublishedQuestions(
+    options: Omit<QuestionSearchOptions, "status" | "userId">
+  ): Promise<PaginatedResult<PublicQuestion>> {
+    const { page, pageSize, departmentId, courseId, semesterId, examTypeId } =
+      options;
+    const offset = (page - 1) * pageSize;
+    const conditions: SQL[] = [sql`q.status = ${QuestionStatus.PUBLISHED}`];
+    if (departmentId) conditions.push(sql`q.departmentId = ${departmentId}`);
+    if (courseId) conditions.push(sql`q.courseId = ${courseId}`);
+    if (semesterId) conditions.push(sql`q.semesterId = ${semesterId}`);
+    if (examTypeId) conditions.push(sql`q.examTypeId = ${examTypeId}`);
+    const whereClause = sql`${sql.join(conditions, sql` AND `)}`;
+    // RAW SQL TEMPLATE (published questions): see above pattern.
+    const [rows] = await db.execute(sql`
+            SELECT q.id, q.pdfKey, q.pdfFileSizeInBytes, q.viewCount, q.createdAt,
+                         d.name AS departmentName, d.shortName AS departmentShortName, c.name AS courseName, s.name AS semesterName, e.name AS examTypeName,
+                         u.name AS userName, u.id AS userId, u.username AS userUsername
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            LEFT JOIN user u ON q.userId = u.id
+            WHERE ${whereClause}
+            ORDER BY q.createdAt DESC
+            LIMIT ${pageSize} OFFSET ${offset}
+        `);
+    const data = (rows as unknown as Array<Record<string, unknown>>).map((r) =>
+      this.mapPublicQuestion(r)
+    );
+    const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total
+            FROM question q
+            WHERE ${whereClause}
+        `);
+    const totalCount = parseInt(
+      String(
+        (countRows as unknown as Array<Record<string, unknown>>)[0]?.total ?? 0
+      ),
+      10
+    );
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        pageSize,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
 
-        // Build where conditions
-        const whereConditions: SQL<unknown>[] = [];
+  async findByIdWithDetails(id: number): Promise<QuestionWithDetails | null> {
+    // RAW SQL TEMPLATE:
+    // SELECT ...joins... WHERE q.id=? LIMIT 1;
+    const [rows] = await db.execute(sql`
+            SELECT q.id, q.userId, q.departmentId, q.courseId, q.semesterId, q.examTypeId, q.status, q.pdfKey, q.pdfFileSizeInBytes, q.viewCount, q.createdAt, q.updatedAt,
+                         d.name AS departmentName, d.shortName AS departmentShortName, c.name AS courseName, s.name AS semesterName, e.name AS examTypeName, u.name AS userName
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            LEFT JOIN user u ON q.userId = u.id
+            WHERE q.id = ${id}
+            LIMIT 1
+        `);
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return null;
+    return this.mapQuestionDetails(data[0]);
+  }
 
-        if (search) {
-            whereConditions.push(
-                sql`(
-          LOWER(${departments.name}) LIKE LOWER(${`%${search}%`}) OR 
-          LOWER(${courses.name}) LIKE LOWER(${`%${search}%`}) OR 
-          LOWER(${semesters.name}) LIKE LOWER(${`%${search}%`}) OR 
-          LOWER(${examTypes.name}) LIKE LOWER(${`%${search}%`})
-        )` as SQL<unknown>
-            );
-        }
+  async findPublishedById(id: number): Promise<PublicQuestion | null> {
+    // RAW SQL TEMPLATE:
+    // SELECT ...published... WHERE q.id=? AND q.status='published' LIMIT 1;
+    const [rows] = await db.execute(sql`
+            SELECT q.id, q.pdfKey, q.pdfFileSizeInBytes, q.viewCount, q.createdAt,
+                         d.name AS departmentName, d.shortName AS departmentShortName, c.name AS courseName, s.name AS semesterName, e.name AS examTypeName,
+                         u.name AS userName, u.id AS userId, u.username AS userUsername
+            FROM question q
+            LEFT JOIN department d ON q.departmentId = d.id
+            LEFT JOIN course c ON q.courseId = c.id
+            LEFT JOIN semester s ON q.semesterId = s.id
+            LEFT JOIN examType e ON q.examTypeId = e.id
+            LEFT JOIN user u ON q.userId = u.id
+            WHERE q.id = ${id} AND q.status = ${QuestionStatus.PUBLISHED}
+            LIMIT 1
+        `);
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return null;
+    return this.mapPublicQuestion(data[0]);
+  }
 
-        if (departmentId) {
-            whereConditions.push(eq(questions.departmentId, departmentId) as SQL<unknown>);
-        }
+  async updateStatus(
+    id: number,
+    status: keyof typeof QuestionStatus
+  ): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // UPDATE question SET status=? WHERE id=?;
+    const [res] = await db.execute(
+      sql`UPDATE question SET status = ${QuestionStatus[status]} WHERE id = ${id}`
+    );
+    return (
+      ((res as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0
+    );
+  }
 
-        if (courseId) {
-            whereConditions.push(eq(questions.courseId, courseId) as SQL<unknown>);
-        }
+  async incrementViewCount(id: number): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // UPDATE question SET viewCount = viewCount + 1 WHERE id=?;
+    const [res] = await db.execute(
+      sql`UPDATE question SET viewCount = viewCount + 1 WHERE id = ${id}`
+    );
+    return (
+      ((res as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0
+    );
+  }
 
-        if (semesterId) {
-            whereConditions.push(eq(questions.semesterId, semesterId) as SQL<unknown>);
-        }
+  async getDepartmentOptions(): Promise<DropdownOption[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT id, shortName AS name FROM department ORDER BY shortName ASC;
+    const [rows] = await db.execute(
+      sql`SELECT id, shortName AS name FROM department ORDER BY shortName ASC`
+    );
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+  }
 
-        if (examTypeId) {
-            whereConditions.push(eq(questions.examTypeId, examTypeId) as SQL<unknown>);
-        }
+  async getCourseOptions(departmentId: number): Promise<DropdownOption[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT id,name FROM course WHERE departmentId=? ORDER BY name ASC;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM course WHERE departmentId = ${departmentId} ORDER BY name ASC`
+    );
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+  }
 
-        if (status) {
-            whereConditions.push(eq(questions.status, QuestionStatus[status]) as SQL<unknown>);
-        }
+  async getSemesterOptions(): Promise<DropdownOption[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT id,name FROM semester ORDER BY name ASC;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM semester ORDER BY name ASC`
+    );
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+  }
 
-        if (userId) {
-            whereConditions.push(eq(questions.userId, userId) as SQL<unknown>);
-        }
+  async getExamTypeOptions(): Promise<DropdownOption[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT id,name FROM examType ORDER BY name ASC;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM examType ORDER BY name ASC`
+    );
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+  }
 
-        const whereCondition = whereConditions.length > 0
-            ? whereConditions.reduce<SQL<unknown>>(
-                (acc, cond) => and(acc, cond) as SQL<unknown>,
-                sql`1=1` as SQL<unknown>
-            )
-            : undefined;
+  async getUserOptions(): Promise<UserDropdownOption[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT id,name,email FROM user ORDER BY email ASC;
+    const [rows] = await db.execute(
+      sql`SELECT id, name, email FROM user ORDER BY email ASC`
+    );
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: String(r.id),
+      name: String(r.name),
+      email: String(r.email),
+    }));
+  }
 
-        // Execute queries in parallel
-        const [questionsResult, totalCountResult] = await Promise.all([
-            db
-                .select({
-                    id: questions.id,
-                    userId: questions.userId,
-                    departmentId: questions.departmentId,
-                    courseId: questions.courseId,
-                    semesterId: questions.semesterId,
-                    examTypeId: questions.examTypeId,
-                    status: questions.status,
-                    pdfKey: questions.pdfKey,
-                    pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-                    viewCount: questions.viewCount,
-                    createdAt: questions.createdAt,
-                    updatedAt: questions.updatedAt,
-                    departmentName: departments.name,
-                    departmentShortName: departments.shortName,
-                    courseName: courses.name,
-                    semesterName: semesters.name,
-                    examTypeName: examTypes.name,
-                    userName: users.name,
-                })
-                .from(questions)
-                .leftJoin(departments, eq(questions.departmentId, departments.id))
-                .leftJoin(courses, eq(questions.courseId, courses.id))
-                .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-                .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-                .leftJoin(users, eq(questions.userId, users.id))
-                .where(whereCondition)
-                .orderBy(orderBy ? (Array.isArray(orderBy) ? orderBy[0] : orderBy) : desc(questions.createdAt))
-                .limit(pageSize)
-                .offset(offset),
+  async getFilterOptions(): Promise<FilterOptions> {
+    // RAW SQL TEMPLATE (batch fetch for dropdown filters):
+    // See individual queries below.
+    const [dRows, cRows, sRows, eRows] = await Promise.all([
+      db.execute(
+        sql`SELECT id, name, shortName FROM department ORDER BY name ASC`
+      ),
+      db.execute(
+        sql`SELECT id, name, departmentId FROM course ORDER BY name ASC`
+      ),
+      db.execute(sql`SELECT id, name FROM semester ORDER BY name ASC`),
+      db.execute(sql`SELECT id, name FROM examType ORDER BY name ASC`),
+    ]);
+    const departmentsResult = (
+      dRows[0] as unknown as Array<Record<string, unknown>>
+    ).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      shortName: String(r.shortName),
+    }));
+    const coursesResult = (
+      cRows[0] as unknown as Array<Record<string, unknown>>
+    ).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      departmentId: Number(r.departmentId),
+    }));
+    const semestersResult = (
+      sRows[0] as unknown as Array<Record<string, unknown>>
+    ).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+    const examTypesResult = (
+      eRows[0] as unknown as Array<Record<string, unknown>>
+    ).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+    }));
+    return {
+      departments: departmentsResult,
+      courses: coursesResult,
+      semesters: semestersResult,
+      examTypes: examTypesResult,
+    };
+  }
 
-            // Count with same conditions (optimized for search vs no-search)
-            search
-                ? db
-                    .select({ count: count() })
-                    .from(questions)
-                    .leftJoin(departments, eq(questions.departmentId, departments.id))
-                    .leftJoin(courses, eq(questions.courseId, courses.id))
-                    .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-                    .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-                    .where(whereCondition)
-                : this.count(whereCondition),
-        ]);
+  async isQuestionOwnedByUser(
+    questionId: number,
+    userId: string
+  ): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // SELECT userId FROM question WHERE id=? LIMIT 1;
+    const [rows] = await db.execute(
+      sql`SELECT userId FROM question WHERE id = ${questionId} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return false;
+    return String(data[0].userId) === userId;
+  }
 
-        const totalCount = Array.isArray(totalCountResult) ? totalCountResult[0].count : totalCountResult;
-        const totalPages = Math.ceil(totalCount / pageSize);
-
-        return {
-            data: questionsResult as QuestionWithDetails[],
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalCount,
-                pageSize,
-                hasNext: page < totalPages,
-                hasPrevious: page > 1,
-            },
-        };
-    }
-
-    async findPublishedQuestions(
-        options: Omit<QuestionSearchOptions, 'status' | 'userId'>
-    ): Promise<PaginatedResult<PublicQuestion>> {
-        const { page, pageSize, departmentId, courseId, semesterId, examTypeId, orderBy } = options;
-        const offset = (page - 1) * pageSize;
-
-        // Build where conditions (always include published status)
-        const whereConditions: SQL<unknown>[] = [
-            eq(questions.status, QuestionStatus.PUBLISHED) as SQL<unknown>
-        ];
-
-        if (departmentId) {
-            whereConditions.push(eq(questions.departmentId, departmentId) as SQL<unknown>);
-        }
-
-        if (courseId) {
-            whereConditions.push(eq(questions.courseId, courseId) as SQL<unknown>);
-        }
-
-        if (semesterId) {
-            whereConditions.push(eq(questions.semesterId, semesterId) as SQL<unknown>);
-        }
-
-        if (examTypeId) {
-            whereConditions.push(eq(questions.examTypeId, examTypeId) as SQL<unknown>);
-        }
-
-        const whereCondition = whereConditions.reduce<SQL<unknown>>(
-            (acc, cond) => and(acc, cond) as SQL<unknown>,
-            sql`1=1` as SQL<unknown>
-        );
-
-        // Execute queries in parallel
-        const [questionsResult, totalCountResult] = await Promise.all([
-            db
-                .select({
-                    id: questions.id,
-                    pdfKey: questions.pdfKey,
-                    pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-                    viewCount: questions.viewCount,
-                    createdAt: questions.createdAt,
-                    departmentName: departments.name,
-                    departmentShortName: departments.shortName,
-                    courseName: courses.name,
-                    semesterName: semesters.name,
-                    examTypeName: examTypes.name,
-                    userName: users.name,
-                    userId: users.id,
-                    userUsername: users.username,
-                })
-                .from(questions)
-                .leftJoin(departments, eq(questions.departmentId, departments.id))
-                .leftJoin(courses, eq(questions.courseId, courses.id))
-                .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-                .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-                .leftJoin(users, eq(questions.userId, users.id))
-                .where(whereCondition)
-                .orderBy(orderBy ? (Array.isArray(orderBy) ? orderBy[0] : orderBy) : desc(questions.createdAt))
-                .limit(pageSize)
-                .offset(offset),
-
-            this.count(whereCondition),
-        ]);
-
-        const totalCount = totalCountResult;
-        const totalPages = Math.ceil(totalCount / pageSize);
-
-        return {
-            data: questionsResult as PublicQuestion[],
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalCount,
-                pageSize,
-                hasNext: page < totalPages,
-                hasPrevious: page > 1,
-            },
-        };
-    }
-
-    async findByIdWithDetails(id: number): Promise<QuestionWithDetails | null> {
-        const result = await db
-            .select({
-                id: questions.id,
-                userId: questions.userId,
-                departmentId: questions.departmentId,
-                courseId: questions.courseId,
-                semesterId: questions.semesterId,
-                examTypeId: questions.examTypeId,
-                status: questions.status,
-                pdfKey: questions.pdfKey,
-                pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-                viewCount: questions.viewCount,
-                createdAt: questions.createdAt,
-                updatedAt: questions.updatedAt,
-                departmentName: departments.name,
-                departmentShortName: departments.shortName,
-                courseName: courses.name,
-                semesterName: semesters.name,
-                examTypeName: examTypes.name,
-                userName: users.name,
-            })
-            .from(questions)
-            .leftJoin(departments, eq(questions.departmentId, departments.id))
-            .leftJoin(courses, eq(questions.courseId, courses.id))
-            .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-            .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-            .leftJoin(users, eq(questions.userId, users.id))
-            .where(eq(questions.id, id))
-            .limit(1);
-
-        return (result[0] as QuestionWithDetails) || null;
-    }
-
-    async findPublishedById(id: number): Promise<PublicQuestion | null> {
-        const result = await db
-            .select({
-                id: questions.id,
-                pdfKey: questions.pdfKey,
-                pdfFileSizeInBytes: questions.pdfFileSizeInBytes,
-                viewCount: questions.viewCount,
-                createdAt: questions.createdAt,
-                departmentName: departments.name,
-                departmentShortName: departments.shortName,
-                courseName: courses.name,
-                semesterName: semesters.name,
-                examTypeName: examTypes.name,
-                userName: users.name,
-                userId: users.id,
-                userUsername: users.username,
-            })
-            .from(questions)
-            .leftJoin(departments, eq(questions.departmentId, departments.id))
-            .leftJoin(courses, eq(questions.courseId, courses.id))
-            .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-            .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-            .leftJoin(users, eq(questions.userId, users.id))
-            .where(and(
-                eq(questions.id, id),
-                eq(questions.status, QuestionStatus.PUBLISHED)
-            ))
-            .limit(1);
-
-        return (result[0] as PublicQuestion) || null;
-    }
-
-    async updateStatus(id: number, status: keyof typeof QuestionStatus): Promise<boolean> {
-        const result = await db
-            .update(questions)
-            .set({ status: QuestionStatus[status] })
-            .where(eq(questions.id, id));
-
-        return (result as unknown as MySqlUpdateResult).rowsAffected > 0;
-    }
-
-    async incrementViewCount(id: number): Promise<boolean> {
-        const result = await db
-            .update(questions)
-            .set({
-                viewCount: sql`${questions.viewCount} + 1`,
-            })
-            .where(eq(questions.id, id));
-
-        return (result as unknown as MySqlUpdateResult).rowsAffected > 0;
-    }
-
-    async getDepartmentOptions(): Promise<DropdownOption[]> {
-        return db
-            .select({
-                id: departments.id,
-                name: departments.shortName,
-            })
-            .from(departments)
-            .orderBy(asc(departments.shortName)) as Promise<DropdownOption[]>;
-    }
-
-    async getCourseOptions(departmentId: number): Promise<DropdownOption[]> {
-        return db
-            .select({
-                id: courses.id,
-                name: courses.name,
-            })
-            .from(courses)
-            .where(eq(courses.departmentId, departmentId))
-            .orderBy(asc(courses.name)) as Promise<DropdownOption[]>;
-    }
-
-    async getSemesterOptions(): Promise<DropdownOption[]> {
-        return db
-            .select({
-                id: semesters.id,
-                name: semesters.name,
-            })
-            .from(semesters)
-            .orderBy(asc(semesters.name)) as Promise<DropdownOption[]>;
-    }
-
-    async getExamTypeOptions(): Promise<DropdownOption[]> {
-        return db
-            .select({
-                id: examTypes.id,
-                name: examTypes.name,
-            })
-            .from(examTypes)
-            .orderBy(asc(examTypes.name)) as Promise<DropdownOption[]>;
-    }
-
-    async getUserOptions(): Promise<UserDropdownOption[]> {
-        return db
-            .select({
-                id: users.id,
-                name: users.name,
-                email: users.email,
-            })
-            .from(users)
-            .orderBy(asc(users.email)) as Promise<UserDropdownOption[]>;
-    }
-
-    async getFilterOptions(): Promise<FilterOptions> {
-        const [departmentsResult, coursesResult, semestersResult, examTypesResult] = await Promise.all([
-            db
-                .select({
-                    id: departments.id,
-                    name: departments.name,
-                    shortName: departments.shortName,
-                })
-                .from(departments)
-                .orderBy(departments.name),
-
-            db
-                .select({
-                    id: courses.id,
-                    name: courses.name,
-                    departmentId: courses.departmentId,
-                })
-                .from(courses)
-                .orderBy(courses.name),
-
-            db
-                .select({
-                    id: semesters.id,
-                    name: semesters.name,
-                })
-                .from(semesters)
-                .orderBy(semesters.name),
-
-            db
-                .select({
-                    id: examTypes.id,
-                    name: examTypes.name,
-                })
-                .from(examTypes)
-                .orderBy(examTypes.name),
-        ]);
-
-        return {
-            departments: departmentsResult,
-            courses: coursesResult,
-            semesters: semestersResult,
-            examTypes: examTypesResult,
-        };
-    }
-
-    async isQuestionOwnedByUser(questionId: number, userId: string): Promise<boolean> {
-        const result = await db
-            .select({ userId: questions.userId })
-            .from(questions)
-            .where(eq(questions.id, questionId))
-            .limit(1);
-
-        return result.length > 0 && result[0].userId === userId;
-    }
-
-    async deleteWithPdfKey(id: number): Promise<{ success: boolean; pdfKey?: string }> {
-        // First get the PDF key for cleanup
-        const existingQuestion = await db
-            .select({ pdfKey: questions.pdfKey })
-            .from(questions)
-            .where(eq(questions.id, id))
-            .limit(1);
-
-        if (existingQuestion.length === 0) {
-            return { success: false };
-        }
-
-        // Delete the question
-        const deleted = await this.delete(id);
-
-        return {
-            success: deleted,
-            pdfKey: existingQuestion[0].pdfKey || undefined,
-        };
-    }
+  async deleteWithPdfKey(
+    id: number
+  ): Promise<{ success: boolean; pdfKey?: string }> {
+    // RAW SQL TEMPLATE:
+    // SELECT pdfKey FROM question WHERE id=?; DELETE FROM question WHERE id=?;
+    const [rows] = await db.execute(
+      sql`SELECT pdfKey FROM question WHERE id = ${id} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return { success: false };
+    const pdfKey = data[0].pdfKey ? String(data[0].pdfKey) : undefined;
+    const [del] = await db.execute(sql`DELETE FROM question WHERE id = ${id}`);
+    const success =
+      ((del as unknown as { affectedRows?: number }).affectedRows ?? 0) > 0;
+    return { success, pdfKey };
+  }
 }
 
 // Export a singleton instance
