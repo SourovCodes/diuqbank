@@ -1,189 +1,233 @@
-import { eq, asc, sql, count } from "drizzle-orm";
-import { examTypes, questions, type ExamType, type NewExamType } from "@/db/schema";
+import { sql } from "drizzle-orm";
+import { examTypes, type ExamType, type NewExamType } from "@/db/schema";
 import { db } from "@/db/drizzle";
-import { BaseRepository, type PaginatedFindOptions, type PaginatedResult } from "./base-repository";
+import {
+  BaseRepository,
+  type PaginatedFindOptions,
+  type PaginatedResult,
+} from "./base-repository";
 
 /**
  * Extended exam type with question count information
  */
 export type ExamTypeWithDetails = ExamType & {
-    questionCount: number;
+  questionCount: number;
 };
 
 /**
  * Exam type-specific repository interface
  */
 export interface IExamTypeRepository {
-    /**
-     * Find exam type by name (case insensitive)
-     */
-    findByName(name: string): Promise<ExamType | null>;
+  /**
+   * Find exam type by name (case insensitive)
+   */
+  findByName(name: string): Promise<ExamType | null>;
 
-    /**
-     * Check if exam type name is taken (case insensitive), optionally excluding an ID
-     */
-    isNameTaken(name: string, excludeId?: number): Promise<boolean>;
+  /**
+   * Check if exam type name is taken (case insensitive), optionally excluding an ID
+   */
+  isNameTaken(name: string, excludeId?: number): Promise<boolean>;
 
-    /**
-     * Get exam types with question counts, paginated
-     */
-    findManyWithQuestionCounts(options: PaginatedFindOptions & { search?: string }): Promise<
-        PaginatedResult<ExamTypeWithDetails>
-    >;
+  /**
+   * Get exam types with question counts, paginated
+   */
+  findManyWithQuestionCounts(
+    options: PaginatedFindOptions & { search?: string }
+  ): Promise<PaginatedResult<ExamTypeWithDetails>>;
 
-    /**
-     * Get all exam types with question counts (for dropdowns, etc.)
-     */
-    findAllWithQuestionCounts(): Promise<ExamTypeWithDetails[]>;
+  /**
+   * Get all exam types with question counts (for dropdowns, etc.)
+   */
+  findAllWithQuestionCounts(): Promise<ExamTypeWithDetails[]>;
 
-    /**
-     * Get question count for an exam type
-     */
-    getQuestionCount(examTypeId: number): Promise<number>;
+  /**
+   * Get question count for an exam type
+   */
+  getQuestionCount(examTypeId: number): Promise<number>;
 
-    /**
-     * Migrate questions from one exam type to another
-     */
-    migrateQuestions(fromExamTypeId: number, toExamTypeId: number): Promise<number>;
+  /**
+   * Migrate questions from one exam type to another
+   */
+  migrateQuestions(
+    fromExamTypeId: number,
+    toExamTypeId: number
+  ): Promise<number>;
 }
 
 /**
  * Exam type repository implementation
  */
 export class ExamTypeRepository
-    extends BaseRepository<ExamType, NewExamType, Partial<NewExamType>, number>
-    implements IExamTypeRepository {
-    protected table = examTypes;
-    protected idColumn = examTypes.id;
+  extends BaseRepository<ExamType, NewExamType, Partial<NewExamType>, number>
+  implements IExamTypeRepository
+{
+  protected table = examTypes;
+  protected idColumn = examTypes.id;
 
-    async create(input: NewExamType): Promise<ExamType> {
-        const [insertResult] = await db.insert(examTypes).values(input);
+  async create(input: NewExamType): Promise<ExamType> {
+    // RAW SQL TEMPLATE:
+    // INSERT INTO examType (name) VALUES (?);
+    // SELECT id, name FROM examType WHERE id = LAST_INSERT_ID();
+    const [insertResult] = await db.execute(
+      sql`INSERT INTO examType (name) VALUES (${input.name})`
+    );
+    const insertId = (insertResult as { insertId: number }).insertId;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM examType WHERE id = ${insertId} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return { id: Number(data[0].id), name: String(data[0].name) };
+  }
 
-        const [examType] = await db
-            .select()
-            .from(examTypes)
-            .where(eq(examTypes.id, insertResult.insertId))
-            .limit(1);
+  async update(
+    id: number,
+    input: Partial<NewExamType>
+  ): Promise<ExamType | null> {
+    // RAW SQL TEMPLATE:
+    // UPDATE examType SET name = ? WHERE id = ?;
+    if (input.name === undefined) return this.findById(id);
+    await db.execute(
+      sql`UPDATE examType SET name = ${input.name} WHERE id = ${id}`
+    );
+    return this.findById(id);
+  }
 
-        return examType;
+  async findByName(name: string): Promise<ExamType | null> {
+    // RAW SQL TEMPLATE:
+    // SELECT id, name FROM examType WHERE LOWER(name)=LOWER(?) LIMIT 1;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM examType WHERE LOWER(name) = LOWER(${name}) LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    if (!data[0]) return null;
+    return { id: Number(data[0].id), name: String(data[0].name) };
+  }
+
+  async isNameTaken(name: string, excludeId?: number): Promise<boolean> {
+    // RAW SQL TEMPLATE:
+    // SELECT 1 FROM examType WHERE LOWER(name)=LOWER(?) [AND id!=?] LIMIT 1;
+    let query = sql`SELECT 1 FROM examType WHERE LOWER(name) = LOWER(${name})`;
+    if (excludeId !== undefined) {
+      query = sql`${query} AND id != ${excludeId}`;
     }
+    query = sql`${query} LIMIT 1`;
+    const [rows] = await db.execute(query);
+    const arr = rows as unknown as Array<unknown>;
+    return arr.length > 0;
+  }
 
-    async update(id: number, input: Partial<NewExamType>): Promise<ExamType | null> {
-        await db.update(examTypes).set(input).where(eq(examTypes.id, id));
+  async findManyWithQuestionCounts(
+    options: PaginatedFindOptions & { search?: string }
+  ): Promise<PaginatedResult<ExamTypeWithDetails>> {
+    const { page, pageSize, search } = options;
+    const offset = (page - 1) * pageSize;
 
-        return this.findById(id);
+    // RAW SQL TEMPLATE (paged list with counts):
+    // SELECT e.id,e.name, COUNT(q.id) AS questionCount
+    // FROM examType e
+    // LEFT JOIN question q ON e.id = q.examTypeId
+    // [WHERE LOWER(e.name) LIKE LOWER(?)]
+    // GROUP BY e.id,e.name
+    // ORDER BY e.name ASC
+    // LIMIT ? OFFSET ?;
+    const searchFilter = search ? `%${search}%` : null;
+    let whereClause = sql``;
+    if (searchFilter) {
+      whereClause = sql`WHERE LOWER(e.name) LIKE LOWER(${searchFilter})`;
     }
+    const [rows] = await db.execute(sql`
+            SELECT e.id, e.name, COUNT(q.id) AS questionCount
+            FROM examType e
+            LEFT JOIN question q ON e.id = q.examTypeId
+            ${whereClause}
+            GROUP BY e.id, e.name
+            ORDER BY e.name ASC
+            LIMIT ${pageSize} OFFSET ${offset}
+        `);
+    const data = (rows as unknown as Array<Record<string, unknown>>).map(
+      (r) => ({
+        id: Number(r.id),
+        name: String(r.name),
+        questionCount:
+          typeof r.questionCount === "number"
+            ? (r.questionCount as number)
+            : parseInt(String(r.questionCount ?? 0), 10),
+      })
+    );
 
-    async findByName(name: string): Promise<ExamType | null> {
-        const result = await db
-            .select()
-            .from(examTypes)
-            .where(sql`LOWER(${examTypes.name}) = LOWER(${name})`)
-            .limit(1);
+    // RAW SQL TEMPLATE (total count):
+    // SELECT COUNT(*) AS total FROM examType e [WHERE LOWER(e.name) LIKE LOWER(?)];
+    const [countRows] = await db.execute(sql`
+            SELECT COUNT(*) AS total FROM examType e
+            ${whereClause}
+        `);
+    const totalCount = parseInt(
+      String(
+        (countRows as unknown as Array<Record<string, unknown>>)[0]?.total ?? 0
+      ),
+      10
+    );
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
-        return (result[0] as ExamType) || null;
-    }
+    return {
+      data: data as ExamTypeWithDetails[],
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        pageSize,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
+  }
 
-    async isNameTaken(name: string, excludeId?: number): Promise<boolean> {
-        let whereCondition = sql`LOWER(${examTypes.name}) = LOWER(${name})`;
+  async findAllWithQuestionCounts(): Promise<ExamTypeWithDetails[]> {
+    // RAW SQL TEMPLATE:
+    // SELECT e.id,e.name, COUNT(q.id) AS questionCount
+    // FROM examType e LEFT JOIN question q ON e.id = q.examTypeId
+    // GROUP BY e.id,e.name ORDER BY e.name ASC;
+    const [rows] = await db.execute(sql`
+            SELECT e.id, e.name, COUNT(q.id) AS questionCount
+            FROM examType e
+            LEFT JOIN question q ON e.id = q.examTypeId
+            GROUP BY e.id, e.name
+            ORDER BY e.name ASC
+        `);
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      questionCount:
+        typeof r.questionCount === "number"
+          ? (r.questionCount as number)
+          : parseInt(String(r.questionCount ?? 0), 10),
+    })) as ExamTypeWithDetails[];
+  }
 
-        if (excludeId !== undefined) {
-            whereCondition = sql`LOWER(${examTypes.name}) = LOWER(${name}) AND ${examTypes.id} != ${excludeId}`;
-        }
+  async getQuestionCount(examTypeId: number): Promise<number> {
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) AS count FROM question WHERE examTypeId=?;
+    const [rows] = await db.execute(
+      sql`SELECT COUNT(*) AS count FROM question WHERE examTypeId = ${examTypeId}`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return parseInt(String(data[0]?.count ?? 0), 10);
+  }
 
-        const result = await db
-            .select()
-            .from(examTypes)
-            .where(whereCondition)
-            .limit(1);
-
-        return result.length > 0;
-    }
-
-    async findManyWithQuestionCounts(
-        options: PaginatedFindOptions & { search?: string }
-    ): Promise<PaginatedResult<ExamTypeWithDetails>> {
-        const { page, pageSize, search, orderBy } = options;
-        const offset = (page - 1) * pageSize;
-
-        // Build where conditions for search
-        const searchCondition = search
-            ? sql`LOWER(${examTypes.name}) LIKE LOWER(${`%${search}%`})`
-            : undefined;
-
-        // Execute queries in parallel
-        const [examTypesResult, totalCountResult] = await Promise.all([
-            db
-                .select({
-                    id: examTypes.id,
-                    name: examTypes.name,
-                    questionCount: count(questions.id),
-                })
-                .from(examTypes)
-                .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
-                .where(searchCondition)
-                .groupBy(examTypes.id, examTypes.name)
-                .orderBy(orderBy ? (Array.isArray(orderBy) ? orderBy[0] : orderBy) : asc(examTypes.name))
-                .limit(pageSize)
-                .offset(offset),
-
-            this.count(searchCondition),
-        ]);
-
-        const totalCount = totalCountResult;
-        const totalPages = Math.ceil(totalCount / pageSize);
-
-        return {
-            data: examTypesResult as ExamTypeWithDetails[],
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalCount,
-                pageSize,
-                hasNext: page < totalPages,
-                hasPrevious: page > 1,
-            },
-        };
-    }
-
-    async findAllWithQuestionCounts(): Promise<ExamTypeWithDetails[]> {
-        return db
-            .select({
-                id: examTypes.id,
-                name: examTypes.name,
-                questionCount: count(questions.id),
-            })
-            .from(examTypes)
-            .leftJoin(questions, eq(examTypes.id, questions.examTypeId))
-            .groupBy(examTypes.id, examTypes.name)
-            .orderBy(asc(examTypes.name)) as Promise<ExamTypeWithDetails[]>;
-    }
-
-    async getQuestionCount(examTypeId: number): Promise<number> {
-        const result = await db
-            .select({ count: count() })
-            .from(questions)
-            .where(eq(questions.examTypeId, examTypeId));
-
-        return result[0].count;
-    }
-
-    async migrateQuestions(fromExamTypeId: number, toExamTypeId: number): Promise<number> {
-        // First get the count of questions to be migrated
-        const questionCount = await this.getQuestionCount(fromExamTypeId);
-
-        if (questionCount === 0) {
-            return 0;
-        }
-
-        // Migrate the questions
-        await db
-            .update(questions)
-            .set({ examTypeId: toExamTypeId })
-            .where(eq(questions.examTypeId, fromExamTypeId));
-
-        return questionCount;
-    }
+  async migrateQuestions(
+    fromExamTypeId: number,
+    toExamTypeId: number
+  ): Promise<number> {
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) FROM question WHERE examTypeId=?; (store as n)
+    // UPDATE question SET examTypeId=? WHERE examTypeId=?; (return n)
+    const count = await this.getQuestionCount(fromExamTypeId);
+    if (count === 0) return 0;
+    await db.execute(
+      sql`UPDATE question SET examTypeId = ${toExamTypeId} WHERE examTypeId = ${fromExamTypeId}`
+    );
+    return count;
+  }
 }
 
 // Export a singleton instance
