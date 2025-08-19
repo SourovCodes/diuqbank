@@ -1,7 +1,11 @@
-import { eq, asc, sql, count } from "drizzle-orm";
-import { semesters, questions, type Semester, type NewSemester } from "@/db/schema";
+import { sql } from "drizzle-orm";
+import { semesters, type Semester, type NewSemester } from "@/db/schema";
 import { db } from "@/db/drizzle";
-import { BaseRepository, type PaginatedFindOptions, type PaginatedResult } from "./base-repository";
+import {
+  BaseRepository,
+  type PaginatedFindOptions,
+  type PaginatedResult,
+} from "./base-repository";
 
 /**
  * Extended semester type with question count information
@@ -27,9 +31,9 @@ export interface ISemesterRepository {
   /**
    * Get semesters with question counts, paginated
    */
-  findManyWithQuestionCounts(options: PaginatedFindOptions & { search?: string }): Promise<
-    PaginatedResult<SemesterWithDetails>
-  >;
+  findManyWithQuestionCounts(
+    options: PaginatedFindOptions & { search?: string }
+  ): Promise<PaginatedResult<SemesterWithDetails>>;
 
   /**
    * Get all semesters with question counts (for dropdowns, etc.)
@@ -44,7 +48,10 @@ export interface ISemesterRepository {
   /**
    * Migrate questions from one semester to another
    */
-  migrateQuestions(fromSemesterId: number, toSemesterId: number): Promise<number>;
+  migrateQuestions(
+    fromSemesterId: number,
+    toSemesterId: number
+  ): Promise<number>;
 }
 
 /**
@@ -57,86 +64,116 @@ export class SemesterRepository
   protected table = semesters;
   protected idColumn = semesters.id;
 
-  async create(input: NewSemester): Promise<Semester> {
-    const [insertResult] = await db.insert(semesters).values(input);
-
-    const [semester] = await db
-      .select()
-      .from(semesters)
-      .where(eq(semesters.id, insertResult.insertId))
-      .limit(1);
-
-    return semester;
+  private mapSemester(row: Record<string, unknown>): Semester {
+    return { id: Number(row.id), name: String(row.name) };
   }
 
-  async update(id: number, input: Partial<NewSemester>): Promise<Semester | null> {
-    await db.update(semesters).set(input).where(eq(semesters.id, id));
+  async create(input: NewSemester): Promise<Semester> {
+    // RAW SQL TEMPLATE:
+    // INSERT INTO semester (name) VALUES (?);
+    // SELECT id, name FROM semester WHERE id = LAST_INSERT_ID();
+    const [insertResult] = await db.execute(
+      sql`INSERT INTO semester (name) VALUES (${input.name})`
+    );
+    const insertId = (insertResult as { insertId: number }).insertId;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM semester WHERE id = ${insertId} LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return this.mapSemester(data[0]);
+  }
 
+  async update(
+    id: number,
+    input: Partial<NewSemester>
+  ): Promise<Semester | null> {
+    // RAW SQL TEMPLATE:
+    // UPDATE semester SET name = ? WHERE id = ?;
+    if (input.name === undefined) return this.findById(id);
+    await db.execute(
+      sql`UPDATE semester SET name = ${input.name} WHERE id = ${id}`
+    );
     return this.findById(id);
   }
 
   async findByName(name: string): Promise<Semester | null> {
-    const result = await db
-      .select()
-      .from(semesters)
-      .where(sql`LOWER(${semesters.name}) = LOWER(${name})`)
-      .limit(1);
-
-    return (result[0] as Semester) || null;
+    // RAW SQL TEMPLATE:
+    // SELECT id, name FROM semester WHERE LOWER(name)=LOWER(?) LIMIT 1;
+    const [rows] = await db.execute(
+      sql`SELECT id, name FROM semester WHERE LOWER(name) = LOWER(${name}) LIMIT 1`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return data[0] ? this.mapSemester(data[0]) : null;
   }
 
   async isNameTaken(name: string, excludeId?: number): Promise<boolean> {
-    let whereCondition = sql`LOWER(${semesters.name}) = LOWER(${name})`;
-
+    // RAW SQL TEMPLATE:
+    // SELECT 1 FROM semester WHERE LOWER(name)=LOWER(?) [AND id!=?] LIMIT 1;
+    let query = sql`SELECT 1 FROM semester WHERE LOWER(name) = LOWER(${name})`;
     if (excludeId !== undefined) {
-      whereCondition = sql`LOWER(${semesters.name}) = LOWER(${name}) AND ${semesters.id} != ${excludeId}`;
+      query = sql`${query} AND id != ${excludeId}`;
     }
-
-    const result = await db
-      .select()
-      .from(semesters)
-      .where(whereCondition)
-      .limit(1);
-
-    return result.length > 0;
+    query = sql`${query} LIMIT 1`;
+    const [rows] = await db.execute(query);
+    const arr = rows as unknown as Array<unknown>;
+    return arr.length > 0;
   }
 
   async findManyWithQuestionCounts(
     options: PaginatedFindOptions & { search?: string }
   ): Promise<PaginatedResult<SemesterWithDetails>> {
-    const { page, pageSize, search, orderBy } = options;
+    const { page, pageSize, search } = options;
     const offset = (page - 1) * pageSize;
 
-    // Build where conditions for search
-    const baseCondition = sql`1=1`;
-    const searchCondition = search
-      ? sql`LOWER(${semesters.name}) LIKE LOWER(${`%${search}%`})`
-      : baseCondition;
+    // RAW SQL TEMPLATE (paged semesters with counts):
+    // SELECT s.id,s.name, COUNT(q.id) AS questionCount
+    // FROM semester s
+    // LEFT JOIN question q ON s.id = q.semesterId
+    // [WHERE LOWER(s.name) LIKE LOWER(?)]
+    // GROUP BY s.id,s.name
+    // ORDER BY s.name ASC
+    // LIMIT ? OFFSET ?;
+    const searchFilter = search ? `%${search}%` : null;
+    let whereClause = sql``;
+    if (searchFilter) {
+      whereClause = sql`WHERE LOWER(s.name) LIKE LOWER(${searchFilter})`;
+    }
+    const [rows] = await db.execute(sql`
+      SELECT s.id, s.name, COUNT(q.id) AS questionCount
+      FROM semester s
+      LEFT JOIN question q ON s.id = q.semesterId
+      ${whereClause}
+      GROUP BY s.id, s.name
+      ORDER BY s.name ASC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `);
+    const data = (rows as unknown as Array<Record<string, unknown>>).map(
+      (r) => ({
+        id: Number(r.id),
+        name: String(r.name),
+        questionCount:
+          typeof r.questionCount === "number"
+            ? (r.questionCount as number)
+            : parseInt(String(r.questionCount ?? 0), 10),
+      })
+    );
 
-    // Execute queries in parallel
-    const [semestersResult, totalCountResult] = await Promise.all([
-      db
-        .select({
-          id: semesters.id,
-          name: semesters.name,
-          questionCount: count(questions.id),
-        })
-        .from(semesters)
-        .leftJoin(questions, eq(semesters.id, questions.semesterId))
-        .where(searchCondition)
-        .groupBy(semesters.id, semesters.name)
-        .orderBy(orderBy ? (Array.isArray(orderBy) ? orderBy[0] : orderBy) : asc(semesters.name))
-        .limit(pageSize)
-        .offset(offset),
-
-      this.count(searchCondition),
-    ]);
-
-    const totalCount = totalCountResult;
-    const totalPages = Math.ceil(totalCount / pageSize);
+    // RAW SQL TEMPLATE (total semesters count):
+    // SELECT COUNT(*) AS total FROM semester s [WHERE LOWER(s.name) LIKE LOWER(?)];
+    const [countRows] = await db.execute(sql`
+      SELECT COUNT(*) AS total FROM semester s
+      ${whereClause}
+    `);
+    const totalCount = parseInt(
+      String(
+        (countRows as unknown as Array<Record<string, unknown>>)[0]?.total ?? 0
+      ),
+      10
+    );
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
     return {
-      data: semestersResult as SemesterWithDetails[],
+      data: data as SemesterWithDetails[],
       pagination: {
         currentPage: page,
         totalPages,
@@ -149,42 +186,50 @@ export class SemesterRepository
   }
 
   async findAllWithQuestionCounts(): Promise<SemesterWithDetails[]> {
-    return db
-      .select({
-        id: semesters.id,
-        name: semesters.name,
-        questionCount: count(questions.id),
-      })
-      .from(semesters)
-      .leftJoin(questions, eq(semesters.id, questions.semesterId))
-      .groupBy(semesters.id, semesters.name)
-      .orderBy(asc(semesters.name)) as Promise<SemesterWithDetails[]>;
+    // RAW SQL TEMPLATE:
+    // SELECT s.id,s.name, COUNT(q.id) AS questionCount
+    // FROM semester s LEFT JOIN question q ON s.id = q.semesterId
+    // GROUP BY s.id,s.name ORDER BY s.name ASC;
+    const [rows] = await db.execute(sql`
+      SELECT s.id, s.name, COUNT(q.id) AS questionCount
+      FROM semester s
+      LEFT JOIN question q ON s.id = q.semesterId
+      GROUP BY s.id, s.name
+      ORDER BY s.name ASC
+    `);
+    return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+      id: Number(r.id),
+      name: String(r.name),
+      questionCount:
+        typeof r.questionCount === "number"
+          ? (r.questionCount as number)
+          : parseInt(String(r.questionCount ?? 0), 10),
+    })) as SemesterWithDetails[];
   }
 
   async getQuestionCount(semesterId: number): Promise<number> {
-    const result = await db
-      .select({ count: count() })
-      .from(questions)
-      .where(eq(questions.semesterId, semesterId));
-
-    return result[0].count;
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) AS count FROM question WHERE semesterId=?;
+    const [rows] = await db.execute(
+      sql`SELECT COUNT(*) AS count FROM question WHERE semesterId = ${semesterId}`
+    );
+    const data = rows as unknown as Array<Record<string, unknown>>;
+    return parseInt(String(data[0]?.count ?? 0), 10);
   }
 
-  async migrateQuestions(fromSemesterId: number, toSemesterId: number): Promise<number> {
-    // First get the count of questions to be migrated
-    const questionCount = await this.getQuestionCount(fromSemesterId);
-
-    if (questionCount === 0) {
-      return 0;
-    }
-
-    // Migrate the questions
-    await db
-      .update(questions)
-      .set({ semesterId: toSemesterId })
-      .where(eq(questions.semesterId, fromSemesterId));
-
-    return questionCount;
+  async migrateQuestions(
+    fromSemesterId: number,
+    toSemesterId: number
+  ): Promise<number> {
+    // RAW SQL TEMPLATE:
+    // SELECT COUNT(*) FROM question WHERE semesterId=?; (store n)
+    // UPDATE question SET semesterId=? WHERE semesterId=?; (return n)
+    const n = await this.getQuestionCount(fromSemesterId);
+    if (n === 0) return 0;
+    await db.execute(
+      sql`UPDATE question SET semesterId = ${toSemesterId} WHERE semesterId = ${fromSemesterId}`
+    );
+    return n;
   }
 }
 
