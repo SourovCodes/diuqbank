@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export const metadata: Metadata = {
   title: "About",
@@ -9,6 +10,20 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const teamMembers = [
+    { name: "Sourov Biswas", id: "232-15-004" },
+    { name: "Muntasir Munyim Polash", id: "232-15-708" },
+    { name: "Moniruzzaman Nahid", id: "232-15-607" },
+    { name: "Rony Roy", id: "232-15-712" },
+    { name: "Mehedi Hasan Shuvo", id: "232-15-358" },
+  ];
+  const supervisor = {
+    name: "Pranto Protim Choudhury (PPC)",
+    role: "Lecturer",
+    email: "prantoprotimchoudhury.cse@diu.edu.bd",
+    phone: "01737043436",
+  };
+
   return (
     <div className="container mx-auto px-4 py-16">
       {/* Header section */}
@@ -25,6 +40,100 @@ export default function AboutPage() {
           community-powered platform
         </p>
       </div>
+
+      {/* Course project submission & team info */}
+      <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+        <CardContent className="p-8">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+            DBMS Course Project Submission
+          </h2>
+          <p className="text-slate-600 dark:text-slate-300 mb-6">
+            This platform is a Database Management Systems (DBMS) course project
+            submission.
+          </p>
+          <div>
+            {/* Supervisor highlight */}
+            <div className="flex flex-col items-center text-center mb-10">
+              <Avatar className="h-28 w-28 border-2 border-blue-500 shadow-sm mb-4 bg-white dark:bg-slate-900">
+                <AvatarImage
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                    supervisor.name
+                  )}`}
+                  alt={supervisor.name}
+                />
+                <AvatarFallback className="text-lg font-semibold">
+                  {supervisor.name
+                    .split(/\s+/)
+                    .map((p) => p[0])
+                    .join("")
+                    .slice(0, 3)
+                    .toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {supervisor.name}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                {supervisor.role}
+              </p>
+              <p className="text-slate-600 dark:text-slate-300 text-sm">
+                <span className="font-medium">Email:</span>{" "}
+                <a
+                  href={`mailto:${supervisor.email}`}
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {supervisor.email}
+                </a>
+                <br />
+                <span className="font-medium">Phone:</span>{" "}
+                <a
+                  href={`tel:${supervisor.phone}`}
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {supervisor.phone}
+                </a>
+              </p>
+            </div>
+
+            {/* Team row */}
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 text-center">
+              Team Members
+            </h3>
+            <div className="flex flex-wrap justify-center gap-8">
+              {teamMembers.map((m) => {
+                const initials = m.name
+                  .split(/\s+/)
+                  .map((p) => p[0])
+                  .join("")
+                  .slice(0, 3)
+                  .toUpperCase();
+                const placeholderSrc = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                  m.name
+                )}`;
+                return (
+                  <div key={m.id} className="flex flex-col items-center w-32">
+                    <Avatar className="h-20 w-20 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+                      <AvatarImage
+                        src={placeholderSrc}
+                        alt={`${m.name} avatar placeholder`}
+                      />
+                      <AvatarFallback className="text-sm font-medium">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="mt-2 text-center text-slate-700 dark:text-slate-300 text-sm font-medium leading-tight">
+                      {m.name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {m.id}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Mission section */}
       <Card className="mb-10 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
