@@ -17,10 +17,15 @@ export async function hasPermission(permissionName: string): Promise<{
     return { allowed: false };
   }
 
-  // Check if user is super admin
-  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
-  const allowed = Boolean(
-    superAdminEmail && session.user.email === superAdminEmail
-  );
+  // Check if user is super admin. SUPER_ADMIN_EMAIL can be a single email or comma-separated list.
+  const superAdminEnv = process.env.SUPER_ADMIN_EMAIL || "";
+  // Split by comma, trim whitespace, ignore empty, make case-insensitive
+  const superAdminEmails = superAdminEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const userEmail = session.user.email.toLowerCase();
+  const allowed = superAdminEmails.includes(userEmail);
   return { allowed };
 }
