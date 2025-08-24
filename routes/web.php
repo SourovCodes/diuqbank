@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestionsPageController;
 use App\Http\Controllers\ContributorsPageController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,10 @@ Route::get('/questions', [QuestionsPageController::class, 'index'])->name('quest
 Route::middleware('auth')->group(function () {
     Route::get('/questions/create', [QuestionsPageController::class, 'create'])->name('questions.create');
     Route::get('/questions/{question}/edit', [QuestionsPageController::class, 'edit'])->name('questions.edit');
+    
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 Route::get('/questions/{question}', [QuestionsPageController::class, 'show'])->name('questions.show');
 

@@ -64,7 +64,10 @@
                             <div class="border-t border-slate-200 dark:border-slate-700"></div>
                             <div class="p-2">
                                 <a href="{{ url('/contributors/'.$me->username) }}" class="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
-                                    <x-lucide-user class="h-4 w-4" /> Profile
+                                    <x-lucide-user class="h-4 w-4" /> View Profile
+                                </a>
+                                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+                                    <x-lucide-settings class="h-4 w-4" /> Edit Profile
                                 </a>
                                 @if (\Illuminate\Support\Facades\Route::has('logout'))
                                     <form method="POST" action="{{ route('logout') }}" class="mt-1">
@@ -119,6 +122,10 @@
                     </span>
                     <span class="truncate">{{ $me->name }}</span>
                     <x-lucide-chevron-right class="h-4 w-4 ml-auto opacity-60" />
+                </a>
+                <a href="{{ route('profile.edit') }}" class="group relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:ring-offset-slate-950 transition-colors text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 mb-2">
+                    <x-lucide-settings class="h-5 w-5" />
+                    <span>Edit Profile</span>
                 </a>
             @else
                 <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 mb-2">
