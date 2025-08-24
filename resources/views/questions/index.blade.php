@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">Questions</h1>
         @auth
             <a href="{{ route('questions.create') }}" 
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-10 has-[>svg]:px-4 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium">
                 <x-lucide-plus class="h-4 w-4" />
                 Add Question
             </a>
@@ -26,8 +26,8 @@
                     @endif
                 </h3>
                 @if (array_filter($filters))
-                    <a href="{{ url('/questions') }}" class="absolute top-4 right-4 rounded-full gap-1.5 border border-slate-300 dark:border-slate-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50/60 dark:hover:border-red-600 dark:hover:text-red-400 dark:hover:bg-red-900/20 h-8 px-3 inline-flex items-center text-sm">
-                        <x-lucide-filter-x class="h-3.5 w-3.5" /> Reset
+                    <a href="{{ url('/questions') }}" class="absolute top-4 right-4 inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive h-8 has-[>svg]:px-3 rounded-full px-4 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md transition-all dark:bg-slate-800 dark:hover:bg-red-950/20 dark:text-red-400 dark:hover:text-red-300 dark:border-red-700 dark:hover:border-red-600 font-medium text-xs">
+                        <x-lucide-filter-x class="h-3 w-3" /> Reset
                     </a>
                 @endif
             </div>
@@ -36,7 +36,7 @@
                     <label for="department_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-building-2 class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Department
                     </label>
-                    <select id="department_id" name="department_id" class="w-full h-10 rounded-md border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:ring-0">
+                    <select id="department_id" name="department_id" class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors">
                         <option value="">All Departments</option>
                         @foreach ($dropdownData['departments'] as $d)
                             <option value="{{ $d->id }}" @selected($filters['department_id']===$d->id)>{{ $d->name }}</option>
@@ -47,7 +47,7 @@
                     <label for="course_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-book-open class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Course
                     </label>
-                    <select id="course_id" name="course_id" class="w-full h-10 rounded-md border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:ring-0">
+                    <select id="course_id" name="course_id" class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors">
                         <option value="">All Courses</option>
                         @foreach ($dropdownData['courses'] as $c)
                             @php $show = empty($filters['department_id']) || $filters['department_id'] === $c->department_id; @endphp
@@ -64,7 +64,7 @@
                     <label for="semester_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-calendar class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Semester
                     </label>
-                    <select id="semester_id" name="semester_id" class="w-full h-10 rounded-md border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:ring-0">
+                    <select id="semester_id" name="semester_id" class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors">
                         <option value="">All Semesters</option>
                         @foreach ($dropdownData['semesters'] as $s)
                             <option value="{{ $s->id }}" @selected($filters['semester_id']===$s->id)>{{ $s->name }}</option>
@@ -75,7 +75,7 @@
                     <label for="exam_type_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-shapes class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Exam Type
                     </label>
-                    <select id="exam_type_id" name="exam_type_id" class="w-full h-10 rounded-md border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:border-blue-500 focus:ring-0">
+                    <select id="exam_type_id" name="exam_type_id" class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors">
                         <option value="">All Exam Types</option>
                         @foreach ($dropdownData['exam_types'] as $e)
                             <option value="{{ $e->id }}" @selected($filters['exam_type_id']===$e->id)>{{ $e->name }}</option>
