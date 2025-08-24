@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $question->course->name ?? 'Question')
+@section('title', ($question->course->name ?? 'Question') . ' (' . ($question->department->short_name ?? 'N/A') . '), ' . ($question->semester->name ?? 'N/A') . ', ' . ($question->examType->name ?? 'N/A'))
 
 @section('content')
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
