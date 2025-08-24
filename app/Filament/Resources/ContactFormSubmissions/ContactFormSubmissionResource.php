@@ -18,7 +18,8 @@ class ContactFormSubmissionResource extends Resource
 {
     protected static ?string $model = ContactFormSubmission::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    // Use an envelope icon to better represent contact form submissions.
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Envelope;
 
     protected static ?string $recordTitleAttribute = 'name';
 
