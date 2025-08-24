@@ -22,7 +22,8 @@ class GoogleLoginController extends Controller
             $email = strtolower($googleUser->getEmail());
             $allowed = str_ends_with($email, '@diu.edu.bd') || str_ends_with($email, '@s.diu.edu.bd');
             if (! $allowed) {
-                return redirect()->route('login')->with('error', 'Only DIU email addresses are allowed (diu.edu.bd or s.diu.edu.bd).');
+                toast('Only DIU email addresses are allowed (diu.edu.bd or s.diu.edu.bd).', 'error');
+                return redirect()->route('login');
             }
 
             $user = User::where('email', $googleUser->getEmail())->first();
@@ -40,6 +41,7 @@ class GoogleLoginController extends Controller
                     $new_user->markEmailAsVerified();
                 }
 
+                toast('Welcome to DIUQBank! Your account has been created successfully.', 'success');
                 return redirect()->intended(route('home'));
             } else {
                 Auth::login($user);
@@ -47,10 +49,12 @@ class GoogleLoginController extends Controller
                     $user->markEmailAsVerified();
                 }
 
+                toast('Welcome back to DIUQBank!', 'success');
                 return redirect()->intended(route('home'));
             }
         } catch (\Throwable $th) {
-            return redirect()->route('login')->with('error', 'Google login failed. Please try again.');
+            toast('Google login failed. Please try again.', 'error');
+            return redirect()->route('login');
         }
     }
 }

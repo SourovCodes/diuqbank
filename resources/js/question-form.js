@@ -277,6 +277,8 @@ class QuestionForm {
             this.hideError('pdf-upload-error');
             this.removeUploadAreaHighlight();
 
+            window.toast.success('PDF uploaded successfully!');
+
         } catch (error) {
             console.error('Upload error:', error);
             this.uploadProgress.classList.add('hidden');
@@ -284,6 +286,7 @@ class QuestionForm {
             // Show the actual error message if available
             const errorMessage = error.message || 'Failed to upload file. Please try again.';
             this.showError('pdf-upload-error', errorMessage);
+            window.toast.error(errorMessage);
         }
     }
 
@@ -371,7 +374,7 @@ class QuestionForm {
                 } else {
                     // Show the actual API error message
                     const errorMessage = result.message || `Failed to ${this.isEdit ? 'update' : 'create'} question`;
-                    alert(errorMessage);
+                    window.toast.error(errorMessage);
                 }
                 return;
             }
@@ -387,7 +390,7 @@ class QuestionForm {
             console.error('Submission error:', error);
             // Show the actual error message if available
             const errorMessage = error.message || `Failed to ${this.isEdit ? 'update' : 'create'} question. Please try again.`;
-            alert(errorMessage);
+            window.toast.error(errorMessage);
         } finally {
             this.setSubmitLoading(false);
         }
@@ -396,7 +399,7 @@ class QuestionForm {
     // Modal functions
     openCourseModal() {
         if (!this.departmentSelect.value) {
-            alert('Please select a department first.');
+            window.toast.warning('Please select a department first.');
             return;
         }
         this.courseModal.classList.remove('hidden');
@@ -463,6 +466,7 @@ class QuestionForm {
             option.selected = true;
             this.courseSelect.appendChild(option);
 
+            window.toast.success(`Course "${result.data.name}" created successfully!`);
             this.closeCourseModal();
 
         } catch (error) {
@@ -516,6 +520,7 @@ class QuestionForm {
             option.selected = true;
             this.semesterSelect.appendChild(option);
 
+            window.toast.success(`Semester "${result.data.name}" created successfully!`);
             this.closeSemesterModal();
 
         } catch (error) {

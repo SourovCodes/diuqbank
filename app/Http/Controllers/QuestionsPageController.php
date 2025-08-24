@@ -97,6 +97,7 @@ class QuestionsPageController extends Controller
     {
         // Ensure only the owner can edit the question
         if ($question->user_id !== auth()->id()) {
+            toast('You can only edit your own questions.', 'error');
             abort(403, 'Unauthorized');
         }
 

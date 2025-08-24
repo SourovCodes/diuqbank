@@ -20,6 +20,24 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ trim($__env->yieldContent('title', 'DIUQBank | DIU Question Bank')) }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        {{-- Toast Flash Messages --}}
+        <script>
+            window.flashMessages = {
+                @if(session('success'))
+                    success: @json(session('success')),
+                @endif
+                @if(session('error'))
+                    error: @json(session('error')),
+                @endif
+                @if(session('warning'))
+                    warning: @json(session('warning')),
+                @endif
+                @if(session('info'))
+                    info: @json(session('info')),
+                @endif
+            };
+        </script>
     </head>
     <body class="antialiased flex flex-col min-h-screen bg-background text-foreground">
         <div class="fixed inset-0 -z-10">

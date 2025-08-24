@@ -47,6 +47,7 @@ class QuestionController extends Controller
     public function store(QuestionRequest $request)
     {
         if (!Storage::disk('s3')->exists($request->pdf_key)) {
+            toast('PDF file not found. Please upload the file again.', 'error');
             abort(400, 'PDF not uploaded');
         }
         $uuid = Str::uuid();
@@ -54,19 +55,24 @@ class QuestionController extends Controller
         Storage::disk('s3')->copy($request->pdf_key, $finalKey);
         Storage::disk('s3')->delete($request->pdf_key);
 
-        return new QuestionResource(Question::create(array_merge($request->validated(), [
+        $question = Question::create(array_merge($request->validated(), [
             'user_id' => auth()->id(),
             'pdf_key' => $finalKey,
             'pdf_size' => Storage::disk('s3')->size($finalKey),
             'is_watermarked' => false,
             'status' => QuestionStatus::PUBLISHED,
-        ])));
+        ]));
+
+        toast('Question created successfully! 🎉', 'success');
+
+        return new QuestionResource($question);
     }
 
 
     public function update(QuestionRequest $request, Question $question)
     {
         if ($question->user_id !== auth()->id()) {
+            toast('You are not authorized to edit this question.', 'error');
             abort(403, 'Unauthorized');
         }
 
@@ -75,6 +81,7 @@ class QuestionController extends Controller
         // If pdf_key is provided, handle PDF file operations
         if ($request->pdf_key) {
             if (!Storage::disk('s3')->exists($request->pdf_key)) {
+                toast('PDF file not found. Please upload the file again.', 'error');
                 abort(400, 'PDF not uploaded');
             }
             $uuid = Str::uuid();
@@ -99,6 +106,8 @@ class QuestionController extends Controller
         }
 
         $question->update($updateData);
+
+        toast('Question updated successfully! ✨', 'success');
 
         return new QuestionResource($question->loadMissing('department', 'semester', 'course', 'examType'));
     }
