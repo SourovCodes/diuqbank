@@ -53,7 +53,10 @@
                 <h3 class="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Contact Us</h3>
                 <div class="space-y-3">
                     <p class="text-slate-600 dark:text-slate-400 flex items-center"><x-lucide-mail class="h-4 w-4 mr-2" /> contact@diuqbank.com</p>
-                    <a href="{{ url('/contact') }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/50 transition-all px-3 py-2">Send Message</a>
+                    <a href="{{ url('/contact') }}" class="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive h-10 has-[>svg]:px-4 rounded-full px-8 bg-white hover:bg-slate-50 text-blue-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 shadow-md hover:shadow-xl transition-all dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 dark:hover:text-blue-300 dark:border-slate-700 dark:hover:border-slate-600 font-medium">
+                        <x-lucide-send class="h-4 w-4" />
+                        Send Message
+                    </a>
                 </div>
             </div>
         </div>
