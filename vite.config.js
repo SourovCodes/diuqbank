@@ -8,7 +8,8 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/js/question-form.js'
+                'resources/js/question-form.js',
+                'resources/js/profile-image.js'
             ],
             refresh: true,
         }),
