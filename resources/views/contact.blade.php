@@ -92,10 +92,10 @@
                     <div class="pt-2">
                         <button 
                             type="submit" 
-                            class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 px-4 md:px-6 py-2 md:py-2.5 text-white text-sm md:text-base rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 flex items-center justify-center"
+                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-10 has-[>svg]:px-4 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 min-w-[200px] font-medium"
                         >
-                            <x-lucide-send class="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                            <span>Send Message</span>
+                            <x-lucide-send class="mr-2 h-4 w-4" />
+                            Send Message
                         </button>
                     </div>
                 </form>
