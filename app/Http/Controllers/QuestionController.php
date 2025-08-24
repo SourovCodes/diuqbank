@@ -53,6 +53,8 @@ class QuestionController extends Controller
         $uuid = Str::uuid();
         $finalKey = "questions/$uuid.pdf";
         Storage::disk('s3')->copy($request->pdf_key, $finalKey);
+        // Set the file as public for read access
+        Storage::disk('s3')->setVisibility($finalKey, 'public');
         Storage::disk('s3')->delete($request->pdf_key);
 
         $question = Question::create(array_merge($request->validated(), [
@@ -87,6 +89,8 @@ class QuestionController extends Controller
             $uuid = Str::uuid();
             $finalKey = "questions/$uuid.pdf";
             Storage::disk('s3')->copy($request->pdf_key, $finalKey);
+            // Set the file as public for read access
+            Storage::disk('s3')->setVisibility($finalKey, 'public');
             Storage::disk('s3')->delete($request->pdf_key);
 
             // Delete the old PDF file if it exists
