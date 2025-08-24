@@ -200,7 +200,7 @@
 
 <!-- Course Creation Modal -->
 <div id="course-modal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 bg-black/50"></div>
     <div class="fixed inset-0 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-w-md w-full">
             <div class="p-6">
@@ -240,7 +240,7 @@
 
 <!-- Semester Creation Modal -->
 <div id="semester-modal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 bg-black/50"></div>
     <div class="fixed inset-0 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-w-md w-full">
             <div class="p-6">
