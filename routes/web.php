@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::view('/about', 'about')->name('about');
+Route::view('/privacy', 'privacy')->name('privacy');
 Route::view('/login', 'auth.login')->middleware('guest')->name('login');
 Route::get('/questions', [QuestionsPageController::class, 'index'])->name('questions.index');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
