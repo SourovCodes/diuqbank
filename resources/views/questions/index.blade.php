@@ -6,13 +6,13 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">Questions</h1>
-        @auth
+  
             <a href="{{ route('questions.create') }}" 
                 class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-10 has-[>svg]:px-4 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium">
                 <x-lucide-plus class="h-4 w-4" />
                 Add Question
             </a>
-        @endauth
+
     </div>
 
     <div class="relative border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm rounded-xl pt-6 pb-5 {{ array_filter($filters) ? 'ring-1 ring-blue-200 dark:ring-blue-700/40' : '' }} mb-6">
