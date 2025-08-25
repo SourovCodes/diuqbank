@@ -42,6 +42,16 @@
                             <x-lucide-pencil class="h-4 w-4" />
                             Edit
                         </a>
+                        <form method="POST" action="{{ route('questions.destroy', $question) }}" class="inline" id="deleteForm">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                class="inline-flex items-center gap-1 rounded-md border border-red-300 dark:border-red-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onclick="return confirmDelete(event)">
+                                <x-lucide-trash-2 class="h-4 w-4" />
+                                Delete
+                            </button>
+                        </form>
                     @endif
                 @endauth
                 @if ($question->pdf_url)
@@ -191,6 +201,21 @@
 </div>
 
 <script>
+// Delete confirmation function
+function confirmDelete(event) {
+    event.preventDefault();
+    
+    const courseName = '{{ $question->course->name ?? "this question" }}';
+    const confirmMessage = `Are you sure you want to delete "${courseName}"?\n\nThis action cannot be undone and will permanently remove the question and its associated PDF file.`;
+    
+    if (confirm(confirmMessage)) {
+        // Submit the form
+        event.target.closest('form').submit();
+    }
+    
+    return false;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Fullscreen functionality
     const btn = document.getElementById('fullscreenBtn');

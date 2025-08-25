@@ -21,6 +21,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::middleware('auth')->group(function () {
     Route::get('/questions/create', [QuestionsPageController::class, 'create'])->name('questions.create');
     Route::get('/questions/{question}/edit', [QuestionsPageController::class, 'edit'])->name('questions.edit');
+    Route::delete('/questions/{question}', [QuestionsPageController::class, 'destroy'])->name('questions.destroy');
     
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

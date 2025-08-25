@@ -8,6 +8,7 @@ use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class QuestionsPageController extends Controller
 {
@@ -114,6 +115,27 @@ class QuestionsPageController extends Controller
             'question' => $question,
             'dropdownData' => $dropdownData,
         ]);
+    }
+
+    public function destroy(Question $question)
+    {
+        // Ensure only the owner can delete the question
+        if ($question->user_id !== auth()->id()) {
+            toast('You can only delete your own questions.', 'error');
+            abort(403, 'Unauthorized');
+        }
+
+        // Delete the PDF file from S3 if it exists
+        if ($question->pdf_key && Storage::disk('s3')->exists($question->pdf_key)) {
+            Storage::disk('s3')->delete($question->pdf_key);
+        }
+
+        // Delete the question record
+        $question->delete();
+
+        toast('Question deleted successfully! 🗑️', 'success');
+
+        return redirect()->route('questions.index');
     }
 }
 
