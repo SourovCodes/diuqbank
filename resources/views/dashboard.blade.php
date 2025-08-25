@@ -6,21 +6,23 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header Section -->
     <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
                 <p class="text-slate-600 dark:text-slate-400 mt-1">Welcome back, {{ $user->name }}!</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <a href="{{ route('questions.create') }}" 
                     class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-10 has-[>svg]:px-4 rounded-full px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium">
                     <x-lucide-plus class="h-4 w-4" />
-                    Add Question
+                    <span class="hidden sm:inline">Add Question</span>
+                    <span class="sm:hidden">Add</span>
                 </a>
                 <a href="{{ route('profile.edit') }}" 
                     class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive h-10 has-[>svg]:px-4 rounded-full px-6 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm hover:shadow-md transition-all font-medium">
                     <x-lucide-user class="h-4 w-4" />
-                    Edit Profile
+                    <span class="hidden sm:inline">Edit Profile</span>
+                    <span class="sm:hidden">Profile</span>
                 </a>
             </div>
         </div>
