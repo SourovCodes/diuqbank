@@ -41,7 +41,7 @@ class QuestionsPageController extends Controller
         $dropdownData = [
             'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
             'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderBy('name')->get(),
+            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
             'exam_types' => ExamType::active()->select('id', 'name')->orderBy('name')->get(),
         ];
 
@@ -102,7 +102,7 @@ class QuestionsPageController extends Controller
         $dropdownData = [
             'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
             'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderBy('name')->get(),
+            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
             'exam_types' => ExamType::active()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ];
 
@@ -124,7 +124,7 @@ class QuestionsPageController extends Controller
         $dropdownData = [
             'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
             'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderBy('name')->get(),
+            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
             'exam_types' => ExamType::active()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ];
 
