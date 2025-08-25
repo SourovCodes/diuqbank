@@ -14,9 +14,7 @@ use Illuminate\Support\Str;
 
 class QuestionController extends Controller
 {
-   
 
-   
 
     public function generatePresignedUrl(QuestionPdfPresignedUrlRequest $request)
     {
@@ -65,7 +63,7 @@ class QuestionController extends Controller
             'status' => QuestionStatus::PUBLISHED,
         ]));
 
-        toast('Question created successfully! 🎉', 'success');
+        toast('Question created successfully! 🎉');
 
         return new QuestionResource($question);
     }
@@ -111,11 +109,10 @@ class QuestionController extends Controller
 
         $question->update($updateData);
 
-        toast('Question updated successfully! ✨', 'success');
+        toast('Question updated successfully! ✨');
 
         return new QuestionResource($question->loadMissing('department', 'semester', 'course', 'examType'));
     }
 
-   
 
 }
