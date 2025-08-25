@@ -72,8 +72,25 @@ class QuestionsPageController extends Controller
         }
 
         $question->load(['department', 'semester', 'course', 'examType', 'user']);
-        // Increment views conservatively
-        $question->increment('view_count');
+       
+        $sessionId = session()->getId();
+        $cacheKey = "question_viewed_{$question->id}_{$sessionId}";
+
+        if (!cache()->has($cacheKey)) {
+            // Filter out bots
+            $ua = strtolower(request()->userAgent() ?? '');
+            $isBot = str_contains($ua, 'bot') || 
+                     str_contains($ua, 'crawl') || 
+                     str_contains($ua, 'spider');
+            
+            if (!$isBot) {
+                $question->increment('view_count');
+            }
+    
+            // Prevent multiple counts for next 6 hours
+            cache()->put($cacheKey, true, now()->addHours(6));
+        }
+   
 
         return view('questions.show', [
             'question' => $question,
