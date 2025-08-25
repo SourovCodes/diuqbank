@@ -47,7 +47,6 @@ class QuestionController extends Controller
     public function store(QuestionRequest $request)
     {
         if (!Storage::disk('s3')->exists($request->pdf_key)) {
-            toast('PDF file not found. Please upload the file again.', 'error');
             abort(400, 'PDF not uploaded');
         }
 
@@ -66,8 +65,6 @@ class QuestionController extends Controller
         $duplicateReason = $request->input('duplicate_reason');
 
         if ($duplicates->count() > 0 && blank($duplicateReason)) {
-            toast('Duplicate detected: matches '.$duplicates->count().' published question(s).', 'error');
-
             return response()->json([
                 'message' => 'Duplicate question detected with '.$duplicates->count().' published question(s).',
                 'duplicates' => QuestionResource::collection($duplicates),
@@ -98,9 +95,6 @@ class QuestionController extends Controller
                 'details' => (string) $duplicateReason,
                 'reviewed' => false,
             ]);
-            toast('Question submitted for review due to possible duplicate.', 'warning');
-        } else {
-            toast('Question created successfully! 🎉');
         }
 
         return new QuestionResource($question);
@@ -110,7 +104,6 @@ class QuestionController extends Controller
     public function update(QuestionRequest $request, Question $question)
     {
         if ($question->user_id !== auth()->id()) {
-            toast('You are not authorized to edit this question.', 'error');
             abort(403, 'Unauthorized');
         }
 
@@ -137,8 +130,6 @@ class QuestionController extends Controller
 
         $updateDuplicateReason = $request->input('duplicate_reason');
         if ($updateDuplicates->count() > 0 && blank($updateDuplicateReason)) {
-            toast('Duplicate detected: matches '.$updateDuplicates->count().' published question(s).', 'error');
-
             return response()->json([
                 'message' => 'Duplicate question detected with '.$updateDuplicates->count().' published question(s).',
                 'duplicates' => QuestionResource::collection($updateDuplicates),
@@ -148,7 +139,6 @@ class QuestionController extends Controller
         // If pdf_key is provided, handle PDF file operations
         if ($request->pdf_key) {
             if (!Storage::disk('s3')->exists($request->pdf_key)) {
-                toast('PDF file not found. Please upload the file again.', 'error');
                 abort(400, 'PDF not uploaded');
             }
             $uuid = Str::uuid();
@@ -191,9 +181,6 @@ class QuestionController extends Controller
                 'details' => (string) $updateDuplicateReason,
                 'reviewed' => false,
             ]);
-            toast('Changes submitted for review due to possible duplicate.', 'warning');
-        } else {
-            toast('Question updated successfully! ✨');
         }
 
         return new QuestionResource($question->loadMissing('department', 'semester', 'course', 'examType'));
