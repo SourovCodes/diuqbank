@@ -6,66 +6,70 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {{-- Header Section --}}
     <div class="mb-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex flex-col gap-4">
             <div class="min-w-0">
-                <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">{{ $question->course->name ?? 'Question' }}</h1>
-                <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 px-2 py-1 text-xs">
-                        <x-lucide-building-2 class="h-3.5 w-3.5" /> 
-                        {{ $question->department->short_name ?? 'N/A' }}
+                <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white break-words">{{ $question->course->name ?? 'Question' }}</h1>
+                <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                    <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 px-2 py-1 text-xs font-medium">
+                        <x-lucide-building-2 class="h-3.5 w-3.5 flex-shrink-0" /> 
+                        <span class="truncate">{{ $question->department->short_name ?? 'N/A' }}</span>
                     </span>
-                    <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 text-xs">
-                        {{ $question->examType->name ?? 'N/A' }}
+                    <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 text-xs font-medium">
+                        <span class="truncate">{{ $question->examType->name ?? 'N/A' }}</span>
                     </span>
-                    <span class="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-1 text-xs">
-                        <x-lucide-calendar class="h-3 w-3" /> 
-                        {{ $question->semester->name ?? 'N/A' }}
+                    <span class="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-1 text-xs font-medium">
+                        <x-lucide-calendar class="h-3 w-3 flex-shrink-0" /> 
+                        <span class="truncate">{{ $question->semester->name ?? 'N/A' }}</span>
                     </span>
                     @if($question->section)
-                        <span class="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-1 text-xs">
-                            Section {{ $question->section }}
+                        <span class="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-1 text-xs font-medium">
+                            <span class="truncate">Section {{ $question->section }}</span>
                         </span>
                     @endif
-                    <span class="inline-flex items-center gap-1 rounded-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 text-xs">
-                        <x-lucide-eye class="h-3 w-3" /> 
-                        {{ number_format((int) $question->view_count) }} views
+                    <span class="inline-flex items-center gap-1 rounded-md bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 text-xs font-medium">
+                        <x-lucide-eye class="h-3 w-3 flex-shrink-0" /> 
+                        <span class="truncate">{{ number_format((int) $question->view_count) }} views</span>
                     </span>
                 </div>
             </div>
             
             {{-- Action Buttons --}}
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 lg:gap-3">
                 @auth
                     @if(auth()->id() === $question->user_id)
-                        <a href="{{ route('questions.edit', $question) }}" 
-                            class="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
-                            <x-lucide-pencil class="h-4 w-4" />
-                            Edit
-                        </a>
-                        <form method="POST" action="{{ route('questions.destroy', $question) }}" class="inline" id="deleteForm">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" 
-                                class="inline-flex items-center gap-1 rounded-md border border-red-300 dark:border-red-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                onclick="return confirmDelete(event)">
-                                <x-lucide-trash-2 class="h-4 w-4" />
-                                Delete
-                            </button>
-                        </form>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <a href="{{ route('questions.edit', $question) }}" 
+                                class="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 sm:py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                <x-lucide-pencil class="h-4 w-4" />
+                                <span>Edit</span>
+                            </a>
+                            <form method="POST" action="{{ route('questions.destroy', $question) }}" class="inline" id="deleteForm">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-red-300 dark:border-red-600 bg-white dark:bg-slate-800 px-3 py-2.5 sm:py-2 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    onclick="return confirmDelete(event)">
+                                    <x-lucide-trash-2 class="h-4 w-4" />
+                                    <span>Delete</span>
+                                </button>
+                            </form>
+                        </div>
                     @endif
                 @endauth
-                @if ($question->pdf_url)
-                    <a href="{{ $question->pdf_url }}" target="_blank" rel="noopener" 
-                        class="inline-flex items-center gap-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm font-medium transition-colors">
-                        <x-lucide-download class="h-4 w-4" />
-                        Download PDF
-                    </a>
-                @endif
-                <button id="shareBtn" type="button" 
-                    class="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    <x-lucide-share-2 class="h-4 w-4" />
-                    Share
-                </button>
+                <div class="flex flex-col sm:flex-row gap-2 sm:ml-auto">
+                    @if ($question->pdf_url)
+                        <a href="{{ $question->pdf_url }}" target="_blank" rel="noopener" 
+                            class="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 text-sm font-medium transition-colors shadow-sm">
+                            <x-lucide-download class="h-4 w-4" />
+                            <span>Download PDF</span>
+                        </a>
+                    @endif
+                    <button id="shareBtn" type="button" 
+                        class="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <x-lucide-share-2 class="h-4 w-4" />
+                        <span>Share</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
