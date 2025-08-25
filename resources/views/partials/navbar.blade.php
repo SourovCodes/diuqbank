@@ -5,9 +5,11 @@
         [ 'name' => 'Home', 'href' => url('/'), 'pattern' => '/' ],
         [ 'name' => 'Questions', 'href' => url('/questions'), 'pattern' => 'questions*' ],
         [ 'name' => 'Contributors', 'href' => url('/contributors'), 'pattern' => 'contributors*' ],
+        [ 'name' => 'Dashboard', 'href' => route('dashboard'), 'pattern' => 'dashboard*' ],
         [ 'name' => 'About', 'href' => url('/about'), 'pattern' => 'about*' ],
         [ 'name' => 'Contact', 'href' => url('/contact'), 'pattern' => 'contact*' ],
     ];
+    
     $isActive = function(string $pattern) {
         return request()->is($pattern) || ($pattern === '/' && request()->path() === '/');
     };
@@ -30,6 +32,7 @@
                     <a href="{{ $item['href'] }}" aria-current="{{ $active ? 'page' : '' }}" class="relative inline-flex items-center gap-1.5 rounded-md px-3 py-2 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 {{ $active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300' }}">
                         @switch($item['name'])
                             @case('Home') <x-lucide-home class="h-4 w-4" /> @break
+                            @case('Dashboard') <x-lucide-layout-dashboard class="h-4 w-4" /> @break
                             @case('Questions') <x-lucide-file-text class="h-4 w-4" /> @break
                             @case('Contributors') <x-lucide-users class="h-4 w-4" /> @break
                             @case('About') <x-lucide-info class="h-4 w-4" /> @break
@@ -137,6 +140,7 @@
                 <a href="{{ $item['href'] }}" @if($idx === 0) id="first-mobile-link" @endif aria-current="{{ $active ? 'page' : '' }}" class="group relative flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:ring-offset-slate-950 transition-colors {{ $active ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                     @switch($item['name'])
                         @case('Home') <x-lucide-home class="h-5 w-5 {{ $active ? 'text-blue-600 dark:text-blue-300' : '' }}" /> @break
+                        @case('Dashboard') <x-lucide-layout-dashboard class="h-5 w-5 {{ $active ? 'text-blue-600 dark:text-blue-300' : '' }}" /> @break
                         @case('Questions') <x-lucide-file-text class="h-5 w-5 {{ $active ? 'text-blue-600 dark:text-blue-300' : '' }}" /> @break
                         @case('Contributors') <x-lucide-users class="h-5 w-5 {{ $active ? 'text-blue-600 dark:text-blue-300' : '' }}" /> @break
                         @case('About') <x-lucide-info class="h-5 w-5 {{ $active ? 'text-blue-600 dark:text-blue-300' : '' }}" /> @break
