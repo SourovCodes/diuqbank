@@ -88,13 +88,17 @@ class QuestionController extends Controller
         ]));
 
         if ($duplicates->count() > 0) {
-            UserReport::create([
-                'user_id' => auth()->id(),
-                'question_id' => $question->id,
-                'type' => UserReportType::DUPLICATE_ALLOW_REQUEST,
-                'details' => (string) $duplicateReason,
-                'reviewed' => false,
-            ]);
+            UserReport::updateOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'question_id' => $question->id,
+                    'type' => UserReportType::DUPLICATE_ALLOW_REQUEST,
+                    'reviewed' => false,
+                ],
+                [
+                    'details' => (string) $duplicateReason,
+                ]
+            );
         }
 
         return new QuestionResource($question);
@@ -174,13 +178,17 @@ class QuestionController extends Controller
         $question->update($updateData);
 
         if ($updateDuplicates->count() > 0 && !blank($updateDuplicateReason)) {
-            UserReport::create([
-                'user_id' => auth()->id(),
-                'question_id' => $question->id,
-                'type' => UserReportType::DUPLICATE_ALLOW_REQUEST,
-                'details' => (string) $updateDuplicateReason,
-                'reviewed' => false,
-            ]);
+            UserReport::updateOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'question_id' => $question->id,
+                    'type' => UserReportType::DUPLICATE_ALLOW_REQUEST,
+                    'reviewed' => false,
+                ],
+                [
+                    'details' => (string) $updateDuplicateReason,
+                ]
+            );
         }
 
         return new QuestionResource($question->loadMissing('department', 'semester', 'course', 'examType'));
