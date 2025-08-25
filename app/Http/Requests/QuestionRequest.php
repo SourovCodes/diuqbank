@@ -45,6 +45,7 @@ class QuestionRequest extends FormRequest
                 'string',
                 'max:5',
             ],
+            'duplicate_reason' => ['nullable', 'string', 'min:5', 'max:1000'],
         ];
 
 

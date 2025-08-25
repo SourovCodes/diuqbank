@@ -180,6 +180,23 @@
             </div>
 
             <!-- Submit Button -->
+            <div id="duplicate-warning" class="hidden border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <x-lucide-alert-triangle class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-amber-800 dark:text-amber-300">Possible duplicate detected</p>
+                        <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">If you still want to proceed, please provide a reason. Your submission will be sent for review.</p>
+                        <div class="mt-3">
+                            <label for="duplicate_reason" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Duplicate reason</label>
+                            <textarea id="duplicate_reason" name="duplicate_reason" minlength="5" maxlength="1000" rows="3" placeholder="Explain why this should be allowed despite being a duplicate"
+                                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                            <div id="duplicate_reason-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                        </div>
+                        <div class="mt-3" id="duplicate-list" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <a href="{{ $cancelUrl }}" 
                     class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">

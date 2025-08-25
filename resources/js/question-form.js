@@ -19,6 +19,9 @@ class QuestionForm {
         this.sectionContainer = document.getElementById('section-container');
         this.sectionInput = document.getElementById('section');
         this.semesterSelect = document.getElementById('semester_id');
+        this.duplicateWarning = document.getElementById('duplicate-warning');
+        this.duplicateReasonInput = document.getElementById('duplicate_reason');
+        this.duplicateList = document.getElementById('duplicate-list');
 
         // Upload elements
         this.pdfUpload = document.getElementById('pdf-upload');
@@ -371,6 +374,42 @@ class QuestionForm {
                     Object.keys(result.errors).forEach(field => {
                         this.showError(field + '-error', result.errors[field][0]);
                     });
+                } else if (response.status === 422 && result.duplicates) {
+                    // Duplicate flow: show reason box and list duplicates
+                    this.renderDuplicates(result.duplicates);
+                    this.duplicateWarning.classList.remove('hidden');
+                    // Validate reason length client-side
+                    if (!this.duplicateReasonInput.value || this.duplicateReasonInput.value.length < 5) {
+                        this.showError('duplicate_reason-error', 'Please provide at least 5 characters.');
+                        this.scrollToFirstError();
+                        return;
+                    }
+                    // Retry with reason
+                    formData.duplicate_reason = this.duplicateReasonInput.value;
+                    const retryResponse = await fetch(url, {
+                        method: method,
+                        headers: this.getApiHeaders(),
+                        body: JSON.stringify(formData)
+                    });
+                    const retryResult = await this.parseJsonResponse(retryResponse);
+                    if (!retryResponse.ok) {
+                        if (retryResponse.status === 422 && retryResult.errors) {
+                            Object.keys(retryResult.errors).forEach(field => {
+                                this.showError(field + '-error', retryResult.errors[field][0]);
+                            });
+                        } else {
+                            const errorMessage = retryResult.message || `Failed to ${this.isEdit ? 'update' : 'create'} question`;
+                            window.toast.error(errorMessage);
+                        }
+                        return;
+                    }
+                    // Success on retry
+                    if (this.isEdit) {
+                        window.location.href = `/questions/${this.questionId}`;
+                    } else {
+                        window.location.href = '/questions';
+                    }
+                    return;
                 } else {
                     // Show the actual API error message
                     const errorMessage = result.message || `Failed to ${this.isEdit ? 'update' : 'create'} question`;
@@ -394,6 +433,23 @@ class QuestionForm {
         } finally {
             this.setSubmitLoading(false);
         }
+    }
+
+    renderDuplicates(duplicates) {
+        if (!Array.isArray(duplicates)) return;
+        // Clear current list
+        if (this.duplicateList) this.duplicateList.innerHTML = '';
+        duplicates.forEach((d) => {
+            const item = document.createElement('div');
+            item.className = 'text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded p-2';
+            const dept = d.department?.name || '';
+            const course = d.course?.name || '';
+            const semester = d.semester?.name || '';
+            const examType = d.exam_type?.name || '';
+            const section = d.section ? `, Section ${d.section}` : '';
+            item.textContent = `#${d.id}: ${dept} • ${course} • ${semester} • ${examType}${section}`;
+            this.duplicateList.appendChild(item);
+        });
     }
 
     // Modal functions
