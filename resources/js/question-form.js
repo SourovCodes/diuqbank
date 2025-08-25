@@ -167,8 +167,8 @@ class QuestionForm {
 
     handleDepartmentChange() {
         const departmentId = this.departmentSelect.value;
-        const currentCourseId = this.courseSelect.value;
 
+        // Reset course selection when department changes
         this.courseSelect.innerHTML = '<option value="">Select Course</option>';
 
         if (departmentId) {
@@ -179,9 +179,6 @@ class QuestionForm {
                 const option = document.createElement('option');
                 option.value = course.id;
                 option.textContent = course.name;
-                if (course.id == currentCourseId) {
-                    option.selected = true;
-                }
                 this.courseSelect.appendChild(option);
             });
         } else {

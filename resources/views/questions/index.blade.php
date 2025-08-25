@@ -104,13 +104,28 @@
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('filters-form');
     const selects = form.querySelectorAll('select');
+    const departmentSelect = document.getElementById('department_id');
+    const courseSelect = document.getElementById('course_id');
+    
     function submitWithPageReset() {
         const pageInput = form.querySelector('input[name="page"]');
         if (pageInput) pageInput.value = '1';
         form.submit();
     }
+    
+    // Handle department change to reset course selection
+    departmentSelect.addEventListener('change', function() {
+        // Reset course selection when department changes
+        courseSelect.value = '';
+        submitWithPageReset();
+    });
+    
+    // Handle other select changes
     selects.forEach(function (sel) {
-        sel.addEventListener('change', submitWithPageReset);
+        // Skip department select since we handle it separately
+        if (sel.id !== 'department_id') {
+            sel.addEventListener('change', submitWithPageReset);
+        }
     });
 });
 </script>
