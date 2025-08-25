@@ -159,7 +159,7 @@
                         <div class="min-w-0">
                             <div class="text-xs text-slate-600 dark:text-slate-300">Uploaded by</div>
                             <div class="text-sm font-medium text-slate-900 dark:text-white truncate group-hover:underline">{{ $question->user?->name ?? 'Unknown' }}</div>
-                            <div class="text-xs text-slate-500 truncate">@ {{ $question->user?->username }}</div>
+                            <div class="text-xs text-slate-500 truncate text-wrap">@ {{ $question->user?->username }}</div>
                         </div>
                         <x-lucide-chevron-right class="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 dark:group-hover:text-slate-300" />
                     </a>
