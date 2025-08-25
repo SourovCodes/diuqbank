@@ -107,24 +107,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const departmentSelect = document.getElementById('department_id');
     const courseSelect = document.getElementById('course_id');
     
-    function submitWithPageReset() {
-        const pageInput = form.querySelector('input[name="page"]');
-        if (pageInput) pageInput.value = '1';
-        form.submit();
+    function submitWithCleanUrl() {
+        // Create a clean URL with only non-empty filter values
+        const baseUrl = window.location.pathname;
+        const params = new URLSearchParams();
+        
+        // Add only non-empty filter values
+        selects.forEach(function(select) {
+            if (select.value && select.value.trim() !== '') {
+                params.append(select.name, select.value);
+            }
+        });
+        
+        // Always reset to page 1 when filters change
+        if (params.toString()) {
+            params.append('page', '1');
+        }
+        
+        // Navigate to the clean URL
+        const newUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+        window.location.href = newUrl;
     }
     
     // Handle department change to reset course selection
     departmentSelect.addEventListener('change', function() {
         // Reset course selection when department changes
         courseSelect.value = '';
-        submitWithPageReset();
+        submitWithCleanUrl();
     });
     
     // Handle other select changes
     selects.forEach(function (sel) {
         // Skip department select since we handle it separately
         if (sel.id !== 'department_id') {
-            sel.addEventListener('change', submitWithPageReset);
+            sel.addEventListener('change', submitWithCleanUrl);
         }
     });
 });
