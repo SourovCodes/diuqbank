@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserReportType;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
@@ -13,9 +14,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignIdFor(User::class)->constrained('users');
             $table->foreignIdFor(Question::class)->constrained('questions');
-            $table->string('type');
+            $table->enum('type', UserReportType::cases());
             $table->longText('details');
-            $table->boolean('reviewed');
+            $table->boolean('reviewed')->default(false);
             $table->timestamps();
         });
     }

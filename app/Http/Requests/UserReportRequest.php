@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserReportType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class UserReportRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class UserReportRequest extends FormRequest
         return [
             'user_id' => ['required', 'exists:users'],
             'question_id' => ['required', 'exists:questions'],
-            'type' => ['required'],
+            'type' => ['required', new Enum(UserReportType::class)],
             'details' => ['required'],
             'reviewed' => ['boolean'],
         ];

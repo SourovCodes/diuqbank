@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserReportType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -28,6 +29,7 @@ class UserReport extends Model
     protected function casts(): array
     {
         return [
+            'type' => UserReportType::class,
             'reviewed' => 'boolean',
         ];
     }
