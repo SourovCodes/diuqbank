@@ -23,6 +23,7 @@ class GoogleLoginController extends Controller
             $allowed = str_ends_with($email, '@diu.edu.bd') || str_ends_with($email, '@s.diu.edu.bd');
             if (! $allowed) {
                 toast('Only DIU email addresses are allowed (diu.edu.bd or s.diu.edu.bd).', 'error');
+
                 return redirect()->route('login');
             }
 
@@ -42,6 +43,7 @@ class GoogleLoginController extends Controller
                 }
 
                 toast('Welcome to DIUQBank! Your account has been created successfully.', 'success');
+
                 return redirect()->intended(route('home'));
             } else {
                 Auth::login($user);
@@ -50,10 +52,12 @@ class GoogleLoginController extends Controller
                 }
 
                 toast('Welcome back to DIUQBank!', 'success');
+
                 return redirect()->intended(route('home'));
             }
         } catch (\Throwable $th) {
             toast('Google login failed. Please try again.', 'error');
+
             return redirect()->route('login');
         }
     }

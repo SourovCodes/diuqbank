@@ -22,14 +22,15 @@ class UserFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition(): array
-    {   
+    {
         $name = fake()->name();
+
         return [
             'name' => $name,
             'email' => fake()->unique()->safeEmail(),
             'username' => fake()->uuid(),
             'student_id' => fake()->unique()->numerify('S########'),
-            'image' => "https://ui-avatars.com/api/?name=".urlencode($name),
+            'image' => 'https://ui-avatars.com/api/?name='.urlencode($name),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

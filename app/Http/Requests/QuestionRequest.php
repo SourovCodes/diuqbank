@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ExamType;
 use App\Rules\CourseBelongsToDepartment;
 use App\Rules\ValidPdfKey;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\ExamType;
 
 class QuestionRequest extends FormRequest
 {
@@ -15,7 +15,7 @@ class QuestionRequest extends FormRequest
         $examTypeId = $this->input('exam_type_id');
         if ($examTypeId) {
             $examType = ExamType::find($examTypeId);
-            if ($examType && !$examType->requires_section) {
+            if ($examType && ! $examType->requires_section) {
                 $this->merge(['section' => null]);
             }
         }
@@ -47,7 +47,6 @@ class QuestionRequest extends FormRequest
             ],
             'duplicate_reason' => ['nullable', 'string', 'min:5', 'max:1000'],
         ];
-
 
         if ($this->isMethod('POST')) {
             $rules['pdf_key'] = ['required', 'string', 'max:255', new ValidPdfKey];

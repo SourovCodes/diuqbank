@@ -8,8 +8,6 @@ use App\Models\Course;
 
 class CourseController extends Controller
 {
-   
-
     public function store(CourseRequest $request)
     {
         return new CourseResource(Course::create($request->validated()));

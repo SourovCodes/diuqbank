@@ -3,21 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuestionStatus;
+use App\Enums\UserReportType;
 use App\Http\Requests\QuestionPdfPresignedUrlRequest;
 use App\Http\Requests\QuestionRequest;
-
 use App\Http\Resources\QuestionResource;
-
 use App\Models\Question;
 use App\Models\UserReport;
-use App\Enums\UserReportType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class QuestionController extends Controller
 {
-
-
     public function generatePresignedUrl(QuestionPdfPresignedUrlRequest $request)
     {
         $fileSize = $request->file_size;
@@ -46,7 +42,7 @@ class QuestionController extends Controller
 
     public function store(QuestionRequest $request)
     {
-        if (!Storage::disk('s3')->exists($request->pdf_key)) {
+        if (! Storage::disk('s3')->exists($request->pdf_key)) {
             abort(400, 'PDF not uploaded');
         }
 
@@ -104,7 +100,6 @@ class QuestionController extends Controller
         return new QuestionResource($question);
     }
 
-
     public function update(QuestionRequest $request, Question $question)
     {
         if ($question->user_id !== auth()->id()) {
@@ -142,7 +137,7 @@ class QuestionController extends Controller
 
         // If pdf_key is provided, handle PDF file operations
         if ($request->pdf_key) {
-            if (!Storage::disk('s3')->exists($request->pdf_key)) {
+            if (! Storage::disk('s3')->exists($request->pdf_key)) {
                 abort(400, 'PDF not uploaded');
             }
             $uuid = Str::uuid();
@@ -168,7 +163,7 @@ class QuestionController extends Controller
         }
 
         // If duplicates exist and reason is provided, mark pending review; otherwise publish
-        if ($updateDuplicates->count() > 0 && !blank($updateDuplicateReason)) {
+        if ($updateDuplicates->count() > 0 && ! blank($updateDuplicateReason)) {
             $updateData['status'] = QuestionStatus::PENDING_REVIEW;
         } else {
             $updateData['status'] = QuestionStatus::PUBLISHED;
@@ -176,7 +171,7 @@ class QuestionController extends Controller
 
         $question->update($updateData);
 
-        if ($updateDuplicates->count() > 0 && !blank($updateDuplicateReason)) {
+        if ($updateDuplicates->count() > 0 && ! blank($updateDuplicateReason)) {
             UserReport::updateOrCreate(
                 [
                     'user_id' => auth()->id(),
@@ -192,6 +187,4 @@ class QuestionController extends Controller
 
         return new QuestionResource($question->loadMissing('department', 'semester', 'course', 'examType'));
     }
-
-
 }

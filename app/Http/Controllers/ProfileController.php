@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -16,7 +15,7 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        
+
         return view('profile.edit', compact('user'));
     }
 
@@ -27,7 +26,6 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $updateData = $request->validated();
-        
 
         // Handle image upload if provided
         if ($request->hasFile('image')) {
@@ -38,12 +36,12 @@ class ProfileController extends Controller
                     Storage::disk('s3')->delete($oldImageKey);
                 }
             }
-            
+
             // Generate new filename
             $uuid = Str::uuid();
             $extension = $request->file('image')->getClientOriginalExtension();
             $filename = "{$uuid}.{$extension}";
-            
+
             // Store image to S3 with public visibility
             $path = Storage::disk('s3')->putFileAs(
                 'profile-images',
@@ -51,7 +49,6 @@ class ProfileController extends Controller
                 $filename,
                 'public'
             );
-            
 
             // Update the image path in update data
             $updateData['image'] = Storage::disk('s3')->url($path);
@@ -60,7 +57,7 @@ class ProfileController extends Controller
             // Remove image from update data if no file uploaded to avoid overwriting existing value
             unset($updateData['image']);
         }
-        
+
         $user->update($updateData);
 
         toast('Profile updated successfully! ✨', 'success');
@@ -73,31 +70,33 @@ class ProfileController extends Controller
      */
     private function extractS3KeyFromUrl($url)
     {
-        if (!$url) return null;
-        
+        if (! $url) {
+            return null;
+        }
+
         // If it's already a key (doesn't start with http), return as is
-        if (!str_starts_with($url, 'http')) {
+        if (! str_starts_with($url, 'http')) {
             return $url;
         }
-        
+
         // Extract key from S3 URL
         $bucket = config('filesystems.disks.s3.bucket');
         $region = config('filesystems.disks.s3.region');
-        
+
         // Handle different S3 URL formats
         $patterns = [
             "/{$bucket}\.s3\.{$region}\.amazonaws\.com\/(.+)/",
-            "/{$bucket}\.s3\.amazonaws\.com\/(.+)/", 
+            "/{$bucket}\.s3\.amazonaws\.com\/(.+)/",
             "/s3\.{$region}\.amazonaws\.com\/{$bucket}\/(.+)/",
-            "/s3\.amazonaws\.com\/{$bucket}\/(.+)/"
+            "/s3\.amazonaws\.com\/{$bucket}\/(.+)/",
         ];
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $url, $matches)) {
                 return $matches[1];
             }
         }
-        
+
         return null;
     }
 }

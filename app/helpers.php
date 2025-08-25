@@ -2,13 +2,11 @@
 
 use App\Helpers\ToastHelper;
 
-if (!function_exists('toast')) {
+if (! function_exists('toast')) {
     /**
      * Flash a toast message
      *
-     * @param string $message
-     * @param string $type (success, error, warning, info)
-     * @return void
+     * @param  string  $type  (success, error, warning, info)
      */
     function toast(string $message, string $type = 'success'): void
     {

@@ -61,8 +61,8 @@ class QuestionsPageController extends Controller
     {
         // Check if question is not published and restrict access to owner only
         if ($question->status !== \App\Enums\QuestionStatus::PUBLISHED) {
-            if (!auth()->check() || auth()->id() !== $question->user_id) {
-                $statusMessage = match($question->status) {
+            if (! auth()->check() || auth()->id() !== $question->user_id) {
+                $statusMessage = match ($question->status) {
                     \App\Enums\QuestionStatus::PENDING_REVIEW => 'This question is pending review and can only be viewed by its owner.',
                     \App\Enums\QuestionStatus::REJECTED => 'This question has been rejected and can only be viewed by its owner.',
                     default => 'This question is not available for public viewing.'
@@ -72,25 +72,24 @@ class QuestionsPageController extends Controller
         }
 
         $question->load(['department', 'semester', 'course', 'examType', 'user']);
-       
+
         $sessionId = session()->getId();
         $cacheKey = "question_viewed_{$question->id}_{$sessionId}";
 
-        if (!cache()->has($cacheKey)) {
+        if (! cache()->has($cacheKey)) {
             // Filter out bots
             $ua = strtolower(request()->userAgent() ?? '');
-            $isBot = str_contains($ua, 'bot') || 
-                     str_contains($ua, 'crawl') || 
+            $isBot = str_contains($ua, 'bot') ||
+                     str_contains($ua, 'crawl') ||
                      str_contains($ua, 'spider');
-            
-            if (!$isBot) {
+
+            if (! $isBot) {
                 $question->increment('view_count');
             }
-    
+
             // Prevent multiple counts for next 6 hours
             cache()->put($cacheKey, true, now()->addHours(6));
         }
-   
 
         return view('questions.show', [
             'question' => $question,
@@ -155,5 +154,3 @@ class QuestionsPageController extends Controller
         return redirect()->route('questions.index');
     }
 }
-
-

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Question;
 use App\Enums\QuestionStatus;
+use App\Models\Question;
+use App\Models\User;
 
 class ContributorsPageController extends Controller
 {
@@ -47,5 +47,3 @@ class ContributorsPageController extends Controller
         ]);
     }
 }
-
-

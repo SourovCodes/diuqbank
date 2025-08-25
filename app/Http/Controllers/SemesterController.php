@@ -8,8 +8,6 @@ use App\Models\Semester;
 
 class SemesterController extends Controller
 {
-   
-
     public function store(SemesterRequest $request)
     {
         return new SemesterResource(Semester::create($request->validated()));

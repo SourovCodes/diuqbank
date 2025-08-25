@@ -27,11 +27,11 @@ class ProfileRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'username' => [
-                'required', 
-                'string', 
-                'max:255', 
+                'required',
+                'string',
+                'max:255',
                 'alpha_dash',
-                Rule::unique('users')->ignore($userId)
+                Rule::unique('users')->ignore($userId),
             ],
             'student_id' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:3072'], // Max 3MB (1000x1000 at 90% quality)
