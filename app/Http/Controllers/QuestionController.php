@@ -167,11 +167,10 @@ class QuestionController extends Controller
             unset($updateData['pdf_key']);
         }
 
-        // If duplicates exist and reason is provided, mark pending review; else publish/keep existing
+        // If duplicates exist and reason is provided, mark pending review; otherwise publish
         if ($updateDuplicates->count() > 0 && !blank($updateDuplicateReason)) {
             $updateData['status'] = QuestionStatus::PENDING_REVIEW;
-        } elseif ($request->pdf_key) {
-            // On actual PDF replacement and no duplicate issue, publish
+        } else {
             $updateData['status'] = QuestionStatus::PUBLISHED;
         }
 
