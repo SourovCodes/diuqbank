@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (shareBtn) {
         shareBtn.addEventListener('click', async function () {
             const url = window.location.href;
-            const title = '{{ $question->course->name ?? "Question" }} - DIUQBank';
+            const title = '{{ ($question->course->name ?? "Question") . " (" . ($question->department->short_name ?? "N/A") . "), " . ($question->semester->name ?? "N/A") . ", " . ($question->examType->name ?? "N/A") }} - DIUQBank';
 
             if (navigator.share) {
                 try {
