@@ -82,6 +82,24 @@ class UserReportInfolist
                             ->icon(Heroicon::OutlinedTicket)
                             ->label('Exam Type'),
 
+                        TextEntry::make('question.section')
+                            ->label('Section')
+                            ->badge()
+                            ->icon(Heroicon::OutlinedRectangleGroup)
+                            ->visible(fn ($record) => filled($record?->question?->section)),
+
+                        TextEntry::make('question.status')
+                            ->label('Status')
+                            ->badge()
+                            ->icon(fn ($state) => $state?->getIcon())
+                            ->color(fn ($state) => $state?->getColor())
+                            ->formatStateUsing(fn ($state) => $state?->getLabel()),
+
+                        TextEntry::make('question.created_at')
+                            ->label('Created At')
+                            ->icon(Heroicon::OutlinedClock)
+                            ->dateTime(),
+
                         TextEntry::make('question.pdf_url')
                             ->label('PDF URL')
                             ->icon(Heroicon::OutlinedLink)
