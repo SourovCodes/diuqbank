@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
-use App\Models\ExamType; // added
+
+// added
 
 class Question extends Model
 {
@@ -35,6 +36,7 @@ class Question extends Model
             // If no exam type is selected, section must be null
             if (! $question->exam_type_id) {
                 $question->section = null;
+
                 return;
             }
 
