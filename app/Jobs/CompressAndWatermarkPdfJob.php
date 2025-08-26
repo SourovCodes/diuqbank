@@ -289,7 +289,7 @@ class CompressAndWatermarkPdfJob implements ShouldQueue
         $fontSize = 9;          // Larger font for better readability
         $lineHeight = 3.5;      // Font height in units (approximately)
         $topPadding = 1;        // Minimal top padding
-        $bottomPadding = 1;     // Minimal bottom padding
+        $bottomPadding = 2;     // Minimal bottom padding
         $sidePadding = 2;       // Left/right padding for text
         
         // Calculate precise header height based on actual text requirements
