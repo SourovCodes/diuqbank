@@ -7,6 +7,7 @@ use App\Enums\UserReportType;
 use App\Http\Requests\QuestionPdfPresignedUrlRequest;
 use App\Http\Requests\QuestionRequest;
 use App\Http\Resources\QuestionResource;
+use App\Jobs\CompressPdfJob;
 use App\Models\Question;
 use App\Models\UserReport;
 use Illuminate\Support\Facades\Storage;
@@ -83,6 +84,11 @@ class QuestionController extends Controller
             'status' => $status,
         ]));
 
+        // Dispatch PDF compression job if enabled
+        if (config('pdf.compression.enabled', true)) {
+            CompressPdfJob::dispatch($finalKey, 's3');
+        }
+
         if ($duplicates->count() > 0) {
             UserReport::updateOrCreate(
                 [
@@ -157,6 +163,11 @@ class QuestionController extends Controller
                 'pdf_size' => Storage::disk('s3')->size($finalKey),
                 'is_watermarked' => false,
             ]);
+
+            // Dispatch PDF compression job for the new PDF if enabled
+            if (config('pdf.compression.enabled', true)) {
+                CompressPdfJob::dispatch($finalKey, 's3');
+            }
         } else {
             // Remove pdf_key from update data if it's null to avoid overwriting existing value
             unset($updateData['pdf_key']);
