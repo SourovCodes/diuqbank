@@ -238,6 +238,9 @@ class QuestionForm {
             this.uploadSuccess.classList.add('hidden');
             this.hideError('pdf-upload-error');
 
+            // Reset progress bar
+            this.updateProgressBar(0);
+
             // Get presigned URL
             const response = await fetch('/api/questions/generate-presigned-url', {
                 method: 'POST',
@@ -256,18 +259,8 @@ class QuestionForm {
 
             const { url, pdf_key } = await response.json();
 
-            // Upload file to S3
-            const uploadResponse = await fetch(url, {
-                method: 'PUT',
-                body: file,
-                headers: {
-                    'Content-Type': file.type
-                }
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error('Failed to upload file');
-            }
+            // Upload file to S3 with progress tracking
+            await this.uploadFileWithProgress(url, file);
 
             // Success
             this.uploadedPdfKey = pdf_key;
@@ -283,10 +276,59 @@ class QuestionForm {
             console.error('Upload error:', error);
             this.uploadProgress.classList.add('hidden');
             this.uploadArea.classList.remove('hidden');
+
+            // Reset progress bar on error
+            this.updateProgressBar(0);
+
             // Show the actual error message if available
             const errorMessage = error.message || 'Failed to upload file. Please try again.';
             this.showError('pdf-upload-error', errorMessage);
             window.toast.error(errorMessage);
+        }
+    }
+
+    uploadFileWithProgress(url, file) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    this.updateProgressBar(percentComplete);
+                }
+            });
+
+            // Handle completion
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    this.updateProgressBar(100);
+                    resolve(xhr);
+                } else {
+                    reject(new Error('Failed to upload file'));
+                }
+            });
+
+            // Handle errors
+            xhr.addEventListener('error', () => {
+                reject(new Error('Upload failed'));
+            });
+
+            // Handle abort
+            xhr.addEventListener('abort', () => {
+                reject(new Error('Upload aborted'));
+            });
+
+            // Configure and send request
+            xhr.open('PUT', url);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
+        });
+    }
+
+    updateProgressBar(percentage) {
+        if (this.progressBar) {
+            this.progressBar.style.width = `${percentage}%`;
         }
     }
 
