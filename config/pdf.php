@@ -4,23 +4,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | PDF Compression Settings
+    | PDF Processing Settings
     |--------------------------------------------------------------------------
     |
-    | This file contains configuration settings for PDF compression using
-    | Ghostscript. You can adjust these settings to control the quality
-    | and compression level of uploaded PDFs.
+    | This file contains configuration settings for PDF compression and
+    | watermarking using Ghostscript. You can adjust these settings to
+    | control the quality and processing of uploaded PDFs.
     |
     */
 
     'compression' => [
         /*
         |--------------------------------------------------------------------------
-        | Enable PDF Compression
+        | Enable PDF Processing
         |--------------------------------------------------------------------------
         |
-        | Set this to true to enable automatic PDF compression for uploaded files.
-        | When disabled, PDFs will be stored as-is without compression.
+        | Set this to true to enable automatic PDF compression and watermarking
+        | for uploaded files. When disabled, PDFs will be stored as-is without
+        | any processing.
         |
         */
         'enabled' => env('PDF_COMPRESSION_ENABLED', true),

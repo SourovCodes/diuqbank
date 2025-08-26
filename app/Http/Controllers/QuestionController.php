@@ -7,7 +7,7 @@ use App\Enums\UserReportType;
 use App\Http\Requests\QuestionPdfPresignedUrlRequest;
 use App\Http\Requests\QuestionRequest;
 use App\Http\Resources\QuestionResource;
-use App\Jobs\CompressPdfJob;
+use App\Jobs\CompressAndWatermarkPdfJob;
 use App\Models\Question;
 use App\Models\UserReport;
 use Illuminate\Support\Facades\Storage;
@@ -84,9 +84,9 @@ class QuestionController extends Controller
             'status' => $status,
         ]));
 
-        // Dispatch PDF compression job if enabled
+        // Dispatch PDF compression and watermarking job if enabled
         if (config('pdf.compression.enabled', true)) {
-            CompressPdfJob::dispatch($finalKey, 's3');
+            CompressAndWatermarkPdfJob::dispatch($question->id);
         }
 
         if ($duplicates->count() > 0) {
@@ -164,9 +164,9 @@ class QuestionController extends Controller
                 'is_watermarked' => false,
             ]);
 
-            // Dispatch PDF compression job for the new PDF if enabled
+            // Dispatch PDF compression and watermarking job for the new PDF if enabled
             if (config('pdf.compression.enabled', true)) {
-                CompressPdfJob::dispatch($finalKey, 's3');
+                CompressAndWatermarkPdfJob::dispatch($question->id);
             }
         } else {
             // Remove pdf_key from update data if it's null to avoid overwriting existing value

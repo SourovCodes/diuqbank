@@ -26,6 +26,7 @@ return new class extends Migration
             $table->unsignedBigInteger('view_count')->default(0);
             $table->string('pdf_key');
             $table->unsignedInteger('pdf_size');
+            $table->string('watermarked_pdf_key')->nullable();
             $table->boolean('is_watermarked')->default(false);
             $table->timestamps();
         });

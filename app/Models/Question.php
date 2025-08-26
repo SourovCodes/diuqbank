@@ -26,6 +26,7 @@ class Question extends Model
         'view_count',
         'pdf_key',
         'pdf_size',
+        'watermarked_pdf_key',
         'is_watermarked',
     ];
 
@@ -156,10 +157,28 @@ class Question extends Model
      */
     public function getPdfUrlAttribute(): ?string
     {
+        // Return watermarked PDF URL if watermarked and watermarked PDF exists
+        if ($this->is_watermarked && $this->watermarked_pdf_key) {
+            return Storage::disk('s3')->url($this->watermarked_pdf_key);
+        }
+
+        // Return original PDF URL
         if (! $this->pdf_key) {
             return null;
         }
 
         return Storage::disk('s3')->url($this->pdf_key);
+    }
+
+    /**
+     * Get the watermarked PDF URL attribute.
+     */
+    public function getWatermarkedPdfUrlAttribute(): ?string
+    {
+        if (! $this->watermarked_pdf_key) {
+            return null;
+        }
+
+        return Storage::disk('s3')->url($this->watermarked_pdf_key);
     }
 }
