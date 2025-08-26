@@ -22,7 +22,7 @@ class QuestionPdfPresignedUrlRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file_size' => 'required|integer|max:10485760', // 10MB in bytes
+            'file_size' => 'required|integer|max:20971520', // 20MB in bytes
             'file_type' => 'required|string|in:application/pdf',
         ];
     }

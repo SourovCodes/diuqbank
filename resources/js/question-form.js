@@ -226,8 +226,8 @@ class QuestionForm {
             return;
         }
 
-        if (file.size > 10 * 1024 * 1024) { // 10MB
-            this.showError('pdf-upload-error', 'File size must be less than 10MB.');
+        if (file.size > 20 * 1024 * 1024) { // 20MB
+            this.showError('pdf-upload-error', 'File size must be less than 20MB.');
             return;
         }
 

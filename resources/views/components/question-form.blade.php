@@ -154,7 +154,7 @@
                             @endif
                         </p>
                         <p class="text-xs text-slate-500">
-                            Maximum file size: 10MB
+                            Maximum file size: 20MB
                             @if($question) • Leave empty to keep current PDF @endif
                         </p>
                     </div>
