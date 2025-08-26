@@ -39,16 +39,14 @@ class ImportQuestions extends Command
             ->sortBy('createdAt')
             ->values()
             ->all();
-        $this->info("Found " . count($oldQuestions) . " questions to import.");
+        $this->info('Found '.count($oldQuestions).' questions to import.');
 
         foreach ($oldQuestions as $question) {
 
-//            $this->info("Importing question: " . $question['createdAt']);
-//            continue;
-
+            //            $this->info("Importing question: " . $question['createdAt']);
+            //            continue;
 
             if (count($question['courses']) == 1 && count($question['departments']) == 1 && count($question['semesters']) == 1 && count($question['examTypes']) == 1) {
-
 
                 $user = User::updateOrCreate(
                     ['email' => $question['uploader']['email']],
@@ -87,14 +85,14 @@ class ImportQuestions extends Command
                     'name' => $question['examTypes'][0]['name'],
                 ], [
                     'name' => $question['examTypes'][0]['name'],
-                    'requires_section' => false
+                    'requires_section' => false,
                 ]);
 
                 $existingQuestion = Question::where('department_id', $department->id)
                     ->where('course_id', $course->id)
                     ->where('semester_id', $semester->id)
                     ->where('exam_type_id', $examType->id)
-                    ->where('user_id', "!=", $user->id)
+                    ->where('user_id', '!=', $user->id)
                     ->first();
 
                 $newQuestion = Question::updateOrCreate([
@@ -102,7 +100,7 @@ class ImportQuestions extends Command
                     'department_id' => $department->id,
                     'course_id' => $course->id,
                     'semester_id' => $semester->id,
-                    'exam_type_id' => $examType->id
+                    'exam_type_id' => $examType->id,
                 ], [
                     'user_id' => $user->id,
                     'department_id' => $department->id,
@@ -114,7 +112,7 @@ class ImportQuestions extends Command
                     'status' => $existingQuestion ? QuestionStatus::PENDING_REVIEW : QuestionStatus::PUBLISHED,
                 ]);
 
-                if ($existingQuestion)
+                if ($existingQuestion) {
                     UserReport::updateOrCreate([
                         'user_id' => $user->id,
                         'question_id' => $newQuestion->id,
@@ -123,10 +121,10 @@ class ImportQuestions extends Command
                         'user_id' => $user->id,
                         'question_id' => $newQuestion->id,
                         'type' => UserReportType::DUPLICATE_ALLOW_REQUEST,
-                        'details' => $question['duplicateReason'] ?? "No reason provided",
+                        'details' => $question['duplicateReason'] ?? 'No reason provided',
 
                     ]);
-
+                }
 
             }
 
