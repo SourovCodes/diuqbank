@@ -5,7 +5,9 @@ namespace App\Filament\Resources\UserReports;
 use App\Filament\Resources\UserReports\Pages\CreateUserReport;
 use App\Filament\Resources\UserReports\Pages\EditUserReport;
 use App\Filament\Resources\UserReports\Pages\ListUserReports;
+use App\Filament\Resources\UserReports\Pages\ViewUserReport;
 use App\Filament\Resources\UserReports\Schemas\UserReportForm;
+use App\Filament\Resources\UserReports\Schemas\UserReportInfolist;
 use App\Filament\Resources\UserReports\Tables\UserReportsTable;
 use App\Models\UserReport;
 use BackedEnum;
@@ -25,6 +27,11 @@ class UserReportResource extends Resource
         return UserReportForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return UserReportInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return UserReportsTable::configure($table);
@@ -42,6 +49,7 @@ class UserReportResource extends Resource
         return [
             'index' => ListUserReports::route('/'),
             'create' => CreateUserReport::route('/create'),
+            'view' => ViewUserReport::route('/{record}'),
             'edit' => EditUserReport::route('/{record}/edit'),
         ];
     }
