@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ExamType; // added
 
 class Question extends Model
 {
@@ -26,6 +27,26 @@ class Question extends Model
         'pdf_size',
         'is_watermarked',
     ];
+
+    // Ensure section is coerced to null if the selected exam type doesn't require it
+    protected static function booted(): void
+    {
+        static::saving(function (Question $question) {
+            // If no exam type is selected, section must be null
+            if (! $question->exam_type_id) {
+                $question->section = null;
+                return;
+            }
+
+            $requiresSection = ExamType::query()
+                ->whereKey($question->exam_type_id)
+                ->value('requires_section');
+
+            if (! $requiresSection) {
+                $question->section = null;
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
