@@ -285,34 +285,42 @@ class CompressAndWatermarkPdfJob implements ShouldQueue
         // Get the number of pages in the source PDF
         $pageCount = $pdf->setSourceFile($sourceFile);
 
-        // Define watermark header height (just enough for text + small padding)
-        $headerHeight = 15; // Reduced from 20 to 15 units
-        $textPadding = 3;   // Padding around text
-
+        // Define optimized watermark header dimensions
+        $fontSize = 9;          // Larger font for better readability
+        $lineHeight = 3.5;      // Font height in units (approximately)
+        $topPadding = 1;        // Minimal top padding
+        $bottomPadding = 1;     // Minimal bottom padding
+        $sidePadding = 2;       // Left/right padding for text
+        
+        // Calculate precise header height based on actual text requirements
+        $headerHeight = $topPadding + $lineHeight + $bottomPadding; // Total: ~5.5 units
+        
         // Loop through each page of the PDF
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             // Get the page size and orientation
             $pageInfo = $pdf->getTemplateSize($pdf->importPage($pageNo));
             $orientation = ($pageInfo['width'] > $pageInfo['height']) ? 'L' : 'P';
 
-            // Create new page with increased height to accommodate header
+            // Create new page with increased height to accommodate compact header
             $newHeight = $pageInfo['height'] + $headerHeight;
             $pdf->AddPage($orientation, [$pageInfo['width'], $newHeight]);
 
-            // Add white background rectangle at the very top
+            // Add white background rectangle at the very top (compact size)
             $pdf->SetFillColor(255, 255, 255); // White color
-            $pdf->Rect(0, 0, $pageInfo['width'], $headerHeight, 'F'); // Header rectangle
+            $pdf->Rect(0, 0, $pageInfo['width'], $headerHeight, 'F'); // Compact header rectangle
 
             // Set font and color for watermark text
-            $pdf->SetFont('Arial', '', 9); // Slightly smaller font to fit better
-            $pdf->SetTextColor(0, 0, 0); // Black color
+            $pdf->SetFont('Arial', '', $fontSize); // Compact font size
+            $pdf->SetTextColor(50, 50, 50); // Dark gray for subtle appearance
 
-            // Center the text vertically in the header
-            $textY = ($headerHeight - 9) / 2; // Center text vertically (9 is approximate font height)
-            $pdf->SetXY($textPadding, $textY);
-            $pdf->Write(0, $watermarkText); // Write text
+            // Position text with precise vertical centering
+            $textY = $topPadding + ($lineHeight / 4); // Fine-tuned vertical position
+            $pdf->SetXY($sidePadding, $textY);
+            
+            // Write text with proper spacing
+            $pdf->Cell(0, $lineHeight, $watermarkText, 0, 0, 'L');
 
-            // Import and place the original page content below the header
+            // Import and place the original page content below the compact header
             $tplId = $pdf->importPage($pageNo);
             $pdf->useTemplate($tplId, 0, $headerHeight, $pageInfo['width'], $pageInfo['height']);
         }
