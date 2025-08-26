@@ -18,7 +18,7 @@ class UserReportResource extends Resource
 {
     protected static ?string $model = UserReport::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
 
     public static function form(Schema $schema): Schema
     {
