@@ -20,6 +20,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ trim($__env->yieldContent('title', 'DIUQBank | DIU Question Bank')) }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        
         
         {{-- Toast Flash Messages --}}
         <script>
@@ -38,6 +40,24 @@
                 @endif
             };
         </script>
+
+        @production
+        <script data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5256137078683241"
+                crossorigin="anonymous"></script>
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-QPKSEMRTZ2"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+
+            gtag('js', new Date());
+
+            gtag('config', 'G-QPKSEMRTZ2');
+        </script>
+        @endproduction
     </head>
     <body class="antialiased flex flex-col min-h-screen bg-background text-foreground">
         <div class="fixed inset-0 -z-10">
