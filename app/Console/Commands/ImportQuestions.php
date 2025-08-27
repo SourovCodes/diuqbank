@@ -32,7 +32,7 @@ class ImportQuestions extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Command description ok';
 
     /**
      * Execute the console command.
