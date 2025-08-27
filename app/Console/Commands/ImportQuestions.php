@@ -35,7 +35,7 @@ class ImportQuestions extends Command
      */
     public function handle()
     {
-        $oldQuestions = collect(Http::get('https://diuqbank.com/api/questions')->json('data'))
+        $oldQuestions = collect(Http::get('http://test.diuqbank.com/questions.json')->json('data'))
             ->sortBy('createdAt')
             ->values()
             ->all();
