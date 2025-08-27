@@ -32,7 +32,11 @@
                                     Pending Review
                                 @elseif($question->status === App\Enums\QuestionStatus::NEED_FIX)
                                     <x-lucide-x-circle class="h-3 w-3" />
-                                    Need Fix
+                                    @if($question->examType && $question->examType->requires_section && !$question->section)
+                                        <span title="You need to add section info to this question. Edit it and submit again.">Need Fix</span>
+                                    @else
+                                        Need Fix
+                                    @endif
                                 @endif
                             </span>
                         @endif
