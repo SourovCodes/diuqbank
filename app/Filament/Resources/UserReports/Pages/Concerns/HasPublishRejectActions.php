@@ -47,7 +47,7 @@ trait HasPublishRejectActions
                 ->color('danger')
                 ->requiresConfirmation()
                 ->visible(fn () => (bool) $this->getRecord()?->question)
-                ->disabled(fn () => $this->getRecord()?->question?->status === QuestionStatus::REJECTED)
+                ->disabled(fn () => $this->getRecord()?->question?->status === QuestionStatus::NEED_FIX)
                 ->action(function () {
                     $report = $this->getRecord();
                     $question = $report?->question;
@@ -55,13 +55,13 @@ trait HasPublishRejectActions
                         return;
                     }
 
-                    $question->update(['status' => QuestionStatus::REJECTED]);
+                    $question->update(['status' => QuestionStatus::NEED_FIX]);
                     $report->update(['reviewed' => true]);
 
                     Notification::make()
                         ->warning()
-                        ->title('Question rejected')
-                        ->body('The question has been rejected.')
+                        ->title('Question needs fixing')
+                        ->body('The question has been marked as needing fixes.')
                         ->send();
                 }),
         ];

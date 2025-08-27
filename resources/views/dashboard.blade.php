@@ -69,8 +69,8 @@
         <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Rejected</p>
-                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ number_format($stats['rejected_questions']) }}</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Need Fix</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ number_format($stats['need_fix_questions']) }}</p>
                 </div>
                 <div class="h-12 w-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                     <x-lucide-x-circle class="h-6 w-6 text-red-600 dark:text-red-400" />

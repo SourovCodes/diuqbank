@@ -93,7 +93,7 @@
                         </div>
                     </div>
                 </div>
-            @elseif($question->status === App\Enums\QuestionStatus::REJECTED)
+            @elseif($question->status === App\Enums\QuestionStatus::NEED_FIX)
                 <div class="rounded-lg border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20 p-4">
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0">
@@ -104,7 +104,7 @@
                                 Only you can see this question
                             </h3>
                             <p class="mt-1 text-sm text-red-700 dark:text-red-300">
-                                This question has been rejected by a moderator and is not visible to other users. You may edit and resubmit it for review.
+                                This question needs fixing as requested by a moderator and is not visible to other users. You may edit and resubmit it for review.
                             </p>
                         </div>
                     </div>

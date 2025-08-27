@@ -28,8 +28,8 @@ class DashboardController extends Controller
             'pending_questions' => Question::where('user_id', $user->id)
                 ->where('status', QuestionStatus::PENDING_REVIEW)
                 ->count(),
-            'rejected_questions' => Question::where('user_id', $user->id)
-                ->where('status', QuestionStatus::REJECTED)
+            'need_fix_questions' => Question::where('user_id', $user->id)
+                ->where('status', QuestionStatus::NEED_FIX)
                 ->count(),
             'total_views' => Question::where('user_id', $user->id)
                 ->sum('view_count'),

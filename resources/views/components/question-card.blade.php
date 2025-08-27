@@ -23,16 +23,16 @@
                             <span class="inline-flex items-center gap-1 rounded-md text-xs px-2 py-1 font-medium
                                 @if($question->status === App\Enums\QuestionStatus::PENDING_REVIEW)
                                     bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
-                                @elseif($question->status === App\Enums\QuestionStatus::REJECTED)
+                                @elseif($question->status === App\Enums\QuestionStatus::NEED_FIX)
                                     bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
                                 @endif
                             ">
                                 @if($question->status === App\Enums\QuestionStatus::PENDING_REVIEW)
                                     <x-lucide-clock class="h-3 w-3" />
                                     Pending Review
-                                @elseif($question->status === App\Enums\QuestionStatus::REJECTED)
+                                @elseif($question->status === App\Enums\QuestionStatus::NEED_FIX)
                                     <x-lucide-x-circle class="h-3 w-3" />
-                                    Rejected
+                                    Need Fix
                                 @endif
                             </span>
                         @endif

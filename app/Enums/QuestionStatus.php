@@ -10,14 +10,14 @@ enum QuestionStatus: string implements HasColor, HasIcon, HasLabel
 {
     case PUBLISHED = 'published';
     case PENDING_REVIEW = 'pending_review';
-    case REJECTED = 'rejected';
+    case NEED_FIX = 'need_fix';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::PUBLISHED => 'Published',
             self::PENDING_REVIEW => 'Pending Review',
-            self::REJECTED => 'Rejected',
+            self::NEED_FIX => 'Need Fix',
         };
     }
 
@@ -26,7 +26,7 @@ enum QuestionStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PUBLISHED => 'success',
             self::PENDING_REVIEW => 'warning',
-            self::REJECTED => 'danger',
+            self::NEED_FIX => 'danger',
         };
     }
 
@@ -35,7 +35,7 @@ enum QuestionStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PUBLISHED => 'heroicon-m-check-circle',
             self::PENDING_REVIEW => 'heroicon-m-clock',
-            self::REJECTED => 'heroicon-m-x-circle',
+            self::NEED_FIX => 'heroicon-m-x-circle',
         };
     }
 }

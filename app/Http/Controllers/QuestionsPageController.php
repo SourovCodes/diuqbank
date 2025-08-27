@@ -64,7 +64,7 @@ class QuestionsPageController extends Controller
             if (! auth()->check() || auth()->id() !== $question->user_id) {
                 $statusMessage = match ($question->status) {
                     \App\Enums\QuestionStatus::PENDING_REVIEW => 'This question is pending review and can only be viewed by its owner.',
-                    \App\Enums\QuestionStatus::REJECTED => 'This question has been rejected and can only be viewed by its owner.',
+                    \App\Enums\QuestionStatus::NEED_FIX => 'This question needs fixing and can only be viewed by its owner.',
                     default => 'This question is not available for public viewing.'
                 };
                 abort(403, $statusMessage);
