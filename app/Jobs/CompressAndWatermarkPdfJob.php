@@ -56,6 +56,10 @@ class CompressAndWatermarkPdfJob implements ShouldQueue
                 Log::warning("Question not found for compression and watermarking: {$this->questionId}");
                 return;
             }
+            if($question->is_watermarked){
+                Log::info("Question already watermarked: {$this->questionId}");
+                return;
+            }
 
             $storage = Storage::disk('s3');
             $pdfKey = $question->pdf_key;
