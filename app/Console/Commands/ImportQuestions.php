@@ -56,37 +56,17 @@ class ImportQuestions extends Command
 
             if (count($question['courses']) == 1 && count($question['departments']) == 1 && count($question['semesters']) == 1 && count($question['examTypes']) == 1) {
 
-                $oldPdfUrl = $question['pdf']['pdfUrl'];
+                // Use existing PDF key and size from old data
+                $finalKey = $question['pdf']['pdfKey'] ?? null;
+                $pdfSize = $question['pdf']['pdfSize'] ?? null;
                 
-                // Try to download the PDF from the old URL
-                try {
-                    $this->info("Downloading PDF from: $oldPdfUrl");
-                    $pdfResponse = Http::timeout(30)->get($oldPdfUrl);
-                    
-                    if (!$pdfResponse->successful() || empty($pdfResponse->body())) {
-                        $this->error("Failed to download PDF - URL: $oldPdfUrl - Status: " . $pdfResponse->status());
-                        $failedCount++;
-                        continue;
-                    }
-                    
-                    // Generate a unique key for the PDF in S3
-                    $uuid = Str::uuid();
-                    $finalKey = "questions/$uuid.pdf";
-                    
-                    // Upload the PDF to S3
-                    Storage::disk('s3')->put($finalKey, $pdfResponse->body());
-                    Storage::disk('s3')->setVisibility($finalKey, 'public');
-                    
-                    // Calculate the file size
-                    $pdfSize = Storage::disk('s3')->size($finalKey);
-                    
-                    $this->info("Successfully uploaded PDF to S3: $finalKey (Size: $pdfSize bytes)");
-                    
-                } catch (\Exception $e) {
-                    $this->error("Exception downloading/uploading PDF - URL: $oldPdfUrl - Error: " . $e->getMessage());
+                if (!$finalKey || !$pdfSize) {
+                    $this->error("Missing PDF key or size in old data for question");
                     $failedCount++;
                     continue;
                 }
+                
+                $this->info("Using existing PDF key: $finalKey (Size: $pdfSize bytes)");
              
 
                 // Handle user with preserved timestamps
