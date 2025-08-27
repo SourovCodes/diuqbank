@@ -45,6 +45,16 @@ class ImportQuestions extends Command
             ->all();
         $this->info('Found '.count($oldQuestions).' questions to import.');
 
+        // Fetch pageview data
+        $this->info('Fetching pageview data...');
+        $pageviewData = collect(Http::get('http://test.diuqbank.com/pageview.json')->json())
+            ->mapWithKeys(function ($item) {
+                // Extract question ID from page_path like "/questions/236"
+                $questionId = basename($item['page_path']);
+                return [$questionId => $item['lifetime_pageviews']];
+            });
+        $this->info('Found pageview data for '.count($pageviewData).' questions.');
+
         $successCount = 0;
         $failedCount = 0;
         $skippedCount = 0;
@@ -53,6 +63,9 @@ class ImportQuestions extends Command
 
             //            $this->info("Importing question: " . $question['createdAt']);
             //            continue;
+
+            // Get pageview count for this question
+            $viewCount = $pageviewData->get($question['id'], 0);
 
             if (count($question['courses']) == 1 && count($question['departments']) == 1 && count($question['semesters']) == 1 && count($question['examTypes']) == 1) {
 
@@ -160,6 +173,7 @@ class ImportQuestions extends Command
                             'pdf_size' => $pdfSize,
                             'status' => $status,
                             'is_watermarked' => false,
+                            'view_count' => $viewCount,
                             'updated_at' => Carbon::parse($question['updatedAt'])->format('Y-m-d H:i:s'),
                         ]);
                     $newQuestion = $existingQuestionForUpdate->fresh();
@@ -175,6 +189,7 @@ class ImportQuestions extends Command
                         'pdf_size' => $pdfSize,
                         'status' => $status,
                         'is_watermarked' => false,
+                        'view_count' => $viewCount,
                         'created_at' => Carbon::parse($question['createdAt'])->format('Y-m-d H:i:s'),
                         'updated_at' => Carbon::parse($question['updatedAt'])->format('Y-m-d H:i:s'),
                     ]);
