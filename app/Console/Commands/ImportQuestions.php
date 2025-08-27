@@ -14,6 +14,7 @@ use App\Models\UserReport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ImportQuestions extends Command
@@ -62,7 +63,7 @@ class ImportQuestions extends Command
                     $pdfResponse = Http::timeout(30)->get($oldPdfUrl);
                     
                     if (!$pdfResponse->successful() || empty($pdfResponse->body())) {
-                        $this->error("Failed to download PDF from: $oldPdfUrl");
+                        $this->error("Failed to download PDF - URL: $oldPdfUrl - Status: " . $pdfResponse->status());
                         $failedCount++;
                         continue;
                     }
@@ -81,15 +82,29 @@ class ImportQuestions extends Command
                     $this->info("Successfully uploaded PDF to S3: $finalKey (Size: $pdfSize bytes)");
                     
                 } catch (\Exception $e) {
-                    $this->error("Exception downloading/uploading PDF from $oldPdfUrl: " . $e->getMessage());
+                    $this->error("Exception downloading/uploading PDF - URL: $oldPdfUrl - Error: " . $e->getMessage());
                     $failedCount++;
                     continue;
                 }
              
 
-                $user = User::updateOrCreate(
-                    ['email' => $question['uploader']['email']],
-                    [
+                // Handle user with preserved timestamps
+                $existingUser = User::where('email', $question['uploader']['email'])->first();
+                if ($existingUser) {
+                    // Update existing user but preserve original timestamps
+                    DB::table('users')
+                        ->where('email', $question['uploader']['email'])
+                        ->update([
+                            'name' => $question['uploader']['name'],
+                            'username' => $question['uploader']['username'],
+                            'student_id' => $question['uploader']['studentId'],
+                            'image' => $question['uploader']['image'],
+                            'updated_at' => $question['uploader']['updatedAt'],
+                        ]);
+                    $user = $existingUser->fresh();
+                } else {
+                    // Insert new user with original timestamps
+                    $userId = DB::table('users')->insertGetId([
                         'name' => $question['uploader']['name'],
                         'email' => $question['uploader']['email'],
                         'username' => $question['uploader']['username'],
@@ -97,8 +112,9 @@ class ImportQuestions extends Command
                         'image' => $question['uploader']['image'],
                         'created_at' => $question['uploader']['createdAt'],
                         'updated_at' => $question['uploader']['updatedAt'],
-                    ]
-                );
+                    ]);
+                    $user = User::find($userId);
+                }
 
                 $department = Department::updateOrCreate([
                     'name' => $question['departments'][0]['name'],
@@ -145,25 +161,44 @@ class ImportQuestions extends Command
                     $status = QuestionStatus::PENDING_REVIEW;
                 }
 
-                $newQuestion = Question::updateOrCreate([
+                // Handle question with preserved timestamps
+                $existingQuestionForUpdate = Question::where([
                     'user_id' => $user->id,
                     'department_id' => $department->id,
                     'course_id' => $course->id,
                     'semester_id' => $semester->id,
                     'exam_type_id' => $examType->id,
-                ], [
-                    'user_id' => $user->id,
-                    'department_id' => $department->id,
-                    'course_id' => $course->id,
-                    'semester_id' => $semester->id,
-                    'exam_type_id' => $examType->id,
-                    'pdf_key' => $finalKey,
-                    'pdf_size' => $pdfSize,
-                    'status' => $status,
-                    'is_watermarked' => false,
-                    'created_at' => $question['createdAt'],
-                    'updated_at' => $question['updatedAt'],
-                ]);
+                ])->first();
+                
+                if ($existingQuestionForUpdate) {
+                    // Update existing question but preserve original timestamps
+                    DB::table('questions')
+                        ->where('id', $existingQuestionForUpdate->id)
+                        ->update([
+                            'pdf_key' => $finalKey,
+                            'pdf_size' => $pdfSize,
+                            'status' => $status,
+                            'is_watermarked' => false,
+                            'updated_at' => $question['updatedAt'],
+                        ]);
+                    $newQuestion = $existingQuestionForUpdate->fresh();
+                } else {
+                    // Insert new question with original timestamps
+                    $questionId = DB::table('questions')->insertGetId([
+                        'user_id' => $user->id,
+                        'department_id' => $department->id,
+                        'course_id' => $course->id,
+                        'semester_id' => $semester->id,
+                        'exam_type_id' => $examType->id,
+                        'pdf_key' => $finalKey,
+                        'pdf_size' => $pdfSize,
+                        'status' => $status,
+                        'is_watermarked' => false,
+                        'created_at' => $question['createdAt'],
+                        'updated_at' => $question['updatedAt'],
+                    ]);
+                    $newQuestion = Question::find($questionId);
+                }
                 
                 $successCount++;
 
