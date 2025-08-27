@@ -84,7 +84,6 @@ class ImportQuestions extends Command
 
                 $oldExamType = $question['examTypes'][0]['name'];
                 $needSection = (bool)($oldExamType==='Quiz' || $oldExamType === 'Lab Final');
-                if($needSection)continue;
                 $examType = ExamType::updateOrCreate([
                     'name' => $oldExamType,
                 ], [
@@ -98,6 +97,14 @@ class ImportQuestions extends Command
                     ->where('exam_type_id', $examType->id)
                     ->where('user_id', '!=', $user->id)
                     ->first();
+
+                // Determine the status based on conditions
+                $status = QuestionStatus::PUBLISHED;
+                if ($needSection) {
+                    $status = QuestionStatus::NEED_FIX;
+                } elseif ($existingQuestion) {
+                    $status = QuestionStatus::PENDING_REVIEW;
+                }
 
                 $newQuestion = Question::updateOrCreate([
                     'user_id' => $user->id,
@@ -113,7 +120,7 @@ class ImportQuestions extends Command
                     'exam_type_id' => $examType->id,
                     'pdf_key' => $question['pdf']['pdfKey'],
                     'pdf_size' => $question['pdf']['pdfSize'],
-                    'status' => $existingQuestion ? QuestionStatus::PENDING_REVIEW : QuestionStatus::PUBLISHED,
+                    'status' => $status,
                 ]);
 
                 if ($existingQuestion) {
