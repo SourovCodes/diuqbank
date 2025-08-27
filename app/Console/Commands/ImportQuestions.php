@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class ImportQuestions extends Command
 {
@@ -99,7 +100,7 @@ class ImportQuestions extends Command
                             'username' => $question['uploader']['username'],
                             'student_id' => $question['uploader']['studentId'],
                             'image' => $question['uploader']['image'],
-                            'updated_at' => $question['uploader']['updatedAt'],
+                            'updated_at' => Carbon::parse($question['uploader']['updatedAt'])->format('Y-m-d H:i:s'),
                         ]);
                     $user = $existingUser->fresh();
                 } else {
@@ -110,8 +111,8 @@ class ImportQuestions extends Command
                         'username' => $question['uploader']['username'],
                         'student_id' => $question['uploader']['studentId'],
                         'image' => $question['uploader']['image'],
-                        'created_at' => $question['uploader']['createdAt'],
-                        'updated_at' => $question['uploader']['updatedAt'],
+                        'created_at' => Carbon::parse($question['uploader']['createdAt'])->format('Y-m-d H:i:s'),
+                        'updated_at' => Carbon::parse($question['uploader']['updatedAt'])->format('Y-m-d H:i:s'),
                     ]);
                     $user = User::find($userId);
                 }
@@ -179,7 +180,7 @@ class ImportQuestions extends Command
                             'pdf_size' => $pdfSize,
                             'status' => $status,
                             'is_watermarked' => false,
-                            'updated_at' => $question['updatedAt'],
+                            'updated_at' => Carbon::parse($question['updatedAt'])->format('Y-m-d H:i:s'),
                         ]);
                     $newQuestion = $existingQuestionForUpdate->fresh();
                 } else {
@@ -194,8 +195,8 @@ class ImportQuestions extends Command
                         'pdf_size' => $pdfSize,
                         'status' => $status,
                         'is_watermarked' => false,
-                        'created_at' => $question['createdAt'],
-                        'updated_at' => $question['updatedAt'],
+                        'created_at' => Carbon::parse($question['createdAt'])->format('Y-m-d H:i:s'),
+                        'updated_at' => Carbon::parse($question['updatedAt'])->format('Y-m-d H:i:s'),
                     ]);
                     $newQuestion = Question::find($questionId);
                 }
