@@ -81,11 +81,15 @@ class ImportQuestions extends Command
                 ], [
                     'name' => $question['semesters'][0]['name'],
                 ]);
+
+                $oldExamType = $question['examTypes'][0]['name'];
+                $needSection = (bool)($oldExamType==='Quiz' || $oldExamType === 'Lab Final');
+                if($needSection)continue;
                 $examType = ExamType::updateOrCreate([
-                    'name' => $question['examTypes'][0]['name'],
+                    'name' => $oldExamType,
                 ], [
-                    'name' => $question['examTypes'][0]['name'],
-                    'requires_section' => false,
+                    'name' => $oldExamType,
+                    'requires_section' => $needSection,
                 ]);
 
                 $existingQuestion = Question::where('department_id', $department->id)
