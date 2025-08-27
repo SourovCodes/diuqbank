@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->constrained('users');
-            $table->foreignIdFor(Question::class)->constrained('questions');
+            $table->foreignIdFor(Question::class)->nullable()->constrained('questions');
             $table->enum('type', UserReportType::cases());
             $table->longText('details');
             $table->boolean('reviewed')->default(false);
