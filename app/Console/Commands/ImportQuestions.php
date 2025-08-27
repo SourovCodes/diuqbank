@@ -181,6 +181,23 @@ class ImportQuestions extends Command
                     $newQuestion = Question::find($questionId);
                 }
                 
+                // Check if PDF URL returns 404 and update status if needed
+                $pdfUrl = $newQuestion->pdf_url;
+                if ($pdfUrl) {
+                    try {
+                        $response = Http::head($pdfUrl);
+                        if ($response->status() === 404) {
+                            // Update question status to NEED_FIX if PDF returns 404
+                            DB::table('questions')
+                                ->where('id', $newQuestion->id)
+                                ->update(['status' => QuestionStatus::NEED_FIX]);
+                            $this->warn("PDF URL returned 404 for question ID {$newQuestion->id}. Status updated to NEED_FIX.");
+                        }
+                    } catch (\Exception $e) {
+                        $this->warn("Failed to check PDF URL for question ID {$newQuestion->id}: " . $e->getMessage());
+                    }
+                }
+                
                 $successCount++;
 
                 if ($existingQuestion) {
