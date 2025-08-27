@@ -13,6 +13,8 @@ use App\Models\User;
 use App\Models\UserReport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ImportQuestions extends Command
 {
@@ -41,12 +43,49 @@ class ImportQuestions extends Command
             ->all();
         $this->info('Found '.count($oldQuestions).' questions to import.');
 
+        $successCount = 0;
+        $failedCount = 0;
+        $skippedCount = 0;
+
         foreach ($oldQuestions as $question) {
 
             //            $this->info("Importing question: " . $question['createdAt']);
             //            continue;
 
             if (count($question['courses']) == 1 && count($question['departments']) == 1 && count($question['semesters']) == 1 && count($question['examTypes']) == 1) {
+
+                $oldPdfUrl = $question['pdf']['pdfUrl'];
+                
+                // Try to download the PDF from the old URL
+                try {
+                    $this->info("Downloading PDF from: $oldPdfUrl");
+                    $pdfResponse = Http::timeout(30)->get($oldPdfUrl);
+                    
+                    if (!$pdfResponse->successful() || empty($pdfResponse->body())) {
+                        $this->error("Failed to download PDF from: $oldPdfUrl");
+                        $failedCount++;
+                        continue;
+                    }
+                    
+                    // Generate a unique key for the PDF in S3
+                    $uuid = Str::uuid();
+                    $finalKey = "questions/$uuid.pdf";
+                    
+                    // Upload the PDF to S3
+                    Storage::disk('s3')->put($finalKey, $pdfResponse->body());
+                    Storage::disk('s3')->setVisibility($finalKey, 'public');
+                    
+                    // Calculate the file size
+                    $pdfSize = Storage::disk('s3')->size($finalKey);
+                    
+                    $this->info("Successfully uploaded PDF to S3: $finalKey (Size: $pdfSize bytes)");
+                    
+                } catch (\Exception $e) {
+                    $this->error("Exception downloading/uploading PDF from $oldPdfUrl: " . $e->getMessage());
+                    $failedCount++;
+                    continue;
+                }
+             
 
                 $user = User::updateOrCreate(
                     ['email' => $question['uploader']['email']],
@@ -118,10 +157,15 @@ class ImportQuestions extends Command
                     'course_id' => $course->id,
                     'semester_id' => $semester->id,
                     'exam_type_id' => $examType->id,
-                    'pdf_key' => $question['pdf']['pdfKey'],
-                    'pdf_size' => $question['pdf']['pdfSize'],
+                    'pdf_key' => $finalKey,
+                    'pdf_size' => $pdfSize,
                     'status' => $status,
+                    'is_watermarked' => false,
+                    'created_at' => $question['createdAt'],
+                    'updated_at' => $question['updatedAt'],
                 ]);
+                
+                $successCount++;
 
                 if ($existingQuestion) {
                     UserReport::updateOrCreate([
@@ -137,8 +181,19 @@ class ImportQuestions extends Command
                     ]);
                 }
 
+            } else {
+                $this->warn("Skipping question due to multiple or missing relationships (courses: " . count($question['courses']) . ", departments: " . count($question['departments']) . ", semesters: " . count($question['semesters']) . ", examTypes: " . count($question['examTypes']) . ")");
+                $skippedCount++;
             }
 
         }
+        
+        // Display final statistics
+        $this->info("Import completed!");
+        $this->info("Successfully imported: $successCount questions");
+        $this->info("Failed to download/upload PDFs: $failedCount questions");
+        $this->info("Skipped due to invalid relationships: $skippedCount questions");
+        $total = $successCount + $failedCount + $skippedCount;
+        $this->info("Total processed: $total questions");
     }
 }
