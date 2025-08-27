@@ -15,8 +15,8 @@ class HomeController extends Controller
         $counts = Cache::remember('home:counts', now()->addMinutes(10), function () {
             return [
                 'questionsCount' => Question::published()->count(),
-                'coursesCount' => Course::active()->count(),
-                'departmentsCount' => Department::active()->count(),
+                'coursesCount' => Course::count(),
+                'departmentsCount' => Department::count(),
                 'contributorsCount' => User::has('questions')->count(),
             ];
         });

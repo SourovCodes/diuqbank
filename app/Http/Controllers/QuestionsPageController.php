@@ -39,10 +39,10 @@ class QuestionsPageController extends Controller
         $questions = $query->paginate(12)->withQueryString();
 
         $dropdownData = [
-            'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
-            'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
-            'exam_types' => ExamType::active()->select('id', 'name','requires_section')->orderBy('name')->get(),
+            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
+            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            'semesters' => Semester::select('id', 'name')->orderByLatest()->get(),
+            'exam_types' => ExamType::select('id', 'name','requires_section')->orderBy('name')->get(),
         ];
 
         return view('questions.index', [
@@ -99,10 +99,10 @@ class QuestionsPageController extends Controller
     public function create()
     {
         $dropdownData = [
-            'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
-            'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
-            'exam_types' => ExamType::active()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
+            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
+            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            'semesters' => Semester::select('id', 'name')->orderByLatest()->get(),
+            'exam_types' => ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ];
 
         return view('questions.create', [
@@ -121,10 +121,10 @@ class QuestionsPageController extends Controller
         $question->load(['department', 'semester', 'course', 'examType']);
 
         $dropdownData = [
-            'departments' => Department::active()->select('id', 'short_name as name')->orderBy('short_name')->get(),
-            'courses' => Course::active()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'semesters' => Semester::active()->select('id', 'name')->orderByLatest()->get(),
-            'exam_types' => ExamType::active()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
+            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
+            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            'semesters' => Semester::select('id', 'name')->orderByLatest()->get(),
+            'exam_types' => ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ];
 
         return view('questions.edit', [
