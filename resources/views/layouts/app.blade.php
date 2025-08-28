@@ -67,6 +67,23 @@
             <div class="absolute bottom-0 right-0 h-40 w-52 rounded-full bg-violet-200/40 dark:bg-violet-900/20"></div>
         </div>
         @include('partials.navbar')
+        
+        {{-- Bug Report Notice --}}
+        <div class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div class="flex items-center justify-center gap-3 text-sm">
+                    <x-lucide-bug class="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    <span class="text-amber-800 dark:text-amber-200">
+                        Found a bug? Please 
+                        <a href="{{ url('/contact') }}" class="font-medium underline hover:no-underline text-amber-900 dark:text-amber-100">
+                            report it through our contact page
+                        </a> 
+                        to help us improve DIUQBank.
+                    </span>
+                </div>
+            </div>
+        </div>
+        
         <main id="main" class="flex-1">
             @yield('content')
         </main>
