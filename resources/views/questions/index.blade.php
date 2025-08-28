@@ -47,24 +47,27 @@
                     <label for="course_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-book-open class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Course
                     </label>
-                    <select id="course_id" name="course_id" {{ empty($filters['department_id']) ? 'disabled' : '' }} class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        <option value="">
-                            @if (empty($filters['department_id']))
-                                Select Department First
-                            @else
-                                All Courses from {{ $dropdownData['departments']->firstWhere('id', $filters['department_id'])->name ?? 'Selected Department' }}
-                            @endif
-                        </option>
-                        @foreach ($dropdownData['courses'] as $c)
-                            @php $show = empty($filters['department_id']) || $filters['department_id'] === $c->department_id; @endphp
-                            @if ($show)
-                                <option value="{{ $c->id }}" @selected($filters['course_id']===$c->id)>
-                                    {{ $c->name }}
-                                    @if (empty($filters['department_id'])) ({{ $dropdownData['departments']->firstWhere('id', $c->department_id)->name ?? '' }}) @endif
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <select id="course_id" name="course_id" {{ empty($filters['department_id']) ? 'disabled' : '' }} class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="">
+                                @if (empty($filters['department_id']))
+                                    Select Department First
+                                @else
+                                    All Courses from {{ $dropdownData['departments']->firstWhere('id', $filters['department_id'])->name ?? 'Selected Department' }}
+                                @endif
+                            </option>
+                            @foreach ($dropdownData['courses'] as $c)
+                                @php $show = empty($filters['department_id']) || $filters['department_id'] === $c->department_id; @endphp
+                                @if ($show)
+                                    <option value="{{ $c->id }}" @selected($filters['course_id']===$c->id)>
+                                        {{ $c->name }}
+                                        @if (empty($filters['department_id'])) ({{ $dropdownData['departments']->firstWhere('id', $c->department_id)->name ?? '' }}) @endif
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                        <div id="course-disabled-overlay" class="absolute inset-0 w-full h-full {{ empty($filters['department_id']) ? '' : 'hidden' }}"></div>
+                    </div>
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="semester_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -112,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selects = form.querySelectorAll('select');
     const departmentSelect = document.getElementById('department_id');
     const courseSelect = document.getElementById('course_id');
+    const courseOverlay = document.getElementById('course-disabled-overlay');
     
     function submitWithCleanUrl() {
         // Create a clean URL with only non-empty filter values
@@ -145,13 +149,38 @@ document.addEventListener('DOMContentLoaded', function () {
             courseSelect.disabled = false;
             const selectedDepartmentText = departmentSelect.options[departmentSelect.selectedIndex].text;
             courseSelect.querySelector('option[value=""]').textContent = `All Courses from ${selectedDepartmentText}`;
+            if (courseOverlay) courseOverlay.classList.add('hidden');
         } else {
             courseSelect.disabled = true;
             courseSelect.querySelector('option[value=""]').textContent = 'Select Department First';
+            if (courseOverlay) courseOverlay.classList.remove('hidden');
         }
         
         submitWithCleanUrl();
     });
+    // Click handler for disabled overlay to show Bangla toast
+    if (courseOverlay) {
+        courseOverlay.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!departmentSelect.value) {
+                if (window.toast && typeof window.toast.warning === 'function') {
+                    window.toast.warning('দয়া করে আগে ডিপার্টমেন্ট নির্বাচন করুন।');
+                } else {
+                    alert('দয়া করে আগে ডিপার্টমেন্ট নির্বাচন করুন।');
+                }
+            }
+        });
+    }
+
+    // Ensure overlay state is correct on initial load
+    if (courseOverlay) {
+        if (departmentSelect.value) {
+            courseOverlay.classList.add('hidden');
+        } else {
+            courseOverlay.classList.remove('hidden');
+        }
+    }
     
     // Handle other select changes
     selects.forEach(function (sel) {
