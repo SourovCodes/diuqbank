@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Question;
+use App\Models\UserReport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -58,6 +59,14 @@ class CleanupBrokenPdfQuestions extends Command
                 
                 if ($response->status() === 404) {
                     $this->warn("\nFound broken PDF for Question ID {$question->id}. URL: {$pdfUrl}");
+                    
+                    // Delete associated user reports first
+                    $deletedReports = UserReport::where('question_id', $question->id)->count();
+                    UserReport::where('question_id', $question->id)->delete();
+                    
+                    if ($deletedReports > 0) {
+                        $this->info("Deleted {$deletedReports} associated user report(s) for Question ID {$question->id}.");
+                    }
                     
                     // Delete the question
                     $question->delete();
