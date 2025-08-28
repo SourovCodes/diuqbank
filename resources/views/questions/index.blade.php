@@ -47,8 +47,14 @@
                     <label for="course_id" class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                         <x-lucide-book-open class="h-4 w-4 text-slate-500 dark:text-slate-400" /> Course
                     </label>
-                    <select id="course_id" name="course_id" class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors">
-                        <option value="">All Courses</option>
+                    <select id="course_id" name="course_id" {{ empty($filters['department_id']) ? 'disabled' : '' }} class="w-full h-10 rounded-lg border border-blue-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 shadow-sm hover:border-blue-300 dark:hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <option value="">
+                            @if (empty($filters['department_id']))
+                                Select Department First
+                            @else
+                                All Courses from {{ $dropdownData['departments']->firstWhere('id', $filters['department_id'])->name ?? 'Selected Department' }}
+                            @endif
+                        </option>
                         @foreach ($dropdownData['courses'] as $c)
                             @php $show = empty($filters['department_id']) || $filters['department_id'] === $c->department_id; @endphp
                             @if ($show)
@@ -133,6 +139,17 @@ document.addEventListener('DOMContentLoaded', function () {
     departmentSelect.addEventListener('change', function() {
         // Reset course selection when department changes
         courseSelect.value = '';
+        
+        // Enable/disable course select based on department selection
+        if (departmentSelect.value) {
+            courseSelect.disabled = false;
+            const selectedDepartmentText = departmentSelect.options[departmentSelect.selectedIndex].text;
+            courseSelect.querySelector('option[value=""]').textContent = `All Courses from ${selectedDepartmentText}`;
+        } else {
+            courseSelect.disabled = true;
+            courseSelect.querySelector('option[value=""]').textContent = 'Select Department First';
+        }
+        
         submitWithCleanUrl();
     });
     

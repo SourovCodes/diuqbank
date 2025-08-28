@@ -45,7 +45,7 @@
                         </button>
                     </div>
                     <select id="course_id" name="course_id" required {{ !$question ? 'disabled' : '' }}
-                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50">
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed">
                         <option value="">{{ !$question ? 'Select Department First' : 'Select Course' }}</option>
                         @if($question)
                             @foreach($dropdownData['courses']->where('department_id', $question->department_id) as $course)
