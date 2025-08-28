@@ -27,7 +27,7 @@ class WatermarkExistingPdf extends Command
      */
     public function handle()
     {
-        $questions = Question::where('is_watermarked', false)->get();
+        $questions = Question::get();
 
         foreach ($questions as $question) {
           CompressAndWatermarkPdfJob::dispatch($question->id);
