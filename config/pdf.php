@@ -39,20 +39,20 @@ return [
             'compatibility_level' => '1.4',
             
             // PDF settings profile: /screen, /ebook, /printer, /prepress
-            'pdf_settings' => '/prepress',
+            'pdf_settings' => '/printer',
             
-            // Image compression settings
-            'color_image_resolution' => 150,
-            'grayscale_image_resolution' => 150,
-            'monochrome_image_resolution' => 300,
+            // Image compression settings - Higher resolutions for better quality
+            'color_image_resolution' => 300,
+            'grayscale_image_resolution' => 300,
+            'monochrome_image_resolution' => 600,
             
-            // Compression thresholds
-            'color_image_threshold' => 1.0,
-            'grayscale_image_threshold' => 1.0,
-            'monochrome_image_threshold' => 1.0,
+            // Compression thresholds - Higher thresholds preserve more quality
+            'color_image_threshold' => 1.5,
+            'grayscale_image_threshold' => 1.5,
+            'monochrome_image_threshold' => 2.0,
             
             // Compression timeout in seconds
-            'timeout' => 120,
+            'timeout' => 180,
         ],
 
         /*
@@ -60,11 +60,11 @@ return [
         | Size Reduction Threshold
         |--------------------------------------------------------------------------
         |
-        | Only replace the original PDF if compression achieves at least this
-        | percentage of size reduction. Set to 0.1 for 10% minimum reduction.
+        | This setting is now legacy - original PDFs are never replaced.
+        | Compression is only applied to watermarked versions for public access.
         |
         */
-        'min_reduction_threshold' => 0.1, // 10% minimum reduction
+        'min_reduction_threshold' => 0.2, // Legacy setting - no longer used for original replacement
 
         /*
         |--------------------------------------------------------------------------

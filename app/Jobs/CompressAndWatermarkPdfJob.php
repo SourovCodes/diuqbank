@@ -89,36 +89,8 @@ class CompressAndWatermarkPdfJob implements ShouldQueue
 
             Log::info("Original PDF size: {$originalSize} bytes for question ID: {$this->questionId}");
 
-            // Step 1: Compress the PDF using Ghostscript
-            $this->compressPdf($originalPath, $compressedPath);
-
-            // Check if compression was successful
-            if (!file_exists($compressedPath)) {
-                throw new \Exception("Compression failed - output file not created");
-            }
-
-            $compressedSize = filesize($compressedPath);
-            Log::info("Compressed PDF size: {$compressedSize} bytes for question ID: {$this->questionId}");
-
-            // Determine which file to use for watermarking
-            $sourceForWatermarking = $compressedPath;
-            $shouldReplaceOriginal = false;
-
-            // Only use compressed version if it achieved significant reduction
-            $minReductionThreshold = config('pdf.compression.min_reduction_threshold', 0.1);
-            $reductionThreshold = 1 - $minReductionThreshold;
-            
-            if ($compressedSize < ($originalSize * $reductionThreshold)) {
-                $shouldReplaceOriginal = true;
-                $reductionPercent = round((($originalSize - $compressedSize) / $originalSize) * 100, 2);
-                Log::info("PDF compressed successfully. Original: {$originalSize} bytes, Compressed: {$compressedSize} bytes, Reduction: {$reductionPercent}%");
-            } else {
-                $sourceForWatermarking = $originalPath;
-                Log::info("Compression did not achieve significant size reduction for question ID {$this->questionId}. Using original file for watermarking.");
-            }
-
-            // Step 2: Add watermark to the PDF
-            $this->watermarkPdf($sourceForWatermarking, $watermarkedPath, $question);
+            // Step 1: Add watermark to the original PDF (keeping original quality)
+            $this->watermarkPdf($originalPath, $watermarkedPath, $question);
 
             // Check if watermarking was successful
             if (!file_exists($watermarkedPath)) {
@@ -128,31 +100,35 @@ class CompressAndWatermarkPdfJob implements ShouldQueue
             $watermarkedSize = filesize($watermarkedPath);
             Log::info("Watermarked PDF size: {$watermarkedSize} bytes for question ID: {$this->questionId}");
 
-            // Step 3: Upload files back to S3
-            $updateData = [];
+            // Step 2: Compress the watermarked PDF to reduce file size for public access
+            $this->compressPdf($watermarkedPath, $compressedPath);
 
-            // Replace original PDF if compression was beneficial
-            if ($shouldReplaceOriginal) {
-                $compressedContent = file_get_contents($compressedPath);
-                $storage->put($pdfKey, $compressedContent);
-                $storage->setVisibility($pdfKey, 'public');
-                $updateData['pdf_size'] = $compressedSize;
+            // Check if compression was successful
+            if (!file_exists($compressedPath)) {
+                throw new \Exception("Compression failed - output file not created");
             }
 
-            // Upload watermarked PDF
+            $compressedWatermarkedSize = filesize($compressedPath);
+            $reductionPercent = round((($watermarkedSize - $compressedWatermarkedSize) / $watermarkedSize) * 100, 2);
+            Log::info("Compressed watermarked PDF size: {$compressedWatermarkedSize} bytes for question ID: {$this->questionId}, Reduction: {$reductionPercent}%");
+
+            // Step 3: Upload compressed watermarked PDF to S3
             $watermarkedUuid = Str::uuid();
             $watermarkedKey = "questions/watermarked/{$watermarkedUuid}.pdf";
-            $watermarkedContent = file_get_contents($watermarkedPath);
-            $storage->put($watermarkedKey, $watermarkedContent);
+            $compressedWatermarkedContent = file_get_contents($compressedPath);
+            $storage->put($watermarkedKey, $compressedWatermarkedContent);
             $storage->setVisibility($watermarkedKey, 'public');
 
             // Update question with watermarked PDF key and mark as watermarked
-            $updateData['watermarked_pdf_key'] = $watermarkedKey;
-            $updateData['is_watermarked'] = true;
+            // Note: Original PDF remains untouched in S3
+            $updateData = [
+                'watermarked_pdf_key' => $watermarkedKey,
+                'is_watermarked' => true,
+            ];
 
             $question->update($updateData);
 
-            Log::info("PDF compression and watermarking completed successfully for question ID: {$this->questionId}");
+            Log::info("PDF watermarking and compression completed successfully for question ID: {$this->questionId}. Original PDF preserved, watermarked PDF compressed.");
 
             // Clean up temporary files
             $this->cleanupTempFiles([$originalPath, $compressedPath, $watermarkedPath]);
