@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -91,9 +91,12 @@ function UserDropdown() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-                    onClick={() => {
-                        // Handle sign out
-                        window.location.href = "/api/auth/sign-out";
+                    onClick={async () => {
+                        try {
+                            await signOut();
+                        } catch (error) {
+                            console.error("Sign out error:", error);
+                        }
                     }}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -109,9 +112,17 @@ export default function Navbar() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    // Handle client-side mounting
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Handle scroll effect for navbar background
     useEffect(() => {
+        if (!mounted) return;
+
         const handleScroll = () => {
             const isScrolled = window.scrollY > 10;
             if (isScrolled !== scrolled) {
@@ -122,7 +133,7 @@ export default function Navbar() {
         // Use passive event listener for better performance
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [scrolled]);
+    }, [scrolled, mounted]);
 
     // Close mobile menu when route changes
     useEffect(() => {
@@ -150,11 +161,9 @@ export default function Navbar() {
         <>
             <header
                 className={cn(
-                    "fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300",
-                    scrolled
-                        ? "bg-white/90 dark:bg-slate-900/90 shadow-sm "
-                        : "bg-white/80 dark:bg-slate-900/80",
-                    "border-slate-200 dark:border-slate-800 backdrop-blur"
+                    "fixed top-0 left-0 right-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
+                    mounted && scrolled && "shadow-sm",
+                    mounted && "transition-colors duration-200"
                 )}
             >
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,7 +261,8 @@ export default function Navbar() {
             >
                 <div
                     className={cn(
-                        "absolute top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white/95 dark:bg-slate-900/95 shadow-xl transition-transform duration-300 ease-in-out transform",
+                        "absolute top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-slate-900 shadow-xl",
+                        mounted && "transition-transform duration-300 ease-in-out transform",
                         isMenuOpen ? "translate-x-0" : "translate-x-full"
                     )}
                     onClick={(e) => e.stopPropagation()}
