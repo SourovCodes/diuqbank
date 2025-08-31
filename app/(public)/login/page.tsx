@@ -20,23 +20,18 @@ export default async function LoginPage({ searchParams }: PageProps) {
                         Welcome to DIUQBank
                     </h1>
                     <p className="text-slate-600 dark:text-slate-300 text-sm">
-                        Sign in with your DIU email to continue
+                        Sign in to continue
                     </p>
                     {error && (
                         <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md text-sm">
-                            {error === "AccessDenied"
-                                ? "You need a DIU email address (@diu.edu.bd or @s.diu.edu.bd) to sign in"
-                                : "An error occurred during sign in. Please try again."}
+                            An error occurred during sign in. Please try again.
                         </div>
                     )}
                 </div>
 
                 <GoogleLoginButton callbackUrl={callbackUrl ?? "/"} />
 
-                <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                    <p>Only DIU email addresses are allowed to sign in</p>
-                    <p className="mt-2">(@diu.edu.bd or @s.diu.edu.bd)</p>
-                </div>
+
             </Card>
         </div>
     );
