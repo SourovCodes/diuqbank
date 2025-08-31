@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, memo, useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -39,8 +39,19 @@ const menuItems = [
     { name: "Contact", href: "/contact", icon: Mail },
 ];
 
-function UserDropdown() {
+// Freeze to avoid accidental runtime mutations
+Object.freeze(menuItems);
+
+const UserDropdown = memo(function UserDropdown() {
     const { data: session } = useSession();
+
+    const handleSignOut = useCallback(async () => {
+        try {
+            await signOut();
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    }, []);
 
     if (!session) {
         return (
@@ -53,9 +64,9 @@ function UserDropdown() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu" aria-haspopup="menu" type="button">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
+                        <AvatarImage src={session.user.image || ""} alt={session.user.name ?? "User avatar"} />
                         <AvatarFallback className="bg-blue-600 text-white">
                             {session.user.name?.charAt(0) || session.user.email?.charAt(0) || "U"}
                         </AvatarFallback>
@@ -91,13 +102,7 @@ function UserDropdown() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-                    onClick={async () => {
-                        try {
-                            await signOut();
-                        } catch (error) {
-                            console.error("Sign out error:", error);
-                        }
-                    }}
+                    onClick={handleSignOut}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign out</span>
@@ -105,7 +110,7 @@ function UserDropdown() {
             </DropdownMenuContent>
         </DropdownMenu>
     );
-}
+});
 
 export default function Navbar() {
     const { theme, setTheme } = useTheme();
@@ -113,27 +118,54 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+    const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const drawerId = useId();
+    const previousOverflowRef = useRef<string>("");
 
     // Handle client-side mounting
-    useEffect(() => {
+    useLayoutEffect(() => {
         setMounted(true);
+    }, []);
+
+    // Respect user's reduced motion preference
+    useEffect(() => {
+        if (typeof window === "undefined" || !("matchMedia" in window)) return;
+        const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const handler = () => setPrefersReducedMotion(media.matches);
+        handler();
+        media.addEventListener("change", handler);
+        return () => media.removeEventListener("change", handler);
     }, []);
 
     // Handle scroll effect for navbar background
     useEffect(() => {
         if (!mounted) return;
 
-        const handleScroll = () => {
+        let rafId = 0;
+        const update = () => {
             const isScrolled = window.scrollY > 10;
-            if (isScrolled !== scrolled) {
-                setScrolled(isScrolled);
-            }
+            setScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
+        };
+        const handleScroll = () => {
+            if (rafId) return;
+            rafId = window.requestAnimationFrame(() => {
+                update();
+                rafId = 0;
+            });
         };
 
-        // Use passive event listener for better performance
+        // Initialize on mount
+        update();
+
         window.addEventListener("scroll", handleScroll, { passive: true });
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [scrolled, mounted]);
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [mounted]);
 
     // Close mobile menu when route changes
     useEffect(() => {
@@ -143,19 +175,31 @@ export default function Navbar() {
     // Prevent body scroll when mobile menu is open
     useEffect(() => {
         if (isMenuOpen) {
+            previousOverflowRef.current = document.body.style.overflow || "";
             document.body.style.overflow = "hidden";
+            // Move focus into the drawer for accessibility
+            closeButtonRef.current?.focus();
         } else {
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = previousOverflowRef.current || "unset";
+            // Return focus to the menu button when closing
+            menuButtonRef.current?.focus();
         }
         return () => {
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = previousOverflowRef.current || "unset";
         };
     }, [isMenuOpen]);
 
     // Handle theme toggle with smooth transition
-    const toggleTheme = () => {
+    const toggleTheme = useCallback(() => {
         setTheme(theme === "dark" ? "light" : "dark");
-    };
+    }, [theme, setTheme]);
+
+    const isPathActive = useCallback(
+        (href: string) => pathname === href || (href !== "/" && pathname?.startsWith(href)),
+        [pathname]
+    );
+
+    const currentYear = useMemo(() => new Date().getFullYear(), []);
 
     return (
         <>
@@ -163,7 +207,7 @@ export default function Navbar() {
                 className={cn(
                     "fixed top-0 left-0 right-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
                     mounted && scrolled && "shadow-sm",
-                    mounted && "transition-colors duration-200"
+                    mounted && !prefersReducedMotion && "transition-colors duration-200"
                 )}
             >
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -181,12 +225,10 @@ export default function Navbar() {
                         </div>
 
                         {/* Desktop navigation */}
-                        <nav className="hidden md:flex items-center space-x-1">
+                        <nav className="hidden md:flex items-center space-x-1" role="navigation" aria-label="Primary">
                             <div className="flex items-center space-x-1 mr-4">
                                 {menuItems.map((item) => {
-                                    const isActive =
-                                        pathname === item.href ||
-                                        (item.href !== "/" && pathname?.startsWith(item.href));
+                                    const active = isPathActive(item.href);
 
                                     return (
                                         <Link
@@ -194,13 +236,13 @@ export default function Navbar() {
                                             href={item.href}
                                             className={cn(
                                                 "px-3 py-2 text-sm rounded-md flex items-center gap-1.5 transition-all duration-200",
-                                                isActive
+                                                active
                                                     ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 font-medium shadow-sm"
                                                     : "text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                                             )}
-                                            aria-current={isActive ? "page" : undefined}
+                                            aria-current={active ? "page" : undefined}
                                         >
-                                            <item.icon className="h-4 w-4" />
+                                            <item.icon className="h-4 w-4" aria-hidden="true" />
                                             <span>{item.name}</span>
                                         </Link>
                                     );
@@ -214,9 +256,11 @@ export default function Navbar() {
                                     onClick={toggleTheme}
                                     className="rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                                     aria-label="Toggle theme"
+                                    aria-pressed={mounted ? theme === "dark" : undefined}
+                                    type="button"
                                 >
-                                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" aria-hidden="true" />
+                                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" aria-hidden="true" />
                                 </Button>
                                 <UserDropdown />
                             </div>
@@ -230,20 +274,25 @@ export default function Navbar() {
                                 onClick={toggleTheme}
                                 className="rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                                 aria-label="Toggle theme"
+                                aria-pressed={mounted ? theme === "dark" : undefined}
+                                type="button"
                             >
-                                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" aria-hidden="true" />
+                                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" aria-hidden="true" />
                             </Button>
 
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                ref={menuButtonRef}
+                                onClick={() => setIsMenuOpen((v) => !v)}
                                 className="rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 ml-1"
                                 aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                                 aria-expanded={isMenuOpen}
+                                aria-controls={drawerId}
+                                type="button"
                             >
-                                <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                                <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" aria-hidden="true" />
                             </Button>
                         </div>
                     </div>
@@ -258,14 +307,20 @@ export default function Navbar() {
                 )}
                 onClick={() => setIsMenuOpen(false)}
                 aria-hidden={!isMenuOpen}
+                onKeyDown={(e) => {
+                    if (e.key === "Escape") setIsMenuOpen(false);
+                }}
             >
                 <div
                     className={cn(
                         "absolute top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white dark:bg-slate-900 shadow-xl",
-                        mounted && "transition-transform duration-300 ease-in-out transform",
+                        mounted && !prefersReducedMotion && "transition-transform duration-300 ease-in-out transform",
                         isMenuOpen ? "translate-x-0" : "translate-x-full"
                     )}
                     onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    id={drawerId}
                 >
                     <div className="flex flex-col h-full">
                         {/* Menu header with profile or sign in */}
@@ -280,18 +335,18 @@ export default function Navbar() {
                                     onClick={() => setIsMenuOpen(false)}
                                     className="rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
                                     aria-label="Close menu"
+                                    ref={closeButtonRef}
+                                    type="button"
                                 >
-                                    <X className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                                    <X className="h-5 w-5 text-slate-700 dark:text-slate-300" aria-hidden="true" />
                                 </Button>
                             </div>
                         </div>
 
                         {/* Navigation menu with improved active state */}
-                        <nav className="py-4 px-2 space-y-1 flex-1 overflow-y-auto">
+                        <nav className="py-4 px-2 space-y-1 flex-1 overflow-y-auto" role="navigation" aria-label="Mobile">
                             {menuItems.map((item) => {
-                                const isActive =
-                                    pathname === item.href ||
-                                    (item.href !== "/" && pathname?.startsWith(item.href));
+                                const active = isPathActive(item.href);
 
                                 return (
                                     <Link
@@ -299,13 +354,13 @@ export default function Navbar() {
                                         href={item.href}
                                         className={cn(
                                             "px-4 py-3 text-base rounded-md flex items-center transition-all duration-200",
-                                            isActive
+                                            active
                                                 ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 font-medium"
                                                 : "text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                                         )}
-                                        aria-current={isActive ? "page" : undefined}
+                                        aria-current={active ? "page" : undefined}
                                     >
-                                        <item.icon className="h-5 w-5 mr-3" />
+                                        <item.icon className="h-5 w-5 mr-3" aria-hidden="true" />
                                         <span>{item.name}</span>
                                     </Link>
                                 );
@@ -316,7 +371,7 @@ export default function Navbar() {
                         <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                             <div className="flex items-center justify-between mt-4">
                                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    © {new Date().getFullYear()} DIUQbank
+                                    © {currentYear} DIUQbank
                                 </span>
                                 <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                                     v1.0
