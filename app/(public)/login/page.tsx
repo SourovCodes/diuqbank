@@ -43,9 +43,13 @@ function LoginContent() {
         try {
             setIsSubmitting(true);
             const redirect = searchParams?.get("redirect") || undefined;
-            await signIn.social({ provider: "google", callbackURL: redirect });
-        } catch (error) {
-            toast.error("Sign in failed. Please try again.", { duration: 6000 });
+            const res = await signIn.social({ provider: "google", callbackURL: redirect });
+            if (res.error) {
+                toast.error("Sign in failed. Please try again. Inform admin if the problem persists.", { duration: 6000 });
+                setIsSubmitting(false);
+            }
+        } catch {
+            toast.error("Sign in failed. Please try again. Inform admin if the problem persists.", { duration: 6000 });
             setIsSubmitting(false);
         }
     }, [searchParams]);
