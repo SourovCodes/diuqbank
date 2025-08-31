@@ -15,6 +15,13 @@
       "when": 1756662193990,
       "tag": "0001_tricky_joshua_kane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1756662770578,
+      "tag": "0002_hard_amazoness",
+      "breakpoints": true
     }
   ]
 }

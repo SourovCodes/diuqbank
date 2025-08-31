@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   int,
+  unique,
 } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
@@ -68,12 +69,39 @@ export const verifications = mysqlTable("verifications", {
     .onUpdateNow(),
 });
 
+export const departments = mysqlTable("departments", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  shortName: varchar("short_name", { length: 5 }).notNull().unique(),
+});
+
+export const courses = mysqlTable(
+  "courses",
+  {
+    id: int("id").primaryKey().autoincrement(),
+    name: varchar("name", { length: 255 }).notNull(),
+    departmentId: int("department_id")
+      .notNull()
+      .references(() => departments.id),
+  },
+  (table) => [
+    unique("unique_course_name_per_department").on(
+      table.departmentId,
+      table.name
+    )
+  ]
+);
+
 export const semesters = mysqlTable("semesters", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 10 }).notNull().unique(),
+  order: int("order").notNull().default(0),
+
 });
 
 export const examTypes = mysqlTable("exam_types", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 10 }).notNull().unique(),
+  order: int("order").notNull().default(0),
+
 });
