@@ -1,4 +1,6 @@
 import Footer from "@/components/footer";
+import Navbar from "@/components/navbar";
+
 export default function PublicLayout({
   children,
 }: {
@@ -6,6 +8,7 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      <Navbar />
       <main className="flex-grow">{children}</main>
       <Footer />
     </>
