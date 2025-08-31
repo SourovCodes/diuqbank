@@ -32,13 +32,10 @@ export default function LoginPage() {
     }, [searchParams]);
 
     return (
-        <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
-            <div className="w-full max-w-md">
+        <div className="container mx-auto px-4 py-16">
+            <div className="w-full max-w-md mx-auto">
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow">
-                            <span className="text-white font-bold">D</span>
-                        </div>
                         <div>
                             <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Sign in to DIUQbank</h1>
                             <p className="text-sm text-slate-600 dark:text-slate-400">Use your Google account to continue</p>
@@ -81,7 +78,7 @@ export default function LoginPage() {
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
