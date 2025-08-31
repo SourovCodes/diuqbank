@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   boolean,
+  int,
 } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
@@ -65,4 +66,14 @@ export const verifications = mysqlTable("verifications", {
     .notNull()
     .defaultNow()
     .onUpdateNow(),
+});
+
+export const semesters = mysqlTable("semesters", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 10 }).notNull().unique(),
+});
+
+export const examTypes = mysqlTable("exam_types", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 10 }).notNull().unique(),
 });
