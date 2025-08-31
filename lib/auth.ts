@@ -7,6 +7,8 @@ export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "mysql",
         schema: schema,
+        usePlural: true,
+
     }),
     socialProviders: {
         google: {

@@ -6,7 +6,7 @@ import {
   boolean,
 } from "drizzle-orm/mysql-core";
 
-export const user = mysqlTable("user", {
+export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: text("name").notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -21,7 +21,7 @@ export const user = mysqlTable("user", {
     .onUpdateNow(),
 });
 
-export const session = mysqlTable("session", {
+export const sessions = mysqlTable("sessions", {
   id: varchar("id", { length: 36 }).primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
   token: varchar("token", { length: 255 }).notNull().unique(),
@@ -31,16 +31,16 @@ export const session = mysqlTable("session", {
   userAgent: text("user_agent"),
   userId: varchar("user_id", { length: 36 })
     .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const account = mysqlTable("account", {
+export const accounts = mysqlTable("accounts", {
   id: varchar("id", { length: 36 }).primaryKey(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
   userId: varchar("user_id", { length: 36 })
     .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "cascade" }),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   idToken: text("id_token"),
@@ -55,7 +55,7 @@ export const account = mysqlTable("account", {
     .onUpdateNow(),
 });
 
-export const verification = mysqlTable("verification", {
+export const verifications = mysqlTable("verifications", {
   id: varchar("id", { length: 36 }).primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
