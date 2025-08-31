@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSession, signIn } from "@/lib/auth-client";
@@ -8,6 +8,25 @@ import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="container mx-auto px-4 py-16">
+                    <div className="w-full max-w-md mx-auto">
+                        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+            }
+        >
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session } = useSession();
