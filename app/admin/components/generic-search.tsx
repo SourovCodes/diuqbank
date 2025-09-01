@@ -6,7 +6,6 @@ import { useRouter } from "nextjs-toploader/app";
 
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface GenericSearchProps {
@@ -54,9 +53,7 @@ export function GenericSearch({ placeholder }: GenericSearchProps) {
         updateSearchParams(debouncedSearch);
     }, [debouncedSearch, updateSearchParams]);
 
-    const handleClear = () => {
-        setSearchQuery("");
-    };
+
 
     return (
         <div className="relative w-full max-w-sm">
@@ -68,17 +65,7 @@ export function GenericSearch({ placeholder }: GenericSearchProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {searchQuery && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-7 w-7 p-0"
-                    onClick={handleClear}
-                >
-                    <span className="sr-only">Clear</span>
-                    <span aria-hidden="true">&times;</span>
-                </Button>
-            )}
+
         </div>
     );
 } 
