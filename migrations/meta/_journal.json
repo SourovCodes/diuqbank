@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1756660376668,
-      "tag": "0000_slimy_kingpin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1756662193990,
-      "tag": "0001_tricky_joshua_kane",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1756662770578,
-      "tag": "0002_hard_amazoness",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1756696364808,
-      "tag": "0003_nasty_tiger_shark",
+      "when": 1756718358164,
+      "tag": "0000_curvy_tiger_shark",
       "breakpoints": true
     }
   ]

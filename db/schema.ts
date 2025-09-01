@@ -76,6 +76,11 @@ export const departments = mysqlTable("departments", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 100 }).notNull().unique(),
   shortName: varchar("short_name", { length: 5 }).notNull().unique(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
 });
 
 export const courses = mysqlTable(
@@ -86,6 +91,11 @@ export const courses = mysqlTable(
     departmentId: int("department_id")
       .notNull()
       .references(() => departments.id),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .notNull()
+      .defaultNow()
+      .onUpdateNow(),
   },
   (table) => [
     unique("unique_course_name_per_department").on(
@@ -99,6 +109,11 @@ export const semesters = mysqlTable("semesters", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 10 }).notNull().unique(),
   order: int("order").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
 
 });
 
@@ -106,6 +121,11 @@ export const examTypes = mysqlTable("exam_types", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 10 }).notNull().unique(),
   order: int("order").notNull().default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
 
 });
 
