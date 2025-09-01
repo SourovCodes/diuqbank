@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "./sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-// import { UserDropdown } from "./user-dropdown";
+import { UserDropdown } from "./user-dropdown";
 import { usePathname } from "next/navigation";
 import {
   Sheet,
@@ -51,7 +51,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* <UserDropdown /> */}
+              <UserDropdown />
             </div>
           </header>
 
@@ -83,7 +83,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div>
-            {/* <UserDropdown /> */}
+            <UserDropdown />
           </div>
         </header>
 
