@@ -8,6 +8,8 @@ import {
   mysqlEnum,
   unique,
 } from "drizzle-orm/mysql-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -137,3 +139,32 @@ export const questions = mysqlTable("questions", {
     .defaultNow()
     .onUpdateNow(),
 });
+
+
+// ----------
+// Type exports for better reuse across the app (InferSelect/InferInsert)
+// ----------
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
+export type Account = InferSelectModel<typeof accounts>;
+export type NewAccount = InferInsertModel<typeof accounts>;
+
+export type Session = InferSelectModel<typeof sessions>;
+export type NewSession = InferInsertModel<typeof sessions>;
+
+export type Department = InferSelectModel<typeof departments>;
+export type NewDepartment = InferInsertModel<typeof departments>;
+
+export type Course = InferSelectModel<typeof courses>;
+export type NewCourse = InferInsertModel<typeof courses>;
+
+export type Semester = InferSelectModel<typeof semesters>;
+export type NewSemester = InferInsertModel<typeof semesters>;
+
+export type ExamType = InferSelectModel<typeof examTypes>;
+export type NewExamType = InferInsertModel<typeof examTypes>;
+
+export type Question = InferSelectModel<typeof questions>;
+export type NewQuestion = InferInsertModel<typeof questions>;
+
