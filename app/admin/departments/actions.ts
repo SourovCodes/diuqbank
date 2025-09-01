@@ -40,17 +40,10 @@ export async function createDepartment(values: DepartmentFormValues) {
       return fail("A department with this name or short name already exists.");
     }
 
-    const [insertResult] = await db.insert(departments).values({
+    const [department] = await db.insert(departments).values({
       name: validatedFields.name,
       shortName: validatedFields.shortName,
-    });
-
-    // Fetch the created department
-    const [department] = await db
-      .select()
-      .from(departments)
-      .where(eq(departments.id, insertResult.insertId))
-      .limit(1);
+    }).returning();
 
     revalidatePath("/admin/departments");
     return ok(department);
@@ -215,10 +208,8 @@ export async function getPaginatedDepartments(
 
     // Build where conditions
     const whereCondition = search
-      ? sql`(LOWER(${departments.name}) LIKE LOWER(${
-          "%" + search + "%"
-        }) OR LOWER(${departments.shortName}) LIKE LOWER(${
-          "%" + search + "%"
+      ? sql`(LOWER(${departments.name}) LIKE LOWER(${"%" + search + "%"
+        }) OR LOWER(${departments.shortName}) LIKE LOWER(${"%" + search + "%"
         }))`
       : undefined;
 

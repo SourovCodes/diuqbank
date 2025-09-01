@@ -1,18 +1,22 @@
 import {
-  mysqlTable,
+  pgTable,
   varchar,
   text,
   timestamp,
   boolean,
-  int,
-  mysqlEnum,
+  integer,
+  pgEnum,
   unique,
-} from "drizzle-orm/mysql-core";
+  uuid,
+  serial,
+} from "drizzle-orm/pg-core";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
+// Define enums
+export const questionStatusEnum = pgEnum('question_status', ['published', 'pending review', 'rejected', 'requires fix']);
 
-export const users = mysqlTable("users", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: boolean("email_verified")
@@ -22,28 +26,27 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
+    .defaultNow(),
 });
 
-export const sessions = mysqlTable("sessions", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
   expiresAt: timestamp("expires_at").notNull(),
   token: varchar("token", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  userId: varchar("user_id", { length: 36 })
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
-export const accounts = mysqlTable("accounts", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
-  userId: varchar("user_id", { length: 36 })
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   accessToken: text("access_token"),
@@ -56,46 +59,42 @@ export const accounts = mysqlTable("accounts", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
+    .defaultNow(),
 });
 
-export const verifications = mysqlTable("verifications", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const verifications = pgTable("verifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
+    .defaultNow(),
 });
 
-export const departments = mysqlTable("departments", {
-  id: int("id").primaryKey().autoincrement(),
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull().unique(),
   shortName: varchar("short_name", { length: 5 }).notNull().unique(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
+    .defaultNow(),
 });
 
-export const courses = mysqlTable(
+export const courses = pgTable(
   "courses",
   {
-    id: int("id").primaryKey().autoincrement(),
+    id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    departmentId: int("department_id")
+    departmentId: integer("department_id")
       .notNull()
       .references(() => departments.id),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
-      .defaultNow()
-      .onUpdateNow(),
+      .defaultNow(),
   },
   (table) => [
     unique("unique_course_name_per_department").on(
@@ -105,59 +104,54 @@ export const courses = mysqlTable(
   ]
 );
 
-export const semesters = mysqlTable("semesters", {
-  id: int("id").primaryKey().autoincrement(),
+export const semesters = pgTable("semesters", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 10 }).notNull().unique(),
-  order: int("order").notNull().default(0),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
-
+    .defaultNow(),
 });
 
-export const examTypes = mysqlTable("exam_types", {
-  id: int("id").primaryKey().autoincrement(),
+export const examTypes = pgTable("exam_types", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 10 }).notNull().unique(),
-  order: int("order").notNull().default(0),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
-
+    .defaultNow(),
 });
 
-export const questions = mysqlTable("questions", {
-  id: int("id").primaryKey().autoincrement(),
-  userId: varchar("user_id", { length: 36 })
+export const questions = pgTable("questions", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  departmentId: int("department_id")
+  departmentId: integer("department_id")
     .notNull()
     .references(() => departments.id),
-  courseId: int("course_id")
+  courseId: integer("course_id")
     .notNull()
     .references(() => courses.id),
-  semesterId: int("semester_id")
+  semesterId: integer("semester_id")
     .notNull()
     .references(() => semesters.id),
-  examTypeId: int("exam_type_id")
+  examTypeId: integer("exam_type_id")
     .notNull()
     .references(() => examTypes.id),
-  status: mysqlEnum("status", ['published', 'pending review', 'rejected', 'requires fix'])
+  status: questionStatusEnum("status")
     .notNull()
     .default('pending review'),
   statusReason: text("status_reason"),
   pdfKey: varchar("pdf_key", { length: 255 }).notNull(),
-  pdfSize: int("pdf_size").notNull(),
-  views: int("views").notNull().default(0),
+  pdfSize: integer("pdf_size").notNull(),
+  views: integer("views").notNull().default(0),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" })
     .notNull()
-    .defaultNow()
-    .onUpdateNow(),
+    .defaultNow(),
 });
 
 
