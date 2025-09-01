@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   int,
+  mysqlEnum,
   unique,
 } from "drizzle-orm/mysql-core";
 
@@ -104,4 +105,35 @@ export const examTypes = mysqlTable("exam_types", {
   name: varchar("name", { length: 10 }).notNull().unique(),
   order: int("order").notNull().default(0),
 
+});
+
+export const questions = mysqlTable("questions", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("user_id", { length: 36 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  departmentId: int("department_id")
+    .notNull()
+    .references(() => departments.id),
+  courseId: int("course_id")
+    .notNull()
+    .references(() => courses.id),
+  semesterId: int("semester_id")
+    .notNull()
+    .references(() => semesters.id),
+  examTypeId: int("exam_type_id")
+    .notNull()
+    .references(() => examTypes.id),
+  status: mysqlEnum("status", ['published', 'pending review', 'rejected', 'requires fix'])
+    .notNull()
+    .default('pending review'),
+  statusReason: text("status_reason"),
+  pdfKey: varchar("pdf_key", { length: 255 }).notNull(),
+  pdfSize: int("pdf_size").notNull(),
+  views: int("views").notNull().default(0),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .onUpdateNow(),
 });
