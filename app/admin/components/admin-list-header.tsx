@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GenericSearch } from "@/components/admin/generic-search";
+import { GenericSearch } from "./generic-search";
 
 interface AdminListHeaderProps {
   title: string;
