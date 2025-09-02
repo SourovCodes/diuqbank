@@ -116,6 +116,7 @@ export const semesters = pgTable("semesters", {
 export const examTypes = pgTable("exam_types", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 10 }).notNull().unique(),
+  requiresSection: boolean("requires_section").notNull().default(false),
   order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" })
