@@ -51,6 +51,7 @@ CREATE TABLE "questions" (
 	"course_id" integer NOT NULL,
 	"semester_id" integer NOT NULL,
 	"exam_type_id" integer NOT NULL,
+	"section" varchar(10),
 	"status" "question_status" DEFAULT 'pending review' NOT NULL,
 	"status_reason" text,
 	"pdf_key" varchar(255) NOT NULL,

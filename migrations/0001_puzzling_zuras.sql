@@ -1,1 +1,0 @@
-ALTER TABLE "questions" ADD COLUMN "section" varchar(10);

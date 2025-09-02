@@ -1,5 +1,5 @@
 {
-  "id": "ab3b8f93-d670-4498-9a35-305a89c13495",
+  "id": "234d0100-3f24-4ea5-9f90-fafccc706578",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -339,6 +339,12 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
         },
         "status": {
           "name": "status",
