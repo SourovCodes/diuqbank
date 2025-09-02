@@ -18,6 +18,7 @@ import { PageHeader } from "../components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { AdminListHeader } from "../components/admin-list-header";
 import { EmptyState } from "../components/empty-state";
+import { SortableTableHeader } from "../components/sortable-table-header";
 import {
   defaultPagination,
   formatTotalLabel,
@@ -37,9 +38,9 @@ interface DepartmentsPageProps {
 export default async function DepartmentsPage({
   searchParams,
 }: DepartmentsPageProps) {
-  const { page, search } = await parseListSearchParams(searchParams);
+  const { page, search, sortBy, sortOrder } = await parseListSearchParams(searchParams);
 
-  const result = await getPaginatedDepartments(page, 10, search);
+  const result = await getPaginatedDepartments(page, 10, search, sortBy, sortOrder);
 
   const departments = result.success ? result.data?.departments ?? [] : [];
   const pagination = result.success
@@ -96,11 +97,15 @@ export default async function DepartmentsPage({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[300px]">Name</TableHead>
-                      <TableHead className="w-[150px]">Short Name</TableHead>
-                      <TableHead className="hidden md:table-cell">
+                      <SortableTableHeader sortKey="name" className="w-[300px]">
+                        Name
+                      </SortableTableHeader>
+                      <SortableTableHeader sortKey="shortName" className="w-[150px]">
+                        Short Name
+                      </SortableTableHeader>
+                      <SortableTableHeader sortKey="questionCount" className="hidden md:table-cell">
                         Questions
-                      </TableHead>
+                      </SortableTableHeader>
                       <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>

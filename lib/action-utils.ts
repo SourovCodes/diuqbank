@@ -92,16 +92,20 @@ export const defaultPagination: Pagination = {
 export type SearchParamsBase = {
   page?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 };
 
 // Parse standard list page search params into primitives
 export async function parseListSearchParams(
   searchParams: Promise<SearchParamsBase>
-): Promise<{ page: number; search?: string }> {
+): Promise<{ page: number; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc' }> {
   const awaited = await searchParams;
   const page = parseInt(awaited.page ?? "1", 10);
   const search = awaited.search || undefined;
-  return { page, search };
+  const sortBy = awaited.sortBy || undefined;
+  const sortOrder = (awaited.sortOrder === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc';
+  return { page, search, sortBy, sortOrder };
 }
 
 // Format a simple total label consistently across pages

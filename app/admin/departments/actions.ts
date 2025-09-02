@@ -7,7 +7,7 @@ import {
   departmentFormSchema,
   type DepartmentFormValues,
 } from "./schemas/department";
-import { eq, and, ne, count, asc, sql } from "drizzle-orm";
+import { eq, and, ne, count, asc, desc, sql } from "drizzle-orm";
 // permission checks handled by ensurePermission helper
 import {
   ensurePermission,
@@ -193,11 +193,13 @@ export async function getDepartment(id: string) {
   }
 }
 
-// Get paginated departments with optional search
+// Get paginated departments with optional search and sorting
 export async function getPaginatedDepartments(
   page: number = 1,
   pageSize: number = 10,
-  search?: string
+  search?: string,
+  sortBy?: string,
+  sortOrder: 'asc' | 'desc' = 'asc'
 ) {
   try {
     // Check if the user has permission to manage departments
@@ -213,6 +215,22 @@ export async function getPaginatedDepartments(
         }))`
       : undefined;
 
+    // Build order by conditions
+    const getOrderByClause = () => {
+      const direction = sortOrder === 'desc' ? desc : asc;
+
+      switch (sortBy) {
+        case 'name':
+          return direction(departments.name);
+        case 'shortName':
+          return direction(departments.shortName);
+        case 'questionCount':
+          return direction(count(questions.id));
+        default:
+          return asc(departments.name); // Default sort by name ascending
+      }
+    };
+
     // Execute the queries
     const [departmentsResult, totalCountResult] = await Promise.all([
       db
@@ -226,7 +244,7 @@ export async function getPaginatedDepartments(
         .leftJoin(questions, eq(departments.id, questions.departmentId))
         .where(whereCondition)
         .groupBy(departments.id, departments.name, departments.shortName)
-        .orderBy(asc(departments.name))
+        .orderBy(getOrderByClause())
         .limit(pageSize)
         .offset(skip),
 
