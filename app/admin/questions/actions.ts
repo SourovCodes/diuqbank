@@ -168,15 +168,12 @@ export async function getPaginatedQuestions(
     if (search) {
       whereConditions.push(
         sql`(LOWER(${departments.name}) LIKE LOWER(${"%" + search + "%"}) OR 
-                     LOWER(${courses.name}) LIKE LOWER(${
-          "%" + search + "%"
-        }) OR 
-                     LOWER(${semesters.name}) LIKE LOWER(${
-          "%" + search + "%"
-        }) OR 
-                     LOWER(${examTypes.name}) LIKE LOWER(${
-          "%" + search + "%"
-        }))`
+                     LOWER(${courses.name}) LIKE LOWER(${"%" + search + "%"
+          }) OR 
+                     LOWER(${semesters.name}) LIKE LOWER(${"%" + search + "%"
+          }) OR 
+                     LOWER(${examTypes.name}) LIKE LOWER(${"%" + search + "%"
+          }))`
       );
     }
 
@@ -191,8 +188,8 @@ export async function getPaginatedQuestions(
     const whereCondition =
       whereConditions.length > 0
         ? whereConditions.reduce(
-            (acc, condition) => sql`${acc} AND ${condition}`
-          )
+          (acc, condition) => sql`${acc} AND ${condition}`
+        )
         : undefined;
 
     const [questionsResult, totalCountResult] = await Promise.all([
@@ -225,13 +222,13 @@ export async function getPaginatedQuestions(
       // If no search text is used, we can count directly from questions with simple filters
       search
         ? db
-            .select({ count: count() })
-            .from(questions)
-            .leftJoin(departments, eq(questions.departmentId, departments.id))
-            .leftJoin(courses, eq(questions.courseId, courses.id))
-            .leftJoin(semesters, eq(questions.semesterId, semesters.id))
-            .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
-            .where(whereCondition)
+          .select({ count: count() })
+          .from(questions)
+          .leftJoin(departments, eq(questions.departmentId, departments.id))
+          .leftJoin(courses, eq(questions.courseId, courses.id))
+          .leftJoin(semesters, eq(questions.semesterId, semesters.id))
+          .leftJoin(examTypes, eq(questions.examTypeId, examTypes.id))
+          .where(whereCondition)
         : db.select({ count: count() }).from(questions).where(whereCondition),
     ]);
 

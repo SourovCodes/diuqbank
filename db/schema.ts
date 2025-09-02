@@ -149,8 +149,8 @@ export const questions = pgTable("questions", {
   pdfKey: varchar("pdf_key", { length: 255 }).notNull(),
   pdfSize: integer("pdf_size").notNull(),
   views: integer("views").notNull().default(0),
-  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt", { mode: "date" })
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
     .notNull()
     .defaultNow(),
 });
@@ -182,4 +182,8 @@ export type NewExamType = InferInsertModel<typeof examTypes>;
 
 export type Question = InferSelectModel<typeof questions>;
 export type NewQuestion = InferInsertModel<typeof questions>;
+
+// Export question status enum values for use in other files
+export const QuestionStatus = ['published', 'pending review', 'rejected', 'requires fix'] as const;
+export type QuestionStatus = typeof QuestionStatus[number];
 

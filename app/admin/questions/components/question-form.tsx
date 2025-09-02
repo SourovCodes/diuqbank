@@ -498,9 +498,8 @@ export function QuestionForm({
                         addDialogTitle="Create New Course"
                         addDialogDescription={
                           selectedDepartmentId
-                            ? `Add a new course under ${
-                                departments.find(d => d.id === selectedDepartmentId)?.name || "this department"
-                              }.`
+                            ? `Add a new course under ${departments.find(d => d.id === selectedDepartmentId)?.name || "this department"
+                            }.`
                             : "Add a new course to the system."
                         }
                       />
@@ -677,36 +676,32 @@ export function QuestionForm({
                       >
                         <label
                           htmlFor="pdf-upload"
-                          className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                            isDragOver
+                          className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragOver
                               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                               : "border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
-                          }`}
+                            }`}
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <Upload
-                              className={`w-8 h-8 mb-2 ${
-                                isDragOver ? "text-blue-500" : "text-gray-500"
-                              }`}
+                              className={`w-8 h-8 mb-2 ${isDragOver ? "text-blue-500" : "text-gray-500"
+                                }`}
                             />
                             <p
-                              className={`mb-2 text-sm ${
-                                isDragOver ? "text-blue-600" : "text-gray-500"
-                              }`}
+                              className={`mb-2 text-sm ${isDragOver ? "text-blue-600" : "text-gray-500"
+                                }`}
                             >
                               <span className="font-semibold">
                                 {isDragOver
                                   ? "Drop PDF file here"
                                   : isEditing
-                                  ? "Click to replace PDF"
-                                  : "Click to upload"}
+                                    ? "Click to replace PDF"
+                                    : "Click to upload"}
                               </span>
                               {!isDragOver && " or drag and drop"}
                             </p>
                             <p
-                              className={`text-xs ${
-                                isDragOver ? "text-blue-500" : "text-gray-500"
-                              }`}
+                              className={`text-xs ${isDragOver ? "text-blue-500" : "text-gray-500"
+                                }`}
                             >
                               PDF files only (Max 10MB)
                             </p>
@@ -812,8 +807,8 @@ export function QuestionForm({
                     ? "Uploading..."
                     : "Saving..."
                   : isEditing
-                  ? "Update Question"
-                  : "Create Question"}
+                    ? "Update Question"
+                    : "Create Question"}
               </Button>
             </div>
           </form>
