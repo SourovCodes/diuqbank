@@ -1,1 +1,0 @@
-ALTER TABLE "exam_types" ADD COLUMN "requires_section" boolean DEFAULT false NOT NULL;

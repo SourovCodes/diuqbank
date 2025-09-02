@@ -141,6 +141,7 @@ export const questions = pgTable("questions", {
   examTypeId: integer("exam_type_id")
     .notNull()
     .references(() => examTypes.id),
+  section: varchar("section", { length: 10 }),
   status: questionStatusEnum("status")
     .notNull()
     .default('pending review'),
