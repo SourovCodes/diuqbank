@@ -17,11 +17,6 @@ import {
   generatePresignedUrl,
   createQuestionAdmin,
   updateQuestion,
-  getDepartmentsForDropdown,
-  getCoursesForDropdown,
-  getSemestersForDropdown,
-  getExamTypesForDropdown,
-  getUsersForDropdown,
 } from "../actions";
 import { createCourse } from "../../courses/actions";
 import { createSemester } from "../../semesters/actions";
@@ -58,6 +53,7 @@ type DepartmentOption = {
 };
 type BasicOption = { id: number; name: string };
 type UserOption = { id: string; name: string | null; email: string | null };
+type CourseOption = { id: number; name: string; departmentId: number };
 
 interface QuestionData {
   id: number;
@@ -75,12 +71,22 @@ interface QuestionFormProps {
   initialData?: QuestionData;
   isEditing?: boolean;
   questionId?: string;
+  departments: DepartmentOption[];
+  semesters: BasicOption[];
+  examTypes: BasicOption[];
+  users: UserOption[];
+  allCourses: CourseOption[];
 }
 
 export function QuestionForm({
   initialData,
   isEditing = false,
   questionId,
+  departments: initialDepartments,
+  semesters: initialSemesters,
+  examTypes: initialExamTypes,
+  users: initialUsers,
+  allCourses: initialAllCourses,
 }: QuestionFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -88,12 +94,12 @@ export function QuestionForm({
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Dropdown data state
-  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [departments] = useState<DepartmentOption[]>(initialDepartments);
+  const [semesters, setSemesters] = useState<BasicOption[]>(initialSemesters);
+  const [examTypes] = useState<BasicOption[]>(initialExamTypes);
+  const [users] = useState<UserOption[]>(initialUsers);
+  const [allCourses, setAllCourses] = useState<CourseOption[]>(initialAllCourses);
   const [courses, setCourses] = useState<BasicOption[]>([]);
-  const [semesters, setSemesters] = useState<BasicOption[]>([]);
-  const [examTypes, setExamTypes] = useState<BasicOption[]>([]);
-  const [users, setUsers] = useState<UserOption[]>([]);
-  const [, setLoadingDropdowns] = useState(true);
 
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(
@@ -116,40 +122,16 @@ export function QuestionForm({
   // Remember the last selected course for each department to restore when switching back
   const lastCourseByDeptRef = useRef<Map<number, number>>(new Map());
 
-  // Load initial dropdown data
+  // Initialize filtered courses for initial department
   useEffect(() => {
-    const loadDropdownData = async () => {
-      setLoadingDropdowns(true);
-      try {
-        const [deptResult, semesterResult, examTypeResult, userResult] =
-          await Promise.all([
-            getDepartmentsForDropdown(),
-            getSemestersForDropdown(),
-            getExamTypesForDropdown(),
-            getUsersForDropdown(),
-          ]);
-
-        if (deptResult.success) {
-          setDepartments(deptResult.data || []);
-        }
-        if (semesterResult.success) {
-          setSemesters(semesterResult.data || []);
-        }
-        if (examTypeResult.success) {
-          setExamTypes(examTypeResult.data || []);
-        }
-        if (userResult.success) {
-          setUsers(userResult.data || []);
-        }
-      } catch (error) {
-        console.error("Error loading dropdown data:", error);
-        toast.error("Failed to load dropdown data");
-      } finally {
-        setLoadingDropdowns(false);
-      }
-    };
-
-    loadDropdownData();
+    const deptId = initialData?.departmentId;
+    if (deptId) {
+      const filtered = initialAllCourses
+        .filter((c) => c.departmentId === deptId)
+        .map((c) => ({ id: c.id, name: c.name }));
+      setCourses(filtered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize last selected course for the initial department (edit mode)
@@ -163,7 +145,7 @@ export function QuestionForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load courses when department changes and keep course selection in sync
+  // Filter courses when department changes and keep course selection in sync
   useEffect(() => {
     const loadCourses = async () => {
       // On first render we don't want to forcibly clear the course value
@@ -173,46 +155,34 @@ export function QuestionForm({
       }
 
       if (selectedDepartmentId) {
-        try {
-          const courseResult = await getCoursesForDropdown(
-            selectedDepartmentId
-          );
-          if (courseResult.success) {
-            const newCourses = courseResult.data || [];
-            setCourses(newCourses);
+        const newCourses = allCourses
+          .filter((c) => c.departmentId === selectedDepartmentId)
+          .map((c) => ({ id: c.id, name: c.name }));
+        setCourses(newCourses);
 
-            // Try to restore last selected course for this department
-            const remembered =
-              lastCourseByDeptRef.current.get(selectedDepartmentId);
-            const currentFormValue = form.getValues("courseId");
+        // Try to restore last selected course for this department
+        const remembered = lastCourseByDeptRef.current.get(selectedDepartmentId);
+        const currentFormValue = form.getValues("courseId");
 
-            // If the current form value is not valid for this department, adjust it
-            const isCurrentValid = newCourses.some(
-              (c) => c.id === currentFormValue
-            );
+        // If the current form value is not valid for this department, adjust it
+        const isCurrentValid = newCourses.some((c) => c.id === currentFormValue);
 
-            if (!isCurrentValid) {
-              if (remembered && newCourses.some((c) => c.id === remembered)) {
-                // Restore remembered selection for this department
-                form.setValue("courseId", remembered, {
-                  shouldValidate: false,
-                  shouldDirty: !isInitial, // don't dirty on initial load
-                  shouldTouch: !isInitial,
-                });
-              } else {
-                // Clear selection if nothing valid to select
-                form.setValue("courseId", undefined as unknown as number, {
-                  shouldValidate: false,
-                  shouldDirty: !isInitial,
-                  shouldTouch: !isInitial,
-                });
-              }
-            }
+        if (!isCurrentValid) {
+          if (remembered && newCourses.some((c) => c.id === remembered)) {
+            // Restore remembered selection for this department
+            form.setValue("courseId", remembered, {
+              shouldValidate: false,
+              shouldDirty: !isInitial, // don't dirty on initial load
+              shouldTouch: !isInitial,
+            });
+          } else {
+            // Clear selection if nothing valid to select
+            form.setValue("courseId", undefined as unknown as number, {
+              shouldValidate: false,
+              shouldDirty: !isInitial,
+              shouldTouch: !isInitial,
+            });
           }
-        } catch (error) {
-          console.error("Error loading courses:", error);
-          toast.error("Failed to load courses");
-          setCourses([]);
         }
       } else {
         setCourses([]);
@@ -226,7 +196,7 @@ export function QuestionForm({
     };
 
     loadCourses();
-  }, [selectedDepartmentId, form]);
+  }, [selectedDepartmentId, form, allCourses]);
 
   const uploadFileToS3 = useCallback(
     async (file: File, presignedUrl: string) => {
@@ -459,6 +429,12 @@ export function QuestionForm({
                               departmentId,
                             });
                             if (result.success && result.data) {
+                              // Update local course stores so the option persists across re-renders
+                              const newCourse = { id: result.data.id as number, name: result.data.name as string, departmentId };
+                              setAllCourses((prev) => [...prev, newCourse]);
+                              if (selectedDepartmentId === departmentId) {
+                                setCourses((prev) => [...prev, { id: newCourse.id, name: newCourse.name }]);
+                              }
                               return {
                                 success: true,
                                 data: {
@@ -528,11 +504,16 @@ export function QuestionForm({
                           try {
                             const result = await createSemester({ name, order: 0 });
                             if (result.success && result.data) {
+                              // Persist newly created semester in local state
+                              setSemesters((prev) => [
+                                ...prev,
+                                { id: (result.data as { id: number; name: string }).id, name: (result.data as { id: number; name: string }).name },
+                              ]);
                               return {
                                 success: true,
                                 data: {
-                                  id: result.data.id,
-                                  name: result.data.name,
+                                  id: (result.data as { id: number; name: string }).id,
+                                  name: (result.data as { id: number; name: string }).name,
                                 },
                               };
                             }
@@ -677,8 +658,8 @@ export function QuestionForm({
                         <label
                           htmlFor="pdf-upload"
                           className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragOver
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                              : "border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
                             }`}
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">

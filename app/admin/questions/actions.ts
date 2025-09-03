@@ -324,6 +324,24 @@ export async function getCoursesForDropdown(departmentId: number) {
   }
 }
 
+// Fetch all courses (id, name, departmentId) for client-side filtering
+export async function getAllCoursesForDropdown() {
+  try {
+    const perm = await ensurePermission("QUESTIONS:MANAGE");
+    if (!perm.success) return perm;
+
+    const allCourses = await db
+      .select({ id: courses.id, name: courses.name, departmentId: courses.departmentId })
+      .from(courses)
+      .orderBy(asc(courses.name));
+
+    return ok(allCourses);
+  } catch (error) {
+    console.error("Error fetching all courses:", error);
+    return fail("Something went wrong. Please try again.");
+  }
+}
+
 export async function getSemestersForDropdown() {
   try {
     const perm = await ensurePermission("QUESTIONS:MANAGE");
