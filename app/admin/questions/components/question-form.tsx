@@ -32,6 +32,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -63,6 +64,7 @@ interface QuestionData {
   semesterId: number;
   examTypeId: number;
   status: QuestionStatus;
+  statusReason?: string | null;
   pdfKey: string;
   pdfFileSizeInBytes: number;
 }
@@ -113,6 +115,7 @@ export function QuestionForm({
       userId: initialData?.userId,
       status:
         (initialData?.status as QuestionFormValues["status"]) || "published",
+      statusReason: initialData?.statusReason ?? "",
     },
   });
 
@@ -257,6 +260,7 @@ export function QuestionForm({
           examTypeId: values.examTypeId,
           userId: values.userId,
           status: values.status,
+          statusReason: values.statusReason?.trim() || null,
           ...(values.pdfFile && { pdfKey, pdfSize: pdfFileSizeInBytes }),
         });
       } else {
@@ -271,6 +275,7 @@ export function QuestionForm({
           examTypeId: values.examTypeId,
           userId: values.userId,
           status: values.status,
+          statusReason: values.statusReason?.trim(),
           pdfKey,
           pdfSize: pdfFileSizeInBytes,
         });
@@ -609,6 +614,27 @@ export function QuestionForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="statusReason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status Reason (optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Provide context if the status is rejected or requires fix"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Use this to explain decisions like rejection or required changes.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

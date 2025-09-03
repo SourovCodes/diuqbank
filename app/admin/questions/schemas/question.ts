@@ -21,6 +21,10 @@ export const questionFormSchema = z.object({
     .min(1, "Exam type is required"),
   userId: z.string({ message: "User is required" }).min(1, "User is required"),
   status: z.enum(QuestionStatus),
+  statusReason: z
+    .string()
+    .max(1000, "Reason must be at most 1000 characters")
+    .optional(),
   pdfFile: z
     .instanceof(File, { message: "PDF file is required" })
     .refine((file) => file.size > 0, "PDF file cannot be empty")

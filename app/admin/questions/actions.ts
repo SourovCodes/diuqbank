@@ -39,6 +39,7 @@ interface CreateQuestionAdminParams {
   examTypeId: number;
   userId: string;
   status: string;
+  statusReason?: string;
   pdfKey: string;
   pdfSize: number;
 }
@@ -50,6 +51,7 @@ interface UpdateQuestionParams {
   examTypeId: number;
   userId: string;
   status: string;
+  statusReason?: string | null;
   pdfKey?: string;
   pdfSize?: number;
 }
@@ -115,6 +117,7 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
       semesterId: values.semesterId,
       examTypeId: values.examTypeId,
       status: values.status as QuestionStatus,
+      statusReason: values.statusReason,
       pdfKey: values.pdfKey,
       pdfSize: values.pdfSize,
     }).returning({ id: questions.id });
@@ -416,6 +419,7 @@ export async function getQuestion(id: string) {
         semesterId: questions.semesterId,
         examTypeId: questions.examTypeId,
         status: questions.status,
+        statusReason: questions.statusReason,
         pdfKey: questions.pdfKey,
         pdfFileSizeInBytes: questions.pdfSize,
         viewCount: questions.views,
@@ -498,6 +502,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
       semesterId: values.semesterId,
       examTypeId: values.examTypeId,
       status: values.status as QuestionStatus,
+      statusReason: values.statusReason ?? null,
     };
 
     // If new PDF is provided, update file info
