@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Create Question | DIU QBank Admin",
   description: "Create a new question",
 };
-
+export const dynamic = 'force-dynamic';
 export default async function CreateQuestionPage() {
   const [deptRes, semRes, examRes, userRes, allCoursesRes] = await Promise.all([
     getDepartmentsForDropdown(),
