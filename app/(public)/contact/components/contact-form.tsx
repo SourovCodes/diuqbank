@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Loader2, SendIcon } from "lucide-react";
 
 import { submitContactForm } from "../actions";
+import { useSession } from "@/lib/auth-client";
 
 // Define the schema here to use with zodResolver
 const formSchema = z.object({
@@ -33,16 +34,41 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session } = useSession();
+
+  const sessionDefaults = useMemo(() => {
+    return {
+      name: session?.user?.name || "",
+      email: session?.user?.email || "",
+    } as const;
+  }, [session]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: sessionDefaults.name,
+      email: sessionDefaults.email,
       subject: "",
       message: "",
     },
   });
+
+  // When the session loads, prefill name/email if the fields are empty.
+  useEffect(() => {
+    const currentValues = form.getValues();
+    const nextValues = {
+      ...currentValues,
+      name: currentValues.name || sessionDefaults.name,
+      email: currentValues.email || sessionDefaults.email,
+    };
+    if (
+      nextValues.name !== currentValues.name ||
+      nextValues.email !== currentValues.email
+    ) {
+      form.reset(nextValues);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionDefaults.name, sessionDefaults.email]);
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -51,7 +77,13 @@ export function ContactForm() {
 
       if (result.success) {
         toast.success("Message sent successfully! We'll get back to you soon.");
-        form.reset();
+        // Reset while preserving session-provided defaults
+        form.reset({
+          name: sessionDefaults.name,
+          email: sessionDefaults.email,
+          subject: "",
+          message: "",
+        });
       } else {
         if (typeof result.error === "string") {
           toast.error(result.error);
