@@ -30,14 +30,12 @@ export default function ContactPage() {
         {/* Contact Form */}
         <Card className="lg:col-span-2 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
           <CardContent className="p-8">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-4">
-                <MessageSquare className="h-6 w-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Send us a message
-              </h2>
-            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
+              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-2">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </span>
+              Send us a message
+            </h2>
             <ContactForm />
           </CardContent>
         </Card>
