@@ -155,6 +155,19 @@ export const questions = pgTable("questions", {
     .defaultNow(),
 });
 
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow(),
+});
+
 
 // ----------
 // Type exports for better reuse across the app (InferSelect/InferInsert)
@@ -182,6 +195,9 @@ export type NewExamType = InferInsertModel<typeof examTypes>;
 
 export type Question = InferSelectModel<typeof questions>;
 export type NewQuestion = InferInsertModel<typeof questions>;
+
+export type ContactSubmission = InferSelectModel<typeof contactSubmissions>;
+export type NewContactSubmission = InferInsertModel<typeof contactSubmissions>;
 
 // Export question status enum values for use in other files
 export const QuestionStatus = ['published', 'pending review', 'rejected', 'requires fix'] as const;

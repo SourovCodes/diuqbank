@@ -16,7 +16,7 @@ import {
   CalendarRange,
   FileText,
   HelpCircle,
-  MessageSquare,
+  Mail,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -79,7 +79,7 @@ export function Sidebar({ className, onNavItemClick }: SidebarProps) {
       href: "/admin/questions",
     },
     {
-      icon: <MessageSquare className="h-5 w-5" />,
+      icon: <Mail className="h-5 w-5" />,
       label: "Contact Submissions",
       href: "/admin/contact-submissions",
     },
