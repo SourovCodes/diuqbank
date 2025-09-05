@@ -16,9 +16,7 @@ export const userFormSchema = z.object({
         .trim()
         .email("Please enter a valid email address")
         .max(255, "Email must be less than 255 characters"),
-    emailVerified: z
-        .boolean()
-        .default(false),
+    emailVerified: z.boolean(),
 });
 
 // Type for the user form values

@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ActionError, ActionResult } from "@/lib/action-utils";
 
 interface MigrationOption {
-  id: number;
+  id: string | number;
   name: string;
   questionCount?: number;
 }
@@ -78,8 +78,7 @@ export function MigrationDialog({
       if (response.success) {
         const migratedCount = response.data?.migratedCount || 0;
         toast.success(
-          `Successfully migrated ${migratedCount} question${
-            migratedCount !== 1 ? "s" : ""
+          `Successfully migrated ${migratedCount} question${migratedCount !== 1 ? "s" : ""
           } to the selected ${entityType.toLowerCase()}`
         );
         setIsOpen(false);
