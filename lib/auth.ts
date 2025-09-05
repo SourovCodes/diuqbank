@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { username } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import * as schema from "@/db/schema";
 
@@ -17,9 +17,15 @@ export const auth = betterAuth({
         schema: schema,
         usePlural: true,
     }),
-    plugins: [
-        username()
-    ],
+    user: {
+        additionalFields: {
+            username: {
+                type: "string",
+                required: true,
+                unique: true,
+            }
+        }
+    },
     socialProviders: {
         google: {
             clientId: process.env.AUTH_GOOGLE_ID as string,
@@ -28,6 +34,10 @@ export const auth = betterAuth({
                 const generatedUsername = generateUsernameFromEmail(profile.email);
                 return {
                     username: generatedUsername,
+                    name: profile.name,
+                    email: profile.email,
+                    image: profile.picture,
+                    emailVerified: true,
                 };
             }
         },
