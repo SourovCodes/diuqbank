@@ -25,6 +25,15 @@ export const userFormSchema = z.object({
             /^[a-zA-Z0-9_-]+$/,
             "Username can only contain letters, numbers, underscores, and hyphens"
         ),
+    studentId: z
+        .string()
+        .trim()
+        .transform(val => val === "" ? undefined : val)
+        .refine(
+            (val) => !val || /^[a-zA-Z0-9-]+$/.test(val),
+            "Student ID can only contain letters, numbers, and hyphens"
+        )
+        .optional(),
     emailVerified: z.boolean(),
 });
 

@@ -70,7 +70,7 @@ export default async function UsersPage({
                 <AdminListHeader
                     title="Users List"
                     description={formatTotalLabel("user", pagination.totalCount)}
-                    searchPlaceholder="Search users by name, email, or username..."
+                    searchPlaceholder="Search users by name, email, username, or student ID..."
                 />
                 <CardContent>
                     {users.length === 0 ? (
@@ -106,7 +106,10 @@ export default async function UsersPage({
                                             <SortableTableHeader sortKey="username" className="w-[150px] hidden sm:table-cell">
                                                 Username
                                             </SortableTableHeader>
-                                            <SortableTableHeader sortKey="emailVerified" className="w-[120px] hidden md:table-cell">
+                                            <SortableTableHeader sortKey="studentId" className="w-[150px] hidden md:table-cell">
+                                                Student ID
+                                            </SortableTableHeader>
+                                            <SortableTableHeader sortKey="emailVerified" className="w-[120px] hidden lg:table-cell">
                                                 Verified
                                             </SortableTableHeader>
                                             <SortableTableHeader sortKey="questionCount" className="hidden lg:table-cell">
@@ -135,6 +138,11 @@ export default async function UsersPage({
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="hidden md:table-cell">
+                                                    <div className="text-sm">
+                                                        {user.studentId || <span className="text-muted-foreground">—</span>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="hidden lg:table-cell">
                                                     <div className="flex items-center">
                                                         {user.emailVerified ? (
                                                             <Badge variant="default" className="flex items-center gap-1">

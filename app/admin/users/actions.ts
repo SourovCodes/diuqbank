@@ -59,6 +59,7 @@ export async function createUser(values: UserFormValues) {
             name: validatedFields.name,
             email: validatedFields.email,
             username: validatedFields.username,
+            studentId: validatedFields.studentId,
             emailVerified: validatedFields.emailVerified,
         }).returning();
 
@@ -127,6 +128,7 @@ export async function updateUser(
                 name: validatedFields.name,
                 email: validatedFields.email,
                 username: validatedFields.username,
+                studentId: validatedFields.studentId,
                 emailVerified: validatedFields.emailVerified,
                 updatedAt: new Date(),
             })
@@ -229,7 +231,7 @@ export async function getPaginatedUsers(
 
         // Build where conditions
         const whereCondition = search
-            ? sql`(LOWER(${users.name}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.email}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.username}) LIKE LOWER(${"%" + search + "%"}))`
+            ? sql`(LOWER(${users.name}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.email}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.username}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.studentId}) LIKE LOWER(${"%" + search + "%"}))`
             : undefined;
 
         // Build order by conditions
@@ -243,6 +245,8 @@ export async function getPaginatedUsers(
                     return direction(users.email);
                 case 'username':
                     return direction(users.username);
+                case 'studentId':
+                    return direction(users.studentId);
                 case 'emailVerified':
                     return direction(users.emailVerified);
                 case 'createdAt':
@@ -262,6 +266,7 @@ export async function getPaginatedUsers(
                     name: users.name,
                     email: users.email,
                     username: users.username,
+                    studentId: users.studentId,
                     emailVerified: users.emailVerified,
                     createdAt: users.createdAt,
                     updatedAt: users.updatedAt,
@@ -270,7 +275,7 @@ export async function getPaginatedUsers(
                 .from(users)
                 .leftJoin(questions, eq(users.id, questions.userId))
                 .where(whereCondition)
-                .groupBy(users.id, users.name, users.email, users.username, users.emailVerified, users.createdAt, users.updatedAt)
+                .groupBy(users.id, users.name, users.email, users.username, users.studentId, users.emailVerified, users.createdAt, users.updatedAt)
                 .orderBy(getOrderByClause())
                 .limit(pageSize)
                 .offset(skip),
@@ -354,11 +359,12 @@ export async function getAllUsers() {
                 name: users.name,
                 email: users.email,
                 username: users.username,
+                studentId: users.studentId,
                 questionCount: count(questions.id),
             })
             .from(users)
             .leftJoin(questions, eq(users.id, questions.userId))
-            .groupBy(users.id, users.name, users.email, users.username)
+            .groupBy(users.id, users.name, users.email, users.username, users.studentId)
             .orderBy(asc(users.name));
 
         return ok(allUsers);

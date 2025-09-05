@@ -50,6 +50,7 @@ export function UserForm({
             name: initialData?.name || "",
             email: initialData?.email || "",
             username: initialData?.username || "",
+            studentId: initialData?.studentId || "",
             emailVerified: initialData?.emailVerified || false,
         },
     });
@@ -150,6 +151,26 @@ export function UserForm({
                                         </FormControl>
                                         <FormDescription>
                                             Enter a unique username. Only letters, numbers, underscores, and hyphens are allowed.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="studentId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Student ID</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Enter student ID (optional)"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Enter the student ID if applicable. Only letters, numbers, and hyphens are allowed. This field is optional.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
