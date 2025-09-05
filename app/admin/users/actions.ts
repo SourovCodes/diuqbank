@@ -26,17 +26,29 @@ export async function createUser(values: UserFormValues) {
 
         const validatedFields = userFormSchema.parse(values);
 
-        // Check if user with same email already exists (case insensitive)
+        // Check if user with same email or username already exists (case insensitive)
         const existingUser = await db
             .select()
             .from(users)
             .where(
-                sql`LOWER(${users.email}) = LOWER(${validatedFields.email})`
+                sql`LOWER(${users.email}) = LOWER(${validatedFields.email}) OR LOWER(${users.username}) = LOWER(${validatedFields.username})`
             )
             .limit(1);
 
         if (existingUser.length > 0) {
-            return fail("A user with this email already exists.");
+            const existingEmail = existingUser.find(user =>
+                user.email.toLowerCase() === validatedFields.email.toLowerCase()
+            );
+            const existingUsername = existingUser.find(user =>
+                user.username.toLowerCase() === validatedFields.username.toLowerCase()
+            );
+
+            if (existingEmail) {
+                return fail("A user with this email already exists.");
+            }
+            if (existingUsername) {
+                return fail("A user with this username already exists.");
+            }
         }
 
         // Generate a unique ID for the user
@@ -46,6 +58,7 @@ export async function createUser(values: UserFormValues) {
             id: userId,
             name: validatedFields.name,
             email: validatedFields.email,
+            username: validatedFields.username,
             emailVerified: validatedFields.emailVerified,
         }).returning();
 
@@ -80,22 +93,32 @@ export async function updateUser(
             return fail("User not found.");
         }
 
-        // Check if another user with the same email exists (except this one)
-        const duplicateEmail = await db
+        // Check if another user with the same email or username exists (except this one)
+        const duplicateUser = await db
             .select()
             .from(users)
             .where(
                 and(
-                    sql`LOWER(${users.email}) = LOWER(${validatedFields.email})`,
+                    sql`(LOWER(${users.email}) = LOWER(${validatedFields.email}) OR LOWER(${users.username}) = LOWER(${validatedFields.username}))`,
                     ne(users.id, id)
                 )
             )
             .limit(1);
 
-        if (duplicateEmail.length > 0) {
-            return fail(
-                "Another user with this email already exists."
+        if (duplicateUser.length > 0) {
+            const duplicateEmail = duplicateUser.find(user =>
+                user.email.toLowerCase() === validatedFields.email.toLowerCase()
             );
+            const duplicateUsername = duplicateUser.find(user =>
+                user.username.toLowerCase() === validatedFields.username.toLowerCase()
+            );
+
+            if (duplicateEmail) {
+                return fail("Another user with this email already exists.");
+            }
+            if (duplicateUsername) {
+                return fail("Another user with this username already exists.");
+            }
         }
 
         await db
@@ -103,6 +126,7 @@ export async function updateUser(
             .set({
                 name: validatedFields.name,
                 email: validatedFields.email,
+                username: validatedFields.username,
                 emailVerified: validatedFields.emailVerified,
                 updatedAt: new Date(),
             })
@@ -205,7 +229,7 @@ export async function getPaginatedUsers(
 
         // Build where conditions
         const whereCondition = search
-            ? sql`(LOWER(${users.name}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.email}) LIKE LOWER(${"%" + search + "%"}))`
+            ? sql`(LOWER(${users.name}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.email}) LIKE LOWER(${"%" + search + "%"}) OR LOWER(${users.username}) LIKE LOWER(${"%" + search + "%"}))`
             : undefined;
 
         // Build order by conditions
@@ -217,6 +241,8 @@ export async function getPaginatedUsers(
                     return direction(users.name);
                 case 'email':
                     return direction(users.email);
+                case 'username':
+                    return direction(users.username);
                 case 'emailVerified':
                     return direction(users.emailVerified);
                 case 'createdAt':
@@ -235,6 +261,7 @@ export async function getPaginatedUsers(
                     id: users.id,
                     name: users.name,
                     email: users.email,
+                    username: users.username,
                     emailVerified: users.emailVerified,
                     createdAt: users.createdAt,
                     updatedAt: users.updatedAt,
@@ -243,7 +270,7 @@ export async function getPaginatedUsers(
                 .from(users)
                 .leftJoin(questions, eq(users.id, questions.userId))
                 .where(whereCondition)
-                .groupBy(users.id, users.name, users.email, users.emailVerified, users.createdAt, users.updatedAt)
+                .groupBy(users.id, users.name, users.email, users.username, users.emailVerified, users.createdAt, users.updatedAt)
                 .orderBy(getOrderByClause())
                 .limit(pageSize)
                 .offset(skip),
@@ -326,11 +353,12 @@ export async function getAllUsers() {
                 id: users.id,
                 name: users.name,
                 email: users.email,
+                username: users.username,
                 questionCount: count(questions.id),
             })
             .from(users)
             .leftJoin(questions, eq(users.id, questions.userId))
-            .groupBy(users.id, users.name, users.email)
+            .groupBy(users.id, users.name, users.email, users.username)
             .orderBy(asc(users.name));
 
         return ok(allUsers);

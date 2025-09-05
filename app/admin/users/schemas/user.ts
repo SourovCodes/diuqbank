@@ -16,6 +16,15 @@ export const userFormSchema = z.object({
         .trim()
         .email("Please enter a valid email address")
         .max(255, "Email must be less than 255 characters"),
+    username: z
+        .string()
+        .trim()
+        .min(3, "Username must be at least 3 characters")
+        .max(50, "Username must be less than 50 characters")
+        .regex(
+            /^[a-zA-Z0-9_-]+$/,
+            "Username can only contain letters, numbers, underscores, and hyphens"
+        ),
     emailVerified: z.boolean(),
 });
 

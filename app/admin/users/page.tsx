@@ -70,7 +70,7 @@ export default async function UsersPage({
                 <AdminListHeader
                     title="Users List"
                     description={formatTotalLabel("user", pagination.totalCount)}
-                    searchPlaceholder="Search users by name or email..."
+                    searchPlaceholder="Search users by name, email, or username..."
                 />
                 <CardContent>
                     {users.length === 0 ? (
@@ -103,6 +103,9 @@ export default async function UsersPage({
                                             <SortableTableHeader sortKey="email" className="w-[250px]">
                                                 Email
                                             </SortableTableHeader>
+                                            <SortableTableHeader sortKey="username" className="w-[150px] hidden sm:table-cell">
+                                                Username
+                                            </SortableTableHeader>
                                             <SortableTableHeader sortKey="emailVerified" className="w-[120px] hidden md:table-cell">
                                                 Verified
                                             </SortableTableHeader>
@@ -124,6 +127,11 @@ export default async function UsersPage({
                                                 <TableCell>
                                                     <div className="text-sm text-muted-foreground">
                                                         {user.email}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="hidden sm:table-cell">
+                                                    <div className="text-sm font-mono">
+                                                        @{user.username}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="hidden md:table-cell">
