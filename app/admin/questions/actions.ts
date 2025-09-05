@@ -37,6 +37,7 @@ interface CreateQuestionAdminParams {
   courseId: number;
   semesterId: number;
   examTypeId: number;
+  section?: string;
   userId: string;
   status: string;
   statusReason?: string;
@@ -49,6 +50,7 @@ interface UpdateQuestionParams {
   courseId: number;
   semesterId: number;
   examTypeId: number;
+  section?: string;
   userId: string;
   status: string;
   statusReason?: string | null;
@@ -101,7 +103,8 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
           eq(questions.departmentId, values.departmentId),
           eq(questions.semesterId, values.semesterId),
           eq(questions.courseId, values.courseId),
-          eq(questions.examTypeId, values.examTypeId)
+          eq(questions.examTypeId, values.examTypeId),
+          values.section ? eq(questions.section, values.section) : sql`${questions.section} IS NULL`
         )
       )
       .limit(1);
@@ -116,6 +119,7 @@ export async function createQuestionAdmin(values: CreateQuestionAdminParams) {
       courseId: values.courseId,
       semesterId: values.semesterId,
       examTypeId: values.examTypeId,
+      section: values.section,
       status: values.status as QuestionStatus,
       statusReason: values.statusReason,
       pdfKey: values.pdfKey,
@@ -200,6 +204,7 @@ export async function getPaginatedQuestions(
         .select({
           id: questions.id,
           status: questions.status,
+          section: questions.section,
           pdfKey: questions.pdfKey,
           pdfFileSizeInBytes: questions.pdfSize,
           viewCount: questions.views,
@@ -368,7 +373,11 @@ export async function getExamTypesForDropdown() {
     if (!perm.success) return perm;
 
     const allExamTypes = await db
-      .select({ id: examTypes.id, name: examTypes.name })
+      .select({
+        id: examTypes.id,
+        name: examTypes.name,
+        requiresSection: examTypes.requiresSection
+      })
       .from(examTypes)
       .orderBy(asc(examTypes.name));
 
@@ -418,6 +427,7 @@ export async function getQuestion(id: string) {
         courseId: questions.courseId,
         semesterId: questions.semesterId,
         examTypeId: questions.examTypeId,
+        section: questions.section,
         status: questions.status,
         statusReason: questions.statusReason,
         pdfKey: questions.pdfKey,
@@ -482,6 +492,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
           eq(questions.semesterId, values.semesterId),
           eq(questions.courseId, values.courseId),
           eq(questions.examTypeId, values.examTypeId),
+          values.section ? eq(questions.section, values.section) : sql`${questions.section} IS NULL`,
           sql`${questions.id} != ${numericId}`
         )
       )
@@ -501,6 +512,7 @@ export async function updateQuestion(id: string, values: UpdateQuestionParams) {
       courseId: values.courseId,
       semesterId: values.semesterId,
       examTypeId: values.examTypeId,
+      section: values.section,
       status: values.status as QuestionStatus,
       statusReason: values.statusReason ?? null,
     };

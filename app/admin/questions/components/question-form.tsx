@@ -6,7 +6,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
-  questionFormSchema,
+  createQuestionFormSchema,
   type QuestionFormValues,
   MAX_PDF_FILE_SIZE_BYTES,
   PDF_MIME_TYPE,
@@ -53,6 +53,7 @@ type DepartmentOption = {
   name: string;
 };
 type BasicOption = { id: number; name: string };
+type ExamTypeOption = { id: number; name: string; requiresSection: boolean };
 type UserOption = { id: string; name: string | null; email: string | null };
 type CourseOption = { id: number; name: string; departmentId: number };
 
@@ -63,6 +64,7 @@ interface QuestionData {
   courseId: number;
   semesterId: number;
   examTypeId: number;
+  section?: string | null;
   status: QuestionStatus;
   statusReason?: string | null;
   pdfKey: string;
@@ -75,7 +77,7 @@ interface QuestionFormProps {
   questionId?: string;
   departments: DepartmentOption[];
   semesters: BasicOption[];
-  examTypes: BasicOption[];
+  examTypes: ExamTypeOption[];
   users: UserOption[];
   allCourses: CourseOption[];
 }
@@ -98,20 +100,21 @@ export function QuestionForm({
   // Dropdown data state
   const [departments] = useState<DepartmentOption[]>(initialDepartments);
   const [semesters, setSemesters] = useState<BasicOption[]>(initialSemesters);
-  const [examTypes] = useState<BasicOption[]>(initialExamTypes);
+  const [examTypes] = useState<ExamTypeOption[]>(initialExamTypes);
   const [users] = useState<UserOption[]>(initialUsers);
   const [allCourses, setAllCourses] = useState<CourseOption[]>(initialAllCourses);
   const [courses, setCourses] = useState<BasicOption[]>([]);
 
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(
-      questionFormSchema
+      createQuestionFormSchema(examTypes)
     ) as unknown as Resolver<QuestionFormValues>,
     defaultValues: {
       departmentId: initialData?.departmentId,
       courseId: initialData?.courseId,
       semesterId: initialData?.semesterId,
       examTypeId: initialData?.examTypeId,
+      section: initialData?.section ?? "",
       userId: initialData?.userId,
       status:
         (initialData?.status as QuestionFormValues["status"]) || "published",
@@ -121,9 +124,14 @@ export function QuestionForm({
 
   // Watch for department changes to filter courses
   const selectedDepartmentId = form.watch("departmentId");
+  const selectedExamTypeId = form.watch("examTypeId");
   const isFirstDeptWatch = useRef(true);
   // Remember the last selected course for each department to restore when switching back
   const lastCourseByDeptRef = useRef<Map<number, number>>(new Map());
+
+  // Check if section is required based on selected exam type
+  const selectedExamType = examTypes.find(et => et.id === selectedExamTypeId);
+  const isSectionRequired = selectedExamType?.requiresSection || false;
 
   // Initialize filtered courses for initial department
   useEffect(() => {
@@ -201,6 +209,13 @@ export function QuestionForm({
     loadCourses();
   }, [selectedDepartmentId, form, allCourses]);
 
+  // Clear section field when exam type doesn't require it
+  useEffect(() => {
+    if (!isSectionRequired) {
+      form.setValue("section", "", { shouldValidate: false });
+    }
+  }, [isSectionRequired, form]);
+
   const uploadFileToS3 = useCallback(
     async (file: File, presignedUrl: string) => {
       const response = await fetch(presignedUrl, {
@@ -258,6 +273,7 @@ export function QuestionForm({
           courseId: values.courseId,
           semesterId: values.semesterId,
           examTypeId: values.examTypeId,
+          section: values.section?.trim() || undefined,
           userId: values.userId,
           status: values.status,
           statusReason: values.statusReason?.trim() || null,
@@ -273,6 +289,7 @@ export function QuestionForm({
           courseId: values.courseId,
           semesterId: values.semesterId,
           examTypeId: values.examTypeId,
+          section: values.section?.trim() || undefined,
           userId: values.userId,
           status: values.status,
           statusReason: values.statusReason?.trim(),
@@ -582,6 +599,7 @@ export function QuestionForm({
                             value={examType.id.toString()}
                           >
                             {examType.name}
+                            {examType.requiresSection && " (requires section)"}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -590,6 +608,29 @@ export function QuestionForm({
                   </FormItem>
                 )}
               />
+
+              {isSectionRequired && (
+                <FormField
+                  control={form.control}
+                  name="section"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Section *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., 65_N, 54_F"
+                          maxLength={5}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Format: number_letter (e.g., 65_N or 54_F)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <FormField

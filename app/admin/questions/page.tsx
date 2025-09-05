@@ -160,6 +160,7 @@ export default async function QuestionsPage({
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {question.semesterName} • {question.examTypeName}
+                              {question.section && ` • Section ${question.section}`}
                             </div>
                           </div>
                         </TableCell>
