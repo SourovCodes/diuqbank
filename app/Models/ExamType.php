@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExamType extends Model
 {
@@ -28,4 +29,12 @@ class ExamType extends Model
     protected $casts = [
         'requires_section' => 'boolean',
     ];
+
+    /**
+     * Get the questions for the exam type.
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
 }
