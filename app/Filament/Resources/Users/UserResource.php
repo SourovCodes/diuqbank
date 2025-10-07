@@ -13,6 +13,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class UserResource extends Resource
 {
@@ -54,5 +56,29 @@ class UserResource extends Resource
             'username',
             'student_id',
         ];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        $details = [
+            'Email' => $record->email,
+        ];
+
+        if (filled($record->username)) {
+            $details['Username'] = $record->username;
+        }
+
+        if (filled($record->student_id)) {
+            $details['Student ID'] = $record->student_id;
+        }
+
+        $details['Questions'] = (string) ($record->questions_count ?? 0);
+
+        return $details;
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->withCount('questions');
     }
 }

@@ -13,6 +13,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class DepartmentResource extends Resource
 {
@@ -52,5 +54,19 @@ class DepartmentResource extends Resource
             'name',
             'short_name',
         ];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Code' => $record->short_name,
+            'Courses' => (string) ($record->courses_count ?? 0),
+            'Questions' => (string) ($record->questions_count ?? 0),
+        ];
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->withCount(['courses', 'questions']);
     }
 }
