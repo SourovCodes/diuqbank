@@ -62,9 +62,9 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     {
         $this
             ->addMediaCollection('profile_picture')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
             ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
             ->singleFile()
             ->useDisk(diskName: 'public');
-
     }
 }

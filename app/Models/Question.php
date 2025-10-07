@@ -5,11 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Question extends Model
+class Question extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
+
+    use InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -64,5 +68,14 @@ class Question extends Model
     public function examType(): BelongsTo
     {
         return $this->belongsTo(ExamType::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('pdf')
+            ->acceptsMimeTypes(['application/pdf'])
+            ->singleFile()
+            ->useDisk(diskName: 'public');
     }
 }
