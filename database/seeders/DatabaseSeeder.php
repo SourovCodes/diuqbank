@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             CourseSeeder::class,
             SemesterSeeder::class,
+            ExamTypeSeeder::class,
         ]);
 
         // User::factory(10)->create();
