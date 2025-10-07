@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Department extends Model
+class Course extends Model
 {
-    /** @use HasFactory<\Database\Factories\DepartmentFactory> */
+    /** @use HasFactory<\Database\Factories\CourseFactory> */
     use HasFactory;
 
     /**
@@ -17,15 +17,15 @@ class Department extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'department_id',
         'name',
-        'short_name',
     ];
 
     /**
-     * Get the courses for the department.
+     * Get the department that owns the course.
      */
-    public function courses(): HasMany
+    public function department(): BelongsTo
     {
-        return $this->hasMany(Course::class);
+        return $this->belongsTo(Department::class);
     }
 }
