@@ -9,10 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable implements HasMedia,MustVerifyEmail
+class User extends Authenticatable implements HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
     use InteractsWithMedia;
 
     /**
@@ -24,6 +25,8 @@ class User extends Authenticatable implements HasMedia,MustVerifyEmail
         'name',
         'email',
         'password',
+        'student_id',
+        'username',
     ];
 
     /**
@@ -49,14 +52,13 @@ class User extends Authenticatable implements HasMedia,MustVerifyEmail
         ];
     }
 
-     public function registerMediaCollections(): void
+    public function registerMediaCollections(): void
     {
         $this
             ->addMediaCollection('profile_picture')
             ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
             ->singleFile()
             ->useDisk(diskName: 'public');
-            
+
     }
-    
 }
