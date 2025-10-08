@@ -18,12 +18,12 @@ class SemesterFactory extends Factory
     {
         $seasons = ['Spring', 'Summer', 'Fall'];
         $years = range(2020, 2030);
-        
+
         $season = $this->faker->randomElement($seasons);
         $year = $this->faker->randomElement($years);
-        
+
         return [
-            'name' => $season . ' ' . $year,
+            'name' => $season.' '.$year,
         ];
     }
 }

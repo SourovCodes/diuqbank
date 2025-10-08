@@ -82,14 +82,14 @@ class CourseFactory extends Factory
 
         // Get a random department or create one if none exists
         $department = Department::inRandomOrder()->first() ?? Department::factory()->create();
-        
+
         // Get courses for this department's short name, or use generic courses
         $courses = $departmentCourses[$department->short_name] ?? [
-            'Introduction to ' . $department->name,
-            'Advanced ' . $department->name,
-            'Research Methods in ' . $department->name,
-            'Seminar in ' . $department->name,
-            'Special Topics in ' . $department->name,
+            'Introduction to '.$department->name,
+            'Advanced '.$department->name,
+            'Research Methods in '.$department->name,
+            'Seminar in '.$department->name,
+            'Special Topics in '.$department->name,
         ];
 
         return [

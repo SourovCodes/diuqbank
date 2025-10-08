@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Semester;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SemesterSeeder extends Seeder
@@ -27,7 +26,7 @@ class SemesterSeeder extends Seeder
             'Spring 2023',
             'Summer 2023',
             'Fall 2023',
-            
+
             // Current and recent semesters (2024-2025)
             'Spring 2024',
             'Summer 2024',
@@ -35,7 +34,7 @@ class SemesterSeeder extends Seeder
             'Spring 2025',
             'Summer 2025',
             'Fall 2025',
-            
+
             // Future semesters (2026-2028)
             'Spring 2026',
             'Summer 2026',

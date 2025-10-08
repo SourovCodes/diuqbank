@@ -22,9 +22,9 @@ class ExamTypeFactory extends Factory
             ['name' => 'Quiz', 'requires_section' => true],
             ['name' => 'Lab Final', 'requires_section' => true],
         ];
-        
+
         $examType = $this->faker->randomElement($examTypes);
-        
+
         return [
             'name' => $examType['name'],
             'requires_section' => $examType['requires_section'],

@@ -23,25 +23,25 @@ class QuestionFactory extends Factory
     {
         // Get a random department
         $department = Department::inRandomOrder()->first() ?? Department::factory()->create();
-        
+
         // Get a course from that department
-        $course = Course::where('department_id', $department->id)->inRandomOrder()->first() 
+        $course = Course::where('department_id', $department->id)->inRandomOrder()->first()
             ?? Course::factory()->create(['department_id' => $department->id]);
-        
+
         // Get random semester and exam type
         $semester = Semester::inRandomOrder()->first() ?? Semester::factory()->create();
         $examType = ExamType::inRandomOrder()->first() ?? ExamType::factory()->create();
-        
+
         // Get a random user
         $user = User::inRandomOrder()->first() ?? User::factory()->create();
-        
+
         // Generate section if exam type requires it
         $section = null;
         if ($examType->requires_section) {
             $sections = ['A', 'B', 'C', 'D', 'E', 'F'];
             $section = $this->faker->randomElement($sections);
         }
-        
+
         return [
             'user_id' => $user->id,
             'department_id' => $department->id,

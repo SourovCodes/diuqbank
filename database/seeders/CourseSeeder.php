@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Course;
 use App\Models\Department;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CourseSeeder extends Seeder
@@ -283,7 +282,7 @@ class CourseSeeder extends Seeder
 
         foreach ($coursesByDepartment as $departmentShortName => $courses) {
             $department = Department::where('short_name', $departmentShortName)->first();
-            
+
             if ($department) {
                 foreach ($courses as $courseName) {
                     Course::firstOrCreate([
