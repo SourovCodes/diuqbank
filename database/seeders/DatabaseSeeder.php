@@ -13,11 +13,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            DepartmentSeeder::class,
+            CourseSeeder::class,
+            SemesterSeeder::class,
+            ExamTypeSeeder::class,
+        ]);
+
         // User::factory(10)->create();
 
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+        ]);
+
+        // Seed questions after user creation
+        $this->call([
+            QuestionSeeder::class,
         ]);
     }
 }
