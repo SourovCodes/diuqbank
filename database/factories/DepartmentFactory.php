@@ -16,6 +16,8 @@ class DepartmentFactory extends Factory
      */
     public function definition(): array
     {
+        static $usedShortNames = [];
+
         $departments = [
             ['name' => 'Computer Science and Engineering', 'short_name' => 'CSE'],
             ['name' => 'Electrical and Electronic Engineering', 'short_name' => 'EEE'],
@@ -34,11 +36,20 @@ class DepartmentFactory extends Factory
             ['name' => 'Pharmacy', 'short_name' => 'PHARM'],
         ];
 
-        $department = $this->faker->randomElement($departments);
-        
+        $availableDepartments = collect($departments)
+            ->reject(fn (array $department): bool => in_array($department['short_name'], $usedShortNames, true))
+            ->values();
+
+        if ($availableDepartments->isNotEmpty()) {
+            $department = $availableDepartments->random();
+            $usedShortNames[] = $department['short_name'];
+
+            return $department;
+        }
+
         return [
-            'name' => $department['name'],
-            'short_name' => $department['short_name'],
+            'name' => $this->faker->unique()->company().' Department',
+            'short_name' => strtoupper($this->faker->unique()->lexify('????')),
         ];
     }
 }
