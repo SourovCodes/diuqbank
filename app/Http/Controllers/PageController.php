@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Http\Controllers\Page;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\Question;
@@ -10,12 +9,9 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 
-class HomeController extends Controller
+class PageController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     */
-    public function __invoke(): View
+    public function home(): View
     {
         $stats = Cache::remember('welcome.stats', now()->addMinutes(10), function () {
             return [

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Page\HomeController;
+use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', HomeController::class);
+Route::get('/', [PageController::class, 'home'])->name('home');
