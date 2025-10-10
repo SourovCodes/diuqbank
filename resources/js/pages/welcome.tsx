@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Head, Link } from "@inertiajs/react";
+import MainLayout from "@/layouts/main-layout";
 import type { SharedData } from "@/types";
 import {
   Upload,
@@ -80,7 +81,7 @@ export default function Welcome({
   ];
 
   return (
-    <>
+    <MainLayout>
       <Head title="Home" />
       {/* Hero section */}
       <section className="relative overflow-hidden pt-20 pb-40 md:py-32">
@@ -316,6 +317,6 @@ export default function Welcome({
           </div>
         </div>
       </section>
-    </>
+    </MainLayout>
   );
 }
