@@ -9,12 +9,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { about, contact, home, login, logout } from '@/routes';
-import blog from '@/routes/blog';
-import events from '@/routes/events';
-import profile from '@/routes/profile';
-import programmers from '@/routes/programmers';
-import trackers from '@/routes/trackers';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BarChart3, Calendar, FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
@@ -23,13 +17,13 @@ import AppearanceToggleDropdown from './appearance-dropdown';
 
 // Navigation items
 const menuItems = [
-    { name: 'Home', href: home.url(), icon: Home },
-    { name: 'Events', href: events.index.url(), icon: Calendar },
-    { name: 'Blog', href: blog.index.url(), icon: FileText },
-    { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
-    { name: 'Programmers', href: programmers.index.url(), icon: Users },
-    { name: 'About', href: about.url(), icon: Info },
-    { name: 'Contact', href: contact.url(), icon: Mail },
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Events', href: '/events', icon: Calendar },
+    { name: 'Blog', href: '/blog', icon: FileText },
+    { name: 'Trackers', href: '/trackers', icon: BarChart3 },
+    { name: 'Programmers', href: '/programmers', icon: Users },
+    { name: 'About', href: '/about', icon: Info },
+    { name: 'Contact', href: '/contact', icon: Mail },
 ];
 
 export default function Navigation() {
@@ -57,7 +51,7 @@ export default function Navigation() {
 
     // Check if menu item is active
     const isActive = (href: string) => {
-        return href === home.url() ? currentPath === home.url() : currentPath.startsWith(href);
+        return href === '/' ? currentPath === '/' : currentPath.startsWith(href);
     };
 
     // Get user initials
@@ -84,7 +78,7 @@ export default function Navigation() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
-                        <Link href={home.url()} className="flex items-center space-x-2">
+                        <Link href="/" className="flex items-center space-x-2">
                             <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-7 w-7 rounded-lg" />
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                 DIU ACM
@@ -142,13 +136,13 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
 
                                             <DropdownMenuItem asChild>
-                                                <Link href={profile.edit.url()} className="flex items-center">
+                                                <Link href="/profile" className="flex items-center">
                                                     <User className="mr-2 h-4 w-4" />
                                                     Edit Profile
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
-                                                <Link href={profile.editPassword.url()} className="flex items-center">
+                                                <Link href="/profile/password" className="flex items-center">
                                                     <KeyRound className="mr-2 h-4 w-4" />
                                                     Change Password
                                                 </Link>
@@ -157,7 +151,7 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem asChild>
                                                 <Link
-                                                    href={logout.url()}
+                                                    href="/logout"
                                                     method="post"
                                                     as="button"
                                                     className="text-red-600 focus:bg-red-50 dark:text-red-400"
@@ -170,7 +164,7 @@ export default function Navigation() {
                                     </DropdownMenu>
                                 ) : (
                                     <Button variant="ghost" size="sm" asChild className="h-8 px-3">
-                                        <Link href={login.url()}>
+                                        <Link href="/login">
                                             <LogIn className="mr-1.5 h-3.5 w-3.5" />
                                             Sign In
                                         </Link>
@@ -256,7 +250,7 @@ export default function Navigation() {
                                 {auth.user && (
                                     <div className="mt-6 space-y-1 border-t pt-6">
                                         <Link
-                                            href={profile.edit.url()}
+                                            href="/profile"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -264,7 +258,7 @@ export default function Navigation() {
                                             <span>Edit Profile</span>
                                         </Link>
                                         <Link
-                                            href={profile.editPassword.url()}
+                                            href="/profile/password"
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -272,7 +266,7 @@ export default function Navigation() {
                                             <span>Change Password</span>
                                         </Link>
                                         <Link
-                                            href={logout.url()}
+                                            href="/logout"
                                             method="post"
                                             as="button"
                                             onClick={() => setIsMobileMenuOpen(false)}
@@ -288,7 +282,7 @@ export default function Navigation() {
                                 {!auth.user && (
                                     <div className="mt-6 space-y-3 border-t pt-6">
                                         <Button variant="outline" className="w-full" asChild>
-                                            <Link href={login.url()} onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                                                 <LogIn className="mr-2 h-4 w-4" />
                                                 Sign In
                                             </Link>

@@ -1,6 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { about, contact, home, privacyPolicy, termsAndConditions } from '@/routes';
-import * as programmers from '@/routes/programmers';
 import { Link } from '@inertiajs/react';
 import { Heart, Mail } from 'lucide-react';
 
@@ -11,7 +9,7 @@ export default function Footer() {
                 <div className="grid grid-cols-1 gap-8 py-8 md:grid-cols-2 lg:grid-cols-4">
                     {/* Logo and description */}
                     <div className="col-span-1 md:col-span-2 lg:col-span-1">
-                        <Link href={home.url()} className="mb-4 inline-flex items-center">
+                        <Link href="/" className="mb-4 inline-flex items-center">
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-2xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                 DIU ACM
                             </span>
@@ -29,7 +27,7 @@ export default function Footer() {
                         <ul className="space-y-2">
                             <li>
                                 <Link
-                                    href={home.url()}
+                                    href="/"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
                                     Home
@@ -37,7 +35,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href={about.url()}
+                                    href="/about"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
                                     About
@@ -45,7 +43,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href={privacyPolicy.url()}
+                                    href="/privacy-policy"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
                                     Privacy Policy
@@ -53,7 +51,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href={termsAndConditions.url()}
+                                    href="/terms"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
                                     Terms &amp; Conditions
@@ -68,7 +66,7 @@ export default function Footer() {
                         <ul className="space-y-2">
                             <li>
                                 <Link
-                                    href={programmers.index.url()}
+                                    href="/programmers"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
                                     Programmers
@@ -90,7 +88,7 @@ export default function Footer() {
                                 variant="outline"
                                 className="w-full rounded-full border border-slate-200 bg-white/80 px-6 font-medium text-blue-600 shadow-md backdrop-blur-sm transition-all hover:border-blue-200 hover:bg-white hover:text-blue-700 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/80 dark:text-blue-400 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                             >
-                                <Link href={contact.url()}>
+                                <Link href="/contact">
                                     <span className="inline-flex items-center">
                                         <Mail className="mr-2 h-4 w-4" />
                                         Send Message
