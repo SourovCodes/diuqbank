@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark']) data-appearance="{{ $appearance ?? 'system' }}">
 
 <head>
     <meta charset="utf-8">
@@ -10,15 +10,23 @@
 
     <script>
         (function () {
-            const appearance = '{{ $appearance ?? "system" }}';
+            const root = document.documentElement;
+            const appearance = root.dataset.appearance || 'system';
+            const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
-            if (appearance === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                if (prefersDark) {
-                    document.documentElement.classList.add('dark');
+            const resolveAppearance = (mode) => {
+                if (mode === 'light' || mode === 'dark') {
+                    return mode;
                 }
-            }
+
+                return mediaQuery && mediaQuery.matches ? 'dark' : 'light';
+            };
+
+            const resolved = resolveAppearance(appearance);
+
+            root.classList.toggle('dark', resolved === 'dark');
+            root.style.colorScheme = resolved === 'dark' ? 'dark' : 'light';
+            root.dataset.resolvedAppearance = resolved;
         })();
     </script>
 

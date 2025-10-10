@@ -13,7 +13,7 @@ import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BarChart3, Calendar, FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import AppearanceToggleDropdown from './appearance-dropdown';
+import AppearanceToggleButton from './appearance-dropdown';
 
 // Navigation items
 const menuItems = [
@@ -112,7 +112,7 @@ export default function Navigation() {
                             </nav>
 
                             <div className="flex items-center space-x-2 border-l border-gray-200 pl-2 dark:border-gray-700">
-                                <AppearanceToggleDropdown />
+                                <AppearanceToggleButton />
 
                                 {auth.user ? (
                                     <DropdownMenu>
