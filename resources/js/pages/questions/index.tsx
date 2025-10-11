@@ -1,37 +1,13 @@
 import { Head } from "@inertiajs/react";
 import MainLayout from "@/layouts/main-layout";
-import type { SharedData } from "@/types";
+import type { SharedData, PaginatedData } from "@/types";
 import { QuestionFilters } from "@/components/ui/question-filters";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { Question, QuestionCard } from "@/components/ui/question-card";
 import { FileText } from "lucide-react";
 
-
-
-type PaginationLink = {
-  url: string | null;
-  label: string;
-  active: boolean;
-};
-
-type PaginatedQuestions = {
-  current_page: number;
-  data: Question[];
-  first_page_url: string;
-  from: number;
-  last_page: number;
-  last_page_url: string;
-  links: PaginationLink[];
-  next_page_url: string | null;
-  path: string;
-  per_page: number;
-  prev_page_url: string | null;
-  to: number;
-  total: number;
-};
-
 interface QuestionsIndexProps extends SharedData {
-  questions: PaginatedQuestions;
+  questions: PaginatedData<Question>;
   filters: {
     department?: number | null;
     semester?: number | null;

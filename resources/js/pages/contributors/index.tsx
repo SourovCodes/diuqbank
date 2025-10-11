@@ -1,6 +1,6 @@
 import { Head, Link } from "@inertiajs/react";
 import MainLayout from "@/layouts/main-layout";
-import type { SharedData } from "@/types";
+import type { SharedData, PaginatedData } from "@/types";
 import { CustomPagination } from "@/components/ui/custom-pagination";
 import { Users, FileText, Eye, ArrowRight } from "lucide-react";
 
@@ -15,30 +15,8 @@ type Contributor = {
   profile_picture_url?: string;
 };
 
-type PaginationLink = {
-  url: string | null;
-  label: string;
-  active: boolean;
-};
-
-type PaginatedContributors = {
-  current_page: number;
-  data: Contributor[];
-  first_page_url: string;
-  from: number;
-  last_page: number;
-  last_page_url: string;
-  links: PaginationLink[];
-  next_page_url: string | null;
-  path: string;
-  per_page: number;
-  prev_page_url: string | null;
-  to: number;
-  total: number;
-};
-
 interface ContributorsIndexProps extends SharedData {
-  contributors: PaginatedContributors;
+  contributors: PaginatedData<Contributor>;
 }
 
 export default function ContributorsIndex({
