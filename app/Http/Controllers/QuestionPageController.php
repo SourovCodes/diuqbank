@@ -7,13 +7,14 @@ use App\Models\Department;
 use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class QuestionPageController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $parseFilterId = static function (?string $value): ?int {
             return is_numeric($value)
@@ -25,6 +26,45 @@ class QuestionPageController extends Controller
         $semesterId = $parseFilterId($request->input('semester'));
         $courseId = $parseFilterId($request->input('course'));
         $examTypeId = $parseFilterId($request->input('examType'));
+
+        $departmentOptions = Department::select('id', 'short_name as name')->orderBy('short_name')->get();
+        $semesterOptions = Semester::select('id', 'name')->orderByDesc('name')->get();
+        $courseOptions = Course::select('id', 'name', 'department_id')->orderBy('name')->get();
+        $examTypeOptions = ExamType::select('id', 'name')->orderBy('name')->get();
+
+        $invalidFiltersDetected = false;
+
+        if ($departmentId !== null && ! $departmentOptions->contains('id', $departmentId)) {
+            $departmentId = null;
+            $invalidFiltersDetected = true;
+        }
+
+        if ($semesterId !== null && ! $semesterOptions->contains('id', $semesterId)) {
+            $semesterId = null;
+            $invalidFiltersDetected = true;
+        }
+
+        if ($courseId !== null && ! $courseOptions->contains('id', $courseId)) {
+            $courseId = null;
+            $invalidFiltersDetected = true;
+        }
+
+        if ($examTypeId !== null && ! $examTypeOptions->contains('id', $examTypeId)) {
+            $examTypeId = null;
+            $invalidFiltersDetected = true;
+        }
+
+        if ($invalidFiltersDetected) {
+            $queryParams = array_filter([
+                'department' => $departmentId,
+                'semester' => $semesterId,
+                'course' => $courseId,
+                'examType' => $examTypeId,
+                'page' => $request->integer('page') > 1 ? $request->integer('page') : null,
+            ], static fn ($value) => $value !== null);
+
+            return redirect()->route('questions.index', $queryParams);
+        }
 
         $query = Question::query()
             ->with(['department', 'semester', 'course', 'examType', 'user', 'media']);
@@ -82,10 +122,10 @@ class QuestionPageController extends Controller
 
         // Get filter options
         $filterOptions = [
-            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get()->toArray(),
-            'semesters' => Semester::select('id', 'name')->orderByDesc('name')->get()->toArray(),
-            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get()->toArray(),
-            'examTypes' => ExamType::select('id', 'name')->orderBy('name')->get()->toArray(),
+            'departments' => $departmentOptions->toArray(),
+            'semesters' => $semesterOptions->toArray(),
+            'courses' => $courseOptions->toArray(),
+            'examTypes' => $examTypeOptions->toArray(),
         ];
 
         return Inertia::render('questions/index', [
