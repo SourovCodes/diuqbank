@@ -76,9 +76,9 @@ class QuestionPageController extends Controller
 
         // Get filter options
         $filterOptions = [
-            'departments' => Department::select('short_name as name')->distinct()->orderBy('short_name')->get()->toArray(),
+            'departments' => Department::select('id', 'short_name as name')->distinct()->orderBy('short_name')->get()->toArray(),
             'semesters' => Semester::select('name')->distinct()->orderByDesc('name')->get()->toArray(),
-            'courses' => Course::select('name')->distinct()->orderBy('name')->get()->toArray(),
+            'courses' => Course::select('name', 'department_id')->distinct()->orderBy('name')->get()->toArray(),
             'examTypes' => ExamType::select('name')->distinct()->orderBy('name')->get()->toArray(),
         ];
 

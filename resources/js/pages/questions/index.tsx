@@ -69,9 +69,9 @@ interface QuestionsIndexProps extends SharedData {
     examType?: string;
   };
   filterOptions: {
-    departments: Array<{ name: string }>;
+    departments: Array<{ id: number; name: string }>;
     semesters: Array<{ name: string }>;
-    courses: Array<{ name: string }>;
+    courses: Array<{ name: string; department_id: number }>;
     examTypes: Array<{ name: string }>;
   };
 }
