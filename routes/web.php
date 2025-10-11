@@ -27,3 +27,6 @@ Route::get('/privacy-policy', function () {
 Route::get('/terms-of-service', function () {
     return Inertia::render('terms-of-service');
 })->name('terms-of-service');
+
+Route::get('/questions', [\App\Http\Controllers\QuestionPageController::class, 'index'])->name('questions.index');
+Route::get('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'show'])->name('questions.show');

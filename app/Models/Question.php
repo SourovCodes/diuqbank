@@ -78,4 +78,24 @@ class Question extends Model implements HasMedia
             ->singleFile()
             ->useDisk(diskName: 'public');
     }
+
+    /**
+     * Get the PDF URL accessor.
+     */
+    protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->getFirstMedia('pdf')?->getUrl()
+        );
+    }
+
+    /**
+     * Get the PDF size accessor.
+     */
+    protected function pdfSize(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->getFirstMedia('pdf')?->size ?? 0
+        );
+    }
 }
