@@ -120,7 +120,7 @@ export default function QuestionShow({ question }: QuestionShowProps) {
             {question.course.name}
           </h1>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2">
             <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300 px-3 py-1">
               <School className="h-3.5 w-3.5 mr-1" />
               {question.department.short_name} - {question.department.name}
@@ -138,27 +138,24 @@ export default function QuestionShow({ question }: QuestionShowProps) {
               {question.course.name}
             </Badge>
           </div>
-
-          {question.pdf_url && (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <a
-                  href={question.pdf_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </a>
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* PDF Viewer */}
           <div className="lg:col-span-8">
             <div className="flex justify-end gap-2 mb-2">
+              {question.pdf_url && (
+                <Button asChild variant="outline" size="sm" className="text-xs">
+                  <a
+                    href={question.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Download
+                  </a>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
