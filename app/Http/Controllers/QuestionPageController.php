@@ -98,22 +98,6 @@ class QuestionPageController extends Controller
     {
         $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
 
-        // Increment view count with caching to prevent spam
-        $cacheKey = 'question_view_'.$question->id.'_'.request()->ip();
-        if (! cache()->has($cacheKey)) {
-            // Filter out bots
-            $ua = strtolower(request()->userAgent() ?? '');
-            $isBot = str_contains($ua, 'bot') ||
-                     str_contains($ua, 'crawl') ||
-                     str_contains($ua, 'spider');
-
-            if (! $isBot) {
-                $question->increment('view_count');
-            }
-
-            cache()->put($cacheKey, true, now()->addHours(6));
-        }
-
         // Transform question data to include media URLs
         $questionData = [
             'id' => $question->id,
@@ -150,5 +134,20 @@ class QuestionPageController extends Controller
         return Inertia::render('questions/show', [
             'question' => $questionData,
         ]);
+    }
+
+    public function incrementView(Question $question)
+    {
+        // Filter out bots
+        $ua = strtolower(request()->userAgent() ?? '');
+        $isBot = str_contains($ua, 'bot') ||
+                 str_contains($ua, 'crawl') ||
+                 str_contains($ua, 'spider');
+
+        if (! $isBot) {
+            $question->increment('view_count');
+        }
+
+        return back();
     }
 }

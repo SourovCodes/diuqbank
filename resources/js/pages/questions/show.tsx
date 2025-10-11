@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import MainLayout from "@/layouts/main-layout";
 import type { SharedData } from "@/types";
 import {
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Types for question data
 type Question = {
@@ -55,6 +55,23 @@ interface QuestionShowProps extends SharedData {
 
 export default function QuestionShow({ question }: QuestionShowProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Track view after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.post(
+        `/questions/${question.id}/view`,
+        {},
+        {
+          preserveScroll: true,
+          preserveState: true,
+          only: [], // Don't reload any props
+        }
+      );
+    }, 3000); // 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [question.id]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
