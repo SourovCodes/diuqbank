@@ -15,3 +15,7 @@ Route::get('/', function () {
         'contributorsCount' => User::query()->whereHas('questions')->count(),
     ]);
 })->name('home');
+
+Route::get('/about', function () {
+    return Inertia::render('about');
+})->name('about');
