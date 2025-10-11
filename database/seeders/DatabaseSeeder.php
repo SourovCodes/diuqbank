@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command->info('Starting database seeding...');
+
+        // Seed base data first
         $this->call([
             DepartmentSeeder::class,
             CourseSeeder::class,
@@ -20,16 +23,18 @@ class DatabaseSeeder extends Seeder
             ExamTypeSeeder::class,
         ]);
 
-        // User::factory(10)->create();
+        $this->command->info('Creating 200 users...');
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create 200 users
+        User::factory(200)->create();
 
-        // Seed questions after user creation
+        $this->command->info('200 users created successfully!');
+
+        // Seed questions after user creation (100 questions per user)
         $this->call([
             QuestionSeeder::class,
         ]);
+
+        $this->command->info('Database seeding completed successfully!');
     }
 }
