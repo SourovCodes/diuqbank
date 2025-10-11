@@ -27,10 +27,12 @@ class QuestionPageController extends Controller
         $courseId = $parseFilterId($request->input('course'));
         $examTypeId = $parseFilterId($request->input('examType'));
 
-        $departmentOptions = Department::select('id', 'short_name as name')->orderBy('short_name')->get();
-        $semesterOptions = Semester::select('id', 'name')->get();
-        $allCourseOptions = Course::select('id', 'name', 'department_id')->orderBy('name')->get();
-        $examTypeOptions = ExamType::select('id', 'name')->orderBy('name')->get();
+        [$departmentOptions, $semesterOptions, $allCourseOptions, $examTypeOptions] = cache()->remember('filter_options', 3600, fn() => [
+            Department::select('id', 'short_name')->orderBy('short_name')->get(),
+            Semester::select('id', 'name')->get(),
+            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            ExamType::select('id', 'name')->orderBy('name')->get(),
+        ]);
 
         $invalidFiltersDetected = false;
 
@@ -73,8 +75,7 @@ class QuestionPageController extends Controller
             return redirect()->route('questions.index', $queryParams);
         }
 
-        $query = Question::query()
-            ->with(['department', 'semester', 'course', 'examType', 'user', 'media']);
+        $query = Question::query();
 
         // Apply filters
         if ($departmentId !== null) {
@@ -97,48 +98,21 @@ class QuestionPageController extends Controller
             'fall' => 4,
         ];
 
-        $semesterOptions = $semesterOptions
-            ->sort(function (Semester $a, Semester $b) use ($semesterSeasonOrder): int {
-                $extractSortData = static function (Semester $semester) use ($semesterSeasonOrder): array {
-                    $matches = [];
-                    preg_match('/^(?<season>[A-Za-z]+)\s+(?<year>\d{2,4})$/', $semester->name, $matches);
-
-                    $seasonKey = strtolower($matches['season'] ?? '');
-                    $seasonRank = $semesterSeasonOrder[$seasonKey] ?? 99;
-                    $year = isset($matches['year']) ? (int) $matches['year'] : 0;
-
-                    if (isset($matches['year']) && strlen($matches['year']) === 2) {
-                        $year += 2000;
-                    }
-
-                    return [$year, $seasonRank];
-                };
-
-                [$yearA, $seasonRankA] = $extractSortData($a);
-                [$yearB, $seasonRankB] = $extractSortData($b);
-
-                if ($yearA === $yearB) {
-                    return $seasonRankA <=> $seasonRankB;
-                }
-
-                return $yearB <=> $yearA;
-            })
-            ->values();
-
+       
         $questions = $query->latest()->paginate(12)->withQueryString();
 
         // Transform questions to include media URLs
-        $questions->getCollection()->transform(function ($question) {
+        $questions->getCollection()->transform(function ($question) use ($departmentOptions, $allCourseOptions, $semesterOptions, $examTypeOptions) {
             return [
                 'id' => $question->id,
                 'created_at' => $question->created_at->toISOString(),
                 'view_count' => $question->view_count,
                 'section' => $question->section,
-                'department' => $question->department->short_name,
-                'course' => $question->course->name,
-                'semester' => $question->semester->name,
-                'exam_type' => $question->examType->name,
-              
+                'department' => $departmentOptions->firstWhere('id', $question->department_id)->short_name,
+                'course' => $allCourseOptions->firstWhere('id', $question->course_id)->name,
+                'semester' => $semesterOptions->firstWhere('id', $question->semester_id)->name,
+                'exam_type' => $examTypeOptions->firstWhere('id', $question->exam_type_id)->name,
+
             ];
         });
 
