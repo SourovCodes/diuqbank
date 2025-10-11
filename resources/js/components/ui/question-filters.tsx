@@ -5,19 +5,30 @@ import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { ClearFiltersButton } from "@/components/ui/clear-filters-button";
 import { useMemo } from "react";
 
+type FilterValue = number | null | undefined;
+
+type FilterOption = {
+  id: number;
+  name: string;
+};
+
+type CourseOption = FilterOption & {
+  department_id: number;
+};
+
 // Define types for component props
 type QuestionFiltersProps = {
   initialFilters: {
-    department?: string;
-    semester?: string;
-    course?: string;
-    examType?: string;
+    department?: FilterValue;
+    semester?: FilterValue;
+    course?: FilterValue;
+    examType?: FilterValue;
   };
   filterOptions: {
-    departments: Array<{ id: number; name: string }>;
-    semesters: Array<{ name: string }>;
-    courses: Array<{ name: string; department_id: number }>;
-    examTypes: Array<{ name: string }>;
+    departments: FilterOption[];
+    semesters: FilterOption[];
+    courses: CourseOption[];
+    examTypes: FilterOption[];
   };
 };
 
@@ -34,7 +45,7 @@ type FilterConfig = {
   id: keyof typeof filterKeys;
   label: string;
   icon: React.ReactNode;
-  options: Array<{ name: string }>;
+  options: FilterOption[];
   activeClass: string;
 };
 
@@ -42,26 +53,23 @@ export function QuestionFilters({
   initialFilters,
   filterOptions,
 }: QuestionFiltersProps) {
+  const allOptionsMap = {
+    department: filterOptions.departments,
+    course: filterOptions.courses,
+    semester: filterOptions.semesters,
+    examType: filterOptions.examTypes,
+  } as const;
+
   // Filter courses based on selected department
   const filteredCourses = useMemo(() => {
-    if (!initialFilters.department) {
+    if (typeof initialFilters.department !== "number") {
       return filterOptions.courses;
     }
 
-    // Find the selected department
-    const selectedDept = filterOptions.departments.find(
-      (dept) => dept.name === initialFilters.department
-    );
-
-    if (!selectedDept) {
-      return filterOptions.courses;
-    }
-
-    // Return only courses that belong to the selected department
     return filterOptions.courses.filter(
-      (course) => course.department_id === selectedDept.id
+      (course) => course.department_id === initialFilters.department
     );
-  }, [initialFilters.department, filterOptions.departments, filterOptions.courses]);
+  }, [initialFilters.department, filterOptions.courses]);
 
   // Create filter configs for consistent rendering (reordered: department, course, semester, examType)
   const filterConfigs: FilterConfig[] = [
@@ -105,11 +113,17 @@ export function QuestionFilters({
   const activeFilters = filterConfigs
     .map((config) => {
       const value = initialFilters[config.id];
-      if (!value) return null;
+      if (value === null || value === undefined) return null;
+
+      const selectedOption = allOptionsMap[config.id].find(
+        (option) => option.id === value
+      );
+
+      if (!selectedOption) return null;
 
       return {
         id: config.id,
-        name: value,
+        name: selectedOption.name,
         icon: config.icon,
         activeClass: config.activeClass,
       };
@@ -156,8 +170,12 @@ export function QuestionFilters({
       {/* Filter comboboxes with responsive grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {filterConfigs.map((config) => {
-          const currentValue = initialFilters[config.id] || "all";
-          const isActive = currentValue !== "all";
+          const rawValue = initialFilters[config.id];
+          const currentValue =
+            rawValue === null || rawValue === undefined
+              ? "all"
+              : String(rawValue);
+          const isActive = rawValue !== null && rawValue !== undefined;
 
           return (
             <div key={config.id}>

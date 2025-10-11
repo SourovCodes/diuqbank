@@ -63,16 +63,16 @@ type PaginatedQuestions = {
 interface QuestionsIndexProps extends SharedData {
   questions: PaginatedQuestions;
   filters: {
-    department?: string;
-    semester?: string;
-    course?: string;
-    examType?: string;
+    department?: number | null;
+    semester?: number | null;
+    course?: number | null;
+    examType?: number | null;
   };
   filterOptions: {
     departments: Array<{ id: number; name: string }>;
-    semesters: Array<{ name: string }>;
-    courses: Array<{ name: string; department_id: number }>;
-    examTypes: Array<{ name: string }>;
+    semesters: Array<{ id: number; name: string }>;
+    courses: Array<{ id: number; name: string; department_id: number }>;
+    examTypes: Array<{ id: number; name: string }>;
   };
 }
 

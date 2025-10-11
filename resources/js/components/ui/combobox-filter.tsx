@@ -17,12 +17,17 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 
+type ComboboxOption = {
+  id: number;
+  name: string;
+};
+
 type ComboboxFilterProps = {
   id: string;
   urlParam: string;
   label: string;
   icon: React.ReactNode;
-  options: Array<{ name: string }>;
+  options: ComboboxOption[];
   value: string;
   className?: string;
   isActive?: boolean;
@@ -41,8 +46,12 @@ export function ComboboxFilter({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get display value for the select
-  const displayValue =
-    value === "all" ? `All ${label}s` : value || `All ${label}s`;
+  const selectedOption =
+    value !== "all"
+      ? options.find((option) => String(option.id) === value)
+      : undefined;
+
+  const displayValue = selectedOption?.name ?? `All ${label}s`;
 
   // Handle select change
   const handleSelect = useCallback(
@@ -130,15 +139,15 @@ export function ComboboxFilter({
             </CommandItem>
             {options.map((option) => (
               <CommandItem
-                key={option.name}
+                key={option.id}
                 value={option.name}
-                onSelect={() => handleSelect(option.name)}
+                onSelect={() => handleSelect(String(option.id))}
                 className="cursor-pointer"
               >
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    value === option.name ? "opacity-100" : "opacity-0"
+                    value === String(option.id) ? "opacity-100" : "opacity-0"
                   )}
                 />
                 {option.name}

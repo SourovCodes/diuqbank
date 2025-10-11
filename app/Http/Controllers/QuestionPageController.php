@@ -15,26 +15,32 @@ class QuestionPageController extends Controller
 {
     public function index(Request $request): Response
     {
-        $department = $request->input('department');
-        $semester = $request->input('semester');
-        $course = $request->input('course');
-        $examType = $request->input('examType');
+        $parseFilterId = static function (?string $value): ?int {
+            return is_numeric($value)
+                ? (int) $value
+                : null;
+        };
+
+        $departmentId = $parseFilterId($request->input('department'));
+        $semesterId = $parseFilterId($request->input('semester'));
+        $courseId = $parseFilterId($request->input('course'));
+        $examTypeId = $parseFilterId($request->input('examType'));
 
         $query = Question::query()
             ->with(['department', 'semester', 'course', 'examType', 'user', 'media']);
 
         // Apply filters
-        if ($department) {
-            $query->whereHas('department', fn ($q) => $q->where('short_name', $department));
+        if ($departmentId !== null) {
+            $query->where('department_id', $departmentId);
         }
-        if ($semester) {
-            $query->whereHas('semester', fn ($q) => $q->where('name', $semester));
+        if ($semesterId !== null) {
+            $query->where('semester_id', $semesterId);
         }
-        if ($course) {
-            $query->whereHas('course', fn ($q) => $q->where('name', $course));
+        if ($courseId !== null) {
+            $query->where('course_id', $courseId);
         }
-        if ($examType) {
-            $query->whereHas('examType', fn ($q) => $q->where('name', $examType));
+        if ($examTypeId !== null) {
+            $query->where('exam_type_id', $examTypeId);
         }
 
         $questions = $query->latest()->paginate(12)->withQueryString();
@@ -76,19 +82,19 @@ class QuestionPageController extends Controller
 
         // Get filter options
         $filterOptions = [
-            'departments' => Department::select('id', 'short_name as name')->distinct()->orderBy('short_name')->get()->toArray(),
-            'semesters' => Semester::select('name')->distinct()->orderByDesc('name')->get()->toArray(),
-            'courses' => Course::select('name', 'department_id')->distinct()->orderBy('name')->get()->toArray(),
-            'examTypes' => ExamType::select('name')->distinct()->orderBy('name')->get()->toArray(),
+            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get()->toArray(),
+            'semesters' => Semester::select('id', 'name')->orderByDesc('name')->get()->toArray(),
+            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get()->toArray(),
+            'examTypes' => ExamType::select('id', 'name')->orderBy('name')->get()->toArray(),
         ];
 
         return Inertia::render('questions/index', [
             'questions' => $questions,
             'filters' => [
-                'department' => $department,
-                'semester' => $semester,
-                'course' => $course,
-                'examType' => $examType,
+                'department' => $departmentId,
+                'semester' => $semesterId,
+                'course' => $courseId,
+                'examType' => $examTypeId,
             ],
             'filterOptions' => $filterOptions,
         ]);
