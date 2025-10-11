@@ -44,9 +44,16 @@ class QuestionPageController extends Controller
             $invalidFiltersDetected = true;
         }
 
-        if ($courseId !== null && ! $allCourseOptions->contains('id', $courseId)) {
-            $courseId = null;
-            $invalidFiltersDetected = true;
+        if ($courseId !== null) {
+            $course = $allCourseOptions->firstWhere('id', $courseId);
+
+            if ($course === null) {
+                $courseId = null;
+                $invalidFiltersDetected = true;
+            } elseif ($departmentId !== null && (int) $course->department_id !== $departmentId) {
+                $courseId = null;
+                $invalidFiltersDetected = true;
+            }
         }
 
         if ($examTypeId !== null && ! $examTypeOptions->contains('id', $examTypeId)) {
