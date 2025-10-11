@@ -75,8 +75,7 @@ export default function Navigation() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-2">
-                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU Question Bank" className="h-7 w-7 rounded-lg" />
+                        <Link href="/" className="flex items-center">
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                 DIU Question Bank
                             </span>
@@ -192,9 +191,8 @@ export default function Navigation() {
                         <div className="flex h-full flex-col">
                             {/* Header */}
                             <div className="flex items-center justify-between border-b p-4">
-                                <div className="flex items-center space-x-2">
-                                    <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-8 w-8 rounded-lg" />
-                                    <span className="text-lg font-semibold">DIU ACM</span>
+                                <div className="flex items-center">
+                                    <span className="text-lg font-semibold">DIU Question Bank</span>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                                     <X className="h-5 w-5" />
