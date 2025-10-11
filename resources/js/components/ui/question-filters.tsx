@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { ClearFiltersButton } from "@/components/ui/clear-filters-button";
-import { useMemo } from "react";
 
 type FilterValue = number | null | undefined;
 
@@ -60,17 +59,6 @@ export function QuestionFilters({
     examType: filterOptions.examTypes,
   } as const;
 
-  // Filter courses based on selected department
-  const filteredCourses = useMemo(() => {
-    if (typeof initialFilters.department !== "number") {
-      return filterOptions.courses;
-    }
-
-    return filterOptions.courses.filter(
-      (course) => course.department_id === initialFilters.department
-    );
-  }, [initialFilters.department, filterOptions.courses]);
-
   // Create filter configs for consistent rendering (reordered: department, course, semester, examType)
   const filterConfigs: FilterConfig[] = [
     {
@@ -85,7 +73,7 @@ export function QuestionFilters({
       id: "course",
       label: "Course",
       icon: <Book className="h-4 w-4 text-green-600 dark:text-green-400" />,
-      options: filteredCourses,
+      options: filterOptions.courses,
       activeClass:
         "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
     },

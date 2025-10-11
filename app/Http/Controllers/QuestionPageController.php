@@ -29,7 +29,7 @@ class QuestionPageController extends Controller
 
         $departmentOptions = Department::select('id', 'short_name as name')->orderBy('short_name')->get();
         $semesterOptions = Semester::select('id', 'name')->orderByDesc('name')->get();
-        $courseOptions = Course::select('id', 'name', 'department_id')->orderBy('name')->get();
+        $allCourseOptions = Course::select('id', 'name', 'department_id')->orderBy('name')->get();
         $examTypeOptions = ExamType::select('id', 'name')->orderBy('name')->get();
 
         $invalidFiltersDetected = false;
@@ -44,7 +44,7 @@ class QuestionPageController extends Controller
             $invalidFiltersDetected = true;
         }
 
-        if ($courseId !== null && ! $courseOptions->contains('id', $courseId)) {
+        if ($courseId !== null && ! $allCourseOptions->contains('id', $courseId)) {
             $courseId = null;
             $invalidFiltersDetected = true;
         }
@@ -120,11 +120,17 @@ class QuestionPageController extends Controller
             ];
         });
 
+        $visibleCourseOptions = $departmentId !== null
+            ? $allCourseOptions
+                ->where('department_id', $departmentId)
+                ->values()
+            : $allCourseOptions;
+
         // Get filter options
         $filterOptions = [
             'departments' => $departmentOptions->toArray(),
             'semesters' => $semesterOptions->toArray(),
-            'courses' => $courseOptions->toArray(),
+            'courses' => $visibleCourseOptions->toArray(),
             'examTypes' => $examTypeOptions->toArray(),
         ];
 
