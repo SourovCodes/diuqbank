@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
-import MainLayout from "@/layouts/main-layout";
-import PageHeader from "@/components/page-header";
-import { Head } from "@inertiajs/react";
-import { FileText, Upload, Download, Shield, AlertTriangle, Scale } from "lucide-react";
+import PageHeader from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
+import MainLayout from '@/layouts/main-layout';
+import { Head } from '@inertiajs/react';
+import { AlertTriangle, Download, FileText, Scale, Shield, Upload } from 'lucide-react';
 
 export default function TermsOfService() {
     return (
@@ -10,17 +10,11 @@ export default function TermsOfService() {
             <Head title="Terms of Service" />
 
             <div className="container mx-auto px-4 py-16">
-                <PageHeader
-                    title="Terms of"
-                    gradientText="Service"
-                    description="Please read these terms carefully before using our platform"
-                />
+                <PageHeader title="Terms of" gradientText="Service" description="Please read these terms carefully before using our platform" />
 
                 {/* Last Updated */}
                 <div className="mb-8 text-center">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Last Updated: October 11, 2025
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Last Updated: October 11, 2025</p>
                 </div>
 
                 {/* Agreement to Terms */}
@@ -35,10 +29,12 @@ export default function TermsOfService() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                Welcome to DIU Question Bank. These Terms of Service ("Terms") govern your access to and use of our platform. By accessing or using DIU Question Bank, you agree to be bound by these Terms.
+                                Welcome to DIUQBank. These Terms of Service ("Terms") govern your access to and use of our platform. By accessing or
+                                using DIUQBank, you agree to be bound by these Terms.
                             </p>
                             <p>
-                                If you do not agree to these Terms, you may not access or use the platform. We reserve the right to modify these Terms at any time, and your continued use of the platform constitutes acceptance of any changes.
+                                If you do not agree to these Terms, you may not access or use the platform. We reserve the right to modify these Terms
+                                at any time, and your continued use of the platform constitutes acceptance of any changes.
                             </p>
                         </div>
                     </CardContent>
@@ -55,7 +51,7 @@ export default function TermsOfService() {
                         </div>
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                            <p>To use DIU Question Bank, you must:</p>
+                            <p>To use DIUQBank, you must:</p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>Be a current or former student of Daffodil International University</li>
                                 <li>Use a valid university email address for contributor access</li>
@@ -64,7 +60,8 @@ export default function TermsOfService() {
                                 <li>Provide accurate and truthful information</li>
                             </ul>
                             <p className="mt-4">
-                                We reserve the right to refuse service, terminate accounts, or remove content at our sole discretion if we believe you have violated these Terms.
+                                We reserve the right to refuse service, terminate accounts, or remove content at our sole discretion if we believe you
+                                have violated these Terms.
                             </p>
                         </div>
                     </CardContent>
@@ -120,7 +117,7 @@ export default function TermsOfService() {
                         <div className="space-y-6 text-slate-600 dark:text-slate-300">
                             <div>
                                 <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Permitted Use</h3>
-                                <p className="mb-2">You may use DIU Question Bank to:</p>
+                                <p className="mb-2">You may use DIUQBank to:</p>
                                 <ul className="list-disc space-y-2 pl-5">
                                     <li>Access and download question papers for personal academic preparation</li>
                                     <li>Study and practice using previous exam questions</li>
@@ -158,10 +155,12 @@ export default function TermsOfService() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                <span className="font-medium">Platform Content:</span> The platform's design, features, code, and branding are owned by DIU Question Bank and are protected by intellectual property laws.
+                                <span className="font-medium">Platform Content:</span> The platform's design, features, code, and branding are owned
+                                by DIUQBank and are protected by intellectual property laws.
                             </p>
                             <p>
-                                <span className="font-medium">User-Uploaded Content:</span> Question papers are created by Daffodil International University faculty and are intended for educational use. By uploading content, you confirm that:
+                                <span className="font-medium">User-Uploaded Content:</span> Question papers are created by Daffodil International
+                                University faculty and are intended for educational use. By uploading content, you confirm that:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>You obtained the question paper through legitimate means (completing the exam)</li>
@@ -185,7 +184,8 @@ export default function TermsOfService() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                <span className="font-medium">No Warranty:</span> DIU Question Bank is provided "as is" without warranties of any kind. We do not guarantee:
+                                <span className="font-medium">No Warranty:</span> DIUQBank is provided "as is" without warranties of any kind. We do
+                                not guarantee:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>The accuracy, completeness, or authenticity of uploaded content</li>
@@ -194,10 +194,12 @@ export default function TermsOfService() {
                                 <li>Specific exam questions will appear in future exams</li>
                             </ul>
                             <p className="mt-4">
-                                <span className="font-medium">Limitation of Liability:</span> We are not liable for any damages arising from your use of the platform, including but not limited to academic performance, data loss, or technical issues.
+                                <span className="font-medium">Limitation of Liability:</span> We are not liable for any damages arising from your use
+                                of the platform, including but not limited to academic performance, data loss, or technical issues.
                             </p>
                             <p className="mt-4">
-                                <span className="font-medium">Educational Purpose:</span> This platform is for study and preparation purposes only. It does not replace proper coursework, lectures, or official study materials.
+                                <span className="font-medium">Educational Purpose:</span> This platform is for study and preparation purposes only. It
+                                does not replace proper coursework, lectures, or official study materials.
                             </p>
                         </div>
                     </CardContent>
@@ -241,10 +243,12 @@ export default function TermsOfService() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                You may stop using the platform at any time. To delete your account and remove your personal information, please contact us.
+                                You may stop using the platform at any time. To delete your account and remove your personal information, please
+                                contact us.
                             </p>
                             <p>
-                                We may suspend or terminate your access immediately, without notice, for any violation of these Terms, including but not limited to:
+                                We may suspend or terminate your access immediately, without notice, for any violation of these Terms, including but
+                                not limited to:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>Uploading inappropriate or harmful content</li>
@@ -254,7 +258,8 @@ export default function TermsOfService() {
                                 <li>Providing false information</li>
                             </ul>
                             <p className="mt-4">
-                                Upon termination, your right to access and use the platform will immediately cease, but your uploaded contributions may remain with attribution unless you request removal.
+                                Upon termination, your right to access and use the platform will immediately cease, but your uploaded contributions
+                                may remain with attribution unless you request removal.
                             </p>
                         </div>
                     </CardContent>
@@ -266,16 +271,14 @@ export default function TermsOfService() {
                         <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">Contact Us</h2>
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                            <p>
-                                If you have questions about these Terms of Service, please contact us:
-                            </p>
+                            <p>If you have questions about these Terms of Service, please contact us:</p>
                             <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-                                <p className="font-medium text-slate-900 dark:text-white">DIU Question Bank Team</p>
+                                <p className="font-medium text-slate-900 dark:text-white">DIUQBank Team</p>
                                 <p className="mt-2">Email: support@diuqbank.edu</p>
                                 <p>Daffodil International University</p>
                             </div>
                             <p className="mt-4 text-sm italic">
-                                By using DIU Question Bank, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                                By using DIUQBank, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
                             </p>
                         </div>
                     </CardContent>

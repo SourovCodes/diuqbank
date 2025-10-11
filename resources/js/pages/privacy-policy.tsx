@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
-import MainLayout from "@/layouts/main-layout";
-import PageHeader from "@/components/page-header";
-import { Head } from "@inertiajs/react";
-import { Shield, Database, Lock, Eye, FileText, Mail } from "lucide-react";
+import PageHeader from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
+import MainLayout from '@/layouts/main-layout';
+import { Head } from '@inertiajs/react';
+import { Database, Eye, FileText, Lock, Mail, Shield } from 'lucide-react';
 
 export default function PrivacyPolicy() {
     return (
@@ -18,9 +18,7 @@ export default function PrivacyPolicy() {
 
                 {/* Last Updated */}
                 <div className="mb-8 text-center">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Last Updated: October 11, 2025
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Last Updated: October 11, 2025</p>
                 </div>
 
                 {/* Introduction */}
@@ -35,10 +33,13 @@ export default function PrivacyPolicy() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                Welcome to DIU Question Bank. We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
+                                Welcome to DIUQBank. We are committed to protecting your privacy and ensuring the security of your personal
+                                information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use
+                                our platform.
                             </p>
                             <p>
-                                By accessing or using DIU Question Bank, you agree to this Privacy Policy. If you do not agree with our policies and practices, please do not use our platform.
+                                By accessing or using DIUQBank, you agree to this Privacy Policy. If you do not agree with our policies and practices,
+                                please do not use our platform.
                             </p>
                         </div>
                     </CardContent>
@@ -127,20 +128,24 @@ export default function PrivacyPolicy() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                We respect your privacy and do not sell, trade, or rent your personal information to third parties. However, we may share information in the following circumstances:
+                                We respect your privacy and do not sell, trade, or rent your personal information to third parties. However, we may
+                                share information in the following circumstances:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>
-                                    <span className="font-medium">Public Display:</span> Contributor names are displayed publicly on uploaded question papers as recognition for their contribution.
+                                    <span className="font-medium">Public Display:</span> Contributor names are displayed publicly on uploaded question
+                                    papers as recognition for their contribution.
                                 </li>
                                 <li>
-                                    <span className="font-medium">With Your Consent:</span> We may share information when you explicitly give us permission.
+                                    <span className="font-medium">With Your Consent:</span> We may share information when you explicitly give us
+                                    permission.
                                 </li>
                                 <li>
                                     <span className="font-medium">Legal Requirements:</span> When required by law or to protect our rights and safety.
                                 </li>
                                 <li>
-                                    <span className="font-medium">University Administration:</span> When necessary to comply with university policies or handle academic integrity issues.
+                                    <span className="font-medium">University Administration:</span> When necessary to comply with university policies
+                                    or handle academic integrity issues.
                                 </li>
                             </ul>
                         </div>
@@ -159,7 +164,8 @@ export default function PrivacyPolicy() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                We implement appropriate technical and organizational security measures to protect your personal information from unauthorized access, disclosure, alteration, or destruction. These measures include:
+                                We implement appropriate technical and organizational security measures to protect your personal information from
+                                unauthorized access, disclosure, alteration, or destruction. These measures include:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>Secure socket layer (SSL) encryption for data transmission</li>
@@ -169,7 +175,8 @@ export default function PrivacyPolicy() {
                                 <li>Regular backups to prevent data loss</li>
                             </ul>
                             <p className="mt-4">
-                                While we strive to protect your information, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security.
+                                While we strive to protect your information, no method of transmission over the internet or electronic storage is 100%
+                                secure. We cannot guarantee absolute security.
                             </p>
                         </div>
                     </CardContent>
@@ -195,9 +202,7 @@ export default function PrivacyPolicy() {
                                 <li>Withdraw consent for data processing at any time</li>
                                 <li>Request a copy of your data in a portable format</li>
                             </ul>
-                            <p className="mt-4">
-                                Note: Deleting your account will remove your uploaded contributions from the platform.
-                            </p>
+                            <p className="mt-4">Note: Deleting your account will remove your uploaded contributions from the platform.</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -214,10 +219,11 @@ export default function PrivacyPolicy() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                If you have questions, concerns, or requests regarding this Privacy Policy or your personal information, please contact us:
+                                If you have questions, concerns, or requests regarding this Privacy Policy or your personal information, please
+                                contact us:
                             </p>
                             <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-                                <p className="font-medium text-slate-900 dark:text-white">DIU Question Bank Team</p>
+                                <p className="font-medium text-slate-900 dark:text-white">DIUQBank Team</p>
                                 <p className="mt-2">Email: privacy@diuqbank.edu</p>
                                 <p>Daffodil International University</p>
                             </div>

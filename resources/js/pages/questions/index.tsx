@@ -1,80 +1,64 @@
-import { Head } from "@inertiajs/react";
-import MainLayout from "@/layouts/main-layout";
-import type { SharedData, PaginatedData } from "@/types";
-import { QuestionFilters } from "@/components/ui/question-filters";
-import { CustomPagination } from "@/components/ui/custom-pagination";
-import { Question, QuestionCard } from "@/components/ui/question-card";
-import { FileText } from "lucide-react";
+import { CustomPagination } from '@/components/ui/custom-pagination';
+import { Question, QuestionCard } from '@/components/ui/question-card';
+import { QuestionFilters } from '@/components/ui/question-filters';
+import MainLayout from '@/layouts/main-layout';
+import type { PaginatedData, SharedData } from '@/types';
+import { Head } from '@inertiajs/react';
+import { FileText } from 'lucide-react';
 
 interface QuestionsIndexProps extends SharedData {
-  questions: PaginatedData<Question>;
-  filters: {
-    department?: number | null;
-    semester?: number | null;
-    course?: number | null;
-    examType?: number | null;
-  };
-  filterOptions: {
-    departments: Array<{ id: number; name: string }>;
-    semesters: Array<{ id: number; name: string }>;
-    courses: Array<{ id: number; name: string; department_id: number }>;
-    examTypes: Array<{ id: number; name: string }>;
-  };
+    questions: PaginatedData<Question>;
+    filters: {
+        department?: number | null;
+        semester?: number | null;
+        course?: number | null;
+        examType?: number | null;
+    };
+    filterOptions: {
+        departments: Array<{ id: number; name: string }>;
+        semesters: Array<{ id: number; name: string }>;
+        courses: Array<{ id: number; name: string; department_id: number }>;
+        examTypes: Array<{ id: number; name: string }>;
+    };
 }
 
-export default function QuestionsIndex({
-  questions,
-  filters,
-  filterOptions,
-}: QuestionsIndexProps) {
-  return (
-    <MainLayout>
-      <Head title="Questions" />
+export default function QuestionsIndex({ questions, filters, filterOptions }: QuestionsIndexProps) {
+    return (
+        <MainLayout>
+            <Head title="Questions" />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            Questions
-          </h1>
-        </div>
+            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mb-6 flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Questions</h1>
+                </div>
 
-        {/* Filters */}
-        <div className="mb-6">
-          <QuestionFilters
-            initialFilters={filters}
-            filterOptions={filterOptions}
-          />
-        </div>
+                {/* Filters */}
+                <div className="mb-6">
+                    <QuestionFilters initialFilters={filters} filterOptions={filterOptions} />
+                </div>
 
-        {/* Questions List */}
-        {questions.data.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-12 text-center">
-            <FileText className="h-16 w-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-              No questions found
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400">
-              Try adjusting your filters or check back later.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4 mb-6">
-            {questions.data.map((question) => (
-              <QuestionCard key={question.id} question={question} />
-            ))}
-          </div>
-        )}
+                {/* Questions List */}
+                {questions.data.length === 0 ? (
+                    <div className="rounded-lg border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <FileText className="mx-auto mb-4 h-16 w-16 text-slate-300 dark:text-slate-600" />
+                        <h3 className="mb-2 text-lg font-medium text-slate-900 dark:text-white">No questions found</h3>
+                        <p className="text-slate-600 dark:text-slate-400">Try adjusting your filters or check back later.</p>
+                    </div>
+                ) : (
+                    <div className="mb-6 space-y-4">
+                        {questions.data.map((question) => (
+                            <QuestionCard key={question.id} question={question} />
+                        ))}
+                    </div>
+                )}
 
-        {/* Pagination */}
-        {questions.data.length > 0 && (
-          <div className="mt-6">
-            <CustomPagination
-              currentPage={questions.current_page}
-              totalPages={questions.last_page}
-            />
-          </div>
-        )}
-      </div>
-    </MainLayout>
-  );
+                {/* Pagination */}
+                {questions.data.length > 0 && (
+                    <div className="mt-6">
+                        <CustomPagination currentPage={questions.current_page} totalPages={questions.last_page} />
+                    </div>
+                )}
+            </div>
+        </MainLayout>
+    );
 }

@@ -77,7 +77,7 @@ export default function Navigation() {
                         {/* Logo */}
                         <Link href="/" className="flex items-center">
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
-                                DIU Question Bank
+                                DIUQBank
                             </span>
                         </Link>
 
@@ -192,7 +192,7 @@ export default function Navigation() {
                             {/* Header */}
                             <div className="flex items-center justify-between border-b p-4">
                                 <div className="flex items-center">
-                                    <span className="text-lg font-semibold">DIU Question Bank</span>
+                                    <span className="text-lg font-semibold">DIUQBank</span>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                                     <X className="h-5 w-5" />

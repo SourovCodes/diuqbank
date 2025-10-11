@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
-import MainLayout from "@/layouts/main-layout";
-import { Head } from "@inertiajs/react";
-import { BookOpen, Upload, Users, GraduationCap } from "lucide-react";
-import PageHeader from "@/components/page-header";
+import PageHeader from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
+import MainLayout from '@/layouts/main-layout';
+import { Head } from '@inertiajs/react';
+import { BookOpen, GraduationCap, Upload, Users } from 'lucide-react';
 
 export default function About() {
     return (
@@ -12,7 +12,7 @@ export default function About() {
             <div className="container mx-auto px-4 py-16">
                 <PageHeader
                     title="About"
-                    gradientText="DIU Question Bank"
+                    gradientText="DIUQBank"
                     description="A community-driven platform helping students excel in their exams through shared knowledge"
                 />
 
@@ -28,10 +28,14 @@ export default function About() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                DIU Question Bank is a community-driven platform designed to help students at Daffodil International University prepare for their exams more effectively. We provide a centralized repository where students can access previous semester question papers, allowing them to understand exam patterns and practice thoroughly.
+                                DIUQBank is a community-driven platform designed to help students at Daffodil International University prepare for
+                                their exams more effectively. We provide a centralized repository where students can access previous semester question
+                                papers, allowing them to understand exam patterns and practice thoroughly.
                             </p>
                             <p>
-                                Our platform thrives on collaboration. Students who have completed their exams contribute by uploading question papers, building a comprehensive resource that benefits the entire university community. Every contribution helps future students succeed in their academic journey.
+                                Our platform thrives on collaboration. Students who have completed their exams contribute by uploading question
+                                papers, building a comprehensive resource that benefits the entire university community. Every contribution helps
+                                future students succeed in their academic journey.
                             </p>
                         </div>
                     </CardContent>
@@ -52,13 +56,16 @@ export default function About() {
                                 <p>Students who have completed their exams can contribute to the platform by:</p>
                                 <ul className="list-disc space-y-2 pl-5">
                                     <li>
-                                        <span className="font-medium">Signing in with university email:</span> Access the upload feature using your official DIU email address.
+                                        <span className="font-medium">Signing in with university email:</span> Access the upload feature using your
+                                        official DIU email address.
                                     </li>
                                     <li>
-                                        <span className="font-medium">Uploading question papers:</span> Share question papers from your exams as PDF files, properly categorized by department, course, semester, and exam type.
+                                        <span className="font-medium">Uploading question papers:</span> Share question papers from your exams as PDF
+                                        files, properly categorized by department, course, semester, and exam type.
                                     </li>
                                     <li>
-                                        <span className="font-medium">Recognition for contribution:</span> Your name gets automatically watermarked on the uploaded PDF, acknowledging your valuable contribution to the community.
+                                        <span className="font-medium">Recognition for contribution:</span> Your name gets automatically watermarked on
+                                        the uploaded PDF, acknowledging your valuable contribution to the community.
                                     </li>
                                 </ul>
                             </div>
@@ -76,17 +83,21 @@ export default function About() {
 
                             <div className="space-y-4 text-slate-600 dark:text-slate-300">
                                 <p>
-                                    Anyone can access the question bank without logging in, making it easy for all students to prepare for their exams. The platform offers:
+                                    Anyone can access the question bank without logging in, making it easy for all students to prepare for their
+                                    exams. The platform offers:
                                 </p>
                                 <ul className="list-disc space-y-2 pl-5">
                                     <li>
-                                        <span className="font-medium">Free access:</span> Browse and download question papers without any registration required.
+                                        <span className="font-medium">Free access:</span> Browse and download question papers without any registration
+                                        required.
                                     </li>
                                     <li>
-                                        <span className="font-medium">Smart filtering:</span> Easily find relevant questions by filtering by department, semester, course, and exam type.
+                                        <span className="font-medium">Smart filtering:</span> Easily find relevant questions by filtering by
+                                        department, semester, course, and exam type.
                                     </li>
                                     <li>
-                                        <span className="font-medium">Comprehensive coverage:</span> Access a growing collection of question papers covering multiple semesters and courses.
+                                        <span className="font-medium">Comprehensive coverage:</span> Access a growing collection of question papers
+                                        covering multiple semesters and courses.
                                     </li>
                                 </ul>
                             </div>
@@ -106,7 +117,8 @@ export default function About() {
 
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
                             <p>
-                                Our mission is to create a supportive academic environment where knowledge is shared freely and students help each other succeed. By providing easy access to previous exam questions, we enable students to:
+                                Our mission is to create a supportive academic environment where knowledge is shared freely and students help each
+                                other succeed. By providing easy access to previous exam questions, we enable students to:
                             </p>
                             <ul className="list-disc space-y-2 pl-5">
                                 <li>Understand exam patterns and question formats</li>
@@ -116,7 +128,8 @@ export default function About() {
                                 <li>Build confidence through comprehensive preparation</li>
                             </ul>
                             <p>
-                                Together, we're building a culture of collaboration and mutual support that helps every student at Daffodil International University achieve their academic goals.
+                                Together, we're building a culture of collaboration and mutual support that helps every student at Daffodil
+                                International University achieve their academic goals.
                             </p>
                         </div>
                     </CardContent>
@@ -125,18 +138,15 @@ export default function About() {
                 {/* Join Us section */}
                 <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
                     <CardContent className="p-8">
-                        <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 dark:text-white">
-                            Be Part of the Community
-                        </h2>
+                        <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 dark:text-white">Be Part of the Community</h2>
 
                         <div className="mx-auto max-w-2xl space-y-4 text-center text-slate-600 dark:text-slate-300">
                             <p>
-                                Whether you're preparing for your next exam or have just completed one, you're a valuable part of our community. 
-                                Access resources to help you study, and consider contributing your exam papers to help fellow students in their journey.
+                                Whether you're preparing for your next exam or have just completed one, you're a valuable part of our community.
+                                Access resources to help you study, and consider contributing your exam papers to help fellow students in their
+                                journey.
                             </p>
-                            <p className="font-medium text-blue-600 dark:text-blue-400">
-                                Together, we make learning easier for everyone at DIU.
-                            </p>
+                            <p className="font-medium text-blue-600 dark:text-blue-400">Together, we make learning easier for everyone at DIU.</p>
                         </div>
                     </CardContent>
                 </Card>

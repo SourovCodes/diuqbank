@@ -11,11 +11,12 @@ export default function Footer() {
                     <div className="col-span-1 md:col-span-2 lg:col-span-1">
                         <Link href="/" className="mb-4 inline-flex items-center">
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-2xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
-                                DIU Question Bank
+                                DIUQBank
                             </span>
                         </Link>
                         <p className="mb-4 text-slate-600 dark:text-slate-400">
-                            A community-driven platform helping students at Daffodil International University excel in their exams through shared knowledge.
+                            A community-driven platform helping students at Daffodil International University excel in their exams through shared
+                            knowledge.
                         </p>
                         <div className="flex space-x-4">{/* Socials placeholder */}</div>
                     </div>
@@ -25,10 +26,7 @@ export default function Footer() {
                         <h3 className="mb-4 text-sm font-semibold tracking-wider text-slate-900 uppercase dark:text-white">Quick Links</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link
-                                    href="/"
-                                    className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
-                                >
+                                <Link href="/" className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
                                     Home
                                 </Link>
                             </li>
