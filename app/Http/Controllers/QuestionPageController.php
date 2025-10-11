@@ -90,8 +90,6 @@ class QuestionPageController extends Controller
             $query->where('exam_type_id', $examTypeId);
         }
 
-       
-
         $questions = $query->latest()->paginate(12)->withQueryString();
 
         // Transform questions to include media URLs
@@ -168,8 +166,8 @@ class QuestionPageController extends Controller
                 'id' => $question->user->id,
                 'name' => $question->user->name,
                 'username' => $question->user->username,
-                'student_id' => $question->user->student_id ,
-                'profile_picture_url' => $question->user->getFirstMediaUrl('profile_picture') ,
+                'student_id' => $question->user->student_id,
+                'profile_picture_url' => $question->user->getFirstMediaUrl('profile_picture'),
             ],
         ];
 

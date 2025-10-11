@@ -45,6 +45,20 @@ class ContributorsPageController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        // Transform questions to match QuestionCard component format
+        $questions->getCollection()->transform(function ($question) {
+            return [
+                'id' => $question->id,
+                'created_at' => $question->created_at->toISOString(),
+                'view_count' => $question->view_count,
+                'section' => $question->section,
+                'department' => $question->department->short_name,
+                'course' => $question->course->name,
+                'semester' => $question->semester->name,
+                'exam_type' => $question->examType->name,
+            ];
+        });
+
         return Inertia::render('contributors/show', [
             'contributor' => [
                 'id' => $user->id,
