@@ -11,19 +11,15 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, Calendar, FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
+import { FileText, Home, Info, KeyRound, LogIn, LogOut, Menu, User, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleButton from './appearance-dropdown';
 
 // Navigation items
 const menuItems = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Blog', href: '/blog', icon: FileText },
-    { name: 'Trackers', href: '/trackers', icon: BarChart3 },
-    { name: 'Programmers', href: '/programmers', icon: Users },
+    { name: 'Questions', href: '/questions', icon: FileText },
     { name: 'About', href: '/about', icon: Info },
-    { name: 'Contact', href: '/contact', icon: Mail },
 ];
 
 export default function Navigation() {
