@@ -7,7 +7,6 @@ use App\Models\Department;
 use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,7 +26,7 @@ class QuestionPageController extends Controller
         $courseId = $parseFilterId($request->input('course'));
         $examTypeId = $parseFilterId($request->input('examType'));
 
-        [$departmentOptions, $semesterOptions, $allCourseOptions, $examTypeOptions] = cache()->remember('filter_options', 3600, fn() => [
+        [$departmentOptions, $semesterOptions, $allCourseOptions, $examTypeOptions] = cache()->remember('filter_options', 3600, fn () => [
             Department::select('id', 'short_name')->orderBy('short_name')->get(),
             Semester::select('id', 'name')->get(),
             Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
@@ -91,14 +90,8 @@ class QuestionPageController extends Controller
             $query->where('exam_type_id', $examTypeId);
         }
 
-        $semesterSeasonOrder = [
-            'spring' => 1,
-            'summer' => 2,
-            'short' => 3,
-            'fall' => 4,
-        ];
-
        
+
         $questions = $query->latest()->paginate(12)->withQueryString();
 
         // Transform questions to include media URLs
@@ -174,8 +167,9 @@ class QuestionPageController extends Controller
             'user' => [
                 'id' => $question->user->id,
                 'name' => $question->user->name,
-                'username' => $question->user->username ?? null,
-                'student_id' => $question->user->student_id ?? null,
+                'username' => $question->user->username,
+                'student_id' => $question->user->student_id ,
+                'profile_picture_url' => $question->user->getFirstMediaUrl('profile_picture') ,
             ],
         ];
 
