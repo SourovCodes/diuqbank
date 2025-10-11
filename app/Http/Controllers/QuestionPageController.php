@@ -14,7 +14,7 @@ use Inertia\Response;
 
 class QuestionPageController extends Controller
 {
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request)
     {
         $parseFilterId = static function (?string $value): ?int {
             return is_numeric($value)
@@ -133,32 +133,12 @@ class QuestionPageController extends Controller
                 'id' => $question->id,
                 'created_at' => $question->created_at->toISOString(),
                 'view_count' => $question->view_count,
-                'pdf_size' => $question->pdf_size,
-                'pdf_url' => $question->pdf_url,
                 'section' => $question->section,
-                'department' => [
-                    'id' => $question->department->id,
-                    'name' => $question->department->name,
-                    'short_name' => $question->department->short_name,
-                ],
-                'course' => [
-                    'id' => $question->course->id,
-                    'name' => $question->course->name,
-                ],
-                'semester' => [
-                    'id' => $question->semester->id,
-                    'name' => $question->semester->name,
-                ],
-                'exam_type' => [
-                    'id' => $question->examType->id,
-                    'name' => $question->examType->name,
-                ],
-                'user' => [
-                    'id' => $question->user->id,
-                    'name' => $question->user->name,
-                    'username' => $question->user->username ?? null,
-                    'student_id' => $question->user->student_id ?? null,
-                ],
+                'department' => $question->department->short_name,
+                'course' => $question->course->name,
+                'semester' => $question->semester->name,
+                'exam_type' => $question->examType->name,
+              
             ];
         });
 

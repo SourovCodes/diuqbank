@@ -1,7 +1,7 @@
 import { Link } from "@inertiajs/react";
 import { School, Calendar, Clock, Eye, ArrowRight } from "lucide-react";
 
-type Question = {
+export type Question = {
   id: number;
   created_at: string;
   view_count: number;

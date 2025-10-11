@@ -3,20 +3,10 @@ import MainLayout from "@/layouts/main-layout";
 import type { SharedData } from "@/types";
 import { QuestionFilters } from "@/components/ui/question-filters";
 import { CustomPagination } from "@/components/ui/custom-pagination";
-import { QuestionCard } from "@/components/ui/question-card";
+import { Question, QuestionCard } from "@/components/ui/question-card";
 import { FileText } from "lucide-react";
 
-// Types for question data
-type Question = {
-  id: number;
-  created_at: string;
-  view_count: number;
-  department: string;
-  course: string;
-  semester: string;
-  exam_type: string;
-  section?: string | null;
-};
+
 
 type PaginationLink = {
   url: string | null;
