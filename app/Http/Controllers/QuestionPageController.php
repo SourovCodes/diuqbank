@@ -28,7 +28,7 @@ class QuestionPageController extends Controller
         $examTypeId = $parseFilterId($request->input('examType'));
 
         $departmentOptions = Department::select('id', 'short_name as name')->orderBy('short_name')->get();
-        $semesterOptions = Semester::select('id', 'name')->orderByDesc('name')->get();
+        $semesterOptions = Semester::select('id', 'name')->get();
         $allCourseOptions = Course::select('id', 'name', 'department_id')->orderBy('name')->get();
         $examTypeOptions = ExamType::select('id', 'name')->orderBy('name')->get();
 
@@ -89,6 +89,41 @@ class QuestionPageController extends Controller
         if ($examTypeId !== null) {
             $query->where('exam_type_id', $examTypeId);
         }
+
+        $semesterSeasonOrder = [
+            'spring' => 1,
+            'summer' => 2,
+            'short' => 3,
+            'fall' => 4,
+        ];
+
+        $semesterOptions = $semesterOptions
+            ->sort(function (Semester $a, Semester $b) use ($semesterSeasonOrder): int {
+                $extractSortData = static function (Semester $semester) use ($semesterSeasonOrder): array {
+                    $matches = [];
+                    preg_match('/^(?<season>[A-Za-z]+)\s+(?<year>\d{2,4})$/', $semester->name, $matches);
+
+                    $seasonKey = strtolower($matches['season'] ?? '');
+                    $seasonRank = $semesterSeasonOrder[$seasonKey] ?? 99;
+                    $year = isset($matches['year']) ? (int) $matches['year'] : 0;
+
+                    if (isset($matches['year']) && strlen($matches['year']) === 2) {
+                        $year += 2000;
+                    }
+
+                    return [$year, $seasonRank];
+                };
+
+                [$yearA, $seasonRankA] = $extractSortData($a);
+                [$yearB, $seasonRankB] = $extractSortData($b);
+
+                if ($yearA === $yearB) {
+                    return $seasonRankA <=> $seasonRankB;
+                }
+
+                return $yearB <=> $yearA;
+            })
+            ->values();
 
         $questions = $query->latest()->paginate(12)->withQueryString();
 
