@@ -27,7 +27,7 @@ class QuestionPageController extends Controller
         $examTypeId = $parseFilterId($request->input('examType'));
 
         [$departmentOptions, $semesterOptions, $allCourseOptions, $examTypeOptions] = cache()->remember('filter_options', 3600, fn () => [
-            Department::select('id', 'short_name')->orderBy('short_name')->get(),
+            Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
             Semester::select('id', 'name')->get(),
             Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
             ExamType::select('id', 'name')->orderBy('name')->get(),
