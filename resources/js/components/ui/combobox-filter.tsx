@@ -1,8 +1,5 @@
-"use client";
-
 import { useState, useCallback, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useRouter } from "nextjs-toploader/app";
+import { router } from "@inertiajs/react";
 
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,9 +37,6 @@ export function ComboboxFilter({
   className,
   isActive,
 }: ComboboxFilterProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -58,8 +52,9 @@ export function ComboboxFilter({
       // Don't update if value hasn't changed
       if (selectedValue === value) return;
 
-      // Create new search params
-      const params = new URLSearchParams(searchParams.toString());
+      // Create new search params from current URL
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
 
       // Update or remove the parameter
       if (selectedValue === "all") {
@@ -71,10 +66,14 @@ export function ComboboxFilter({
       // Reset to page 1 when filters change
       params.set("page", "1");
 
-      // Update URL without full page reload
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      // Update URL without full page reload using Inertia
+      router.visit(url.toString(), { 
+        preserveState: true, 
+        preserveScroll: false,
+        replace: true 
+      });
     },
-    [value, urlParam, pathname, router, searchParams]
+    [value, urlParam]
   );
 
   // Handle manual focus to avoid auto-focusing on mobile
