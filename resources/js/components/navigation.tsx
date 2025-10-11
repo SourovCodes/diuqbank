@@ -79,9 +79,9 @@ export default function Navigation() {
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
                         <Link href="/" className="flex items-center space-x-2">
-                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-7 w-7 rounded-lg" />
+                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU Question Bank" className="h-7 w-7 rounded-lg" />
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
-                                DIU ACM
+                                DIU Question Bank
                             </span>
                         </Link>
 
