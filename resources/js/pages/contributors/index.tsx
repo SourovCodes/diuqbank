@@ -9,11 +9,11 @@ import { ArrowRight, Eye, FileText, Users } from 'lucide-react';
 type Contributor = {
     id: number;
     name: string;
-    username?: string;
+    username: string;
     student_id?: string;
     questions_count: number;
     total_views: number;
-    profile_picture_url?: string;
+    profile_picture_url: string;
 };
 
 interface ContributorsIndexProps extends SharedData {
@@ -41,32 +41,20 @@ export default function ContributorsIndex({ contributors }: ContributorsIndexPro
                 ) : (
                     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {contributors.data.map((contributor) => (
-                            <Link
-                                key={contributor.id}
-                                href={contributorsRoutes.show.url({ user: contributor.username ?? contributor.id })}
-                                className="group block"
-                            >
+                            <Link key={contributor.id} href={contributorsRoutes.show.url({ user: contributor.username })} className="group block">
                                 <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600">
                                     <div className="mb-4 flex items-start gap-4">
-                                        {contributor.profile_picture_url ? (
-                                            <img
-                                                src={contributor.profile_picture_url}
-                                                alt={contributor.name}
-                                                className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50">
-                                                <Users className="h-8 w-8 text-blue-700 dark:text-blue-400" />
-                                            </div>
-                                        )}
+                                        <img
+                                            src={contributor.profile_picture_url}
+                                            alt={contributor.name}
+                                            className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+                                        />
 
                                         <div className="min-w-0 flex-1">
                                             <h3 className="truncate text-lg font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                                                 {contributor.name}
                                             </h3>
-                                            {contributor.username && (
-                                                <p className="truncate text-sm text-slate-500 dark:text-slate-400">@{contributor.username}</p>
-                                            )}
+                                            <p className="truncate text-sm text-slate-500 dark:text-slate-400">@{contributor.username}</p>
                                             {contributor.student_id && (
                                                 <p className="truncate text-sm text-slate-500 dark:text-slate-400">ID: {contributor.student_id}</p>
                                             )}

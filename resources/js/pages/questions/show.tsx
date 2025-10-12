@@ -223,7 +223,9 @@ export default function QuestionShow({ question }: QuestionShowProps) {
                                             </div>
                                             <div className="truncate text-xs text-slate-500 dark:text-slate-400">@{question.user.username}</div>
                                             {question.user.student_id && (
-                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">ID: {question.user.student_id}</div>
+                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                                    ID: {question.user.student_id}
+                                                </div>
                                             )}
                                         </div>
 

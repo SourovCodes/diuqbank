@@ -4,16 +4,16 @@ import MainLayout from '@/layouts/main-layout';
 import contributorsRoutes from '@/routes/contributors';
 import type { PaginatedData, SharedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, FileText, User } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 
 type Contributor = {
     id: number;
     name: string;
-    username?: string;
+    username: string;
     student_id?: string;
     questions_count: number;
     total_views: number;
-    profile_picture_url?: string;
+    profile_picture_url: string;
 };
 
 interface ContributorShowProps extends SharedData {
@@ -39,22 +39,16 @@ export default function ContributorShow({ contributor, questions }: ContributorS
                 {/* Contributor Header */}
                 <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex items-start gap-4">
-                        {contributor.profile_picture_url ? (
-                            <img
-                                src={contributor.profile_picture_url}
-                                alt={contributor.name}
-                                className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50">
-                                <User className="h-8 w-8 text-blue-700 dark:text-blue-400" />
-                            </div>
-                        )}
+                        <img
+                            src={contributor.profile_picture_url}
+                            alt={contributor.name}
+                            className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+                        />
 
                         <div className="min-w-0 flex-1">
                             <h1 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">{contributor.name}</h1>
 
-                            {contributor.username && <p className="mb-2 text-slate-600 dark:text-slate-400">@{contributor.username}</p>}
+                            <p className="mb-2 text-slate-600 dark:text-slate-400">@{contributor.username}</p>
 
                             {contributor.student_id && (
                                 <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Student ID: {contributor.student_id}</p>

@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
 import { Clock, Facebook, Loader2, Mail, MessageSquare, Send } from 'lucide-react';
+import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
 type ContactFormData = {
@@ -29,7 +29,7 @@ export default function Contact() {
                 />
 
                 <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
-                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800 lg:col-span-2">
+                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md lg:col-span-2 dark:border-slate-700 dark:bg-slate-800">
                         <CardContent className="p-4 md:p-8">
                             <div className="mb-4 flex items-center md:mb-6">
                                 <div className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 md:mr-4 md:h-12 md:w-12 dark:from-blue-400 dark:to-blue-600">
