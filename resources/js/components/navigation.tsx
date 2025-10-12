@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
+import { FileText, Home, Info, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleButton from './appearance-dropdown';
 
@@ -138,12 +138,6 @@ export default function Navigation() {
                                                     Edit Profile
                                                 </Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem asChild>
-                                                <Link href="/profile/password" className="flex items-center">
-                                                    <KeyRound className="mr-2 h-4 w-4" />
-                                                    Change Password
-                                                </Link>
-                                            </DropdownMenuItem>
 
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem asChild>
@@ -252,14 +246,6 @@ export default function Navigation() {
                                         >
                                             <User className="h-4 w-4" />
                                             <span>Edit Profile</span>
-                                        </Link>
-                                        <Link
-                                            href="/profile/password"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
-                                        >
-                                            <KeyRound className="h-4 w-4" />
-                                            <span>Change Password</span>
                                         </Link>
                                         <Link
                                             href="/logout"
