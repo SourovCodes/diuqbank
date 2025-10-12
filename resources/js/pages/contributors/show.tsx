@@ -1,6 +1,7 @@
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import { Question, QuestionCard } from '@/components/ui/question-card';
 import MainLayout from '@/layouts/main-layout';
+import contributorsRoutes from '@/routes/contributors';
 import type { PaginatedData, SharedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, FileText, User } from 'lucide-react';
@@ -28,7 +29,7 @@ export default function ContributorShow({ contributor, questions }: ContributorS
             <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 {/* Back Button */}
                 <Link
-                    href="/contributors"
+                    href={contributorsRoutes.index.url()}
                     className="mb-6 inline-flex items-center text-sm text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                 >
                     <ArrowLeft className="mr-1.5 h-4 w-4" />

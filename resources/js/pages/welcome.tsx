@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
+import questionsRoutes from '@/routes/questions';
 import type { SharedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { BookOpen, Building2, Download, FileText, Filter, Medal, Upload, Users } from 'lucide-react';
@@ -90,7 +91,7 @@ export default function Welcome({ questionsCount, coursesCount, departmentsCount
                                     size="lg"
                                     className="min-w-[200px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                 >
-                                    <Link href="/questions">
+                                    <Link href={questionsRoutes.index.url()}>
                                         <Download className="mr-2 h-4 w-4" />
                                         Find Question PDFs
                                     </Link>

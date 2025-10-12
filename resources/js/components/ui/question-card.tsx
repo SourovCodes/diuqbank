@@ -1,5 +1,6 @@
 import { Link } from "@inertiajs/react";
 import { School, Calendar, Clock, Eye, ArrowRight } from "lucide-react";
+import questionsRoutes from "@/routes/questions";
 
 export type Question = {
   id: number;
@@ -26,7 +27,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
   };
 
   return (
-    <Link href={`/questions/${question.id}`} className="block group">
+    <Link href={questionsRoutes.show.url(question.id)} className="block group">
       <div className="relative overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200 shadow-sm hover:shadow-md h-full hover:-translate-y-0.5 py-4 rounded-xl">
         <div className="px-4 py-0 relative z-10 flex flex-col h-full">
           <div className="flex items-start justify-between gap-2 mb-2">
