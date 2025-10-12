@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Book, Calendar, Clock, Download, Eye, FileText, Maximize, School } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Book, Calendar, Clock, Download, Eye, FileText, Maximize, School } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // Types for question data
@@ -34,8 +34,9 @@ type Question = {
     user: {
         id: number;
         name: string;
-        username?: string;
+        username: string;
         student_id?: string;
+        profile_picture_url: string;
     };
 };
 
@@ -204,10 +205,28 @@ export default function QuestionShow({ question }: QuestionShowProps) {
 
                                 <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
                                     <div className="text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">Uploaded By</div>
-                                    <div className="text-sm font-medium text-slate-900 dark:text-white">{question.user.name}</div>
-                                    {question.user.student_id && (
-                                        <div className="text-xs text-slate-500 dark:text-slate-400">ID: {question.user.student_id}</div>
-                                    )}
+                                    <Link
+                                        href={`/contributors/${question.user.id}`}
+                                        className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-3 transition-all hover:border-blue-400 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
+                                    >
+                                        <img
+                                            src={question.user.profile_picture_url}
+                                            alt={question.user.name}
+                                            className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                                        />
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                                {question.user.name}
+                                            </div>
+                                            <div className="truncate text-xs text-slate-500 dark:text-slate-400">@{question.user.username}</div>
+                                            {question.user.student_id && (
+                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">ID: {question.user.student_id}</div>
+                                            )}
+                                        </div>
+
+                                        <ArrowRight className="h-4 w-4 flex-shrink-0 text-slate-300 transition-colors group-hover:text-blue-500 dark:text-slate-600 dark:group-hover:text-blue-400" />
+                                    </Link>
                                 </div>
                             </div>
                         </div>
