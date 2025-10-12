@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateProfileImageRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +18,7 @@ class ProfileController extends Controller
     public function edit(): Response
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = Auth::user();
 
         return Inertia::render('profile/edit', [
             'user' => [
@@ -26,7 +27,7 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'username' => $user->username,
                 'student_id' => $user->student_id,
-                'avatar' => $user->getFirstMediaUrl('profile_picture') ?: null,
+                'avatar' => $user->getFirstMediaUrl('profile_picture'),
             ],
         ]);
     }
@@ -37,7 +38,7 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): \Illuminate\Http\RedirectResponse
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = Auth::user();
 
         $validated = $request->validated();
 
@@ -57,7 +58,7 @@ class ProfileController extends Controller
     public function updateImage(UpdateProfileImageRequest $request): \Illuminate\Http\RedirectResponse
     {
         /** @var User $user */
-        $user = auth()->user();
+        $user = Auth::user();
 
         $validated = $request->validated();
 

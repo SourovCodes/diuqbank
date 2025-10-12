@@ -17,7 +17,7 @@ interface User {
     email: string;
     username: string;
     student_id: string | null;
-    avatar: string | null;
+    avatar: string;
 }
 
 interface ProfileEditProps {
@@ -32,7 +32,7 @@ type ProfileFormData = {
 
 export default function ProfileEdit({ user }: ProfileEditProps) {
     const [showImageCropper, setShowImageCropper] = useState(false);
-    const [previewAvatar, setPreviewAvatar] = useState<string | null>(user.avatar);
+    const [previewAvatar, setPreviewAvatar] = useState<string>(user.avatar);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const { data, setData, put, processing, errors } = useForm<ProfileFormData>({
@@ -69,8 +69,10 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                 preserveScroll: true,
                 onSuccess: (page) => {
                     // Update preview with the new avatar URL from the response
-                    const newAvatar = (page.props as any).user?.avatar || user.avatar;
-                    setPreviewAvatar(newAvatar);
+                    const newAvatar = (page.props as any).user?.avatar;
+                    if (newAvatar) {
+                        setPreviewAvatar(newAvatar);
+                    }
                     setIsUploadingImage(false);
                     toast.success('Profile picture updated successfully!');
                 },
@@ -117,7 +119,7 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                                 <div className="flex flex-col items-center space-y-4">
                                     <div className="relative">
                                         <Avatar className="h-24 w-24 border-4 border-slate-200 dark:border-slate-700">
-                                            <AvatarImage src={previewAvatar || undefined} alt={data.name} />
+                                            <AvatarImage src={previewAvatar} alt={data.name} />
                                             <AvatarFallback className="bg-gradient-to-r from-blue-600 to-cyan-500 text-2xl text-white">
                                                 {getInitials(data.name)}
                                             </AvatarFallback>
