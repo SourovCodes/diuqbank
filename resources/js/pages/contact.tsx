@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { Clock, Loader2, Mail, MessageCircle, MessageSquare, Send } from 'lucide-react';
+import { Clock, Facebook, Loader2, Mail, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ContactFormData = {
@@ -56,27 +56,27 @@ export default function Contact() {
                                     <div className="flex items-start space-x-3 rounded-lg border border-slate-100 bg-slate-50 p-3 md:p-4 dark:border-slate-700 dark:bg-slate-700/40">
                                         <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500 md:h-5 md:w-5" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900 md:text-base dark:text-slate-200">General inquiries</p>
+                                            <p className="text-sm font-medium text-slate-900 md:text-base dark:text-slate-200">Developer Email</p>
                                             <a
-                                                href="mailto:support@diuqbank.com"
+                                                href="mailto:sourov2305101004@diu.edu.bd"
                                                 className="text-sm break-all text-slate-600 transition-colors hover:text-blue-500 md:text-base dark:text-slate-300 dark:hover:text-blue-400"
                                             >
-                                                support@diuqbank.com
+                                                sourov2305101004@diu.edu.bd
                                             </a>
                                         </div>
                                     </div>
 
                                     <div className="flex items-start space-x-3 rounded-lg border border-slate-100 bg-slate-50 p-3 md:p-4 dark:border-slate-700 dark:bg-slate-700/40">
-                                        <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500 md:h-5 md:w-5" />
+                                        <Facebook className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500 md:h-5 md:w-5" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900 md:text-base dark:text-slate-200">Telegram community</p>
+                                            <p className="text-sm font-medium text-slate-900 md:text-base dark:text-slate-200">Facebook Page</p>
                                             <a
-                                                href="https://t.me/diuqbank"
+                                                href="https://fb.com/diuqbank"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-sm break-all text-slate-600 transition-colors hover:text-blue-500 md:text-base dark:text-slate-300 dark:hover:text-blue-400"
                                             >
-                                                https://t.me/diuqbank
+                                                fb.com/diuqbank
                                             </a>
                                         </div>
                                     </div>
@@ -90,11 +90,11 @@ export default function Contact() {
                                     <span className="mr-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 md:h-8 md:w-8 dark:from-blue-400 dark:to-blue-600">
                                         <Clock className="h-3 w-3 text-white md:h-4 md:w-4" />
                                     </span>
-                                    Response time
+                                    Response Time
                                 </h2>
                                 <p className="mt-2 text-sm text-slate-600 md:mt-3 md:text-base dark:text-slate-300">
-                                    We typically respond to new submissions within 24-72 hours on weekdays. For urgent issues, mention it in your message
-                                    so we can prioritise it.
+                                    We typically respond to inquiries within 24-48 hours during weekdays. For urgent matters, please reach out on our
+                                    Facebook page so we can get to you faster.
                                 </p>
                             </CardContent>
                         </Card>
