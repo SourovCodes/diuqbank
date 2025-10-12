@@ -6,7 +6,7 @@ import questionsRoutes from '@/routes/questions';
 import type { SharedData } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Book, Calendar, Clock, Download, Eye, FileText, Maximize, School } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 // Types for question data
 type Question = {
@@ -47,8 +47,6 @@ interface QuestionShowProps extends SharedData {
 }
 
 export default function QuestionShow({ question }: QuestionShowProps) {
-    const [isFullscreen, setIsFullscreen] = useState(false);
-
     // Track view after 3 seconds
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -84,10 +82,8 @@ export default function QuestionShow({ question }: QuestionShowProps) {
 
         if (!document.fullscreenElement) {
             container.requestFullscreen();
-            setIsFullscreen(true);
         } else {
             document.exitFullscreen();
-            setIsFullscreen(false);
         }
     };
 

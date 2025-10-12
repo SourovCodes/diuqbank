@@ -69,7 +69,8 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                 preserveScroll: true,
                 onSuccess: (page) => {
                     // Update preview with the new avatar URL from the response
-                    const newAvatar = (page.props as any).user?.avatar;
+                    const pageProps = page.props as { user?: User };
+                    const newAvatar = pageProps.user?.avatar;
                     if (newAvatar) {
                         setPreviewAvatar(newAvatar);
                     }
@@ -114,7 +115,8 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <Card className="overflow-hidden border border-slate-200 bg-white shadow-md lg:col-span-2 dark:border-slate-700 dark:bg-slate-800">
                         <CardContent className="p-6 md:p-8">
-                            <form onSubmit={handleSubmit} className="space-y-6">{/* Profile Picture Section */}
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Profile Picture Section */}
                                 {/* Profile Picture Section */}
                                 <div className="flex flex-col items-center space-y-4">
                                     <div className="relative">
@@ -128,7 +130,7 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                                             type="button"
                                             size="sm"
                                             variant="secondary"
-                                            className="absolute bottom-0 right-0 h-8 w-8 rounded-full p-0 shadow-lg"
+                                            className="absolute right-0 bottom-0 h-8 w-8 rounded-full p-0 shadow-lg"
                                             onClick={() => setShowImageCropper(true)}
                                             disabled={isUploadingImage}
                                         >
@@ -185,7 +187,9 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                                         required
                                     />
                                     {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Only letters, numbers, dashes, and underscores allowed</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        Only letters, numbers, dashes, and underscores allowed
+                                    </p>
                                 </div>
 
                                 {/* Student ID Field */}
@@ -247,8 +251,8 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
                                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">About Your Profile</h3>
                                 </div>
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                                    Your profile information is visible to other users on the platform. Make sure to keep your information up to date for
-                                    the best experience.
+                                    Your profile information is visible to other users on the platform. Make sure to keep your information up to date
+                                    for the best experience.
                                 </p>
                             </CardContent>
                         </Card>
