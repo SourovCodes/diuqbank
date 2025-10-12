@@ -1,6 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
+import contributorsRoutes from '@/routes/contributors';
+import questionsRoutes from '@/routes/questions';
 import type { SharedData } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Book, Calendar, Clock, Download, Eye, FileText, Maximize, School } from 'lucide-react';
@@ -51,7 +53,7 @@ export default function QuestionShow({ question }: QuestionShowProps) {
     useEffect(() => {
         const timer = setTimeout(() => {
             router.post(
-                `/questions/${question.id}/view`,
+                questionsRoutes.view.url(question.id),
                 {},
                 {
                     preserveScroll: true,
@@ -97,7 +99,7 @@ export default function QuestionShow({ question }: QuestionShowProps) {
                 {/* Back Button */}
                 <div className="mb-6">
                     <Link
-                        href="/questions"
+                        href={questionsRoutes.index.url()}
                         className="inline-flex items-center gap-1 text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     >
                         <ArrowLeft className="h-4 w-4" />
@@ -206,7 +208,7 @@ export default function QuestionShow({ question }: QuestionShowProps) {
                                 <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
                                     <div className="text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">Uploaded By</div>
                                     <Link
-                                        href={`/contributors/${question.user.id}`}
+                                        href={contributorsRoutes.show.url({ user: question.user.username })}
                                         className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-3 transition-all hover:border-blue-400 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
                                     >
                                         <img

@@ -1,5 +1,6 @@
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
+import contributorsRoutes from '@/routes/contributors';
 import type { PaginatedData, SharedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Eye, FileText, Users } from 'lucide-react';
@@ -8,7 +9,7 @@ import { ArrowRight, Eye, FileText, Users } from 'lucide-react';
 type Contributor = {
     id: number;
     name: string;
-    username?: string;
+    username: string;
     student_id?: string;
     questions_count: number;
     total_views: number;
@@ -40,7 +41,7 @@ export default function ContributorsIndex({ contributors }: ContributorsIndexPro
                 ) : (
                     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {contributors.data.map((contributor) => (
-                            <Link key={contributor.id} href={`/contributors/${contributor.id}`} className="group block">
+                            <Link key={contributor.id} href={contributorsRoutes.show.url({ user: contributor.username })} className="group block">
                                 <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600">
                                     <div className="mb-4 flex items-start gap-4">
                                         {contributor.profile_picture_url ? (
