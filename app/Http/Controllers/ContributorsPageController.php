@@ -15,6 +15,7 @@ class ContributorsPageController extends Controller
             ->has('questions')
             ->withCount('questions')
             ->withSum('questions as total_views', 'view_count')
+            ->with('media')
             ->orderByDesc('questions_count')
             ->paginate(12)
             ->withQueryString()
@@ -37,6 +38,7 @@ class ContributorsPageController extends Controller
     {
         $user->loadCount('questions');
         $user->loadSum('questions as total_views', 'view_count');
+        $user->load('media');
 
         $questions = Question::query()
             ->where('user_id', $user->id)
