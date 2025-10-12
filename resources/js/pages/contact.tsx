@@ -116,6 +116,7 @@ function ContactForm() {
         event.preventDefault();
 
         post('/contact', {
+            preserveScroll: true,
             onSuccess: () => {
                 reset();
                 toast.success('Message sent successfully!', {
