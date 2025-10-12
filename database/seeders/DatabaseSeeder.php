@@ -27,6 +27,10 @@ class DatabaseSeeder extends Seeder
 
         // Create 200 users
         User::factory(200)->create();
+        User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'sourov2305101004@diu.edu.bd',
+        ]);
 
         $this->command->info('200 users created successfully!');
 
