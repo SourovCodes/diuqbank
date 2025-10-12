@@ -35,4 +35,9 @@ class PagesController extends Controller
     {
         return Inertia::render('terms-of-service');
     }
+
+    public function contact(): Response
+    {
+        return Inertia::render('contact');
+    }
 }

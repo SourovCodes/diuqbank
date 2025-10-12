@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { FileText, Home, Info, KeyRound, LogIn, LogOut, Menu, User, Users, X } from 'lucide-react';
+import { FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleButton from './appearance-dropdown';
 
@@ -20,6 +20,7 @@ const menuItems = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Questions', href: '/questions', icon: FileText },
     { name: 'Contributors', href: '/contributors', icon: Users },
+    { name: 'Contact', href: '/contact', icon: Mail },
     { name: 'About', href: '/about', icon: Info },
 ];
 
