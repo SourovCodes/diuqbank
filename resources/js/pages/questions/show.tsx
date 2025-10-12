@@ -175,11 +175,10 @@ export default function QuestionShow({ question }: QuestionShowProps) {
                     <aside className="lg:col-span-4">
                         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
                             <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Question Details</h2>
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Stats</h2>
                             </div>
 
                             <div className="space-y-4 p-6">
-                                {/* Stats Grid */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
                                         <div className="text-[11px] tracking-wide text-slate-500 uppercase">Views</div>
@@ -203,58 +202,6 @@ export default function QuestionShow({ question }: QuestionShowProps) {
                                     </div>
                                 </div>
 
-                                {/* Course Information */}
-                                <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-                                    <div className="text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">
-                                        Course Information
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-start gap-2">
-                                            <School className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                                            <div className="flex-1">
-                                                <div className="text-xs text-slate-500 dark:text-slate-400">Department</div>
-                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{question.department.name}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-2">
-                                            <Book className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                                            <div className="flex-1">
-                                                <div className="text-xs text-slate-500 dark:text-slate-400">Course</div>
-                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{question.course.name}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-2">
-                                            <Calendar className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                                            <div className="flex-1">
-                                                <div className="text-xs text-slate-500 dark:text-slate-400">Semester</div>
-                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{question.semester.name}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-start gap-2">
-                                            <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                                            <div className="flex-1">
-                                                <div className="text-xs text-slate-500 dark:text-slate-400">Exam Type</div>
-                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{question.exam_type.name}</div>
-                                            </div>
-                                        </div>
-
-                                        {question.section && (
-                                            <div className="flex items-start gap-2">
-                                                <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                                                <div className="flex-1">
-                                                    <div className="text-xs text-slate-500 dark:text-slate-400">Section</div>
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-white">{question.section}</div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Uploader Information */}
                                 <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
                                     <div className="text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">Uploaded By</div>
                                     <div className="text-sm font-medium text-slate-900 dark:text-white">{question.user.name}</div>
