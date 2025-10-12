@@ -34,5 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'google' => [
+        'client_id' => env('AUTH_GOOGLE_ID'),
+        'client_secret' => env('AUTH_GOOGLE_SECRET'),
+        'redirect' => config('app.url').'/auth/google/callback',
+    ],
 
 ];
