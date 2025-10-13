@@ -10,6 +10,7 @@ Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact']
 Route::post('/contact', \App\Http\Controllers\ContactFormController::class)->name('contact.submit');
 
 Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login'])->name('login');
+Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
 Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 

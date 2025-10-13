@@ -124,3 +124,52 @@ it('marks email as verified for new google users', function () {
     expect($user->email_verified_at)->not()->toBeNull();
     expect($user->hasVerifiedEmail())->toBeTrue();
 });
+
+it('marks email as verified for existing users with unverified email', function () {
+    $existingUser = User::factory()->create([
+        'email' => 'unverified@example.com',
+        'name' => 'Unverified User',
+        'email_verified_at' => null,
+    ]);
+
+    expect($existingUser->hasVerifiedEmail())->toBeFalse();
+
+    $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getEmail')->andReturn('unverified@example.com');
+        $mock->shouldReceive('getName')->andReturn('Unverified User');
+    });
+
+    Socialite::shouldReceive('driver->user')->andReturn($googleUser);
+
+    $response = $this->get('/auth/google/callback');
+
+    $response->assertRedirect(route('home'));
+
+    $existingUser->refresh();
+    expect($existingUser->hasVerifiedEmail())->toBeTrue();
+    expect($existingUser->email_verified_at)->not()->toBeNull();
+});
+
+it('logs out authenticated user', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    expect(Auth::check())->toBeTrue();
+
+    $response = $this->post('/logout');
+
+    $response->assertRedirect(route('home'));
+
+    expect(Auth::check())->toBeFalse();
+});
+
+it('allows unauthenticated user to access logout', function () {
+    expect(Auth::check())->toBeFalse();
+
+    $response = $this->post('/logout');
+
+    $response->assertRedirect(route('home'));
+
+    expect(Auth::check())->toBeFalse();
+});
