@@ -6,7 +6,9 @@ use App\Http\Resources\QuestionResource;
 use App\Models\Question;
 use App\Repositories\QuestionFormOptionsRepository;
 use Illuminate\Http\Request;
+use Inertia\Response;
 use Inertia\Inertia;
+use App\Http\Resources\QuestionDetailResource;
 
 class QuestionsController extends Controller
 {
@@ -89,9 +91,13 @@ class QuestionsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Question $question)
+     public function show(Question $question): Response       
     {
-        //
+        $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
+
+        return Inertia::render('questions/show', [
+            'question' => QuestionDetailResource::make($question)->resolve(),
+        ]);
     }
 
     /**

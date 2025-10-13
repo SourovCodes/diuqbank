@@ -23,7 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'update'])->name('questions.update');
 });
 
-Route::get('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'show'])->name('questions.show');
+Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
 Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionPageController::class, 'incrementView'])->name('questions.view');
 
 Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::class, 'index'])->name('contributors.index');
