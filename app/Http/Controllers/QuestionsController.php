@@ -25,6 +25,35 @@ class QuestionsController extends Controller
         $examTypeId = $request->integer('exam_type_id') ?: null;
         $uploaderId = $request->integer('uploader') ?: null;
 
+        // Load filter options for validation
+        $filterOptions = $this->optionsRepository->getFilterOptions($departmentId);
+
+        // Validate filter parameters and collect invalid ones
+        $invalidParams = [];
+
+        if ($departmentId && ! $filterOptions['departments']->contains('id', $departmentId)) {
+            $invalidParams[] = 'department_id';
+        }
+
+        if ($courseId && ! $filterOptions['courses']->contains('id', $courseId)) {
+            $invalidParams[] = 'course_id';
+        }
+
+        if ($semesterId && ! $filterOptions['semesters']->contains('id', $semesterId)) {
+            $invalidParams[] = 'semester_id';
+        }
+
+        if ($examTypeId && ! $filterOptions['examTypes']->contains('id', $examTypeId)) {
+            $invalidParams[] = 'exam_type_id';
+        }
+
+        // If any invalid parameters found, redirect without them
+        if (count($invalidParams) > 0) {
+            $validParams = $request->except($invalidParams);
+
+            return redirect()->route('questions.index', $validParams);
+        }
+
         $query = Question::query()
             ->where(function ($q) {
                 // Show published questions for everyone OR user's own questions regardless of status
@@ -43,7 +72,7 @@ class QuestionsController extends Controller
         $questions = $query->paginate(12)->withQueryString();
 
         $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
-        $filterOptions = $this->optionsRepository->getFilterOptions();
+
         return Inertia::render('questions/index', [
             'questions' => $questions,
             'filters' => [
@@ -52,12 +81,7 @@ class QuestionsController extends Controller
                 'course' => $courseId,
                 'examType' => $examTypeId,
             ],
-            'filterOptions' =>[
-                'departments' => $filterOptions['departments'],
-                'semesters' => $filterOptions['semesters'],
-                'courses' => $this->optionsRepository->getCoursesByDepartment($departmentId, $filterOptions['courses']),
-                'examTypes' => $filterOptions['examTypes'],
-            ] ,
+            'filterOptions' => $filterOptions,
         ]);
 
     }
