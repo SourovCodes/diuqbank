@@ -26,9 +26,9 @@ class QuestionFormOptionsRepository
     /**
      * Get cached filter options for question index page.
      */
-    public function getFilterOptions(?int $departmentId,): array
+    public function getFilterOptions(?int $departmentId): array
     {
-        $filterOptions =  cache()->remember('filter_options', 3600, fn () => [
+        $filterOptions = cache()->remember('filter_options', 3600, fn () => [
             'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
             'semesters' => Semester::select('id', 'name')->get(),
             'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
@@ -36,6 +36,7 @@ class QuestionFormOptionsRepository
         ]);
 
         $filterOptions['courses'] = $this->getCoursesByDepartment($departmentId, $filterOptions['courses']);
+
         return $filterOptions;
     }
 

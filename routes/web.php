@@ -17,14 +17,14 @@ Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthContro
 Route::get('/questions', [\App\Http\Controllers\QuestionsController::class, 'index'])->name('questions.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/questions/create', [\App\Http\Controllers\QuestionPageController::class, 'create'])->name('questions.create');
+    Route::get('/questions/create', [\App\Http\Controllers\QuestionsController::class, 'create'])->name('questions.create');
     Route::post('/questions', [\App\Http\Controllers\QuestionPageController::class, 'store'])->name('questions.store');
-    Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionPageController::class, 'edit'])->name('questions.edit');
+    Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionsController::class, 'edit'])->name('questions.edit');
     Route::put('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'update'])->name('questions.update');
 });
 
 Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
-Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionPageController::class, 'incrementView'])->name('questions.view');
+Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionsController::class, 'incrementView'])->name('questions.view');
 
 Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::class, 'index'])->name('contributors.index');
 Route::get('/contributors/{user}', [\App\Http\Controllers\ContributorsPageController::class, 'show'])->name('contributors.show');

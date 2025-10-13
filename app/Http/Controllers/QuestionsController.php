@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\QuestionResource;
 use App\Models\Question;
 use App\Repositories\QuestionFormOptionsRepository;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
 use Inertia\Inertia;
@@ -75,9 +76,10 @@ class QuestionsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response    
     {
-        //
+         $formOptions = $this->optionsRepository->getFormOptions();
+        return Inertia::render('questions/create',  $formOptions);
     }
 
     /**
@@ -99,13 +101,34 @@ class QuestionsController extends Controller
             'question' => QuestionDetailResource::make($question)->resolve(),
         ]);
     }
+       public function incrementView(Question $question): RedirectResponse
+    {
+        // Filter out bots
+        $ua = strtolower(request()->userAgent() ?? '');
+        $isBot = str_contains($ua, 'bot') ||
+                 str_contains($ua, 'crawl') ||
+                 str_contains($ua, 'spider');
+
+        if (! $isBot) {
+            $question->increment('view_count');
+        }
+
+        return back();
+    }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Question $question)
+     public function edit(Question $question): Response
     {
-        //
+        abort_unless(auth()->check() && auth()->id() === $question->user_id, 403);
+
+        $formOptions = $this->optionsRepository->getFormOptions();
+
+        return Inertia::render('questions/edit', [
+           'question' => QuestionDetailResource::make($question)->resolve(),
+           'formOptions' => $formOptions,
+        ]);
     }
 
     /**
