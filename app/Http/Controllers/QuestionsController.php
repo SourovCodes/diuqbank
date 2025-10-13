@@ -2,19 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
+use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Requests\UpdateQuestionRequest;
+use App\Http\Resources\QuestionDetailResource;
 use App\Http\Resources\QuestionResource;
 use App\Models\Question;
 use App\Repositories\QuestionFormOptionsRepository;
+use App\Services\QuestionDuplicateChecker;
+use App\Services\QuestionFilterValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Response;
 use Inertia\Inertia;
-use App\Http\Resources\QuestionDetailResource;
+use Inertia\Response;
 
 class QuestionsController extends Controller
 {
     public function __construct(
-        protected QuestionFormOptionsRepository $optionsRepository
+        protected QuestionFormOptionsRepository $optionsRepository,
+        protected QuestionDuplicateChecker $duplicateChecker,
+        protected QuestionFilterValidator $filterValidator,
     ) {}
 
     /**
@@ -32,7 +40,7 @@ class QuestionsController extends Controller
         $filterOptions = $this->optionsRepository->getFilterOptions($departmentId);
 
         // Check for invalid filter parameters
-        $invalidParams = $this->getInvalidFilterParams(
+        $invalidParams = $this->filterValidator->getInvalidParams(
             $filterOptions,
             $departmentId,
             $courseId,
@@ -76,26 +84,61 @@ class QuestionsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Response    
+    public function create(): Response
     {
-         $formOptions = $this->optionsRepository->getFormOptions();
-        return Inertia::render('questions/create',  [
-            'formOptions' => $formOptions,  
+        $formOptions = $this->optionsRepository->getFormOptions();
+
+        return Inertia::render('questions/create', [
+            'formOptions' => $formOptions,
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreQuestionRequest $request): RedirectResponse
     {
-        //
+        // Check for duplicate if not confirmed
+        if (! $request->boolean('confirmed_duplicate')) {
+            $duplicate = $this->duplicateChecker->check($request->validated());
+
+            if ($duplicate) {
+                return back()->withErrors([
+                    'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                ])->withInput();
+            }
+        }
+
+        $duplicateReason = $request->validated('duplicate_reason');
+
+        $question = Question::create([
+            'user_id' => auth()->id(),
+            'department_id' => $request->validated('department_id'),
+            'course_id' => $request->validated('course_id'),
+            'semester_id' => $request->validated('semester_id'),
+            'exam_type_id' => $request->validated('exam_type_id'),
+            'section' => $request->validated('section'),
+            'view_count' => 0,
+            'status' => $duplicateReason !== null ? QuestionStatus::PENDING_REVIEW : QuestionStatus::PUBLISHED,
+            'under_review_reason' => $duplicateReason !== null ? UnderReviewReason::DUPLICATE : null,
+            'duplicate_reason' => $duplicateReason,
+        ]);
+
+        if ($request->hasFile('pdf')) {
+            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+        }
+
+        $message = $duplicateReason !== null
+            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            : 'Question created successfully!';
+
+        return redirect()->route('questions.show', $question)->with('success', $message);
     }
 
     /**
      * Display the specified resource.
      */
-     public function show(Question $question): Response       
+    public function show(Question $question): Response
     {
         $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
 
@@ -103,7 +146,8 @@ class QuestionsController extends Controller
             'question' => QuestionDetailResource::make($question)->resolve(),
         ]);
     }
-       public function incrementView(Question $question): RedirectResponse
+
+    public function incrementView(Question $question): RedirectResponse
     {
         // Filter out bots
         $ua = strtolower(request()->userAgent() ?? '');
@@ -121,24 +165,57 @@ class QuestionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-     public function edit(Question $question): Response
+    public function edit(Question $question): Response
     {
         abort_unless(auth()->check() && auth()->id() === $question->user_id, 403);
 
         $formOptions = $this->optionsRepository->getFormOptions();
 
         return Inertia::render('questions/edit', [
-           'question' => QuestionDetailResource::make($question)->resolve(),
-           'formOptions' => $formOptions,
+            'question' => QuestionDetailResource::make($question)->resolve(),
+            'formOptions' => $formOptions,
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Question $question)
+    public function update(UpdateQuestionRequest $request, Question $question): RedirectResponse
     {
-        //
+        // Check for duplicate if not confirmed
+        if (! $request->boolean('confirmed_duplicate')) {
+            $duplicate = $this->duplicateChecker->check($request->validated(), $question->id);
+
+            if ($duplicate) {
+                return back()->withErrors([
+                    'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                ])->withInput();
+            }
+        }
+
+        $duplicateReason = $request->validated('duplicate_reason');
+
+        $question->update([
+            'department_id' => $request->validated('department_id'),
+            'course_id' => $request->validated('course_id'),
+            'semester_id' => $request->validated('semester_id'),
+            'exam_type_id' => $request->validated('exam_type_id'),
+            'section' => $request->validated('section'),
+            'status' => $duplicateReason !== null ? QuestionStatus::PENDING_REVIEW : $question->status,
+            'under_review_reason' => $duplicateReason !== null ? UnderReviewReason::DUPLICATE : $question->under_review_reason,
+            'duplicate_reason' => $duplicateReason,
+        ]);
+
+        if ($request->hasFile('pdf')) {
+            $question->clearMediaCollection('pdf');
+            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+        }
+
+        $message = $duplicateReason !== null
+            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            : 'Question updated successfully!';
+
+        return redirect()->route('questions.show', $question)->with('success', $message);
     }
 
     /**
@@ -147,36 +224,5 @@ class QuestionsController extends Controller
     public function destroy(Question $question)
     {
         //
-    }
-
-    /**
-     * Validate filter parameters and return array of invalid parameter names.
-     */
-    protected function getInvalidFilterParams(
-        array $filterOptions,
-        ?int $departmentId,
-        ?int $courseId,
-        ?int $semesterId,
-        ?int $examTypeId
-    ): array {
-        $invalidParams = [];
-
-        if ($departmentId && ! $filterOptions['departments']->contains('id', $departmentId)) {
-            $invalidParams[] = 'department_id';
-        }
-
-        if ($courseId && ! $filterOptions['courses']->contains('id', $courseId)) {
-            $invalidParams[] = 'course_id';
-        }
-
-        if ($semesterId && ! $filterOptions['semesters']->contains('id', $semesterId)) {
-            $invalidParams[] = 'semester_id';
-        }
-
-        if ($examTypeId && ! $filterOptions['examTypes']->contains('id', $examTypeId)) {
-            $invalidParams[] = 'exam_type_id';
-        }
-
-        return $invalidParams;
     }
 }

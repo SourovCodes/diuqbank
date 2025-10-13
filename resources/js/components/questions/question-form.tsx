@@ -287,16 +287,33 @@ export default function QuestionForm({
             {/* PDF Upload */}
             <div className="space-y-3">
                 <Label htmlFor="pdf">Question Paper (PDF) {!existingPdfUrl && <span className="text-red-500">*</span>}</Label>
-                <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-slate-500">
+                <label
+                    htmlFor="pdf"
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950/20');
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950/20');
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950/20');
+                        const file = e.dataTransfer.files?.[0];
+                        if (file && file.type === 'application/pdf') {
+                            setData('pdf', file);
+                            setPdfFileName(file.name);
+                        }
+                    }}
+                    className="block cursor-pointer rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800/50 dark:hover:border-slate-500"
+                >
                     <div className="flex flex-col items-center justify-center gap-3 text-center">
                         <div className="rounded-full bg-slate-100 p-3 dark:bg-slate-700">
                             <Upload className="h-6 w-6 text-slate-600 dark:text-slate-400" />
                         </div>
                         <div className="space-y-1">
-                            <label
-                                htmlFor="pdf"
-                                className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                            >
+                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
                                 {pdfFileName ? (
                                     <span className="text-slate-900 dark:text-white">{pdfFileName}</span>
                                 ) : (
@@ -305,14 +322,14 @@ export default function QuestionForm({
                                         <span className="text-slate-600 dark:text-slate-400">or drag and drop</span>
                                     </>
                                 )}
-                            </label>
+                            </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {existingPdfUrl && !pdfFileName ? 'Current file will be kept if no new file is uploaded' : 'PDF files only, max 10MB'}
                             </p>
                         </div>
-                        <input id="pdf" type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
                     </div>
-                </div>
+                </label>
+                <input id="pdf" type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
                 {errors.pdf && <p className="text-sm text-red-600 dark:text-red-400">{errors.pdf}</p>}
             </div>
 
