@@ -6,11 +6,13 @@ use App\Enums\QuestionStatus;
 use App\Enums\UnderReviewReason;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
-use App\Models\Course;
+use App\Http\Resources\QuestionDetailResource;
+use App\Http\Resources\QuestionResource;
 use App\Models\Department;
-use App\Models\ExamType;
 use App\Models\Question;
-use App\Models\Semester;
+use App\Repositories\QuestionFormOptionsRepository;
+use App\Services\QuestionDuplicateChecker;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -18,12 +20,15 @@ use Inertia\Response;
 
 class QuestionPageController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        protected QuestionDuplicateChecker $duplicateChecker,
+        protected QuestionFormOptionsRepository $formOptionsRepository
+    ) {}
+
+    public function index(Request $request): Response|RedirectResponse
     {
         $parseFilterId = static function (?string $value): ?int {
-            return is_numeric($value)
-                ? (int) $value
-                : null;
+            return is_numeric($value) ? (int) $value : null;
         };
 
         $departmentId = $parseFilterId($request->input('department'));
@@ -31,57 +36,30 @@ class QuestionPageController extends Controller
         $courseId = $parseFilterId($request->input('course'));
         $examTypeId = $parseFilterId($request->input('examType'));
 
-        [$departmentOptions, $semesterOptions, $allCourseOptions, $examTypeOptions] = cache()->remember('filter_options', 3600, fn () => [
-            Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
-            Semester::select('id', 'name')->get(),
-            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
-            ExamType::select('id', 'name')->orderBy('name')->get(),
-        ]);
+        $filterOptions = $this->formOptionsRepository->getFilterOptions();
 
-        $invalidFiltersDetected = false;
-
-        if ($departmentId !== null && ! $departmentOptions->contains('id', $departmentId)) {
-            $departmentId = null;
-            $invalidFiltersDetected = true;
-        }
-
-        if ($semesterId !== null && ! $semesterOptions->contains('id', $semesterId)) {
-            $semesterId = null;
-            $invalidFiltersDetected = true;
-        }
-
-        if ($courseId !== null) {
-            $course = $allCourseOptions->firstWhere('id', $courseId);
-
-            if ($course === null) {
-                $courseId = null;
-                $invalidFiltersDetected = true;
-            } elseif ($departmentId !== null && (int) $course->department_id !== $departmentId) {
-                $courseId = null;
-                $invalidFiltersDetected = true;
-            }
-        }
-
-        if ($examTypeId !== null && ! $examTypeOptions->contains('id', $examTypeId)) {
-            $examTypeId = null;
-            $invalidFiltersDetected = true;
-        }
+        // Validate filters
+        $invalidFiltersDetected = $this->hasInvalidFilters(
+            $departmentId,
+            $semesterId,
+            $courseId,
+            $examTypeId,
+            $filterOptions
+        );
 
         if ($invalidFiltersDetected) {
-            $queryParams = array_filter([
+            return redirect()->route('questions.index', array_filter([
                 'department' => $departmentId,
                 'semester' => $semesterId,
                 'course' => $courseId,
                 'examType' => $examTypeId,
                 'page' => $request->integer('page') > 1 ? $request->integer('page') : null,
-            ], static fn ($value) => $value !== null);
-
-            return redirect()->route('questions.index', $queryParams);
+            ], static fn ($value) => $value !== null));
         }
 
+        // Build query with filters
         $query = Question::query()->published();
 
-        // Apply filters
         if ($departmentId !== null) {
             $query->where('department_id', $departmentId);
         }
@@ -95,36 +73,19 @@ class QuestionPageController extends Controller
             $query->where('exam_type_id', $examTypeId);
         }
 
-        $questions = $query->latest()->paginate(12)->withQueryString();
+        $questions = $query
+            ->with(['department', 'course', 'semester', 'examType'])
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
 
-        // Transform questions to include media URLs
-        $questions->getCollection()->transform(function ($question) use ($departmentOptions, $allCourseOptions, $semesterOptions, $examTypeOptions) {
-            return [
-                'id' => $question->id,
-                'created_at' => $question->created_at->toISOString(),
-                'view_count' => $question->view_count,
-                'section' => $question->section,
-                'department' => $departmentOptions->firstWhere('id', $question->department_id)?->short_name ?? '',
-                'course' => $allCourseOptions->firstWhere('id', $question->course_id)?->name ?? '',
-                'semester' => $semesterOptions->firstWhere('id', $question->semester_id)?->name ?? '',
-                'exam_type' => $examTypeOptions->firstWhere('id', $question->exam_type_id)?->name ?? '',
+        // Transform questions using resource
+        $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
 
-            ];
-        });
-
+        // Get visible courses based on department filter
         $visibleCourseOptions = $departmentId !== null
-            ? $allCourseOptions
-                ->where('department_id', $departmentId)
-                ->values()
-            : $allCourseOptions;
-
-        // Get filter options
-        $filterOptions = [
-            'departments' => $departmentOptions->toArray(),
-            'semesters' => $semesterOptions->toArray(),
-            'courses' => $visibleCourseOptions->toArray(),
-            'examTypes' => $examTypeOptions->toArray(),
-        ];
+            ? $this->formOptionsRepository->getCoursesByDepartment($departmentId, $filterOptions['allCourses'])
+            : $filterOptions['allCourses'];
 
         return Inertia::render('questions/index', [
             'questions' => $questions,
@@ -134,7 +95,12 @@ class QuestionPageController extends Controller
                 'course' => $courseId,
                 'examType' => $examTypeId,
             ],
-            'filterOptions' => $filterOptions,
+            'filterOptions' => [
+                'departments' => $filterOptions['departments'],
+                'semesters' => $filterOptions['semesters'],
+                'courses' => $visibleCourseOptions,
+                'examTypes' => $filterOptions['examTypes'],
+            ],
         ]);
     }
 
@@ -142,46 +108,12 @@ class QuestionPageController extends Controller
     {
         $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
 
-        // Transform question data to include media URLs
-        $questionData = [
-            'id' => $question->id,
-            'created_at' => $question->created_at->toISOString(),
-            'view_count' => $question->view_count,
-            'pdf_size' => $question->pdf_size,
-            'pdf_url' => $question->pdf_url,
-            'section' => $question->section,
-            'department' => [
-                'id' => $question->department->id,
-                'name' => $question->department->name,
-                'short_name' => $question->department->short_name,
-            ],
-            'course' => [
-                'id' => $question->course->id,
-                'name' => $question->course->name,
-            ],
-            'semester' => [
-                'id' => $question->semester->id,
-                'name' => $question->semester->name,
-            ],
-            'exam_type' => [
-                'id' => $question->examType->id,
-                'name' => $question->examType->name,
-            ],
-            'user' => [
-                'id' => $question->user->id,
-                'name' => $question->user->name,
-                'username' => $question->user->username,
-                'student_id' => $question->user->student_id,
-                'profile_picture_url' => $question->user->getFirstMediaUrl('profile_picture'),
-            ],
-        ];
-
         return Inertia::render('questions/show', [
-            'question' => $questionData,
+            'question' => QuestionDetailResource::make($question)->resolve(),
         ]);
     }
 
-    public function incrementView(Question $question)
+    public function incrementView(Question $question): RedirectResponse
     {
         // Filter out bots
         $ua = strtolower(request()->userAgent() ?? '');
@@ -200,41 +132,21 @@ class QuestionPageController extends Controller
     {
         abort_unless(Auth::check(), 403);
 
-        [$departments, $semesters, $courses, $examTypes] = cache()->remember('question_form_options', 3600, fn () => [
-            Department::select('id', 'name')->orderBy('name')->get(),
-            Semester::select('id', 'name')->orderBy('name', 'desc')->get(),
-            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
-            ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
-        ]);
+        $formOptions = $this->formOptionsRepository->getFormOptions();
 
         return Inertia::render('questions/create', [
-            'departments' => $departments,
-            'semesters' => $semesters,
-            'courses' => $courses,
-            'examTypes' => $examTypes,
+            'departments' => $formOptions['departments'],
+            'semesters' => $formOptions['semesters'],
+            'courses' => $formOptions['courses'],
+            'examTypes' => $formOptions['examTypes'],
         ]);
     }
 
-    public function store(StoreQuestionRequest $request)
+    public function store(StoreQuestionRequest $request): RedirectResponse
     {
         // Check for duplicate if not confirmed
         if (! $request->boolean('confirmed_duplicate')) {
-            $query = Question::query()
-                ->where('status', QuestionStatus::PUBLISHED)
-                ->where('department_id', $request->validated('department_id'))
-                ->where('course_id', $request->validated('course_id'))
-                ->where('semester_id', $request->validated('semester_id'))
-                ->where('exam_type_id', $request->validated('exam_type_id'));
-
-            $section = $request->validated('section');
-            if ($section === '' || $section === null) {
-                $query->whereNull('section');
-            } else {
-                $query->where('section', $section);
-            }
-
-            // Get the oldest duplicate (original question)
-            $duplicate = $query->orderBy('created_at', 'asc')->first();
+            $duplicate = $this->duplicateChecker->check($request->validated());
 
             if ($duplicate) {
                 return back()->withErrors([
@@ -273,12 +185,7 @@ class QuestionPageController extends Controller
     {
         abort_unless(Auth::check() && Auth::id() === $question->user_id, 403);
 
-        [$departments, $semesters, $courses, $examTypes] = cache()->remember('question_form_options', 3600, fn () => [
-            Department::select('id', 'name')->orderBy('name')->get(),
-            Semester::select('id', 'name')->orderBy('name', 'desc')->get(),
-            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
-            ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
-        ]);
+        $formOptions = $this->formOptionsRepository->getFormOptions();
 
         return Inertia::render('questions/edit', [
             'question' => [
@@ -290,34 +197,18 @@ class QuestionPageController extends Controller
                 'section' => $question->section,
                 'pdf_url' => $question->pdf_url,
             ],
-            'departments' => $departments,
-            'semesters' => $semesters,
-            'courses' => $courses,
-            'examTypes' => $examTypes,
+            'departments' => $formOptions['departments'],
+            'semesters' => $formOptions['semesters'],
+            'courses' => $formOptions['courses'],
+            'examTypes' => $formOptions['examTypes'],
         ]);
     }
 
-    public function update(UpdateQuestionRequest $request, Question $question)
+    public function update(UpdateQuestionRequest $request, Question $question): RedirectResponse
     {
         // Check for duplicate if not confirmed
         if (! $request->boolean('confirmed_duplicate')) {
-            $query = Question::query()
-                ->where('status', QuestionStatus::PUBLISHED)
-                ->where('id', '!=', $question->id)
-                ->where('department_id', $request->validated('department_id'))
-                ->where('course_id', $request->validated('course_id'))
-                ->where('semester_id', $request->validated('semester_id'))
-                ->where('exam_type_id', $request->validated('exam_type_id'));
-
-            $section = $request->validated('section');
-            if ($section === '' || $section === null) {
-                $query->whereNull('section');
-            } else {
-                $query->where('section', $section);
-            }
-
-            // Get the oldest duplicate (original question)
-            $duplicate = $query->orderBy('created_at', 'asc')->first();
+            $duplicate = $this->duplicateChecker->check($request->validated(), $question->id);
 
             if ($duplicate) {
                 return back()->withErrors([
@@ -349,5 +240,42 @@ class QuestionPageController extends Controller
             : 'Question updated successfully!';
 
         return redirect()->route('questions.show', $question)->with('success', $message);
+    }
+
+    /**
+     * Validate filter parameters against available options.
+     */
+    protected function hasInvalidFilters(
+        ?int $departmentId,
+        ?int $semesterId,
+        ?int $courseId,
+        ?int $examTypeId,
+        array $filterOptions
+    ): bool {
+        if ($departmentId !== null && ! collect($filterOptions['departments'])->contains('id', $departmentId)) {
+            return true;
+        }
+
+        if ($semesterId !== null && ! collect($filterOptions['semesters'])->contains('id', $semesterId)) {
+            return true;
+        }
+
+        if ($courseId !== null) {
+            $course = collect($filterOptions['allCourses'])->firstWhere('id', $courseId);
+
+            if ($course === null) {
+                return true;
+            }
+
+            if ($departmentId !== null && (int) $course->department_id !== $departmentId) {
+                return true;
+            }
+        }
+
+        if ($examTypeId !== null && ! collect($filterOptions['examTypes'])->contains('id', $examTypeId)) {
+            return true;
+        }
+
+        return false;
     }
 }
