@@ -216,7 +216,7 @@ export default function QuestionForm({
                         type="text"
                         value={data.section}
                         onChange={(e) => setData('section', e.target.value)}
-                        placeholder="Enter section (e.g., A, B, C)"
+                        placeholder="e.g., 65_N, 64_A"
                         aria-invalid={!!errors.section}
                         className="max-w-xs"
                     />
