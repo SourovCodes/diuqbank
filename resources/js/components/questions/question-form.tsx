@@ -278,10 +278,19 @@ export default function QuestionForm({
 
             {/* Submit Button */}
             <div className="flex items-center justify-end gap-4 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    className="min-w-[140px] rounded-full border border-slate-200 bg-white px-6 font-medium shadow-md transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+                >
                     Cancel
                 </Button>
-                <Button type="submit" disabled={processing}>
+                <Button
+                    type="submit"
+                    disabled={processing}
+                    className="min-w-[140px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl disabled:opacity-50 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                >
                     {processing ? 'Submitting...' : submitLabel}
                 </Button>
             </div>

@@ -5,6 +5,7 @@ import questionsRoutes from '@/routes/questions';
 import type { SharedData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Department = {
     id: number;
@@ -47,7 +48,7 @@ interface QuestionEditProps extends SharedData {
 }
 
 export default function QuestionEdit({ question, departments, semesters, courses, examTypes }: QuestionEditProps) {
-    const { data, setData, errors, processing } = useForm({
+    const { data, setData, post, errors, processing } = useForm({
         department_id: question.department_id.toString(),
         course_id: question.course_id.toString(),
         semester_id: question.semester_id.toString(),
@@ -59,7 +60,29 @@ export default function QuestionEdit({ question, departments, semesters, courses
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        router.post(questionsRoutes.update.url({ question: question.id }), data);
+        post(questionsRoutes.update.url({ question: question.id }), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Question updated successfully!', {
+                    description: 'Your changes have been saved.',
+                    duration: 4000,
+                });
+            },
+            onError: (errors) => {
+                if (Object.keys(errors).length > 0) {
+                    toast.error('Please review the form', {
+                        description: 'Some fields need your attention before we can proceed.',
+                        duration: 5000,
+                    });
+                } else {
+                    toast.error('Something went wrong', {
+                        description: 'Please try again later.',
+                        duration: 5000,
+                    });
+                }
+            },
+        });
     }
 
     function handleCancel() {
