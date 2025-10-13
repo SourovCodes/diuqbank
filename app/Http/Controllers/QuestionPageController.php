@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -189,5 +192,89 @@ class QuestionPageController extends Controller
         }
 
         return back();
+    }
+
+    public function create(): Response
+    {
+        abort_unless(Auth::check(), 403);
+
+        [$departments, $semesters, $courses, $examTypes] = cache()->remember('question_form_options', 3600, fn () => [
+            Department::select('id', 'name')->orderBy('name')->get(),
+            Semester::select('id', 'name')->orderBy('name', 'desc')->get(),
+            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
+        ]);
+
+        return Inertia::render('questions/create', [
+            'departments' => $departments,
+            'semesters' => $semesters,
+            'courses' => $courses,
+            'examTypes' => $examTypes,
+        ]);
+    }
+
+    public function store(StoreQuestionRequest $request)
+    {
+        $question = Question::create([
+            'user_id' => Auth::id(),
+            'department_id' => $request->validated('department_id'),
+            'course_id' => $request->validated('course_id'),
+            'semester_id' => $request->validated('semester_id'),
+            'exam_type_id' => $request->validated('exam_type_id'),
+            'section' => $request->validated('section'),
+            'view_count' => 0,
+        ]);
+
+        if ($request->hasFile('pdf')) {
+            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+        }
+
+        return redirect()->route('questions.show', $question)->with('success', 'Question created successfully!');
+    }
+
+    public function edit(Question $question): Response
+    {
+        abort_unless(Auth::check() && Auth::id() === $question->user_id, 403);
+
+        [$departments, $semesters, $courses, $examTypes] = cache()->remember('question_form_options', 3600, fn () => [
+            Department::select('id', 'name')->orderBy('name')->get(),
+            Semester::select('id', 'name')->orderBy('name', 'desc')->get(),
+            Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
+        ]);
+
+        return Inertia::render('questions/edit', [
+            'question' => [
+                'id' => $question->id,
+                'department_id' => $question->department_id,
+                'course_id' => $question->course_id,
+                'semester_id' => $question->semester_id,
+                'exam_type_id' => $question->exam_type_id,
+                'section' => $question->section,
+                'pdf_url' => $question->pdf_url,
+            ],
+            'departments' => $departments,
+            'semesters' => $semesters,
+            'courses' => $courses,
+            'examTypes' => $examTypes,
+        ]);
+    }
+
+    public function update(UpdateQuestionRequest $request, Question $question)
+    {
+        $question->update([
+            'department_id' => $request->validated('department_id'),
+            'course_id' => $request->validated('course_id'),
+            'semester_id' => $request->validated('semester_id'),
+            'exam_type_id' => $request->validated('exam_type_id'),
+            'section' => $request->validated('section'),
+        ]);
+
+        if ($request->hasFile('pdf')) {
+            $question->clearMediaCollection('pdf');
+            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+        }
+
+        return redirect()->route('questions.show', $question)->with('success', 'Question updated successfully!');
     }
 }

@@ -15,6 +15,14 @@ Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::cla
 Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
 Route::get('/questions', [\App\Http\Controllers\QuestionPageController::class, 'index'])->name('questions.index');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/questions/create', [\App\Http\Controllers\QuestionPageController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [\App\Http\Controllers\QuestionPageController::class, 'store'])->name('questions.store');
+    Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionPageController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'update'])->name('questions.update');
+});
+
 Route::get('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'show'])->name('questions.show');
 Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionPageController::class, 'incrementView'])->name('questions.view');
 
