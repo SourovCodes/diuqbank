@@ -8,7 +8,6 @@ use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
 use App\Http\Resources\QuestionDetailResource;
 use App\Http\Resources\QuestionResource;
-use App\Models\Department;
 use App\Models\Question;
 use App\Repositories\QuestionFormOptionsRepository;
 use App\Services\QuestionDuplicateChecker;
@@ -261,7 +260,7 @@ class QuestionPageController extends Controller
         }
 
         if ($courseId !== null) {
-            $course = collect($filterOptions['allCourses'])->firstWhere('id', $courseId);
+            $course = collect($filterOptions['courses'])->firstWhere('id', $courseId);
 
             if ($course === null) {
                 return true;
