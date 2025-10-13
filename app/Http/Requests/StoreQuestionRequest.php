@@ -51,6 +51,8 @@ class StoreQuestionRequest extends FormRequest
                 'max:255',
             ],
             'pdf' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'duplicate_reason' => ['nullable', 'string', 'max:500'],
+            'confirmed_duplicate' => ['nullable', 'boolean'],
         ];
     }
 

@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, FileText, Upload } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertTriangle, FileText, Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type Department = {
@@ -34,6 +35,8 @@ interface QuestionFormData {
     exam_type_id: string;
     section: string;
     pdf: File | null;
+    duplicate_reason?: string;
+    confirmed_duplicate?: boolean;
 }
 
 interface QuestionFormErrors {
@@ -43,6 +46,8 @@ interface QuestionFormErrors {
     exam_type_id?: string;
     section?: string;
     pdf?: string;
+    duplicate_reason?: string;
+    duplicate?: string;
 }
 
 interface QuestionFormProps {
@@ -75,6 +80,10 @@ export default function QuestionForm({
     existingPdfUrl,
 }: QuestionFormProps) {
     const [pdfFileName, setPdfFileName] = useState<string>('');
+    const [showDuplicateReason, setShowDuplicateReason] = useState<boolean>(false);
+
+    // Check if there's a backend duplicate error
+    const hasDuplicateError = errors.duplicate !== undefined;
 
     // Filter courses based on selected department
     const filteredCourses = useMemo(() => {
@@ -224,6 +233,59 @@ export default function QuestionForm({
                 </div>
             )}
 
+            {/* Duplicate Warning and Reason */}
+            {hasDuplicateError && (
+                <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-500" />
+                        <div className="flex-1 space-y-3">
+                            <h3 className="font-semibold text-amber-900 dark:text-amber-100">Duplicate Detected</h3>
+                            <p className="text-sm text-amber-800 dark:text-amber-200">
+                                A question with these exact details already exists on the website.
+                            </p>
+
+                            <p className="text-sm text-amber-800 dark:text-amber-200">
+                                If you believe this is a unique question and our detection missed it, please explain why below and submit for manual
+                                review.
+                            </p>
+
+                            {!showDuplicateReason ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowDuplicateReason(true)}
+                                    className="border-amber-300 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-100 dark:hover:bg-amber-900/50"
+                                >
+                                    This is not a duplicate - Let me explain
+                                </Button>
+                            ) : (
+                                <div className="space-y-2">
+                                    <Label htmlFor="duplicate_reason" className="text-amber-900 dark:text-amber-100">
+                                        Why is this not a duplicate? <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Textarea
+                                        id="duplicate_reason"
+                                        value={data.duplicate_reason || ''}
+                                        onChange={(e) => {
+                                            setData('duplicate_reason', e.target.value);
+                                            setData('confirmed_duplicate', true);
+                                        }}
+                                        placeholder="Please explain why you believe this question is unique and different from the existing question..."
+                                        rows={4}
+                                        className="border-amber-300 bg-white focus:border-amber-500 focus:ring-amber-500 dark:border-amber-700 dark:bg-slate-900"
+                                    />
+                                    {errors.duplicate_reason && <p className="text-sm text-red-600 dark:text-red-400">{errors.duplicate_reason}</p>}
+                                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                                        Your submission will be reviewed by our team before being published.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Existing PDF Display (Edit Mode) */}
             {existingPdfUrl && (
                 <div className="space-y-2">
@@ -236,7 +298,6 @@ export default function QuestionForm({
                         </div>
                         <Button type="button" variant="outline" size="sm" asChild>
                             <a href={existingPdfUrl} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="mr-2 h-4 w-4" />
                                 View PDF
                             </a>
                         </Button>

@@ -44,6 +44,8 @@ export default function QuestionCreate({ departments, semesters, courses, examTy
         exam_type_id: '',
         section: '',
         pdf: null as File | null,
+        duplicate_reason: '',
+        confirmed_duplicate: false,
     });
 
     function handleSubmit(e: React.FormEvent) {

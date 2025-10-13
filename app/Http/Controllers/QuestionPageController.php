@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Course;
@@ -215,6 +217,34 @@ class QuestionPageController extends Controller
 
     public function store(StoreQuestionRequest $request)
     {
+        // Check for duplicate if not confirmed
+        if (! $request->boolean('confirmed_duplicate')) {
+            $query = Question::query()
+                ->where('status', QuestionStatus::PUBLISHED)
+                ->where('department_id', $request->validated('department_id'))
+                ->where('course_id', $request->validated('course_id'))
+                ->where('semester_id', $request->validated('semester_id'))
+                ->where('exam_type_id', $request->validated('exam_type_id'));
+
+            $section = $request->validated('section');
+            if ($section === '' || $section === null) {
+                $query->whereNull('section');
+            } else {
+                $query->where('section', $section);
+            }
+
+            // Get the oldest duplicate (original question)
+            $duplicate = $query->orderBy('created_at', 'asc')->first();
+
+            if ($duplicate) {
+                return back()->withErrors([
+                    'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                ])->withInput();
+            }
+        }
+
+        $duplicateReason = $request->validated('duplicate_reason');
+
         $question = Question::create([
             'user_id' => Auth::id(),
             'department_id' => $request->validated('department_id'),
@@ -223,13 +253,20 @@ class QuestionPageController extends Controller
             'exam_type_id' => $request->validated('exam_type_id'),
             'section' => $request->validated('section'),
             'view_count' => 0,
+            'status' => $duplicateReason !== null ? QuestionStatus::PENDING_REVIEW : QuestionStatus::PUBLISHED,
+            'under_review_reason' => $duplicateReason !== null ? UnderReviewReason::DUPLICATE : null,
+            'duplicate_reason' => $duplicateReason,
         ]);
 
         if ($request->hasFile('pdf')) {
             $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
         }
 
-        return redirect()->route('questions.show', $question)->with('success', 'Question created successfully!');
+        $message = $duplicateReason !== null
+            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            : 'Question created successfully!';
+
+        return redirect()->route('questions.show', $question)->with('success', $message);
     }
 
     public function edit(Question $question): Response
@@ -262,12 +299,44 @@ class QuestionPageController extends Controller
 
     public function update(UpdateQuestionRequest $request, Question $question)
     {
+        // Check for duplicate if not confirmed
+        if (! $request->boolean('confirmed_duplicate')) {
+            $query = Question::query()
+                ->where('status', QuestionStatus::PUBLISHED)
+                ->where('id', '!=', $question->id)
+                ->where('department_id', $request->validated('department_id'))
+                ->where('course_id', $request->validated('course_id'))
+                ->where('semester_id', $request->validated('semester_id'))
+                ->where('exam_type_id', $request->validated('exam_type_id'));
+
+            $section = $request->validated('section');
+            if ($section === '' || $section === null) {
+                $query->whereNull('section');
+            } else {
+                $query->where('section', $section);
+            }
+
+            // Get the oldest duplicate (original question)
+            $duplicate = $query->orderBy('created_at', 'asc')->first();
+
+            if ($duplicate) {
+                return back()->withErrors([
+                    'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                ])->withInput();
+            }
+        }
+
+        $duplicateReason = $request->validated('duplicate_reason');
+
         $question->update([
             'department_id' => $request->validated('department_id'),
             'course_id' => $request->validated('course_id'),
             'semester_id' => $request->validated('semester_id'),
             'exam_type_id' => $request->validated('exam_type_id'),
             'section' => $request->validated('section'),
+            'status' => $duplicateReason !== null ? QuestionStatus::PENDING_REVIEW : $question->status,
+            'under_review_reason' => $duplicateReason !== null ? UnderReviewReason::DUPLICATE : $question->under_review_reason,
+            'duplicate_reason' => $duplicateReason,
         ]);
 
         if ($request->hasFile('pdf')) {
@@ -275,6 +344,10 @@ class QuestionPageController extends Controller
             $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
         }
 
-        return redirect()->route('questions.show', $question)->with('success', 'Question updated successfully!');
+        $message = $duplicateReason !== null
+            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            : 'Question updated successfully!';
+
+        return redirect()->route('questions.show', $question)->with('success', $message);
     }
 }

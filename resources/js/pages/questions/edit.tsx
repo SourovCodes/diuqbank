@@ -55,6 +55,8 @@ export default function QuestionEdit({ question, departments, semesters, courses
         exam_type_id: question.exam_type_id.toString(),
         section: question.section ?? '',
         pdf: null as File | null,
+        duplicate_reason: '',
+        confirmed_duplicate: false,
         _method: 'PUT',
     });
 

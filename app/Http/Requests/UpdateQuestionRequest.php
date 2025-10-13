@@ -55,6 +55,8 @@ class UpdateQuestionRequest extends FormRequest
                 'max:5',
             ],
             'pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'duplicate_reason' => ['nullable', 'string', 'max:500'],
+            'confirmed_duplicate' => ['nullable', 'boolean'],
         ];
     }
 
