@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\ExamType;
 use App\Rules\CourseBelongsToDepartment;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class StoreQuestionRequest extends FormRequest
@@ -14,7 +15,7 @@ class StoreQuestionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check();
+        return Auth::check();
     }
 
     /**
