@@ -46,3 +46,78 @@ export interface PaginatedData<T> {
     to: number;
     total: number;
 }
+
+// Question Resources
+export interface QuestionResource {
+    id: number;
+    created_at: string;
+    view_count: number;
+    section: string | null;
+    department: string;
+    course: string;
+    semester: string;
+    exam_type: string;
+}
+
+export interface QuestionDetailResource {
+    id: number;
+    created_at: string;
+    view_count: number;
+    pdf_size: number;
+    pdf_url: string;
+    section: string | null;
+    department: {
+        id: number;
+        name: string;
+        short_name: string;
+    };
+    course: {
+        id: number;
+        name: string;
+    };
+    semester: {
+        id: number;
+        name: string;
+    };
+    exam_type: {
+        id: number;
+        name: string;
+    };
+    user: {
+        id: number;
+        name: string;
+        username: string;
+        student_id: string;
+        profile_picture_url: string;
+    };
+}
+
+// Form Options Types
+export interface Department {
+    id: number;
+    name: string;
+}
+
+export interface Semester {
+    id: number;
+    name: string;
+}
+
+export interface Course {
+    id: number;
+    name: string;
+    department_id: number;
+}
+
+export interface ExamType {
+    id: number;
+    name: string;
+    requires_section: boolean;
+}
+
+export interface QuestionFormOptions {
+    departments: Department[];
+    semesters: Semester[];
+    courses: Course[];
+    examTypes: ExamType[];
+}

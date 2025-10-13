@@ -1,20 +1,10 @@
 import { Link } from "@inertiajs/react";
 import { School, Calendar, Clock, Eye, ArrowRight } from "lucide-react";
 import questionsRoutes from "@/routes/questions";
-
-export type Question = {
-  id: number;
-  created_at: string;
-  view_count: number;
-  department: string;
-  course: string;
-  semester: string;
-  exam_type: string;
-  section?: string | null;
-};
+import type { QuestionResource } from "@/types";
 
 interface QuestionCardProps {
-  question: Question;
+  question: QuestionResource;
 }
 
 export function QuestionCard({ question }: QuestionCardProps) {

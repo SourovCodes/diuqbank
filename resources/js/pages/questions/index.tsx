@@ -1,15 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { CustomPagination } from '@/components/ui/custom-pagination';
-import { Question, QuestionCard } from '@/components/ui/question-card';
+import { QuestionCard } from '@/components/ui/question-card';
 import { QuestionFilters } from '@/components/ui/question-filters';
 import MainLayout from '@/layouts/main-layout';
 import questionsRoutes from '@/routes/questions';
-import type { PaginatedData, SharedData } from '@/types';
+import type { Course, Department, ExamType, PaginatedData, QuestionResource, Semester, SharedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
 
 interface QuestionsIndexProps extends SharedData {
-    questions: PaginatedData<Question>;
+    questions: PaginatedData<QuestionResource>;
     filters: {
         department?: number | null;
         semester?: number | null;
@@ -17,10 +17,10 @@ interface QuestionsIndexProps extends SharedData {
         examType?: number | null;
     };
     filterOptions: {
-        departments: Array<{ id: number; name: string }>;
-        semesters: Array<{ id: number; name: string }>;
-        courses: Array<{ id: number; name: string; department_id: number }>;
-        examTypes: Array<{ id: number; name: string }>;
+        departments: Department[];
+        semesters: Semester[];
+        courses: Course[];
+        examTypes: ExamType[];
     };
 }
 

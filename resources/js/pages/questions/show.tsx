@@ -3,47 +3,13 @@ import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import contributorsRoutes from '@/routes/contributors';
 import questionsRoutes from '@/routes/questions';
-import type { SharedData } from '@/types';
+import type { QuestionDetailResource, SharedData } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Book, Calendar, Clock, Download, Eye, FileText, Maximize, School } from 'lucide-react';
 import { useEffect } from 'react';
 
-// Types for question data
-type Question = {
-    id: number;
-    created_at: string;
-    view_count: number;
-    pdf_size: number;
-    pdf_url: string | null;
-    department: {
-        id: number;
-        name: string;
-        short_name: string;
-    };
-    course: {
-        id: number;
-        name: string;
-    };
-    semester: {
-        id: number;
-        name: string;
-    };
-    exam_type: {
-        id: number;
-        name: string;
-    };
-    section?: string | null;
-    user: {
-        id: number;
-        name: string;
-        username: string;
-        student_id?: string;
-        profile_picture_url: string;
-    };
-};
-
 interface QuestionShowProps extends SharedData {
-    question: Question;
+    question: QuestionDetailResource;
 }
 
 export default function QuestionShow({ question }: QuestionShowProps) {

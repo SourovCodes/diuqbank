@@ -79,7 +79,9 @@ class QuestionsController extends Controller
     public function create(): Response    
     {
          $formOptions = $this->optionsRepository->getFormOptions();
-        return Inertia::render('questions/create',  $formOptions);
+        return Inertia::render('questions/create',  [
+            'formOptions' => $formOptions,  
+        ]);
     }
 
     /**

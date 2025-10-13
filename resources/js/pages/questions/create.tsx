@@ -2,41 +2,16 @@ import QuestionForm from '@/components/questions/question-form';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import questionsRoutes from '@/routes/questions';
-import type { SharedData } from '@/types';
+import type { QuestionFormOptions, SharedData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Department = {
-    id: number;
-    name: string;
-};
-
-type Semester = {
-    id: number;
-    name: string;
-};
-
-type Course = {
-    id: number;
-    name: string;
-    department_id: number;
-};
-
-type ExamType = {
-    id: number;
-    name: string;
-    requires_section: boolean;
-};
-
 interface QuestionCreateProps extends SharedData {
-    departments: Department[];
-    semesters: Semester[];
-    courses: Course[];
-    examTypes: ExamType[];
+    formOptions: QuestionFormOptions;
 }
 
-export default function QuestionCreate({ departments, semesters, courses, examTypes }: QuestionCreateProps) {
+export default function QuestionCreate({ formOptions }: QuestionCreateProps) {
     const { data, setData, post, processing, errors } = useForm({
         department_id: '',
         course_id: '',
@@ -93,10 +68,10 @@ export default function QuestionCreate({ departments, semesters, courses, examTy
                             setData={setData}
                             errors={errors}
                             processing={processing}
-                            departments={departments}
-                            semesters={semesters}
-                            courses={courses}
-                            examTypes={examTypes}
+                            departments={formOptions.departments}
+                            semesters={formOptions.semesters}
+                            courses={formOptions.courses}
+                            examTypes={formOptions.examTypes}
                             onSubmit={handleSubmit}
                             onCancel={handleCancel}
                             submitLabel="Create Question"

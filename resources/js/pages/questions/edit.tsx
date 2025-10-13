@@ -2,57 +2,22 @@ import QuestionForm from '@/components/questions/question-form';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import questionsRoutes from '@/routes/questions';
-import type { SharedData } from '@/types';
+import type { QuestionDetailResource, QuestionFormOptions, SharedData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Department = {
-    id: number;
-    name: string;
-};
-
-type Semester = {
-    id: number;
-    name: string;
-};
-
-type Course = {
-    id: number;
-    name: string;
-    department_id: number;
-};
-
-type ExamType = {
-    id: number;
-    name: string;
-    requires_section: boolean;
-};
-
-type Question = {
-    id: number;
-    department_id: number;
-    course_id: number;
-    semester_id: number;
-    exam_type_id: number;
-    section: string | null;
-    pdf_url: string;
-};
-
 interface QuestionEditProps extends SharedData {
-    question: Question;
-    departments: Department[];
-    semesters: Semester[];
-    courses: Course[];
-    examTypes: ExamType[];
+    question: QuestionDetailResource;
+    formOptions: QuestionFormOptions;
 }
 
-export default function QuestionEdit({ question, departments, semesters, courses, examTypes }: QuestionEditProps) {
+export default function QuestionEdit({ question, formOptions }: QuestionEditProps) {
     const { data, setData, post, errors, processing } = useForm({
-        department_id: question.department_id.toString(),
-        course_id: question.course_id.toString(),
-        semester_id: question.semester_id.toString(),
-        exam_type_id: question.exam_type_id.toString(),
+        department_id: question.department.id.toString(),
+        course_id: question.course.id.toString(),
+        semester_id: question.semester.id.toString(),
+        exam_type_id: question.exam_type.id.toString(),
         section: question.section ?? '',
         pdf: null as File | null,
         duplicate_reason: '',
@@ -105,10 +70,10 @@ export default function QuestionEdit({ question, departments, semesters, courses
                             setData={setData}
                             errors={errors}
                             processing={processing}
-                            departments={departments}
-                            semesters={semesters}
-                            courses={courses}
-                            examTypes={examTypes}
+                            departments={formOptions.departments}
+                            semesters={formOptions.semesters}
+                            courses={formOptions.courses}
+                            examTypes={formOptions.examTypes}
                             onSubmit={handleSubmit}
                             onCancel={handleCancel}
                             submitLabel="Update Question"

@@ -3,30 +3,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import type { Course, Department, ExamType, Semester } from '@/types';
 import { AlertTriangle, FileText, Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-
-type Department = {
-    id: number;
-    name: string;
-};
-
-type Semester = {
-    id: number;
-    name: string;
-};
-
-type Course = {
-    id: number;
-    name: string;
-    department_id: number;
-};
-
-type ExamType = {
-    id: number;
-    name: string;
-    requires_section: boolean;
-};
 
 interface QuestionFormData {
     department_id: string;

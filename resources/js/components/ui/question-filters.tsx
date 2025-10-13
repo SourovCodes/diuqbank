@@ -3,17 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { ClearFiltersButton } from "@/components/ui/clear-filters-button";
+import type { Course, Department, ExamType, Semester } from "@/types";
 
 type FilterValue = number | null | undefined;
-
-type FilterOption = {
-  id: number;
-  name: string;
-};
-
-type CourseOption = FilterOption & {
-  department_id: number;
-};
 
 // Define types for component props
 type QuestionFiltersProps = {
@@ -24,10 +16,10 @@ type QuestionFiltersProps = {
     examType?: FilterValue;
   };
   filterOptions: {
-    departments: FilterOption[];
-    semesters: FilterOption[];
-    courses: CourseOption[];
-    examTypes: FilterOption[];
+    departments: Department[];
+    semesters: Semester[];
+    courses: Course[];
+    examTypes: ExamType[];
   };
 };
 
@@ -44,7 +36,7 @@ type FilterConfig = {
   id: keyof typeof filterKeys;
   label: string;
   icon: React.ReactNode;
-  options: FilterOption[];
+  options: Array<{ id: number; name: string }>;
   activeClass: string;
 };
 
