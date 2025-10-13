@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Questions\Tables;
 
+use App\Enums\QuestionStatus;
 use App\Models\Question;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -42,6 +43,9 @@ class QuestionsTable
                     ->badge()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('user.name')
                     ->label('Uploaded by')
                     ->searchable()
@@ -84,6 +88,9 @@ class QuestionsTable
                     ->label('Exam type')
                     ->relationship('examType', 'name')
                     ->searchable(),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(QuestionStatus::class),
                 TernaryFilter::make('has_pdf')
                     ->label('Has PDF')
                     ->placeholder('Any')

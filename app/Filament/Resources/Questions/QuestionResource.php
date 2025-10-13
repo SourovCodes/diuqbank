@@ -59,6 +59,7 @@ class QuestionResource extends Resource
             'semester.name',
             'user.name',
             'section',
+            'status',
         ];
     }
 
@@ -76,6 +77,7 @@ class QuestionResource extends Resource
             'Department' => $record->department?->name,
             'Semester' => $record->semester?->name,
             'Section' => $record->section,
+            'Status' => $record->status?->getLabel(),
             'Views' => (string) ($record->view_count ?? 0),
         ];
     }

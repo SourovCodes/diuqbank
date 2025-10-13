@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Questions\Schemas;
 
+use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
 use App\Models\Course;
 use App\Models\ExamType;
 use App\Models\Question;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -76,6 +79,29 @@ class QuestionForm
                             ->formatStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper(Str::squish($state)) : null)
                             ->required(fn (callable $get): bool => self::requiresSection($get('exam_type_id')))
                             ->visible(fn (callable $get): bool => self::requiresSection($get('exam_type_id'))),
+                    ]),
+                Section::make('Status & Review')
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('status')
+                            ->label('Status')
+                            ->options(QuestionStatus::class)
+                            ->default(QuestionStatus::PUBLISHED)
+                            ->required()
+                            ->live(),
+                        Select::make('under_review_reason')
+                            ->label('Under Review Reason')
+                            ->options(UnderReviewReason::class)
+                            ->live()
+                            ->visible(fn (callable $get): bool => $get('status') === QuestionStatus::PENDING_REVIEW)
+                            ->required(fn (callable $get): bool => $get('status') === QuestionStatus::PENDING_REVIEW),
+                        Textarea::make('duplicate_reason')
+                            ->label('Duplicate Reason')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->columnSpanFull()
+                            ->visible(fn (callable $get): bool => $get('under_review_reason') === UnderReviewReason::DUPLICATE),
                     ]),
                 Section::make('Attachments')
                     ->columnSpanFull()
