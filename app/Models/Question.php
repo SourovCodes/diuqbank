@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,8 +29,24 @@ class Question extends Model implements HasMedia
         'semester_id',
         'exam_type_id',
         'section',
+        'status',
+        'under_review_reason',
+        'duplicate_reason',
         'view_count',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => QuestionStatus::class,
+            'under_review_reason' => UnderReviewReason::class,
+        ];
+    }
 
     /**
      * Get the user that owns the question.

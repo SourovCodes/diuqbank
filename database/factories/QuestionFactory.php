@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\ExamType;
@@ -49,7 +51,46 @@ class QuestionFactory extends Factory
             'semester_id' => $semester->id,
             'exam_type_id' => $examType->id,
             'section' => $section,
+            'status' => QuestionStatus::PUBLISHED,
             'view_count' => $this->faker->numberBetween(0, 100),
         ];
+    }
+
+    /**
+     * Indicate that the question is under review.
+     */
+    public function underReview(?UnderReviewReason $reason = null): static
+    {
+        $reason = $reason ?? $this->faker->randomElement(UnderReviewReason::cases());
+
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::PENDING_REVIEW,
+            'under_review_reason' => $reason,
+            'duplicate_reason' => $reason === UnderReviewReason::DUPLICATE
+                ? $this->faker->sentence()
+                : null,
+        ]);
+    }
+
+    /**
+     * Indicate that the question is under review due to duplicate.
+     */
+    public function duplicate(?string $reason = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::PENDING_REVIEW,
+            'under_review_reason' => UnderReviewReason::DUPLICATE,
+            'duplicate_reason' => $reason ?? $this->faker->sentence(),
+        ]);
+    }
+
+    /**
+     * Indicate that the question needs fixing.
+     */
+    public function needFix(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::NEED_FIX,
+        ]);
     }
 }
