@@ -84,8 +84,8 @@ class QuestionPageController extends Controller
 
         // Get visible courses based on department filter
         $visibleCourseOptions = $departmentId !== null
-            ? $this->formOptionsRepository->getCoursesByDepartment($departmentId, $filterOptions['allCourses'])
-            : $filterOptions['allCourses'];
+            ? $this->formOptionsRepository->getCoursesByDepartment($departmentId, $filterOptions['courses'])
+            : $filterOptions['courses'];
 
         return Inertia::render('questions/index', [
             'questions' => $questions,
