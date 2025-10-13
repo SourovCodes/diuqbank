@@ -51,21 +51,10 @@ export default function QuestionCreate({ departments, semesters, courses, examTy
         post(questionsRoutes.store.url(), {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Question created successfully!', {
-                    description: 'Your question paper has been uploaded and is now available.',
-                    duration: 4000,
-                });
-            },
             onError: (errors) => {
                 if (Object.keys(errors).length > 0) {
                     toast.error('Please review the form', {
                         description: 'Some fields need your attention before we can proceed.',
-                        duration: 5000,
-                    });
-                } else {
-                    toast.error('Something went wrong', {
-                        description: 'Please try again later.',
                         duration: 5000,
                     });
                 }

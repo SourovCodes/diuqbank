@@ -63,21 +63,10 @@ export default function QuestionEdit({ question, departments, semesters, courses
         post(questionsRoutes.update.url({ question: question.id }), {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Question updated successfully!', {
-                    description: 'Your changes have been saved.',
-                    duration: 4000,
-                });
-            },
             onError: (errors) => {
                 if (Object.keys(errors).length > 0) {
                     toast.error('Please review the form', {
                         description: 'Some fields need your attention before we can proceed.',
-                        duration: 5000,
-                    });
-                } else {
-                    toast.error('Something went wrong', {
-                        description: 'Please try again later.',
                         duration: 5000,
                     });
                 }

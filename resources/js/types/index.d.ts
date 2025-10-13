@@ -5,6 +5,12 @@ export interface Auth {
 export interface SharedData {
     name: string;
     auth: Auth;
+    flash: {
+        success?: string;
+        error?: string;
+        info?: string;
+        warning?: string;
+    };
     [key: string]: unknown;
 }
 
