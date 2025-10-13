@@ -16,6 +16,9 @@ use function Pest\Laravel\actingAs;
 beforeEach(function () {
     Storage::fake('public');
 
+    // Create a minimal valid PDF content
+    $this->pdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF";
+
     $this->user = User::factory()->create();
     $this->department = Department::factory()->create();
     $this->semester = Semester::factory()->create();
@@ -40,7 +43,7 @@ it('detects duplicate when creating a question with the same attributes', functi
         'semester_id' => $this->semester->id,
         'exam_type_id' => $this->examType->id,
         'section' => 'A',
-        'pdf' => UploadedFile::fake()->create('question.pdf', 100, 'application/pdf'),
+        'pdf' => UploadedFile::fake()->createWithContent('question.pdf', $this->pdfContent),
         'confirmed_duplicate' => false,
     ]);
 
@@ -67,14 +70,14 @@ it('allows creating a question with duplicate_reason when duplicate exists', fun
         'semester_id' => $this->semester->id,
         'exam_type_id' => $this->examType->id,
         'section' => 'A',
-        'pdf' => UploadedFile::fake()->create('question.pdf', 100, 'application/pdf'),
+        'pdf' => UploadedFile::fake()->createWithContent('question.pdf', $this->pdfContent),
         'duplicate_reason' => 'This is actually from a different year',
         'confirmed_duplicate' => true,
     ]);
 
     $response->assertRedirect();
 
-    $question = Question::latest()->first();
+    $question = Question::where('duplicate_reason', 'This is actually from a different year')->first();
 
     expect($question)
         ->department_id->toBe($this->department->id)
@@ -94,7 +97,7 @@ it('creates a question without duplicate_reason when no duplicate exists', funct
         'semester_id' => $this->semester->id,
         'exam_type_id' => $this->examType->id,
         'section' => 'A',
-        'pdf' => UploadedFile::fake()->create('question.pdf', 100, 'application/pdf'),
+        'pdf' => UploadedFile::fake()->createWithContent('question.pdf', $this->pdfContent),
     ]);
 
     $response->assertRedirect();
@@ -122,7 +125,7 @@ it('allows creating a question with different section', function () {
         'semester_id' => $this->semester->id,
         'exam_type_id' => $this->examType->id,
         'section' => 'B',
-        'pdf' => UploadedFile::fake()->create('question.pdf', 100, 'application/pdf'),
+        'pdf' => UploadedFile::fake()->createWithContent('question.pdf', $this->pdfContent),
     ]);
 
     $response->assertRedirect();
@@ -234,7 +237,10 @@ it('allows updating a question without changing to duplicate', function () {
 });
 
 it('treats null and empty section as duplicate', function () {
-    $examTypeNoSection = ExamType::factory()->create(['requires_section' => false]);
+    $examTypeNoSection = ExamType::factory()->create([
+        'name' => 'Final Exam - No Section',
+        'requires_section' => false,
+    ]);
 
     Question::factory()->create([
         'department_id' => $this->department->id,
@@ -250,7 +256,7 @@ it('treats null and empty section as duplicate', function () {
         'semester_id' => $this->semester->id,
         'exam_type_id' => $examTypeNoSection->id,
         'section' => '',
-        'pdf' => UploadedFile::fake()->create('question.pdf', 100, 'application/pdf'),
+        'pdf' => UploadedFile::fake()->createWithContent('question.pdf', $this->pdfContent),
         'confirmed_duplicate' => false,
     ]);
 
