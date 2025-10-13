@@ -9,6 +9,10 @@ Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, '
 Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');
 Route::post('/contact', \App\Http\Controllers\ContactFormController::class)->name('contact.submit');
 
+Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login'])->name('login');
+Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+
 Route::get('/questions', [\App\Http\Controllers\QuestionPageController::class, 'index'])->name('questions.index');
 Route::get('/questions/{question}', [\App\Http\Controllers\QuestionPageController::class, 'show'])->name('questions.show');
 Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionPageController::class, 'incrementView'])->name('questions.view');
