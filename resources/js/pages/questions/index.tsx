@@ -1,10 +1,12 @@
+import { Button } from '@/components/ui/button';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import { Question, QuestionCard } from '@/components/ui/question-card';
 import { QuestionFilters } from '@/components/ui/question-filters';
 import MainLayout from '@/layouts/main-layout';
+import questionsRoutes from '@/routes/questions';
 import type { PaginatedData, SharedData } from '@/types';
-import { Head } from '@inertiajs/react';
-import { FileText } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { FileText, Plus } from 'lucide-react';
 
 interface QuestionsIndexProps extends SharedData {
     questions: PaginatedData<Question>;
@@ -22,7 +24,7 @@ interface QuestionsIndexProps extends SharedData {
     };
 }
 
-export default function QuestionsIndex({ questions, filters, filterOptions }: QuestionsIndexProps) {
+export default function QuestionsIndex({ questions, filters, filterOptions, auth }: QuestionsIndexProps) {
     return (
         <MainLayout>
             <Head title="Questions" />
@@ -30,6 +32,16 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
             <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Questions</h1>
+
+                    <Button
+                        asChild
+                        className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                    >
+                        <Link href={questionsRoutes.create.url()}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add New Question
+                        </Link>
+                    </Button>
                 </div>
 
                 {/* Filters */}

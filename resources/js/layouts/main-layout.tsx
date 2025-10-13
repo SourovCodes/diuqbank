@@ -1,9 +1,9 @@
 import Footer from '@/components/footer';
 import Navigation from '@/components/navigation';
+import type { SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import { toast, Toaster } from 'sonner';
-import type { SharedData } from '@/types';
 
 interface MainLayoutProps {
     children: ReactNode;
