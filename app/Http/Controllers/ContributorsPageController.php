@@ -41,6 +41,7 @@ class ContributorsPageController extends Controller
         $user->load('media');
 
         $questions = Question::query()
+            ->published()
             ->where('user_id', $user->id)
             ->with(['department', 'semester', 'course', 'examType'])
             ->latest()

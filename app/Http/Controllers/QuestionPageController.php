@@ -77,7 +77,7 @@ class QuestionPageController extends Controller
             return redirect()->route('questions.index', $queryParams);
         }
 
-        $query = Question::query();
+        $query = Question::query()->published();
 
         // Apply filters
         if ($departmentId !== null) {
@@ -102,10 +102,10 @@ class QuestionPageController extends Controller
                 'created_at' => $question->created_at->toISOString(),
                 'view_count' => $question->view_count,
                 'section' => $question->section,
-                'department' => $departmentOptions->firstWhere('id', $question->department_id)?->short_name??"",
-                'course' => $allCourseOptions->firstWhere('id', $question->course_id)?->name??"",
-                'semester' => $semesterOptions->firstWhere('id', $question->semester_id)?->name??"",
-                'exam_type' => $examTypeOptions->firstWhere('id', $question->exam_type_id)?->name??"",
+                'department' => $departmentOptions->firstWhere('id', $question->department_id)?->short_name ?? '',
+                'course' => $allCourseOptions->firstWhere('id', $question->course_id)?->name ?? '',
+                'semester' => $semesterOptions->firstWhere('id', $question->semester_id)?->name ?? '',
+                'exam_type' => $examTypeOptions->firstWhere('id', $question->exam_type_id)?->name ?? '',
 
             ];
         });

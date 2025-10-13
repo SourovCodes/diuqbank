@@ -51,7 +51,7 @@ class UpdateQuestionRequest extends FormRequest
                 }),
                 'nullable',
                 'string',
-                
+
                 'max:5',
             ],
             'pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],

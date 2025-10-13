@@ -117,4 +117,12 @@ class Question extends Model implements HasMedia
             get: fn () => $this->getFirstMedia('pdf')?->size ?? 0
         );
     }
+
+    /**
+     * Scope a query to only include published questions.
+     */
+    public function scopePublished(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->where('status', QuestionStatus::PUBLISHED);
+    }
 }
