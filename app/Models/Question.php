@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\QuestionStatus;
 use App\Enums\UnderReviewReason;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -99,6 +100,58 @@ class Question extends Model implements HasMedia
     }
 
     /**
+     * Scope a query to filter questions by department.
+     */
+    public function scopeDepartment(Builder $query, $departmentId): void
+    {
+        if (! $departmentId) {
+            return;
+        }
+        $query->where('department_id', $departmentId);
+    }
+
+    /**
+     * Scope a query to filter questions by course.
+     */
+    public function scopeCourse(Builder $query, $courseId): void
+    {
+        if (! $courseId) {
+            return;
+        }
+        $query->where('course_id', $courseId);
+    }
+
+    /**
+     * Scope a query to filter questions by semester.
+     */
+    public function scopeSemester(Builder $query, $semesterId): void
+    {
+        if (! $semesterId) {
+            return;
+        }
+        $query->where('semester_id', $semesterId);
+    }
+
+    /**
+     * Scope a query to filter questions by exam type.
+     */
+    public function scopeExamType(Builder $query, $examTypeId): void
+    {
+        if (! $examTypeId) {
+            return;
+        }
+        $query->where('exam_type_id', $examTypeId);
+    }
+
+    /**
+     * Scope a query to only include published questions.
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', QuestionStatus::PUBLISHED);
+    }
+
+    /**
      * Get the PDF URL accessor.
      */
     protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
@@ -116,13 +169,5 @@ class Question extends Model implements HasMedia
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             get: fn () => $this->getFirstMedia('pdf')?->size ?? 0
         );
-    }
-
-    /**
-     * Scope a query to only include published questions.
-     */
-    public function scopePublished(\Illuminate\Database\Eloquent\Builder $query): void
-    {
-        $query->where('status', QuestionStatus::PUBLISHED);
     }
 }

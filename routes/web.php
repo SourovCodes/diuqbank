@@ -14,7 +14,7 @@ Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logou
 Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
-Route::get('/questions', [\App\Http\Controllers\QuestionPageController::class, 'index'])->name('questions.index');
+Route::get('/questions', [\App\Http\Controllers\QuestionsController::class, 'index'])->name('questions.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/questions/create', [\App\Http\Controllers\QuestionPageController::class, 'create'])->name('questions.create');

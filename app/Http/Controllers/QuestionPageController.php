@@ -39,11 +39,11 @@ class QuestionPageController extends Controller
 
         // Validate filters
         $invalidFiltersDetected = $this->hasInvalidFilters(
-            $departmentId,
-            $semesterId,
-            $courseId,
-            $examTypeId,
-            $filterOptions
+            departmentId: $departmentId,
+            semesterId: $semesterId,
+            courseId: $courseId,
+            examTypeId: $examTypeId,
+            filterOptions: $filterOptions
         );
 
         if ($invalidFiltersDetected) {

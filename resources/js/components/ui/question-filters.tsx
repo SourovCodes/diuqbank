@@ -33,10 +33,10 @@ type QuestionFiltersProps = {
 
 // Map filter keys for type safety
 const filterKeys = {
-  department: "department",
-  semester: "semester",
-  course: "course",
-  examType: "examType",
+  department: "department_id",
+  semester: "semester_id",
+  course: "course_id",
+  examType: "exam_type_id",
 } as const;
 
 // Type for filter configuration
