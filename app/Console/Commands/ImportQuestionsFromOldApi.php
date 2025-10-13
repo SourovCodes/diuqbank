@@ -76,13 +76,14 @@ class ImportQuestionsFromOldApi extends Command
                 'student_id' => $question['user']['student_id'],
             ]);
 
-            //  if(!$user->hasMedia('profile_picture') ) {
-            //     $user->addMediaFromUrl($question['user']['image'])->toMediaCollection('profile_picture');
-            // }
-            $section = $question['section'] ?? null;
-            $status = $question['status'] ?? 'pending';
-
+             if($question['user']['image'] && !$user->hasMedia('profile_picture') ) {
+                $user->addMediaFromUrl($question['user']['image'])->toMediaCollection('profile_picture');
+            }
             
+            $status = $question['status'];
+            $under_review_reason = $status === "pending_review" ? "duplicate" : null;
+            $duplicate_reason =  $status === "pending_review"  ? $question['user_reports'][0]['details'] : null;
+
             $newQuestion = Question::updateOrCreate([
                 'user_id' => $user->id,
                 'department_id' => $department->id,
@@ -95,8 +96,10 @@ class ImportQuestionsFromOldApi extends Command
                 'course_id' => $course->id,
                 'semester_id' => $semester->id,
                 'exam_type_id' => $examType->id,
-                'section' => $section,
-                'status' => $status,
+                'section' =>  $question['section'],
+                'status' =>  $status,
+                'under_review_reason' =>  $under_review_reason,
+                'duplicate_reason' =>  $duplicate_reason,
                 'view_count' => $question['view_count'],
                 'created_at' => $question['created_at'],
                 'updated_at' => $question['updated_at'],
