@@ -45,13 +45,7 @@ class QuestionsController extends Controller
         }
 
         $query = Question::query()
-            ->where(function ($q) {
-                // Show published questions for everyone OR user's own questions regardless of status
-                $q->where('status', \App\Enums\QuestionStatus::PUBLISHED);
-                if (auth()->check()) {
-                    $q->orWhere('user_id', auth()->id());
-                }
-            })
+            ->published()
             ->department($departmentId)
             ->course($courseId)
             ->semester($semesterId)
