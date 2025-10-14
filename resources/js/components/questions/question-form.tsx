@@ -31,7 +31,7 @@ interface QuestionFormErrors {
 
 interface QuestionFormProps {
     data: QuestionFormData;
-    setData: (key: keyof QuestionFormData, value: any) => void;
+    setData: (key: keyof QuestionFormData, value: string | File | boolean | null) => void;
     errors: QuestionFormErrors;
     processing: boolean;
     departments: Department[];
@@ -92,14 +92,14 @@ export default function QuestionForm({
                 setData('course_id', '');
             }
         }
-    }, [data.department_id]);
+    }, [data.department_id, data.course_id, courses, setData]);
 
     // Reset section when exam type changes
     useEffect(() => {
         if (!requiresSection && data.section) {
             setData('section', '');
         }
-    }, [requiresSection]);
+    }, [requiresSection, data.section, setData]);
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];

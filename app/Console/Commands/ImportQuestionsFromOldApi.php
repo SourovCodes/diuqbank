@@ -64,7 +64,7 @@ class ImportQuestionsFromOldApi extends Command
                 'name' => $question['exam_type']['name'],
             ], [
                 'name' => $question['exam_type']['name'],
-                'requires_section'=> $question['exam_type']['requires_section'],
+                'requires_section' => $question['exam_type']['requires_section'],
             ]);
 
             $user = User::updateOrCreate([
@@ -76,13 +76,13 @@ class ImportQuestionsFromOldApi extends Command
                 'student_id' => $question['user']['student_id'],
             ]);
 
-             if($question['user']['image'] && !$user->hasMedia('profile_picture') ) {
+            if ($question['user']['image'] && ! $user->hasMedia('profile_picture')) {
                 $user->addMediaFromUrl($question['user']['image'])->toMediaCollection('profile_picture');
             }
-            
+
             $status = $question['status'];
-            $under_review_reason = $status === "pending_review" ? "duplicate" : null;
-            $duplicate_reason =  $status === "pending_review"  ? $question['user_reports'][0]['details'] : null;
+            $under_review_reason = $status === 'pending_review' ? 'duplicate' : null;
+            $duplicate_reason = $status === 'pending_review' ? $question['user_reports'][0]['details'] : null;
 
             $newQuestion = Question::updateOrCreate([
                 'user_id' => $user->id,
@@ -90,22 +90,22 @@ class ImportQuestionsFromOldApi extends Command
                 'course_id' => $course->id,
                 'semester_id' => $semester->id,
                 'exam_type_id' => $examType->id,
-            ],[
+            ], [
                 'user_id' => $user->id,
                 'department_id' => $department->id,
                 'course_id' => $course->id,
                 'semester_id' => $semester->id,
                 'exam_type_id' => $examType->id,
-                'section' =>  $question['section'],
-                'status' =>  $status,
-                'under_review_reason' =>  $under_review_reason,
-                'duplicate_reason' =>  $duplicate_reason,
+                'section' => $question['section'],
+                'status' => $status,
+                'under_review_reason' => $under_review_reason,
+                'duplicate_reason' => $duplicate_reason,
                 'view_count' => $question['view_count'],
                 'created_at' => $question['created_at'],
                 'updated_at' => $question['updated_at'],
             ]);
-            if(!$newQuestion->hasMedia('pdf') ) {
-                $newQuestion->addMediaFromUrl("https://r2.diuqbank.com/".$question['pdf_key'])->toMediaCollection('pdf');
+            if (! $newQuestion->hasMedia('pdf')) {
+                $newQuestion->addMediaFromUrl('https://r2.diuqbank.com/'.$question['pdf_key'])->toMediaCollection('pdf');
             }
         }
     }

@@ -24,7 +24,7 @@ interface QuestionsIndexProps extends SharedData {
     };
 }
 
-export default function QuestionsIndex({ questions, filters, filterOptions, auth }: QuestionsIndexProps) {
+export default function QuestionsIndex({ questions, filters, filterOptions }: QuestionsIndexProps) {
     return (
         <MainLayout>
             <Head title="Questions" />
