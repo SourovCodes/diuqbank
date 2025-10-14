@@ -1,6 +1,6 @@
 <?php
 
-use App\MediaLibrary\Conversions\PdfWatermarkImageGenerator;
+use App\MediaLibrary\Conversions\PdfWatermarkGenerator;
 use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +32,7 @@ it('includes the uploader name within the watermark text', function () {
 
     $fallback = \Mockery::mock(BasePdfGenerator::class);
 
-    $generator = new class($fallback) extends PdfWatermarkImageGenerator
+    $generator = new class($fallback) extends PdfWatermarkGenerator
     {
         public function setMediaForTest(Media $media): void
         {
@@ -49,5 +49,5 @@ it('includes the uploader name within the watermark text', function () {
 
     expect($generator->exposedResolveWatermarkText())
         ->toContain('Uploader Name')
-        ->toStartWith(config('app.name', 'DIUQBank'));
+        ->toStartWith('https://diuqbank.com');
 });

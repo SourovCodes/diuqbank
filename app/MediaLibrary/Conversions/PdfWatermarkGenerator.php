@@ -10,7 +10,7 @@ use Spatie\MediaLibrary\Conversions\ImageGenerators\ImageGenerator;
 use Spatie\MediaLibrary\Conversions\ImageGenerators\Pdf as BasePdfGenerator;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class PdfWatermarkImageGenerator extends ImageGenerator
+class PdfWatermarkGenerator extends ImageGenerator
 {
     public function __construct(
         protected BasePdfGenerator $fallback
