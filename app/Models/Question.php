@@ -95,7 +95,7 @@ class Question extends Model implements HasMedia
             ->addMediaCollection('pdf')
             ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
-            ->useDisk(diskName: 'public')
+            ->useDisk(diskName: 'local')
             ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
     }
 
@@ -157,7 +157,7 @@ class Question extends Model implements HasMedia
     protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->getFirstMediaUrl('pdf')
+            get: fn () => $this->getFirstMedia('pdf')?->getTemporaryUrl(now()->addMinutes(5))
         );
     }
 
