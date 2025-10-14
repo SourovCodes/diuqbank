@@ -12,6 +12,7 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -89,7 +90,11 @@ class QuestionForm
                             ->options(QuestionStatus::class)
                             ->default(QuestionStatus::PUBLISHED)
                             ->required()
-                            ->live(),
+                            ->live()
+                            ->afterStateHydrated(function (Select $component, $state) {
+                                // Force re-evaluation of dependent fields on load
+                                $component->state($state);
+                            }),
                         Select::make('under_review_reason')
                             ->label('Under Review Reason')
                             ->options(UnderReviewReason::class)
@@ -102,6 +107,15 @@ class QuestionForm
                             ->maxLength(1000)
                             ->columnSpanFull()
                             ->visible(fn (callable $get): bool => $get('under_review_reason') === UnderReviewReason::DUPLICATE),
+                        View::make('filament.resources.questions.duplicate-pdf-comparison')
+                            ->viewData(fn (?Question $record): array => [
+                                'record' => $record,
+                                'originalQuestion' => $record ? self::findOriginalQuestion($record) : null,
+                            ])
+                            ->columnSpanFull()
+                            ->visible(fn (callable $get, ?Question $record): bool => $get('under_review_reason') === UnderReviewReason::DUPLICATE &&
+                                $record?->getFirstMedia('pdf') !== null
+                            ),
                     ]),
                 Section::make('Attachments')
                     ->columnSpanFull()
@@ -129,5 +143,19 @@ class QuestionForm
         return (bool) ExamType::query()
             ->whereKey($examTypeId)
             ->value('requires_section');
+    }
+
+    protected static function findOriginalQuestion(Question $currentQuestion): ?Question
+    {
+        return Question::query()
+            ->where('department_id', $currentQuestion->department_id)
+            ->where('course_id', $currentQuestion->course_id)
+            ->where('semester_id', $currentQuestion->semester_id)
+            ->where('exam_type_id', $currentQuestion->exam_type_id)
+            ->where('section', $currentQuestion->section)
+            ->where('status', QuestionStatus::PUBLISHED)
+            ->where('id', '!=', $currentQuestion->id)
+            ->orderBy('created_at', 'asc')
+            ->first();
     }
 }
