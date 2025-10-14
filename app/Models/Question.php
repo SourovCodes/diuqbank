@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Question extends Model implements HasMedia
 {
@@ -96,7 +97,17 @@ class Question extends Model implements HasMedia
             ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
             ->useDisk(diskName: 'local')
+            ->storeConversionsOnDisk('public')
             ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('watermarked')
+            ->performOnCollections('pdf')
+            ->withoutManipulations()
+            ->nonQueued();
     }
 
     /**
@@ -157,7 +168,23 @@ class Question extends Model implements HasMedia
     protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->getFirstMedia('pdf')?->getTemporaryUrl(now()->addMinutes(5))
+            get: function (): ?string {
+                $media = $this->getFirstMedia('pdf');
+
+                if (! $media) {
+                    return null;
+                }
+
+                if ($media->hasGeneratedConversion('watermarked')) {
+                    return $media->getFullUrl('watermarked');
+                }
+
+                try {
+                    return $media->getTemporaryUrl(now()->addMinutes(5));
+                } catch (\RuntimeException $exception) {
+                    return $media->getFullUrl();
+                }
+            }
         );
     }
 
