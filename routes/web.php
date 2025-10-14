@@ -1,46 +1,36 @@
 <?php
 
-use App\Http\Controllers\Auth\GoogleLoginController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\ContributorsPageController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QuestionsPageController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::view('/about', 'about')->name('about');
-Route::view('/privacy', 'privacy')->name('privacy');
-Route::view('/terms', 'terms')->name('terms');
-Route::view('/login', 'auth.login')->middleware('guest')->name('login');
-Route::get('/questions', [QuestionsPageController::class, 'index'])->name('questions.index');
-Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::get('/', [\App\Http\Controllers\PagesController::class, 'home'])->name('home');
+Route::get('/about', [\App\Http\Controllers\PagesController::class, 'about'])->name('about');
+Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('privacy-policy');
+Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-of-service');
+Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');
+Route::post('/contact', \App\Http\Controllers\ContactFormController::class)->name('contact.submit');
 
-// Question creation and editing routes (require authentication)
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/questions/create', [QuestionsPageController::class, 'create'])->name('questions.create');
-    Route::get('/questions/{question}/edit', [QuestionsPageController::class, 'edit'])->name('questions.edit');
-    Route::delete('/questions/{question}', [QuestionsPageController::class, 'destroy'])->name('questions.destroy');
+Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login'])->name('login');
+Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
+Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
-    // Profile routes
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::get('/questions', [\App\Http\Controllers\QuestionsController::class, 'index'])->name('questions.index');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/questions/create', [\App\Http\Controllers\QuestionsController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [\App\Http\Controllers\QuestionsController::class, 'store'])->name('questions.store');
+    Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionsController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'update'])->name('questions.update');
 });
-Route::get('/questions/{question}', [QuestionsPageController::class, 'show'])->name('questions.show');
 
-Route::get('/contributors', [ContributorsPageController::class, 'index'])->name('contributors.index');
-Route::get('/contributors/{user}', [ContributorsPageController::class, 'show'])->name('contributors.show');
+Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
+Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionsController::class, 'incrementView'])->name('questions.view');
 
-Route::get('/auth/google/redirect', [GoogleLoginController::class, 'redirect'])->middleware('guest')->name('auth.google.redirect');
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
+Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::class, 'index'])->name('contributors.index');
+Route::get('/contributors/{user}', [\App\Http\Controllers\ContributorsPageController::class, 'show'])->name('contributors.show');
 
-    return redirect()->route('home');
-})->middleware('auth')->name('logout');
-Route::get('/auth/google/callback', [GoogleLoginController::class, 'googleCallback'])->middleware('guest')->name('auth.google.callback');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/image', [\App\Http\Controllers\ProfileController::class, 'updateImage'])->name('profile.image.update');
+});

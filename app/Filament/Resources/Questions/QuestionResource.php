@@ -13,12 +13,16 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class QuestionResource extends Resource
 {
     protected static ?string $model = Question::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static ?string $recordTitleAttribute = 'id';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::QuestionMarkCircle;
 
     public static function form(Schema $schema): Schema
     {
@@ -44,5 +48,48 @@ class QuestionResource extends Resource
             'create' => CreateQuestion::route('/create'),
             'edit' => EditQuestion::route('/{record}/edit'),
         ];
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'course.name',
+            'department.name',
+            'examType.name',
+            'semester.name',
+            'user.name',
+            'section',
+            'status',
+        ];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        $course = $record->course?->name ?? 'Question';
+        $examType = $record->examType?->name;
+
+        return $examType ? sprintf('%s (%s)', $course, $examType) : $course;
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Department' => $record->department?->name,
+            'Semester' => $record->semester?->name,
+            'Section' => $record->section,
+            'Status' => $record->status?->getLabel(),
+            'Views' => (string) ($record->view_count ?? 0),
+        ];
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with([
+            'course',
+            'department',
+            'examType',
+            'semester',
+            'user',
+        ]);
     }
 }

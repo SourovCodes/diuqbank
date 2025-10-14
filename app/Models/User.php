@@ -2,25 +2,20 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-
-
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->email ==='sourov2305101004@diu.edu.bd';
-    }
+    use InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -30,10 +25,10 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name',
         'email',
-        'username',
-        'student_id',
-        'image',
         'password',
+        'student_id',
+        'username',
+        'email_verified_at',
     ];
 
     /**
@@ -51,17 +46,27 @@ class User extends Authenticatable implements FilamentUser
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
-    public function questions(): User|HasMany
+    /**
+     * Get the questions for the user.
+     */
+    public function questions(): HasMany
     {
         return $this->hasMany(Question::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('profile_picture')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+            ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
+            ->singleFile()
+            ->useDisk(diskName: 'public');
     }
 
     public function getRouteKeyName(): string

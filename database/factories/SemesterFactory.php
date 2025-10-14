@@ -2,20 +2,28 @@
 
 namespace Database\Factories;
 
-use App\Models\Semester;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Semester>
+ */
 class SemesterFactory extends Factory
 {
-    protected $model = Semester::class;
-
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
+        $seasons = ['Spring', 'Summer', 'Fall'];
+        $years = range(2020, 2030);
+
+        $season = $this->faker->randomElement($seasons);
+        $year = $this->faker->randomElement($years);
+
         return [
-            'name' => $this->faker->name(),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'name' => $season.' '.$year,
         ];
     }
 }
