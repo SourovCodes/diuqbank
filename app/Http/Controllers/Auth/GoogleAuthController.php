@@ -19,7 +19,31 @@ class GoogleAuthController extends Controller
 
     public function callback(): RedirectResponse
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with(
+                'error', 'Authentication failed. Please try again.'
+            );
+        }
+
+        // Check if email domain is allowed
+        $allowedDomains = ['@diu.edu.bd', '@s.diu.edu.bd'];
+        $userEmail = $googleUser->getEmail();
+        $isAllowedDomain = false;
+
+        foreach ($allowedDomains as $domain) {
+            if (Str::endsWith($userEmail, $domain)) {
+                $isAllowedDomain = true;
+                break;
+            }
+        }
+
+        if (! $isAllowedDomain) {
+            return redirect()->route('login')->with(
+                'email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.'
+            );
+        }
 
         $user = User::query()
             ->where('email', $googleUser->getEmail())
