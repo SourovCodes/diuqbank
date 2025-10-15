@@ -2,101 +2,96 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileRequest;
+use App\Http\Requests\UpdateProfileImageRequest;
+use App\Http\Requests\UpdateProfileRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProfileController extends Controller
 {
     /**
      * Show the profile edit form.
      */
-    public function edit()
+    public function edit(): Response
     {
+        /** @var User $user */
         $user = Auth::user();
 
-        return view('profile.edit', compact('user'));
+        return Inertia::render('profile/edit', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'student_id' => $user->student_id,
+                'avatar' => $user->getFirstMediaUrl('profile_picture'),
+            ],
+        ]);
     }
 
     /**
      * Update the user's profile.
      */
-    public function update(ProfileRequest $request)
+    public function update(UpdateProfileRequest $request): \Illuminate\Http\RedirectResponse
     {
+        /** @var User $user */
         $user = Auth::user();
-        $updateData = $request->validated();
 
-        // Handle image upload if provided
-        if ($request->hasFile('image')) {
-            // Delete old image if it exists (extract the key from URL if it's a full URL)
-            if ($user->image) {
-                $oldImageKey = $this->extractS3KeyFromUrl($user->image);
-                if ($oldImageKey && Storage::disk('s3')->exists($oldImageKey)) {
-                    Storage::disk('s3')->delete($oldImageKey);
-                }
-            }
+        $validated = $request->validated();
 
-            // Generate new filename
-            $uuid = Str::uuid();
-            $extension = $request->file('image')->getClientOriginalExtension();
-            $filename = "{$uuid}.{$extension}";
+        // Update basic profile information
+        $user->update([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'student_id' => $validated['student_id'] ?? null,
+        ]);
 
-            // Store image to S3 with public visibility
-            $path = Storage::disk('s3')->putFileAs(
-                'profile-images',
-                $request->file('image'),
-                $filename,
-                'public'
-            );
-
-            // Update the image path in update data
-            $updateData['image'] = Storage::disk('s3')->url($path);
-        } else {
-
-            // Remove image from update data if no file uploaded to avoid overwriting existing value
-            unset($updateData['image']);
-        }
-
-        $user->update($updateData);
-
-        toast('Profile updated successfully! ✨', 'success');
-
-        return redirect()->route('profile.edit');
+        return redirect()->back()->with('success', 'Profile updated successfully!');
     }
 
     /**
-     * Extract S3 key from URL (for old images that might be stored as full URLs)
+     * Update the user's profile picture.
      */
-    private function extractS3KeyFromUrl($url)
+    public function updateImage(UpdateProfileImageRequest $request): \Illuminate\Http\RedirectResponse
     {
-        if (! $url) {
-            return null;
+        /** @var User $user */
+        $user = Auth::user();
+
+        $validated = $request->validated();
+
+        // Remove old avatar if exists
+        $user->clearMediaCollection('profile_picture');
+
+        // Decode base64 image
+        $imageData = $validated['avatar'];
+
+        // Remove data:image/...;base64, part if exists
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $extension = $matches[1];
+        } else {
+            $extension = 'jpg';
         }
 
-        // If it's already a key (doesn't start with http), return as is
-        if (! str_starts_with($url, 'http')) {
-            return $url;
-        }
+        $imageData = base64_decode($imageData);
 
-        // Extract key from S3 URL
-        $bucket = config('filesystems.disks.s3.bucket');
-        $region = config('filesystems.disks.s3.region');
+        // Generate unique filename
+        $filename = 'avatar_'.$user->id.'_'.time().'.'.$extension;
 
-        // Handle different S3 URL formats
-        $patterns = [
-            "/{$bucket}\.s3\.{$region}\.amazonaws\.com\/(.+)/",
-            "/{$bucket}\.s3\.amazonaws\.com\/(.+)/",
-            "/s3\.{$region}\.amazonaws\.com\/{$bucket}\/(.+)/",
-            "/s3\.amazonaws\.com\/{$bucket}\/(.+)/",
-        ];
+        // Store in temp location first
+        $tempPath = 'temp/'.$filename;
+        Storage::disk('local')->put($tempPath, $imageData);
 
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $url, $matches)) {
-                return $matches[1];
-            }
-        }
+        // Add to media library
+        $user->addMedia(Storage::disk('local')->path($tempPath))
+            ->toMediaCollection('profile_picture');
 
-        return null;
+        // Clean up temp file
+        Storage::disk('local')->delete($tempPath);
+
+        return redirect()->back();
     }
 }

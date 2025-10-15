@@ -18,14 +18,14 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
-    'resend' => [
-        'key' => env('RESEND_KEY'),
-    ],
-
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'resend' => [
+        'key' => env('RESEND_KEY'),
     ],
 
     'slack' => [
@@ -38,6 +38,10 @@ return [
         'client_id' => env('AUTH_GOOGLE_ID'),
         'client_secret' => env('AUTH_GOOGLE_SECRET'),
         'redirect' => config('app.url').'/auth/google/callback',
+    ],
+
+    'google_analytics' => [
+        'id' => env('GOOGLE_ANALYTICS_ID'),
     ],
 
 ];

@@ -2,21 +2,32 @@
 
 namespace Database\Factories;
 
-use App\Models\ExamType;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ExamType>
+ */
 class ExamTypeFactory extends Factory
 {
-    protected $model = ExamType::class;
-
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
+        $examTypes = [
+            ['name' => 'Final', 'requires_section' => false],
+            ['name' => 'Mid', 'requires_section' => false],
+            ['name' => 'Quiz', 'requires_section' => true],
+            ['name' => 'Lab Final', 'requires_section' => true],
+        ];
+
+        $examType = $this->faker->randomElement($examTypes);
+
         return [
-            'name' => $this->faker->name(),
-            'requires_section' => $this->faker->boolean(),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'name' => $examType['name'],
+            'requires_section' => $examType['requires_section'],
         ];
     }
 }

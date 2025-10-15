@@ -2,32 +2,27 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin Question */
 class QuestionResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'section' => $this->section,
-            'status' => $this->status,
+            'created_at' => $this->created_at->toISOString(),
             'view_count' => $this->view_count,
-            'created_at' => $this->created_at,
-            'pdf_url' => $this->pdf_url,
-            'pdf_size' => $this->pdf_size,
-            'department' => new DepartmentResource($this->department),
-            'course' => new CourseResource($this->course),
-            'semester' => new SemesterResource($this->semester),
-            'exam_type' => new ExamTypeResource($this->examType),
-            'uploader' => [
-                'name' => $this->user->name,
-                'username' => $this->user->username,
-                'student_id' => $this->user->student_id,
-            ],
+            'section' => $this->section,
+            'department' => $this->department->short_name ?? '',
+            'course' => $this->course->name ?? '',
+            'semester' => $this->semester->name ?? '',
+            'exam_type' => $this->examType->name ?? '',
+            'status' => $this->status,
+            'user_id' => $this->user_id,
         ];
     }
 }

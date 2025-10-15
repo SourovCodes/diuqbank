@@ -3,18 +3,27 @@
 namespace App\Models;
 
 use App\Enums\QuestionStatus;
+use App\Enums\UnderReviewReason;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-// added
-
-class Question extends Model
+class Question extends Model implements HasMedia
 {
+    /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
 
+    use InteractsWithMedia;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'department_id',
@@ -23,33 +32,10 @@ class Question extends Model
         'exam_type_id',
         'section',
         'status',
+        'under_review_reason',
+        'duplicate_reason',
         'view_count',
-        'pdf_key',
-        'pdf_size',
-        'watermarked_pdf_key',
-        'is_watermarked',
     ];
-
-    // Ensure section is coerced to null if the selected exam type doesn't require it
-    protected static function booted(): void
-    {
-        static::saving(function (Question $question) {
-            // If no exam type is selected, section must be null
-            if (! $question->exam_type_id) {
-                $question->section = null;
-
-                return;
-            }
-
-            $requiresSection = ExamType::query()
-                ->whereKey($question->exam_type_id)
-                ->value('requires_section');
-
-            if (! $requiresSection) {
-                $question->section = null;
-            }
-        });
-    }
 
     /**
      * Get the attributes that should be cast.
@@ -60,27 +46,68 @@ class Question extends Model
     {
         return [
             'status' => QuestionStatus::class,
-            'is_watermarked' => 'boolean',
+            'under_review_reason' => UnderReviewReason::class,
         ];
     }
 
     /**
-     * Scope a query to only include published questions.
+     * Get the user that owns the question.
      */
-    public function scopePublished(Builder $query): void
+    public function user(): BelongsTo
     {
-        $query->where('status', QuestionStatus::PUBLISHED);
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Scope a query to filter questions by uploader (user).
+     * Get the department that owns the question.
      */
-    public function scopeUploader(Builder $query, $userId): void
+    public function department(): BelongsTo
     {
-        if (! $userId) {
-            return;
-        }
-        $query->where('user_id', $userId);
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get the course that owns the question.
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * Get the semester that owns the question.
+     */
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    /**
+     * Get the exam type that owns the question.
+     */
+    public function examType(): BelongsTo
+    {
+        return $this->belongsTo(ExamType::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('pdf')
+            ->acceptsMimeTypes(['application/pdf'])
+            ->singleFile()
+            ->useDisk(diskName: 'local')
+            ->storeConversionsOnDisk('public')
+            ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('watermarked')
+            ->performOnCollections('pdf')
+            ->withoutManipulations()
+            ->nonQueued();
     }
 
     /**
@@ -127,58 +154,51 @@ class Question extends Model
         $query->where('exam_type_id', $examTypeId);
     }
 
-    public function user(): BelongsTo
+    /**
+     * Scope a query to only include published questions.
+     */
+    public function scopePublished(Builder $query): void
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function course(): BelongsTo
-    {
-        return $this->belongsTo(Course::class);
-    }
-
-    public function semester(): BelongsTo
-    {
-        return $this->belongsTo(Semester::class);
-    }
-
-    public function examType(): BelongsTo
-    {
-        return $this->belongsTo(ExamType::class);
+        $query->where('status', QuestionStatus::PUBLISHED);
     }
 
     /**
-     * Get the PDF URL attribute.
+     * Get the PDF URL accessor.
      */
-    public function getPdfUrlAttribute(): ?string
+    protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        // Return watermarked PDF URL if watermarked and watermarked PDF exists
-        if ($this->is_watermarked && $this->watermarked_pdf_key) {
-            return Storage::disk('s3')->url($this->watermarked_pdf_key);
-        }
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function (): ?string {
+                $media = $this->getFirstMedia('pdf');
 
-        // Return original PDF URL
-        if (! $this->pdf_key) {
-            return null;
-        }
+                if (! $media) {
+                    return null;
+                }
 
-        return Storage::disk('s3')->url($this->pdf_key);
+                if ($media->hasGeneratedConversion('watermarked')) {
+                    return $media->getFullUrl('watermarked');
+                }
+
+                try {
+                    if ($media->disk === 's3' || $media->disk === 'local') {
+                        return $media->getTemporaryUrl(now()->addMinutes(5));
+                    } else {
+                        return $media->getFullUrl();
+                    }
+                } catch (\RuntimeException $exception) {
+                    return $media->getFullUrl();
+                }
+            }
+        );
     }
 
     /**
-     * Get the watermarked PDF URL attribute.
+     * Get the PDF size accessor.
      */
-    public function getWatermarkedPdfUrlAttribute(): ?string
+    protected function pdfSize(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        if (! $this->watermarked_pdf_key) {
-            return null;
-        }
-
-        return Storage::disk('s3')->url($this->watermarked_pdf_key);
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => $this->getFirstMedia('pdf')?->size ?? 0
+        );
     }
 }
