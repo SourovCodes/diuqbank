@@ -22,21 +22,21 @@ it('redirects to google oauth', function () {
 
 it('creates a new user on google callback when user does not exist', function () {
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('newuser@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('newuser@diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('New User');
     });
 
     Socialite::shouldReceive('driver->user')->andReturn($googleUser);
 
-    expect(User::query()->where('email', 'newuser@example.com')->exists())->toBeFalse();
+    expect(User::query()->where('email', 'newuser@diu.edu.bd')->exists())->toBeFalse();
 
     $response = $this->get('/auth/google/callback');
 
     $response->assertRedirect(route('home'));
 
-    expect(User::query()->where('email', 'newuser@example.com')->exists())->toBeTrue();
+    expect(User::query()->where('email', 'newuser@diu.edu.bd')->exists())->toBeTrue();
 
-    $user = User::query()->where('email', 'newuser@example.com')->first();
+    $user = User::query()->where('email', 'newuser@diu.edu.bd')->first();
     expect($user->name)->toBe('New User');
     expect($user->username)->not()->toBeEmpty();
     expect($user->email_verified_at)->not()->toBeNull();
@@ -47,12 +47,12 @@ it('creates a new user on google callback when user does not exist', function ()
 
 it('logs in existing user on google callback', function () {
     $existingUser = User::factory()->create([
-        'email' => 'existing@example.com',
+        'email' => 'existing@diu.edu.bd',
         'name' => 'Existing User',
     ]);
 
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('existing@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('existing@diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('Existing User');
     });
 
@@ -68,17 +68,17 @@ it('logs in existing user on google callback', function () {
     expect(Auth::id())->toBe($existingUser->id);
 
     // Should not create duplicate user
-    expect(User::query()->where('email', 'existing@example.com')->count())->toBe(1);
+    expect(User::query()->where('email', 'existing@diu.edu.bd')->count())->toBe(1);
 });
 
 it('generates unique username for new users', function () {
     User::factory()->create([
-        'email' => 'test1@example.com',
+        'email' => 'test1@diu.edu.bd',
         'username' => 'test',
     ]);
 
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('test@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('test@diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('Test Example');
     });
 
@@ -88,13 +88,13 @@ it('generates unique username for new users', function () {
 
     $response->assertRedirect(route('home'));
 
-    $newUser = User::query()->where('email', 'test@example.com')->first();
+    $newUser = User::query()->where('email', 'test@diu.edu.bd')->first();
     expect($newUser->username)->toBe('test1');
 });
 
 it('generates username from email address', function () {
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('john.doe@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('john.doe@s.diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('John Doe');
     });
 
@@ -104,13 +104,13 @@ it('generates username from email address', function () {
 
     $response->assertRedirect(route('home'));
 
-    $newUser = User::query()->where('email', 'john.doe@example.com')->first();
+    $newUser = User::query()->where('email', 'john.doe@s.diu.edu.bd')->first();
     expect($newUser->username)->toBe('johndoe');
 });
 
 it('marks email as verified for new google users', function () {
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('verified@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('verified@diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('Verified User');
     });
 
@@ -120,14 +120,14 @@ it('marks email as verified for new google users', function () {
 
     $response->assertRedirect(route('home'));
 
-    $user = User::query()->where('email', 'verified@example.com')->first();
+    $user = User::query()->where('email', 'verified@diu.edu.bd')->first();
     expect($user->email_verified_at)->not()->toBeNull();
     expect($user->hasVerifiedEmail())->toBeTrue();
 });
 
 it('marks email as verified for existing users with unverified email', function () {
     $existingUser = User::factory()->create([
-        'email' => 'unverified@example.com',
+        'email' => 'unverified@s.diu.edu.bd',
         'name' => 'Unverified User',
         'email_verified_at' => null,
     ]);
@@ -135,7 +135,7 @@ it('marks email as verified for existing users with unverified email', function 
     expect($existingUser->hasVerifiedEmail())->toBeFalse();
 
     $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
-        $mock->shouldReceive('getEmail')->andReturn('unverified@example.com');
+        $mock->shouldReceive('getEmail')->andReturn('unverified@s.diu.edu.bd');
         $mock->shouldReceive('getName')->andReturn('Unverified User');
     });
 
@@ -172,4 +172,34 @@ it('allows unauthenticated user to access logout', function () {
     $response->assertRedirect(route('home'));
 
     expect(Auth::check())->toBeFalse();
+});
+
+it('rejects authentication with non-DIU email domains', function () {
+    $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getEmail')->andReturn('user@gmail.com');
+        $mock->shouldReceive('getName')->andReturn('External User');
+    });
+
+    Socialite::shouldReceive('driver->user')->andReturn($googleUser);
+
+    $response = $this->get('/auth/google/callback');
+
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHasErrors(['email']);
+    expect(User::query()->where('email', 'user@gmail.com')->exists())->toBeFalse();
+});
+
+it('rejects authentication with other educational domains', function () {
+    $googleUser = mock(SocialiteUser::class, function (MockInterface $mock) {
+        $mock->shouldReceive('getEmail')->andReturn('student@other.edu.bd');
+        $mock->shouldReceive('getName')->andReturn('Other Student');
+    });
+
+    Socialite::shouldReceive('driver->user')->andReturn($googleUser);
+
+    $response = $this->get('/auth/google/callback');
+
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHasErrors(['email']);
+    expect(User::query()->where('email', 'student@other.edu.bd')->exists())->toBeFalse();
 });

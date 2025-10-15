@@ -78,3 +78,12 @@ it('authenticates existing user with valid DIU email', function () {
     $response->assertRedirect(route('home'));
     $this->assertAuthenticatedAs($existingUser);
 });
+
+it('handles socialite exceptions gracefully', function () {
+    Socialite::shouldReceive('driver->user')->andThrow(new \Exception('OAuth error'));
+
+    $response = $this->get('/auth/google/callback');
+
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('error', 'Authentication failed. Please try again.');
+});

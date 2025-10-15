@@ -19,7 +19,13 @@ class GoogleAuthController extends Controller
 
     public function callback(): RedirectResponse
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with(
+                'error', 'Authentication failed. Please try again.'
+            );
+        }
 
         // Check if email domain is allowed
         $allowedDomains = ['@diu.edu.bd', '@s.diu.edu.bd'];
@@ -34,9 +40,9 @@ class GoogleAuthController extends Controller
         }
 
         if (! $isAllowedDomain) {
-            return redirect()->route('login')->with(
-                'error' ,'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.',
-            );
+            return redirect()->route('login')->withErrors([
+                'email' => 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.',
+            ]);
         }
 
         $user = User::query()
