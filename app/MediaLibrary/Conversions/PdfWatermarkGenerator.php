@@ -32,9 +32,9 @@ class PdfWatermarkGenerator extends ImageGenerator
     // Ghostscript configuration
     private const GS_TIMEOUT = 180;
 
-    private const GS_IMAGE_RESOLUTION = 150;
+    private const GS_IMAGE_RESOLUTION = 300;
 
-    private const GS_DOWNSAMPLE_THRESHOLD = 1.0;
+    private const GS_DOWNSAMPLE_THRESHOLD = 1.5;
 
     // PDF error codes
     private const ERROR_ENCRYPTED = 268;
@@ -228,7 +228,7 @@ class PdfWatermarkGenerator extends ImageGenerator
             $gsPath,
             '-sDEVICE=pdfwrite',
             '-dCompatibilityLevel=1.4',
-            '-dPDFSETTINGS=/ebook',
+            '-dPDFSETTINGS=/printer',
             '-dNOPAUSE',
             '-dQUIET',
             '-dBATCH',
