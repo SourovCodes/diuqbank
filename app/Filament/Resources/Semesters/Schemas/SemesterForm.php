@@ -24,10 +24,7 @@ class SemesterForm
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->helperText('Use the season and year, e.g., Spring 2025.')
-                            ->placeholder('Spring 2025')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::headline(str($state)->squish()->toString()) : null)
-                            ->formatStateUsing(fn (?string $state): ?string => filled($state) ? Str::headline(str($state)->squish()->toString()) : null),
+                            ->placeholder('Fall 23'),
                     ]),
             ]);
     }

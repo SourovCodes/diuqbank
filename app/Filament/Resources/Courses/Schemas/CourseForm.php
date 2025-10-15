@@ -31,9 +31,7 @@ class CourseForm
                             ->unique(ignoreRecord: true)
                             ->helperText('Use the official course title, e.g., Data Structures and Algorithms.')
                             ->placeholder('Data Structures and Algorithms')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::headline(str($state)->squish()->toString()) : null)
-                            ->formatStateUsing(fn (?string $state): ?string => filled($state) ? Str::headline(str($state)->squish()->toString()) : null),
+                
                     ]),
             ]);
     }
