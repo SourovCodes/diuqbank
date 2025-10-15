@@ -21,6 +21,24 @@ class GoogleAuthController extends Controller
     {
         $googleUser = Socialite::driver('google')->user();
 
+        // Check if email domain is allowed
+        $allowedDomains = ['@diu.edu.bd', '@s.diu.edu.bd'];
+        $userEmail = $googleUser->getEmail();
+        $isAllowedDomain = false;
+
+        foreach ($allowedDomains as $domain) {
+            if (Str::endsWith($userEmail, $domain)) {
+                $isAllowedDomain = true;
+                break;
+            }
+        }
+
+        if (! $isAllowedDomain) {
+            return redirect()->route('login')->with(
+                'error' ,'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.',
+            );
+        }
+
         $user = User::query()
             ->where('email', $googleUser->getEmail())
             ->first();
