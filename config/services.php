@@ -40,4 +40,8 @@ return [
         'redirect' => config('app.url').'/auth/google/callback',
     ],
 
+    'google_analytics' => [
+        'id' => env('GOOGLE_ANALYTICS_ID'),
+    ],
+
 ];

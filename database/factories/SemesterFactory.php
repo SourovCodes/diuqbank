@@ -17,7 +17,7 @@ class SemesterFactory extends Factory
     public function definition(): array
     {
         $seasons = ['Spring', 'Summer', 'Fall'];
-        $years = range(2020, 2030);
+        $years = range(20, 30);
 
         $season = $this->faker->randomElement($seasons);
         $year = $this->faker->randomElement($years);
