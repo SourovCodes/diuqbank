@@ -77,7 +77,7 @@ export default function Footer() {
                         <h3 className="mb-4 text-sm font-semibold tracking-wider text-slate-900 uppercase dark:text-white">Contact Us</h3>
                         <div className="space-y-3">
                             <p className="flex items-center text-slate-600 dark:text-slate-400">
-                                <Mail className="mr-2 h-4 w-4" /> support@diuqbank.edu
+                                <Mail className="mr-2 h-4 w-4" /> info@diuqbank.com
                             </p>
                             <Button
                                 asChild

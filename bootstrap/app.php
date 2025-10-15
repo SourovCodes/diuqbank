@@ -29,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 return inertia('errors/'.$response->getStatusCode())
                     ->toResponse(request())
                     ->setStatusCode($response->getStatusCode());
+            } elseif ($response->getStatusCode() === 419) {
+                return back()->with([
+                    'warning' => 'The page expired, please try again.',
+                ]);
             }
 
             return $response;

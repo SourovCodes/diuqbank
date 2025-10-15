@@ -97,7 +97,7 @@ class Question extends Model implements HasMedia
             ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
             ->useDisk(diskName: 'local')
-            ->storeConversionsOnDisk('public-cdn')
+            ->storeConversionsOnDisk('public')
             ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
     }
 

@@ -27,6 +27,14 @@ class QuestionsController extends Controller
     ) {}
 
     /**
+     * Generate a descriptive filename/title for the question based on its attributes.
+     */
+    protected function generateQuestionTitle(Question $question): string
+    {
+        return $question->course->name.' ('.$question->department->short_name.'), '.$question->semester->name.', '.$question->examType->name;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -126,8 +134,10 @@ class QuestionsController extends Controller
         ]);
 
         if ($request->hasFile('pdf')) {
+            $question->load(['course', 'department', 'semester', 'examType']);
+            $fileName = $this->generateQuestionTitle($question).'.pdf';
             $question->addMediaFromRequest('pdf')
-                ->usingFileName('question.pdf')
+                ->usingFileName($fileName)
                 ->toMediaCollection('pdf');
         }
 
@@ -161,21 +171,29 @@ class QuestionsController extends Controller
             'question' => QuestionDetailResource::make($question)->resolve(),
         ])->withViewData([
             'SEOData' => new SEOData(
-                title: $question->course->name.' ('.$question->department->short_name.'), '.$question->semester->name.', '.$question->examType->name,
+                title: $this->generateQuestionTitle($question),
             ),
         ]);
     }
 
     public function incrementView(Question $question): RedirectResponse
     {
-        // Filter out bots
-        $ua = strtolower(request()->userAgent() ?? '');
-        $isBot = str_contains($ua, 'bot') ||
-                 str_contains($ua, 'crawl') ||
-                 str_contains($ua, 'spider');
+        $sessionId = session()->getId();
+        $cacheKey = "question_viewed_{$question->id}_{$sessionId}";
 
-        if (! $isBot) {
-            $question->increment('view_count');
+        if (! cache()->has($cacheKey)) {
+            // Filter out bots
+            $ua = strtolower(request()->userAgent() ?? '');
+            $isBot = str_contains($ua, 'bot') ||
+                     str_contains($ua, 'crawl') ||
+                     str_contains($ua, 'spider');
+
+            if (! $isBot) {
+                $question->increment('view_count');
+            }
+
+            // Prevent multiple counts for next 6 hours
+            cache()->put($cacheKey, true, now()->addHours(6));
         }
 
         return back();
@@ -214,6 +232,12 @@ class QuestionsController extends Controller
 
         $duplicateReason = $request->validated('duplicate_reason');
 
+        // Check if any of the key parameters changed
+        $parametersChanged = $question->department_id !== $request->validated('department_id') ||
+                           $question->course_id !== $request->validated('course_id') ||
+                           $question->semester_id !== $request->validated('semester_id') ||
+                           $question->exam_type_id !== $request->validated('exam_type_id');
+
         $question->update([
             'department_id' => $request->validated('department_id'),
             'course_id' => $request->validated('course_id'),
@@ -227,9 +251,16 @@ class QuestionsController extends Controller
 
         if ($request->hasFile('pdf')) {
             $question->clearMediaCollection('pdf');
+            $fileName = $this->generateQuestionTitle($question).'.pdf';
             $question->addMediaFromRequest('pdf')
-                ->usingFileName('question.pdf')
+                ->usingFileName($fileName)
                 ->toMediaCollection('pdf');
+        } elseif ($parametersChanged && $question->hasMedia('pdf')) {
+            // If parameters changed but no new PDF uploaded, rename existing media
+            $media = $question->getFirstMedia('pdf');
+            $fileName = $this->generateQuestionTitle($question).'.pdf';
+            $media->file_name = $fileName;
+            $media->save();
         }
 
         $message = $duplicateReason !== null
