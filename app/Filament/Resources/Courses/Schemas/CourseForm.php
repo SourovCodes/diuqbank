@@ -6,7 +6,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class CourseForm
 {
@@ -30,8 +29,8 @@ class CourseForm
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->helperText('Use the official course title, e.g., Data Structures and Algorithms.')
-                            ->placeholder('Data Structures and Algorithms')
-                
+                            ->placeholder('Data Structures and Algorithms'),
+
                     ]),
             ]);
     }
