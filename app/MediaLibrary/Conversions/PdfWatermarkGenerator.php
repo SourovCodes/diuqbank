@@ -63,19 +63,65 @@ class PdfWatermarkGenerator extends ImageGenerator
             $errorCode = $exception->getCode();
 
             if ($errorCode === 267) {
-                Log::warning('PDF uses unsupported compression technique, skipping watermark', [
+                Log::info('PDF uses unsupported compression technique, attempting to reprocess', [
                     'file' => basename($file),
                     'media_id' => $this->media?->id,
                 ]);
+
+                // Try to reprocess the PDF with Ghostscript to make it compatible
+                $reprocessedFile = $this->reprocessPdfForCompatibility($file);
+
+                if ($reprocessedFile && $reprocessedFile !== $file) {
+                    try {
+                        // Try again with the reprocessed file
+                        $pdf = new Fpdi;
+                        $pdf->SetMargins(0, 0, 0);
+                        $pdf->SetAutoPageBreak(false);
+                        $pageCount = $pdf->setSourceFile($reprocessedFile);
+                        $sourceFile = $reprocessedFile;
+
+                        Log::info('Successfully reprocessed PDF for watermarking', [
+                            'file' => basename($file),
+                            'media_id' => $this->media?->id,
+                        ]);
+                    } catch (CrossReferenceException $retryException) {
+                        Log::warning('PDF reprocessing failed, skipping watermark', [
+                            'file' => basename($file),
+                            'media_id' => $this->media?->id,
+                            'retry_error_code' => $retryException->getCode(),
+                        ]);
+
+                        // Clean up reprocessed file
+                        if (file_exists($reprocessedFile)) {
+                            @unlink($reprocessedFile);
+                        }
+
+                        return $file;
+                    }
+                } else {
+                    Log::warning('Could not reprocess PDF, skipping watermark', [
+                        'file' => basename($file),
+                        'media_id' => $this->media?->id,
+                    ]);
+
+                    return $file;
+                }
             } elseif ($errorCode === 268) {
                 Log::warning('PDF is encrypted, skipping watermark', [
                     'file' => basename($file),
                     'media_id' => $this->media?->id,
                 ]);
-            }
 
-            // Return the original file without watermark
-            return $file;
+                return $file;
+            } else {
+                Log::warning('PDF has unknown issue, skipping watermark', [
+                    'file' => basename($file),
+                    'media_id' => $this->media?->id,
+                    'error_code' => $errorCode,
+                ]);
+
+                return $file;
+            }
         }
 
         $watermarkText = $this->resolveWatermarkText();
@@ -126,9 +172,14 @@ class PdfWatermarkGenerator extends ImageGenerator
 
         $pdf->Output('F', $outputPath);
 
-        // Clean up compressed temporary file if it was created
+        // Clean up temporary files
         if ($compressedFile && $compressedFile !== $file && file_exists($compressedFile)) {
             @unlink($compressedFile);
+        }
+
+        // Clean up reprocessed file if it was created and different from source
+        if ($sourceFile !== $file && $sourceFile !== $compressedFile && file_exists($sourceFile)) {
+            @unlink($sourceFile);
         }
 
         return $outputPath;
@@ -209,6 +260,70 @@ class PdfWatermarkGenerator extends ImageGenerator
             return null;
         } catch (\Throwable $exception) {
             Log::warning('PDF compression failed with exception', [
+                'file' => basename($inputFile),
+                'media_id' => $this->media?->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    protected function reprocessPdfForCompatibility(string $inputFile): ?string
+    {
+        // Check if Ghostscript is available
+        exec('which gs 2>/dev/null', $output, $returnCode);
+        if ($returnCode !== 0) {
+            Log::info('Ghostscript not available, cannot reprocess PDF', [
+                'file' => basename($inputFile),
+                'media_id' => $this->media?->id,
+            ]);
+
+            return null;
+        }
+
+        try {
+            $outputFile = sprintf(
+                '%s/%s-reprocessed.pdf',
+                pathinfo($inputFile, PATHINFO_DIRNAME),
+                pathinfo($inputFile, PATHINFO_FILENAME)
+            );
+
+            // Use Ghostscript to reprocess the PDF for compatibility
+            // This decompresses and reconstructs the PDF in a standard format
+            $command = sprintf(
+                'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dAutoRotatePages=/None -dColorImageDownsampleType=/Bicubic -dColorImageResolution=150 -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=150 -dMonoImageDownsampleType=/Bicubic -dMonoImageResolution=150 -sOutputFile=%s %s 2>&1',
+                escapeshellarg($outputFile),
+                escapeshellarg($inputFile)
+            );
+
+            exec($command, $output, $returnCode);
+
+            if ($returnCode !== 0) {
+                Log::warning('Ghostscript PDF reprocessing failed', [
+                    'file' => basename($inputFile),
+                    'media_id' => $this->media?->id,
+                    'error' => implode("\n", $output),
+                ]);
+
+                return null;
+            }
+
+            // Verify the reprocessed file exists
+            if (file_exists($outputFile)) {
+                Log::info('PDF reprocessed for compatibility', [
+                    'file' => basename($inputFile),
+                    'media_id' => $this->media?->id,
+                    'original_size_kb' => round(filesize($inputFile) / 1024, 2),
+                    'reprocessed_size_kb' => round(filesize($outputFile) / 1024, 2),
+                ]);
+
+                return $outputFile;
+            }
+
+            return null;
+        } catch (\Throwable $exception) {
+            Log::warning('PDF reprocessing failed with exception', [
                 'file' => basename($inputFile),
                 'media_id' => $this->media?->id,
                 'error' => $exception->getMessage(),
