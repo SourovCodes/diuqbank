@@ -21,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/questions', [\App\Http\Controllers\QuestionsController::class, 'store'])->name('questions.store');
     Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionsController::class, 'edit'])->name('questions.edit');
     Route::put('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'update'])->name('questions.update');
+    Route::post('/courses', [\App\Http\Controllers\CourseController::class, 'store'])->name('courses.store');
+    Route::post('/semesters', [\App\Http\Controllers\SemesterController::class, 'store'])->name('semesters.store');
 });
 
 Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');

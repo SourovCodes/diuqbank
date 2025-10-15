@@ -97,7 +97,7 @@ class Question extends Model implements HasMedia
             ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
             ->useDisk(diskName: 'local')
-            ->storeConversionsOnDisk('public')
+            ->storeConversionsOnDisk('public-cdn')
             ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
     }
 
@@ -180,7 +180,11 @@ class Question extends Model implements HasMedia
                 }
 
                 try {
-                    return $media->getTemporaryUrl(now()->addMinutes(5));
+                    if($media->disk === 's3' || $media->disk === 'local') {
+                        return $media->getTemporaryUrl(now()->addMinutes(5));
+                    }else{
+                        return $media->getFullUrl();
+                    }
                 } catch (\RuntimeException $exception) {
                     return $media->getFullUrl();
                 }

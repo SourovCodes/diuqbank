@@ -4,7 +4,9 @@ namespace App\MediaLibrary\Conversions;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\Conversions\ImageGenerators\ImageGenerator;
 use Spatie\MediaLibrary\Conversions\ImageGenerators\Pdf as BasePdfGenerator;
@@ -50,7 +52,28 @@ class PdfWatermarkGenerator extends ImageGenerator
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false);
 
-        $pageCount = $pdf->setSourceFile($file);
+        try {
+            $pageCount = $pdf->setSourceFile($file);
+        } catch (CrossReferenceException $exception) {
+            // Handle PDFs with unsupported compression or encryption
+            $errorCode = $exception->getCode();
+
+            if ($errorCode === 267) {
+                Log::warning('PDF uses unsupported compression technique, skipping watermark', [
+                    'file' => basename($file),
+                    'media_id' => $this->media?->id,
+                ]);
+            } elseif ($errorCode === 268) {
+                Log::warning('PDF is encrypted, skipping watermark', [
+                    'file' => basename($file),
+                    'media_id' => $this->media?->id,
+                ]);
+            }
+
+            // Return the original file without watermark
+            return $file;
+        }
+
         $watermarkText = $this->resolveWatermarkText();
 
         for ($pageNumber = 1; $pageNumber <= $pageCount; $pageNumber++) {

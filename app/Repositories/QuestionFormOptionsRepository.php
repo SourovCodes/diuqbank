@@ -51,4 +51,13 @@ class QuestionFormOptionsRepository
 
         return $allCourses->where('department_id', $departmentId)->values();
     }
+
+    /**
+     * Clear cached option collections so new records are available immediately.
+     */
+    public function clearCache(): void
+    {
+        cache()->forget('question_form_options');
+        cache()->forget('filter_options');
+    }
 }

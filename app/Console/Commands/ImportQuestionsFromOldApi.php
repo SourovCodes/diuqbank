@@ -105,7 +105,9 @@ class ImportQuestionsFromOldApi extends Command
                 'updated_at' => $question['updated_at'],
             ]);
             if (! $newQuestion->hasMedia('pdf')) {
-                $newQuestion->addMediaFromUrl('https://r2.diuqbank.com/'.$question['pdf_key'])->toMediaCollection('pdf');
+                $newQuestion->addMediaFromUrl('https://r2.diuqbank.com/'.$question['pdf_key'])
+                    ->usingFileName('question.pdf')
+                    ->toMediaCollection('pdf');
             }
         }
     }

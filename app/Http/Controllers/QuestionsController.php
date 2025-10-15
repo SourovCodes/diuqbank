@@ -125,7 +125,9 @@ class QuestionsController extends Controller
         ]);
 
         if ($request->hasFile('pdf')) {
-            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+            $question->addMediaFromRequest('pdf')
+                ->usingFileName('question.pdf')
+                ->toMediaCollection('pdf');
         }
 
         $message = $duplicateReason !== null
@@ -208,7 +210,9 @@ class QuestionsController extends Controller
 
         if ($request->hasFile('pdf')) {
             $question->clearMediaCollection('pdf');
-            $question->addMediaFromRequest('pdf')->toMediaCollection('pdf');
+            $question->addMediaFromRequest('pdf')
+                ->usingFileName('question.pdf')
+                ->toMediaCollection('pdf');
         }
 
         $message = $duplicateReason !== null

@@ -1,11 +1,15 @@
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import coursesRoutes from '@/routes/courses';
+import semestersRoutes from '@/routes/semesters';
 import type { Course, Department, ExamType, Semester } from '@/types';
-import { AlertTriangle, FileText, Upload } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, FileText, Plus, Upload } from 'lucide-react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 
 interface QuestionFormData {
     department_id: string;
@@ -44,6 +48,37 @@ interface QuestionFormProps {
     existingPdfUrl?: string;
 }
 
+interface NewCourseFormState {
+    department_id: string;
+    name: string;
+}
+
+interface NewCourseFormErrors {
+    department_id?: string;
+    name?: string;
+}
+
+interface NewSemesterFormState {
+    name: string;
+}
+
+interface NewSemesterFormErrors {
+    name?: string;
+}
+
+function sortByName<T extends { name: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getCsrfToken(): string {
+    const token = document.cookie
+        .split('; ')
+        .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+        ?.split('=')[1];
+
+    return token ? decodeURIComponent(token) : '';
+}
+
 export default function QuestionForm({
     data,
     setData,
@@ -60,6 +95,52 @@ export default function QuestionForm({
 }: QuestionFormProps) {
     const [pdfFileName, setPdfFileName] = useState<string>('');
     const [showDuplicateReason, setShowDuplicateReason] = useState<boolean>(false);
+    const [localCourses, setLocalCourses] = useState<Course[]>(courses);
+    const [localSemesters, setLocalSemesters] = useState<Semester[]>(semesters);
+    const [courseDialogOpen, setCourseDialogOpen] = useState<boolean>(false);
+    const [courseForm, setCourseForm] = useState<NewCourseFormState>({ department_id: '', name: '' });
+    const [courseFormErrors, setCourseFormErrors] = useState<NewCourseFormErrors>({});
+    const [courseSubmitting, setCourseSubmitting] = useState<boolean>(false);
+    const [semesterDialogOpen, setSemesterDialogOpen] = useState<boolean>(false);
+    const [semesterForm, setSemesterForm] = useState<NewSemesterFormState>({ name: '' });
+    const [semesterFormErrors, setSemesterFormErrors] = useState<NewSemesterFormErrors>({});
+    const [semesterSubmitting, setSemesterSubmitting] = useState<boolean>(false);
+    const [pendingCourseSelection, setPendingCourseSelection] = useState<{courseId: string; departmentId: string} | null>(null);
+    const [pendingSemesterSelection, setPendingSemesterSelection] = useState<string | null>(null);
+
+    useEffect(() => {
+        setLocalCourses(courses);
+    }, [courses]);
+
+    useEffect(() => {
+        setLocalSemesters(semesters);
+    }, [semesters]);
+
+    // Handle pending course selection after localCourses updates
+    useEffect(() => {
+        if (pendingCourseSelection) {
+            const { courseId, departmentId } = pendingCourseSelection;
+            
+            // First ensure department is set
+            if (data.department_id !== departmentId) {
+                setData('department_id', departmentId);
+            }
+            
+            // Then set the course
+            setData('course_id', courseId);
+            setPendingCourseSelection(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pendingCourseSelection]);
+
+    // Handle pending semester selection after localSemesters updates
+    useEffect(() => {
+        if (pendingSemesterSelection) {
+            setData('semester_id', pendingSemesterSelection);
+            setPendingSemesterSelection(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pendingSemesterSelection]);
 
     // Check if there's a backend duplicate error
     const hasDuplicateError = errors.duplicate !== undefined;
@@ -70,8 +151,10 @@ export default function QuestionForm({
             return [];
         }
 
-        return courses.filter((course) => course.department_id === parseInt(data.department_id));
-    }, [data.department_id, courses]);
+        const departmentId = parseInt(data.department_id, 10);
+
+        return localCourses.filter((course) => course.department_id === departmentId);
+    }, [data.department_id, localCourses]);
 
     // Check if section is required based on selected exam type
     const requiresSection = useMemo(() => {
@@ -87,12 +170,15 @@ export default function QuestionForm({
     // Reset course when department changes
     useEffect(() => {
         if (data.department_id && data.course_id) {
-            const course = courses.find((c) => c.id === parseInt(data.course_id));
-            if (!course || course.department_id !== parseInt(data.department_id)) {
+            const courseId = parseInt(data.course_id, 10);
+            const departmentId = parseInt(data.department_id, 10);
+            const course = localCourses.find((c) => c.id === courseId);
+
+            if (!course || course.department_id !== departmentId) {
                 setData('course_id', '');
             }
         }
-    }, [data.department_id, data.course_id, courses, setData]);
+    }, [data.department_id, data.course_id, localCourses, setData]);
 
     // Reset section when exam type changes
     useEffect(() => {
@@ -100,6 +186,179 @@ export default function QuestionForm({
             setData('section', '');
         }
     }, [requiresSection, data.section, setData]);
+
+    function openCourseDialog(): void {
+        setCourseForm({
+            department_id: data.department_id || '',
+            name: '',
+        });
+        setCourseFormErrors({});
+        setCourseSubmitting(false);
+        setCourseDialogOpen(true);
+    }
+
+    function handleCourseDialogChange(open: boolean, defaultDepartmentId?: string): void {
+        setCourseDialogOpen(open);
+
+        if (!open) {
+            setCourseForm({
+                department_id: defaultDepartmentId ?? data.department_id ?? '',
+                name: '',
+            });
+            setCourseFormErrors({});
+            setCourseSubmitting(false);
+        }
+    }
+
+    function openSemesterDialog(): void {
+        setSemesterForm({ name: '' });
+        setSemesterFormErrors({});
+        setSemesterSubmitting(false);
+        setSemesterDialogOpen(true);
+    }
+
+    function handleSemesterDialogChange(open: boolean): void {
+        setSemesterDialogOpen(open);
+
+        if (!open) {
+            setSemesterForm({ name: '' });
+            setSemesterFormErrors({});
+            setSemesterSubmitting(false);
+        }
+    }
+
+    async function handleCourseSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+        event.preventDefault();
+
+        const trimmedName = courseForm.name.trim();
+        const departmentId = courseForm.department_id;
+
+        const validationErrors: NewCourseFormErrors = {};
+
+        if (!departmentId) {
+            validationErrors.department_id = 'Select a department.';
+        }
+
+        if (!trimmedName) {
+            validationErrors.name = 'Course name is required.';
+        }
+
+        if (Object.keys(validationErrors).length > 0) {
+            setCourseFormErrors(validationErrors);
+            return;
+        }
+
+        setCourseSubmitting(true);
+
+        try {
+            const response = await fetch(coursesRoutes.store.url(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    department_id: parseInt(departmentId, 10),
+                    name: trimmedName,
+                }),
+            });
+
+            const payload = await response.json().catch(() => null);
+
+            if (response.ok && payload?.course) {
+                const newCourse = payload.course as Course;
+
+                // Add the new course to the list
+                setLocalCourses((current) => sortByName([...current, newCourse]));
+
+                // Set pending selection to be handled by useEffect
+                setPendingCourseSelection({
+                    courseId: newCourse.id.toString(),
+                    departmentId: newCourse.department_id.toString()
+                });
+
+                toast.success('Course added successfully.');
+                handleCourseDialogChange(false, newCourse.department_id.toString());
+            } else if (response.status === 422 && payload?.errors) {
+                const formattedErrors: NewCourseFormErrors = {};
+                Object.entries(payload.errors).forEach(([key, value]) => {
+                    const message = Array.isArray(value) ? value[0] : value;
+                    if (message) {
+                        formattedErrors[key as keyof NewCourseFormErrors] = message as string;
+                    }
+                });
+                setCourseFormErrors(formattedErrors);
+            } else {
+                toast.error('We could not add the course. Please try again.');
+            }
+        } catch (error) {
+            toast.error('We could not add the course. Please try again.');
+        } finally {
+            setCourseSubmitting(false);
+        }
+    }
+
+    async function handleSemesterSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+        event.preventDefault();
+
+        const trimmedName = semesterForm.name.trim();
+
+        if (!trimmedName) {
+            setSemesterFormErrors({ name: 'Semester name is required.' });
+            return;
+        }
+
+        setSemesterSubmitting(true);
+
+        try {
+            const response = await fetch(semestersRoutes.store.url(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    name: trimmedName,
+                }),
+            });
+
+            const payload = await response.json().catch(() => null);
+
+            if (response.ok && payload?.semester) {
+                const newSemester = payload.semester as Semester;
+
+                // Add the new semester to the list
+                setLocalSemesters((current) => sortByName([...current, newSemester]));
+                
+                // Set pending selection to be handled by useEffect
+                setPendingSemesterSelection(newSemester.id.toString());
+
+                toast.success('Semester added successfully.');
+                handleSemesterDialogChange(false);
+            } else if (response.status === 422 && payload?.errors) {
+                const formattedErrors: NewSemesterFormErrors = {};
+                Object.entries(payload.errors).forEach(([key, value]) => {
+                    const message = Array.isArray(value) ? value[0] : value;
+                    if (message) {
+                        formattedErrors[key as keyof NewSemesterFormErrors] = message as string;
+                    }
+                });
+                setSemesterFormErrors(formattedErrors);
+            } else {
+                toast.error('We could not add the semester. Please try again.');
+            }
+        } catch (error) {
+            toast.error('We could not add the semester. Please try again.');
+        } finally {
+            setSemesterSubmitting(false);
+        }
+    }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -110,7 +369,8 @@ export default function QuestionForm({
     }
 
     return (
-        <form onSubmit={onSubmit} className="space-y-6">
+        <>
+            <form onSubmit={onSubmit} className="space-y-6">
             {/* Department and Course */}
             <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -136,18 +396,31 @@ export default function QuestionForm({
                     <Label htmlFor="course_id">
                         Course <span className="text-red-500">*</span>
                     </Label>
-                    <Select value={data.course_id} onValueChange={(value) => setData('course_id', value)} disabled={!data.department_id}>
-                        <SelectTrigger id="course_id" className="w-full" aria-invalid={!!errors.course_id}>
-                            <SelectValue placeholder={data.department_id ? 'Select course' : 'Select department first'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {filteredCourses.map((course) => (
-                                <SelectItem key={course.id} value={course.id.toString()}>
-                                    {course.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                        <Select value={data.course_id} onValueChange={(value) => setData('course_id', value)} disabled={!data.department_id}>
+                            <SelectTrigger id="course_id" className="w-full" aria-invalid={!!errors.course_id}>
+                                <SelectValue placeholder={data.department_id ? 'Select course' : 'Select department first'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {filteredCourses.map((course) => (
+                                    <SelectItem key={course.id} value={course.id.toString()}>
+                                        {course.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={openCourseDialog}
+                            disabled={!data.department_id}
+                            title={!data.department_id ? 'Select a department first' : 'Add course'}
+                            className="shrink-0"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
                     {errors.course_id && <p className="text-sm text-red-600 dark:text-red-400">{errors.course_id}</p>}
                 </div>
             </div>
@@ -158,18 +431,30 @@ export default function QuestionForm({
                     <Label htmlFor="semester_id">
                         Semester <span className="text-red-500">*</span>
                     </Label>
-                    <Select value={data.semester_id} onValueChange={(value) => setData('semester_id', value)}>
-                        <SelectTrigger id="semester_id" className="w-full" aria-invalid={!!errors.semester_id}>
-                            <SelectValue placeholder="Select semester" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {semesters.map((semester) => (
-                                <SelectItem key={semester.id} value={semester.id.toString()}>
-                                    {semester.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                        <Select value={data.semester_id} onValueChange={(value) => setData('semester_id', value)}>
+                            <SelectTrigger id="semester_id" className="w-full" aria-invalid={!!errors.semester_id}>
+                                <SelectValue placeholder="Select semester" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {localSemesters.map((semester) => (
+                                    <SelectItem key={semester.id} value={semester.id.toString()}>
+                                        {semester.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={openSemesterDialog}
+                            title="Add semester"
+                            className="shrink-0"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
                     {errors.semester_id && <p className="text-sm text-red-600 dark:text-red-400">{errors.semester_id}</p>}
                 </div>
 
@@ -352,5 +637,105 @@ export default function QuestionForm({
                 </Button>
             </div>
         </form>
+
+        <Dialog open={courseDialogOpen} onOpenChange={(open) => handleCourseDialogChange(open)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add a new course</DialogTitle>
+                    <DialogDescription>Select the department and provide the course name to make it available in the list.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCourseSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="new-course-department">
+                            Department <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                            value={courseForm.department_id}
+                            onValueChange={(value) => setCourseForm((prev) => ({ ...prev, department_id: value }))}
+                            disabled={courseSubmitting}
+                        >
+                            <SelectTrigger id="new-course-department" aria-invalid={!!courseFormErrors.department_id}>
+                                <SelectValue placeholder="Select department" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.map((dept) => (
+                                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                                        {dept.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {courseFormErrors.department_id && (
+                            <p className="text-sm text-red-600 dark:text-red-400">{courseFormErrors.department_id}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="new-course-name">
+                            Course name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="new-course-name"
+                            type="text"
+                            value={courseForm.name}
+                            onChange={(event) => setCourseForm((prev) => ({ ...prev, name: event.target.value }))}
+                            placeholder="e.g., Data Structures"
+                            aria-invalid={!!courseFormErrors.name}
+                            disabled={courseSubmitting}
+                        />
+                        {courseFormErrors.name && (
+                            <p className="text-sm text-red-600 dark:text-red-400">{courseFormErrors.name}</p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => handleCourseDialogChange(false)} disabled={courseSubmitting}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={courseSubmitting}>
+                            {courseSubmitting ? 'Saving...' : 'Save course'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={semesterDialogOpen} onOpenChange={handleSemesterDialogChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add a new semester</DialogTitle>
+                    <DialogDescription>Provide a semester name to make it selectable for future questions.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSemesterSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="new-semester-name">
+                            Semester name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="new-semester-name"
+                            type="text"
+                            value={semesterForm.name}
+                            onChange={(event) => setSemesterForm({ name: event.target.value })}
+                            placeholder="e.g., Spring 2025"
+                            aria-invalid={!!semesterFormErrors.name}
+                            disabled={semesterSubmitting}
+                        />
+                        {semesterFormErrors.name && (
+                            <p className="text-sm text-red-600 dark:text-red-400">{semesterFormErrors.name}</p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => handleSemesterDialogChange(false)} disabled={semesterSubmitting}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={semesterSubmitting}>
+                            {semesterSubmitting ? 'Saving...' : 'Save semester'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }
