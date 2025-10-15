@@ -27,6 +27,14 @@ class ImportQuestionsFromOldApi extends Command
     protected $description = 'Command description';
 
     /**
+     * Generate a descriptive filename/title for the question based on its attributes.
+     */
+    protected function generateQuestionTitle(Question $question): string
+    {
+        return $question->course->name.' ('.$question->department->short_name.'), '.$question->semester->name.', '.$question->examType->name;
+    }
+
+    /**
      * Execute the console command.
      */
     public function handle()
@@ -105,8 +113,9 @@ class ImportQuestionsFromOldApi extends Command
                 'updated_at' => $question['updated_at'],
             ]);
             if (! $newQuestion->hasMedia('pdf')) {
+                $fileName = $this->generateQuestionTitle($newQuestion).'.pdf';
                 $newQuestion->addMediaFromUrl('https://r2.diuqbank.com/'.$question['pdf_key'])
-                    ->usingFileName('question.pdf')
+                    ->usingFileName($fileName)
                     ->toMediaCollection('pdf');
             }
         }
