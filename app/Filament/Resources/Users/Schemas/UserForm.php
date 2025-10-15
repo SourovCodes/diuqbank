@@ -22,7 +22,6 @@ class UserForm
                         SpatieMediaLibraryFileUpload::make('profile_picture')
                             ->collection('profile_picture')
                             ->label('Profile picture')
-                            ->disk('public')
                             ->image()
                             ->imageEditor()
                             ->columnSpan(1),

@@ -123,11 +123,10 @@ class QuestionForm
                         SpatieMediaLibraryFileUpload::make('pdf')
                             ->label('Question PDF')
                             ->collection('pdf')
-                            ->disk('public')
                             ->preserveFilenames()
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(10240)
-                            ->required(fn (?Question $record): bool => blank($record?->getFirstMedia('pdf')))
+                            ->required()
                             ->openable()
                             ->downloadable(),
                     ]),
