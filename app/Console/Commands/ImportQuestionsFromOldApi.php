@@ -39,7 +39,7 @@ class ImportQuestionsFromOldApi extends Command
      */
     public function handle()
     {
-        $questions = Http::get('https://diuqbank.com/api/questions')->json();
+        $questions = Http::get('https://backup.sourov.me/api/questions')->json();
         // sort question by created_at, oldest first
         usort($questions, function ($a, $b) {
             return strtotime($a['created_at']) - strtotime($b['created_at']);
