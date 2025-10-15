@@ -92,13 +92,15 @@ class ImportQuestionsFromOldApi extends Command
             $under_review_reason = $status === 'pending_review' ? 'duplicate' : null;
             $duplicate_reason = $status === 'pending_review' ? $question['user_reports'][0]['details'] : null;
 
-            $newQuestion = Question::updateOrCreate([
+            $newQuestion = Question::firstOrNew([
                 'user_id' => $user->id,
                 'department_id' => $department->id,
                 'course_id' => $course->id,
                 'semester_id' => $semester->id,
                 'exam_type_id' => $examType->id,
-            ], [
+            ]);
+
+            $newQuestion->fill([
                 'user_id' => $user->id,
                 'department_id' => $department->id,
                 'course_id' => $course->id,
@@ -109,9 +111,13 @@ class ImportQuestionsFromOldApi extends Command
                 'under_review_reason' => $under_review_reason,
                 'duplicate_reason' => $duplicate_reason,
                 'view_count' => $question['view_count'],
-                'created_at' => $question['created_at'],
-                'updated_at' => $question['updated_at'],
             ]);
+
+            // Manually set timestamps to preserve original dates
+            $newQuestion->created_at = $question['created_at'];
+            $newQuestion->updated_at = $question['updated_at'];
+
+            $newQuestion->save();
             if (! $newQuestion->hasMedia('pdf')) {
                 $fileName = $this->generateQuestionTitle($newQuestion).'.pdf';
                 $newQuestion->addMediaFromUrl('https://r2.diuqbank.com/'.$question['pdf_key'])
