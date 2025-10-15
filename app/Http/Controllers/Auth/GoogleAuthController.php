@@ -40,9 +40,9 @@ class GoogleAuthController extends Controller
         }
 
         if (! $isAllowedDomain) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.',
-            ]);
+            return redirect()->route('login')->with(
+                'email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.'
+            );
         }
 
         $user = User::query()
