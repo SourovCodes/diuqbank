@@ -19,6 +19,7 @@ class QuestionDetailResource extends JsonResource
             'pdf_size' => $this->pdf_size,
             'pdf_url' => $this->pdf_url,
             'section' => $this->section,
+            'status' => $this->status->value,
             'department' => [
                 'id' => $this->department->id,
                 'name' => $this->department->name,

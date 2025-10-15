@@ -37,6 +37,7 @@ it('returns the watermarked conversion url when available', function (): void {
 it('returns the temporary url when the conversion is missing', function (): void {
     $media = \Mockery::mock(Media::class);
     $media->shouldReceive('hasGeneratedConversion')->once()->with('watermarked')->andReturnFalse();
+    $media->shouldReceive('getAttribute')->with('disk')->andReturn('s3');
     $media->shouldReceive('getTemporaryUrl')->once()->with(\Mockery::type(\DateTimeInterface::class))->andReturn('https://private.example/temp.pdf');
 
     $question = questionWithMedia($media);
@@ -47,6 +48,7 @@ it('returns the temporary url when the conversion is missing', function (): void
 it('falls back to the original url when a temporary url cannot be generated', function (): void {
     $media = \Mockery::mock(Media::class);
     $media->shouldReceive('hasGeneratedConversion')->once()->with('watermarked')->andReturnFalse();
+    $media->shouldReceive('getAttribute')->with('disk')->andReturn('s3');
     $media->shouldReceive('getTemporaryUrl')->once()->with(\Mockery::type(\DateTimeInterface::class))->andThrow(new \RuntimeException('temporary urls unavailable'));
     $media->shouldReceive('getFullUrl')->once()->withNoArgs()->andReturn('https://private.example/original.pdf');
 

@@ -93,4 +93,14 @@ class QuestionFactory extends Factory
             'status' => QuestionStatus::NEED_FIX,
         ]);
     }
+
+    /**
+     * Indicate that the question is published.
+     */
+    public function published(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::PUBLISHED,
+        ]);
+    }
 }

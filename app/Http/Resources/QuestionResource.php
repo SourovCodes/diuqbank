@@ -21,6 +21,8 @@ class QuestionResource extends JsonResource
             'course' => $this->course->name ?? '',
             'semester' => $this->semester->name ?? '',
             'exam_type' => $this->examType->name ?? '',
+            'status' => $this->status,
+            'user_id' => $this->user_id,
         ];
     }
 }

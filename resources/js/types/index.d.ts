@@ -57,6 +57,8 @@ export interface QuestionResource {
     course: string;
     semester: string;
     exam_type: string;
+    status: string;
+    user_id: number;
 }
 
 export interface QuestionDetailResource {
@@ -66,6 +68,7 @@ export interface QuestionDetailResource {
     pdf_size: number;
     pdf_url: string;
     section: string | null;
+    status: string;
     department: {
         id: number;
         name: string;
@@ -120,4 +123,13 @@ export interface QuestionFormOptions {
     semesters: Semester[];
     courses: Course[];
     examTypes: ExamType[];
+}
+
+// Dashboard Types
+export interface DashboardStats {
+    total_questions: number;
+    published: number;
+    pending_review: number;
+    need_fix: number;
+    total_views: number;
 }

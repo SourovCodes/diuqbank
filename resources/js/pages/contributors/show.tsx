@@ -1,9 +1,9 @@
 import { CustomPagination } from '@/components/ui/custom-pagination';
-import { Question, QuestionCard } from '@/components/ui/question-card';
+import { QuestionCard } from '@/components/ui/question-card';
 import MainLayout from '@/layouts/main-layout';
 import contributorsRoutes from '@/routes/contributors';
-import type { PaginatedData, SharedData } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import type { PaginatedData, QuestionResource, SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, FileText } from 'lucide-react';
 
 type Contributor = {
@@ -18,10 +18,12 @@ type Contributor = {
 
 interface ContributorShowProps extends SharedData {
     contributor: Contributor;
-    questions: PaginatedData<Question>;
+    questions: PaginatedData<QuestionResource>;
 }
 
 export default function ContributorShow({ contributor, questions }: ContributorShowProps) {
+    const { auth } = usePage<SharedData>().props;
+
     return (
         <MainLayout>
             <Head title={`${contributor.name} - Contributors`} />
@@ -86,7 +88,7 @@ export default function ContributorShow({ contributor, questions }: ContributorS
                     ) : (
                         <div className="mb-6 space-y-4">
                             {questions.data.map((question) => (
-                                <QuestionCard key={question.id} question={question} />
+                                <QuestionCard key={question.id} question={question} currentUserId={auth?.user?.id} />
                             ))}
                         </div>
                     )}

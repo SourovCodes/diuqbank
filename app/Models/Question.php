@@ -180,9 +180,9 @@ class Question extends Model implements HasMedia
                 }
 
                 try {
-                    if($media->disk === 's3' || $media->disk === 'local') {
+                    if ($media->disk === 's3' || $media->disk === 'local') {
                         return $media->getTemporaryUrl(now()->addMinutes(5));
-                    }else{
+                    } else {
                         return $media->getFullUrl();
                     }
                 } catch (\RuntimeException $exception) {

@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { FileText, Home, Info, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
+import { FileText, Home, Info, LayoutDashboard, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleButton from './appearance-dropdown';
 
@@ -133,6 +133,13 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
 
                                             <DropdownMenuItem asChild>
+                                                <Link href="/dashboard" className="flex items-center">
+                                                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                                                    Dashboard
+                                                </Link>
+                                            </DropdownMenuItem>
+
+                                            <DropdownMenuItem asChild>
                                                 <Link href="/profile" className="flex items-center">
                                                     <User className="mr-2 h-4 w-4" />
                                                     Edit Profile
@@ -239,6 +246,14 @@ export default function Navigation() {
                                 {/* User Actions */}
                                 {auth.user && (
                                     <div className="mt-6 space-y-1 border-t pt-6">
+                                        <Link
+                                            href="/dashboard"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        >
+                                            <LayoutDashboard className="h-4 w-4" />
+                                            <span>Dashboard</span>
+                                        </Link>
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsMobileMenuOpen(false)}

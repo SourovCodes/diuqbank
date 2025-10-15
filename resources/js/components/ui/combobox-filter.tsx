@@ -140,7 +140,8 @@ export function ComboboxFilter({
             {options.map((option) => (
               <CommandItem
                 key={option.id}
-                value={option.name}
+                value={String(option.id)}
+                keywords={[option.name]}
                 onSelect={() => handleSelect(String(option.id))}
                 className="cursor-pointer"
               >

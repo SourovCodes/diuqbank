@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class QuestionsController extends Controller
 {
@@ -142,10 +143,26 @@ class QuestionsController extends Controller
      */
     public function show(Question $question): Response
     {
+        // Check if question is not published and restrict access to owner only
+        if ($question->status !== QuestionStatus::PUBLISHED) {
+            if (! auth()->check() || auth()->id() !== $question->user_id) {
+                $statusMessage = match ($question->status) {
+                    QuestionStatus::PENDING_REVIEW => 'This question is pending review and can only be viewed by its owner.',
+                    QuestionStatus::NEED_FIX => 'This question needs fixing and can only be viewed by its owner.',
+                    default => 'This question is not available for public viewing.'
+                };
+                abort(403, $statusMessage);
+            }
+        }
+
         $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
 
         return Inertia::render('questions/show', [
             'question' => QuestionDetailResource::make($question)->resolve(),
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $question->course->name.' ('.$question->department->short_name.'), '.$question->semester->name.', '.$question->examType->name,
+            ),
         ]);
     }
 
@@ -225,8 +242,16 @@ class QuestionsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Question $question)
+    public function destroy(Question $question): \Illuminate\Http\RedirectResponse
     {
-        //
+        // Authorize: only the owner can delete their question
+        if (auth()->id() !== $question->user_id) {
+            abort(403, 'You are not authorized to delete this question.');
+        }
+
+        // Delete the question
+        $question->delete();
+
+        return redirect()->route('questions.index')->with('success', 'Question deleted successfully!');
     }
 }

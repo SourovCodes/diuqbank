@@ -5,7 +5,7 @@ import { QuestionFilters } from '@/components/ui/question-filters';
 import MainLayout from '@/layouts/main-layout';
 import questionsRoutes from '@/routes/questions';
 import type { Course, Department, ExamType, PaginatedData, QuestionResource, Semester, SharedData } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
 
 interface QuestionsIndexProps extends SharedData {
@@ -25,6 +25,8 @@ interface QuestionsIndexProps extends SharedData {
 }
 
 export default function QuestionsIndex({ questions, filters, filterOptions }: QuestionsIndexProps) {
+    const { auth } = usePage<SharedData>().props;
+
     return (
         <MainLayout>
             <Head title="Questions" />
@@ -59,7 +61,7 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
                 ) : (
                     <div className="mb-6 space-y-4">
                         {questions.data.map((question) => (
-                            <QuestionCard key={question.id} question={question} />
+                            <QuestionCard key={question.id} question={question} currentUserId={auth?.user?.id} />
                         ))}
                     </div>
                 )}

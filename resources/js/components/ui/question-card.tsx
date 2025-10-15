@@ -1,13 +1,14 @@
 import { Link } from "@inertiajs/react";
-import { School, Calendar, Clock, Eye, ArrowRight } from "lucide-react";
+import { School, Calendar, Clock, Eye, ArrowRight, User, XCircle } from "lucide-react";
 import questionsRoutes from "@/routes/questions";
 import type { QuestionResource } from "@/types";
 
 interface QuestionCardProps {
   question: QuestionResource;
+  currentUserId?: number | null;
 }
 
-export function QuestionCard({ question }: QuestionCardProps) {
+export function QuestionCard({ question, currentUserId }: QuestionCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -15,6 +16,8 @@ export function QuestionCard({ question }: QuestionCardProps) {
       year: "numeric",
     });
   };
+  const isOwnQuestion = currentUserId && currentUserId === question.user_id;
+  const isPublished = question.status === 'published';
 
   return (
     <Link href={questionsRoutes.show.url(question.id)} className="block group">
@@ -26,7 +29,37 @@ export function QuestionCard({ question }: QuestionCardProps) {
             </h3>
 
             <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Add any badges or icons here if needed */}
+              {/* "Your Question" badge for question owner */}
+              {isOwnQuestion && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-1 text-xs font-medium">
+                  <User className="h-3 w-3" />
+                  Your Question
+                </span>
+              )}
+
+              {/* Status indicator for non-published questions when viewing own questions */}
+              {isOwnQuestion && !isPublished && (
+                <span className={`inline-flex items-center gap-1 rounded-md text-xs px-2 py-1 font-medium ${
+                  question.status === 'pending_review'
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                    : question.status === 'need_fix'
+                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                    : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
+                }`}>
+                  {question.status === 'pending_review' && (
+                    <>
+                      <Clock className="h-3 w-3" />
+                      Pending Review
+                    </>
+                  )}
+                  {question.status === 'need_fix' && (
+                    <>
+                      <XCircle className="h-3 w-3" />
+                      Need Fix
+                    </>
+                  )}
+                </span>
+              )}
             </div>
           </div>
 

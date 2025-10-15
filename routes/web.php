@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/questions', [\App\Http\Controllers\QuestionsController::class, 'store'])->name('questions.store');
     Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionsController::class, 'edit'])->name('questions.edit');
     Route::put('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'update'])->name('questions.update');
+    Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'destroy'])->name('questions.destroy');
     Route::post('/courses', [\App\Http\Controllers\CourseController::class, 'store'])->name('courses.store');
     Route::post('/semesters', [\App\Http\Controllers\SemesterController::class, 'store'])->name('semesters.store');
 });
@@ -32,6 +33,7 @@ Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::c
 Route::get('/contributors/{user}', [\App\Http\Controllers\ContributorsPageController::class, 'show'])->name('contributors.show');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/image', [\App\Http\Controllers\ProfileController::class, 'updateImage'])->name('profile.image.update');
