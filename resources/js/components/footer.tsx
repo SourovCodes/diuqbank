@@ -99,7 +99,7 @@ export default function Footer() {
                 <div className="border-t border-slate-200 py-6 dark:border-slate-800">
                     <div className="flex flex-col items-center justify-between md:flex-row">
                         <div className="mb-4 text-sm text-slate-600 md:mb-0 dark:text-slate-400">
-                            <p className="mb-2">© {new Date().getFullYear()} DIU ACM. All rights reserved.</p>
+                            <p className="mb-2">© {new Date().getFullYear()} DIUQBank. All rights reserved.</p>
                         </div>
                         <p className="flex items-center text-sm text-slate-600 dark:text-slate-400">
                             Made with <Heart className="mx-1 h-4 w-4 text-red-500" /> by Sourov Biswas
