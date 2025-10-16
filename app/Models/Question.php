@@ -107,7 +107,7 @@ class Question extends Model implements HasMedia
             ->addMediaConversion('watermarked')
             ->performOnCollections('pdf')
             ->withoutManipulations()
-            ->queued();
+            ->nonQueued();
     }
 
     /**
