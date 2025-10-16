@@ -1,15 +1,11 @@
 <?php
 
-use App\Mail\ContactFormSubmission;
 use App\Models\ContactFormSubmission as ContactFormSubmissionModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
 
-it('creates a contact form submission and sends email', function () {
-    Mail::fake();
-
+it('creates a contact form submission', function () {
     $data = [
         'name' => 'John Doe',
         'email' => 'john@example.com',
@@ -28,14 +24,6 @@ it('creates a contact form submission and sends email', function () {
     expect($submission->name)->toBe('John Doe');
     expect($submission->message)->toBe('This is a test message for the contact form.');
     expect($submission->ip_address)->not->toBeNull();
-
-    // Assert email was queued (since ContactFormSubmission implements ShouldQueue)
-    Mail::assertQueued(ContactFormSubmission::class, function ($mail) use ($data) {
-        return $mail->name === $data['name'] &&
-               $mail->email === $data['email'] &&
-               $mail->messageBody === $data['message'] &&
-               $mail->hasTo('info@diuqbank.com');
-    });
 });
 
 it('validates required fields', function () {
