@@ -16,6 +16,7 @@
         "laravel/wayfinder": "^0.1.11",
         "league/flysystem-aws-s3-v3": "^3.29",
         "ralphjsmit/laravel-seo": "^1.7",
+        "sentry/sentry-laravel": "^4.17",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6"
     },
