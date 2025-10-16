@@ -16,7 +16,7 @@ class ContactFormController extends Controller
     {
         $data = $request->validated();
 
-        Mail::to('info@diuqbank.com')->send(
+        Mail::to('sourov2305101004@diu.edu.bd')->send(
             new ContactFormSubmission($data['name'], $data['email'], $data['message'])
         );
 
