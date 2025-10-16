@@ -30,6 +30,8 @@ class PdfWatermarkGenerator extends ImageGenerator
 
     private const SIDE_PADDING = 2;
 
+    private const TEXT_VERTICAL_OFFSET_RATIO = 0.25; // Position text 25% down from top padding
+
     private const HEADER_HEIGHT = self::TOP_PADDING + self::LINE_HEIGHT + self::BOTTOM_PADDING;
 
     // Ghostscript configuration
@@ -126,8 +128,8 @@ class PdfWatermarkGenerator extends ImageGenerator
             // Compress the watermarked PDF
             $compressedPath = $this->compressPdfWithGhostscript($uncompressedPath, $outputPath);
 
-            // Clean up uncompressed temp file
-            if (file_exists($uncompressedPath)) {
+            // Clean up uncompressed temp file only if compression succeeded
+            if ($compressedPath && file_exists($uncompressedPath)) {
                 @unlink($uncompressedPath);
             }
 
@@ -198,7 +200,7 @@ class PdfWatermarkGenerator extends ImageGenerator
         $pdf->SetFont('Arial', '', self::FONT_SIZE);
         $pdf->SetTextColor(50, 50, 50);
 
-        $textY = self::TOP_PADDING + (self::LINE_HEIGHT / 4);
+        $textY = self::TOP_PADDING + (self::LINE_HEIGHT * self::TEXT_VERTICAL_OFFSET_RATIO);
         $pdf->SetXY(self::SIDE_PADDING, $textY);
         $pdf->Cell($pageWidth - (self::SIDE_PADDING * 2), self::LINE_HEIGHT, $text, 0, 0, 'L');
     }
@@ -208,14 +210,16 @@ class PdfWatermarkGenerator extends ImageGenerator
      */
     protected function normalizePdfWithGhostscript(string $inputFile): ?string
     {
-        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
-        if (empty($gsPath)) {
+        $gsPath = $this->findGhostscriptPath();
+        if (! $gsPath) {
             $this->logInfo('Ghostscript not available, cannot normalize PDF');
 
             return null;
         }
 
         $outputFile = $this->getTempPath($inputFile, 'normalized');
+
+        $process = null;
 
         try {
             $process = new Process($this->buildGhostscriptCommand($gsPath, $inputFile, $outputFile));
@@ -232,8 +236,8 @@ class PdfWatermarkGenerator extends ImageGenerator
         } catch (ProcessFailedException $exception) {
             $this->logWarning('Ghostscript PDF normalization failed', [
                 'error' => $exception->getMessage(),
-                'output' => $process->getOutput(),
-                'error_output' => $process->getErrorOutput(),
+                'output' => $process?->getOutput(),
+                'error_output' => $process?->getErrorOutput(),
             ]);
 
             if (file_exists($outputFile)) {
@@ -246,6 +250,10 @@ class PdfWatermarkGenerator extends ImageGenerator
                 'error' => $exception->getMessage(),
             ]);
 
+            if (file_exists($outputFile)) {
+                @unlink($outputFile);
+            }
+
             return null;
         }
     }
@@ -255,12 +263,14 @@ class PdfWatermarkGenerator extends ImageGenerator
      */
     protected function compressPdfWithGhostscript(string $inputFile, string $outputFile): ?string
     {
-        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
-        if (empty($gsPath)) {
+        $gsPath = $this->findGhostscriptPath();
+        if (! $gsPath) {
             $this->logInfo('Ghostscript not available, cannot compress PDF');
 
             return null;
         }
+
+        $process = null;
 
         try {
             $originalSize = filesize($inputFile);
@@ -286,8 +296,8 @@ class PdfWatermarkGenerator extends ImageGenerator
         } catch (ProcessFailedException $exception) {
             $this->logWarning('Ghostscript PDF compression failed', [
                 'error' => $exception->getMessage(),
-                'output' => $process->getOutput(),
-                'error_output' => $process->getErrorOutput(),
+                'output' => $process?->getOutput(),
+                'error_output' => $process?->getErrorOutput(),
             ]);
 
             if (file_exists($outputFile)) {
@@ -299,6 +309,10 @@ class PdfWatermarkGenerator extends ImageGenerator
             $this->logWarning('PDF compression failed with exception', [
                 'error' => $exception->getMessage(),
             ]);
+
+            if (file_exists($outputFile)) {
+                @unlink($outputFile);
+            }
 
             return null;
         }
@@ -340,6 +354,13 @@ class PdfWatermarkGenerator extends ImageGenerator
             "-sOutputFile={$outputFile}",
             $inputFile,
         ];
+    }
+
+    protected function findGhostscriptPath(): ?string
+    {
+        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
+
+        return empty($gsPath) ? null : $gsPath;
     }
 
     public function requirementsAreInstalled(): bool
