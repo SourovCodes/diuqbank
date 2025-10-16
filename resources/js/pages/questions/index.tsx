@@ -39,7 +39,7 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
                         asChild
                         className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                     >
-                        <Link href={questionsRoutes.create.url()}>
+                        <Link href={questionsRoutes.create.url()} prefetch>
                             <Plus className="mr-2 h-4 w-4" />
                             Add New Question
                         </Link>

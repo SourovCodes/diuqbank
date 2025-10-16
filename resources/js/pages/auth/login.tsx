@@ -61,7 +61,7 @@ export default function Login() {
                             <p>By signing in, you agree to our Terms of Service and Privacy Policy.</p>
                             <p>
                                 Need help?{' '}
-                                <Link href="/contact" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                                <Link href="/contact" prefetch className="font-medium text-blue-600 hover:underline dark:text-blue-400">
                                     Contact us
                                 </Link>
                             </p>

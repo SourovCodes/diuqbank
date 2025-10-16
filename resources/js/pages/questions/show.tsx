@@ -109,7 +109,7 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                     {isOwnQuestion && (
                         <div className="flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={questionsRoutes.edit.url(question.id)}>
+                                <Link href={questionsRoutes.edit.url(question.id)} prefetch>
                                     <Edit className="mr-1.5 h-4 w-4" />
                                     Edit Question
                                 </Link>
@@ -169,7 +169,10 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                         <div className="mb-2 flex justify-end gap-2">
                             {question.pdf_url && (
                                 <Button asChild variant="outline" size="sm" className="text-xs">
-                                    <a href={question.pdf_url} target="_blank" rel="noopener noreferrer">
+                                    <a 
+                                        href={question.pdf_url} 
+                                        download={`(DIUQBank) ${question.course.name} (${question.department.short_name}), ${question.semester.name}, ${question.exam_type.name}.pdf`}
+                                    >
                                         <Download className="mr-1 h-3.5 w-3.5" />
                                         Download
                                     </a>

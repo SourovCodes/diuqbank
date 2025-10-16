@@ -17,13 +17,13 @@ it('sends an email when the contact form is submitted', function () {
     $response->assertRedirect(route('contact'));
     $response->assertSessionHas('success', 'Message sent successfully.');
 
-    Mail::assertSent(ContactFormSubmission::class);
+    Mail::assertQueued(ContactFormSubmission::class);
 
     /** @var ContactFormSubmission $sentMail */
-    $sentMail = Mail::sent(ContactFormSubmission::class)->first();
+    $sentMail = Mail::queued(ContactFormSubmission::class)->first();
 
     expect($sentMail)->toBeInstanceOf(ContactFormSubmission::class);
-    expect($sentMail->hasTo('contact-form-submissions@diuqbank.com'))->toBeTrue();
+    expect($sentMail->hasTo('info@diuqbank.com'))->toBeTrue();
     expect($sentMail->hasReplyTo($payload['email']))->toBeTrue();
     expect($sentMail->name)->toBe($payload['name']);
     expect($sentMail->email)->toBe($payload['email']);
