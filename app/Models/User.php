@@ -73,7 +73,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
             ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
             ->singleFile()
-            ->useDisk(diskName: 'public');
+            ->useDisk(diskName: 'profile-pictures');
     }
 
     public function getRouteKeyName(): string
