@@ -16,6 +16,9 @@ use Symfony\Component\Process\Process;
 
 class PdfWatermarkGenerator extends ImageGenerator
 {
+    // PDF dimensions - fixed width with aspect ratio maintained
+    private const TARGET_WIDTH_MM = 210; // A4 width in millimeters
+
     // Watermark styling constants
     private const FONT_SIZE = 9;
 
@@ -27,12 +30,14 @@ class PdfWatermarkGenerator extends ImageGenerator
 
     private const SIDE_PADDING = 2;
 
+    private const TEXT_VERTICAL_OFFSET_RATIO = 0.25; // Position text 25% down from top padding
+
     private const HEADER_HEIGHT = self::TOP_PADDING + self::LINE_HEIGHT + self::BOTTOM_PADDING;
 
     // Ghostscript configuration
     private const GS_TIMEOUT = 180;
 
-    private const GS_IMAGE_RESOLUTION = 300;
+    private const GS_IMAGE_RESOLUTION = 300; // 300 DPI for printer quality
 
     private const GS_DOWNSAMPLE_THRESHOLD = 1.5;
 
@@ -115,9 +120,20 @@ class PdfWatermarkGenerator extends ImageGenerator
             $this->addWatermarkToPages($pdf, $pageCount);
 
             $outputPath = $this->getOutputPath($file);
-            $pdf->Output('F', $outputPath);
+            $uncompressedPath = $this->getTempPath($file, 'uncompressed');
 
-            return $outputPath;
+            // Output uncompressed watermarked PDF first
+            $pdf->Output('F', $uncompressedPath);
+
+            // Compress the watermarked PDF
+            $compressedPath = $this->compressPdfWithGhostscript($uncompressedPath, $outputPath);
+
+            // Clean up uncompressed temp file only if compression succeeded
+            if ($compressedPath && file_exists($uncompressedPath)) {
+                @unlink($uncompressedPath);
+            }
+
+            return $compressedPath ?: $uncompressedPath;
         } finally {
             // Always clean up temp file
             if ($tempFile && file_exists($tempFile)) {
@@ -143,16 +159,30 @@ class PdfWatermarkGenerator extends ImageGenerator
             $templateId = $pdf->importPage($pageNumber);
             $pageSize = $pdf->getTemplateSize($templateId);
 
-            $orientation = $pageSize['width'] > $pageSize['height'] ? 'L' : 'P';
-            $newHeight = $pageSize['height'] + self::HEADER_HEIGHT;
+            // Calculate dimensions - only downscale if larger than target width
+            $originalWidth = $pageSize['width'];
+            $originalHeight = $pageSize['height'];
 
-            $pdf->AddPage($orientation, [$pageSize['width'], $newHeight]);
+            // Only scale down if width exceeds target, otherwise keep original size
+            if ($originalWidth > self::TARGET_WIDTH_MM) {
+                $aspectRatio = $originalHeight / $originalWidth;
+                $finalWidth = self::TARGET_WIDTH_MM;
+                $scaledContentHeight = $finalWidth * $aspectRatio;
+            } else {
+                $finalWidth = $originalWidth;
+                $scaledContentHeight = $originalHeight;
+            }
+
+            $totalHeight = $scaledContentHeight + self::HEADER_HEIGHT;
+            $orientation = $finalWidth > $totalHeight ? 'L' : 'P';
+
+            $pdf->AddPage($orientation, [$finalWidth, $totalHeight]);
 
             // Draw watermark header
-            $this->drawWatermarkHeader($pdf, $pageSize['width'], $watermarkText);
+            $this->drawWatermarkHeader($pdf, $finalWidth, $watermarkText);
 
             // Place original page content below header
-            $pdf->useTemplate($templateId, 0, self::HEADER_HEIGHT, $pageSize['width'], $pageSize['height']);
+            $pdf->useTemplate($templateId, 0, self::HEADER_HEIGHT, $finalWidth, $scaledContentHeight);
         }
     }
 
@@ -170,7 +200,7 @@ class PdfWatermarkGenerator extends ImageGenerator
         $pdf->SetFont('Arial', '', self::FONT_SIZE);
         $pdf->SetTextColor(50, 50, 50);
 
-        $textY = self::TOP_PADDING + (self::LINE_HEIGHT / 4);
+        $textY = self::TOP_PADDING + (self::LINE_HEIGHT * self::TEXT_VERTICAL_OFFSET_RATIO);
         $pdf->SetXY(self::SIDE_PADDING, $textY);
         $pdf->Cell($pageWidth - (self::SIDE_PADDING * 2), self::LINE_HEIGHT, $text, 0, 0, 'L');
     }
@@ -180,14 +210,16 @@ class PdfWatermarkGenerator extends ImageGenerator
      */
     protected function normalizePdfWithGhostscript(string $inputFile): ?string
     {
-        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
-        if (empty($gsPath)) {
+        $gsPath = $this->findGhostscriptPath();
+        if (! $gsPath) {
             $this->logInfo('Ghostscript not available, cannot normalize PDF');
 
             return null;
         }
 
         $outputFile = $this->getTempPath($inputFile, 'normalized');
+
+        $process = null;
 
         try {
             $process = new Process($this->buildGhostscriptCommand($gsPath, $inputFile, $outputFile));
@@ -204,8 +236,8 @@ class PdfWatermarkGenerator extends ImageGenerator
         } catch (ProcessFailedException $exception) {
             $this->logWarning('Ghostscript PDF normalization failed', [
                 'error' => $exception->getMessage(),
-                'output' => $process->getOutput(),
-                'error_output' => $process->getErrorOutput(),
+                'output' => $process?->getOutput(),
+                'error_output' => $process?->getErrorOutput(),
             ]);
 
             if (file_exists($outputFile)) {
@@ -218,6 +250,70 @@ class PdfWatermarkGenerator extends ImageGenerator
                 'error' => $exception->getMessage(),
             ]);
 
+            if (file_exists($outputFile)) {
+                @unlink($outputFile);
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * Compress a watermarked PDF using Ghostscript for size optimization.
+     */
+    protected function compressPdfWithGhostscript(string $inputFile, string $outputFile): ?string
+    {
+        $gsPath = $this->findGhostscriptPath();
+        if (! $gsPath) {
+            $this->logInfo('Ghostscript not available, cannot compress PDF');
+
+            return null;
+        }
+
+        $process = null;
+
+        try {
+            $originalSize = filesize($inputFile);
+
+            $process = new Process($this->buildGhostscriptCommand($gsPath, $inputFile, $outputFile));
+            $process->setTimeout(self::GS_TIMEOUT);
+            $process->mustRun();
+
+            if (! file_exists($outputFile)) {
+                return null;
+            }
+
+            $compressedSize = filesize($outputFile);
+
+            $this->logInfo('PDF optimized successfully', [
+                'original_size_kb' => round($originalSize / 1024, 2),
+                'optimized_size_kb' => round($compressedSize / 1024, 2),
+                'size_reduction_kb' => round(($originalSize - $compressedSize) / 1024, 2),
+                'size_reduction_percent' => round((($originalSize - $compressedSize) / $originalSize) * 100, 1),
+            ]);
+
+            return $outputFile;
+        } catch (ProcessFailedException $exception) {
+            $this->logWarning('Ghostscript PDF compression failed', [
+                'error' => $exception->getMessage(),
+                'output' => $process?->getOutput(),
+                'error_output' => $process?->getErrorOutput(),
+            ]);
+
+            if (file_exists($outputFile)) {
+                @unlink($outputFile);
+            }
+
+            return null;
+        } catch (\Throwable $exception) {
+            $this->logWarning('PDF compression failed with exception', [
+                'error' => $exception->getMessage(),
+            ]);
+
+            if (file_exists($outputFile)) {
+                @unlink($outputFile);
+            }
+
             return null;
         }
     }
@@ -228,13 +324,15 @@ class PdfWatermarkGenerator extends ImageGenerator
             $gsPath,
             '-sDEVICE=pdfwrite',
             '-dCompatibilityLevel=1.4',
-            '-dPDFSETTINGS=/printer',
+            '-dPDFSETTINGS=/printer', // High quality for printing (300 DPI)
             '-dNOPAUSE',
             '-dQUIET',
             '-dBATCH',
-            '-dDetectDuplicateImages',
+            '-dDetectDuplicateImages=true',
             '-dCompressFonts=true',
             '-dSubsetFonts=true',
+            '-dCompressPages=true',
+            '-dUseFlateCompression=true',
             '-dColorImageDownsampleType=/Bicubic',
             '-dColorImageResolution='.self::GS_IMAGE_RESOLUTION,
             '-dGrayImageDownsampleType=/Bicubic',
@@ -247,9 +345,22 @@ class PdfWatermarkGenerator extends ImageGenerator
             '-dColorImageDownsampleThreshold='.self::GS_DOWNSAMPLE_THRESHOLD,
             '-dGrayImageDownsampleThreshold='.self::GS_DOWNSAMPLE_THRESHOLD,
             '-dMonoImageDownsampleThreshold='.self::GS_DOWNSAMPLE_THRESHOLD,
+            '-dDownsampleColorImages=true',
+            '-dDownsampleGrayImages=true',
+            '-dDownsampleMonoImages=true',
+            '-dColorConversionStrategy=/LeaveColorUnchanged',
+            '-dDoThumbnails=false',
+            '-dPreserveAnnots=true',
             "-sOutputFile={$outputFile}",
             $inputFile,
         ];
+    }
+
+    protected function findGhostscriptPath(): ?string
+    {
+        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
+
+        return empty($gsPath) ? null : $gsPath;
     }
 
     public function requirementsAreInstalled(): bool
