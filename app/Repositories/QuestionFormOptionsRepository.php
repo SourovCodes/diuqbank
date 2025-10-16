@@ -31,7 +31,7 @@ class QuestionFormOptionsRepository
         $filterOptions = cache()->remember('filter_options', 3600, fn () => [
             'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
             'semesters' => Semester::select('id', 'name')->orderedBySemester(),
-            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
+            'courses' => Course::with('department:id,short_name')->select('id', 'name', 'department_id')->orderBy('name')->get(),
             'examTypes' => ExamType::select('id', 'name')->orderBy('name')->get(),
         ]);
 
@@ -46,7 +46,11 @@ class QuestionFormOptionsRepository
     public function getCoursesByDepartment(?int $departmentId, Collection $allCourses): Collection
     {
         if ($departmentId === null) {
-            return $allCourses;
+            return $allCourses->map(function ($course) {
+                $course->name = "{$course->name} ({$course->department->short_name})";
+
+                return $course;
+            })->values();
         }
 
         return $allCourses->where('department_id', $departmentId)->values();
