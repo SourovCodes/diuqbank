@@ -1,8 +1,8 @@
 @php
     use App\Filament\Resources\Questions\QuestionResource;
     
-    $currentPdfUrl = $record?->getFirstMediaUrl('pdf');
-    $originalPdfUrl = $originalQuestion?->getFirstMediaUrl('pdf');
+    $currentPdfUrl = $record?->pdf_url;
+    $originalPdfUrl = $originalQuestion?->pdf_url;
     $editUrl = $originalQuestion ? QuestionResource::getUrl('edit', ['record' => $originalQuestion->id]) : null;
 @endphp
 
