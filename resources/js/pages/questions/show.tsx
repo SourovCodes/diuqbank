@@ -169,7 +169,7 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                         <div className="mb-2 flex justify-end gap-2">
                             {question.pdf_url && (
                                 <Button asChild variant="outline" size="sm" className="text-xs">
-                                    <a href={question.pdf_url} target="_blank" rel="noopener noreferrer">
+                                    <a href={question.pdf_url} download={`${question.course.name}.pdf`}>
                                         <Download className="mr-1 h-3.5 w-3.5" />
                                         Download
                                     </a>
