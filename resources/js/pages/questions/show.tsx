@@ -109,7 +109,7 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                     {isOwnQuestion && (
                         <div className="flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={questionsRoutes.edit.url(question.id)}>
+                                <Link href={questionsRoutes.edit.url(question.id)} prefetch>
                                     <Edit className="mr-1.5 h-4 w-4" />
                                     Edit Question
                                 </Link>

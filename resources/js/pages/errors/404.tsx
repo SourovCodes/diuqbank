@@ -34,7 +34,7 @@ export default function NotFound() {
                             size="lg"
                             className="min-w-[200px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                         >
-                            <Link href="/">
+                            <Link href="/" prefetch>
                                 <Home className="mr-2 h-4 w-4" />
                                 Back to Home
                             </Link>
@@ -44,7 +44,7 @@ export default function NotFound() {
                             size="lg"
                             className="min-w-[200px] rounded-full border border-slate-200 bg-white px-8 font-medium text-blue-600 shadow-md transition-all hover:border-blue-200 hover:bg-slate-50 hover:text-blue-700 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-blue-300"
                         >
-                            <Link href="/questions">
+                            <Link href="/questions" prefetch>
                                 <Search className="mr-2 h-4 w-4" />
                                 Browse Questions
                             </Link>

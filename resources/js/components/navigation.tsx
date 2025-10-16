@@ -76,7 +76,7 @@ export default function Navigation() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center">
+                        <Link href="/" prefetch className="flex items-center">
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                 DIUQBank
                             </span>
@@ -94,6 +94,7 @@ export default function Navigation() {
                                         <Link
                                             key={item.name}
                                             href={item.href}
+                                            prefetch
                                             className={cn(
                                                 'flex items-center space-x-1 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
                                                 active
@@ -133,14 +134,14 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
 
                                             <DropdownMenuItem asChild>
-                                                <Link href="/dashboard" className="flex items-center">
+                                                <Link href="/dashboard" prefetch className="flex items-center">
                                                     <LayoutDashboard className="mr-2 h-4 w-4" />
                                                     Dashboard
                                                 </Link>
                                             </DropdownMenuItem>
 
                                             <DropdownMenuItem asChild>
-                                                <Link href="/profile" className="flex items-center">
+                                                <Link href="/profile" prefetch className="flex items-center">
                                                     <User className="mr-2 h-4 w-4" />
                                                     Edit Profile
                                                 </Link>
@@ -162,7 +163,7 @@ export default function Navigation() {
                                     </DropdownMenu>
                                 ) : (
                                     <Button variant="ghost" size="sm" asChild className="h-8 px-3">
-                                        <Link href="/login">
+                                        <Link href="/login" prefetch>
                                             <LogIn className="mr-1.5 h-3.5 w-3.5" />
                                             Sign In
                                         </Link>
@@ -228,6 +229,7 @@ export default function Navigation() {
                                             <Link
                                                 key={item.name}
                                                 href={item.href}
+                                                prefetch
                                                 onClick={() => setIsMobileMenuOpen(false)}
                                                 className={cn(
                                                     'flex items-center space-x-3 rounded-lg px-3 py-3 transition-colors',
@@ -248,6 +250,7 @@ export default function Navigation() {
                                     <div className="mt-6 space-y-1 border-t pt-6">
                                         <Link
                                             href="/dashboard"
+                                            prefetch
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -256,6 +259,7 @@ export default function Navigation() {
                                         </Link>
                                         <Link
                                             href="/profile"
+                                            prefetch
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -279,7 +283,7 @@ export default function Navigation() {
                                 {!auth.user && (
                                     <div className="mt-6 space-y-3 border-t pt-6">
                                         <Button variant="outline" className="w-full" asChild>
-                                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Link href="/login" prefetch onClick={() => setIsMobileMenuOpen(false)}>
                                                 <LogIn className="mr-2 h-4 w-4" />
                                                 Sign In
                                             </Link>
