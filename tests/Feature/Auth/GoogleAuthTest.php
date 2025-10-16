@@ -185,7 +185,7 @@ it('rejects authentication with non-DIU email domains', function () {
     $response = $this->get('/auth/google/callback');
 
     $response->assertRedirect(route('login'));
-    $response->assertSessionHas('email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
+    $response->assertSessionHas('error', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
     expect(User::query()->where('email', 'user@gmail.com')->exists())->toBeFalse();
 });
 
@@ -200,6 +200,6 @@ it('rejects authentication with other educational domains', function () {
     $response = $this->get('/auth/google/callback');
 
     $response->assertRedirect(route('login'));
-    $response->assertSessionHas('email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
+    $response->assertSessionHas('error', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
     expect(User::query()->where('email', 'student@other.edu.bd')->exists())->toBeFalse();
 });

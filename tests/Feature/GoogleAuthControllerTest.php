@@ -44,7 +44,7 @@ it('rejects authentication with non-DIU email', function () {
 
     expect(User::where('email', 'student@gmail.com')->exists())->toBeFalse();
     $response->assertRedirect(route('login'));
-    $response->assertSessionHas('email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
+    $response->assertSessionHas('error', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
 });
 
 it('rejects authentication with other educational domain', function () {
@@ -58,7 +58,7 @@ it('rejects authentication with other educational domain', function () {
 
     expect(User::where('email', 'student@other.edu.bd')->exists())->toBeFalse();
     $response->assertRedirect(route('login'));
-    $response->assertSessionHas('email', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
+    $response->assertSessionHas('error', 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.');
 });
 
 it('authenticates existing user with valid DIU email', function () {
