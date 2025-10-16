@@ -12,17 +12,16 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable implements HasMedia, MustVerifyEmail, FilamentUser
+class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     use InteractsWithMedia;
 
-
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->email==='sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail();
+        return $this->email === 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail();
     }
 
     /**

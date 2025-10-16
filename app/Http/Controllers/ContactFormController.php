@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactFormRequest;
-use App\Mail\ContactFormSubmission;
+use App\Models\ContactFormSubmission as ContactFormSubmissionModel;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Mail;
 
 class ContactFormController extends Controller
 {
@@ -16,9 +15,14 @@ class ContactFormController extends Controller
     {
         $data = $request->validated();
 
-        Mail::to('sourov2305101004@diu.edu.bd')->send(
-            new ContactFormSubmission($data['name'], $data['email'], $data['message'])
-        );
+        // Store the submission in database
+        ContactFormSubmissionModel::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'message' => $data['message'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return redirect()->route('contact')->with('success', 'Message sent successfully.');
     }

@@ -1,11 +1,11 @@
 <?php
 
-use App\Mail\ContactFormSubmission;
-use Illuminate\Support\Facades\Mail;
+use App\Models\ContactFormSubmission;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-it('sends an email when the contact form is submitted', function () {
-    Mail::fake();
+uses(RefreshDatabase::class);
 
+it('creates a contact form submission when submitted', function () {
     $payload = [
         'name' => 'Jane Doe',
         'email' => 'jane@example.com',
@@ -17,28 +17,23 @@ it('sends an email when the contact form is submitted', function () {
     $response->assertRedirect(route('contact'));
     $response->assertSessionHas('success', 'Message sent successfully.');
 
-    Mail::assertQueued(ContactFormSubmission::class);
+    // Assert submission was created in database
+    expect(ContactFormSubmission::where('email', 'jane@example.com')->exists())->toBeTrue();
 
-    /** @var ContactFormSubmission $sentMail */
-    $sentMail = Mail::queued(ContactFormSubmission::class)->first();
-
-    expect($sentMail)->toBeInstanceOf(ContactFormSubmission::class);
-    expect($sentMail->hasTo('info@diuqbank.com'))->toBeTrue();
-    expect($sentMail->hasReplyTo($payload['email']))->toBeTrue();
-    expect($sentMail->name)->toBe($payload['name']);
-    expect($sentMail->email)->toBe($payload['email']);
-    expect($sentMail->messageBody)->toBe($payload['message']);
+    $submission = ContactFormSubmission::where('email', 'jane@example.com')->first();
+    expect($submission->name)->toBe($payload['name']);
+    expect($submission->email)->toBe($payload['email']);
+    expect($submission->message)->toBe($payload['message']);
 });
 
 it('validates contact form input', function (array $payload, array $expectedErrors) {
-    Mail::fake();
-
     $response = $this->from(route('contact'))->post('/contact', $payload);
 
     $response->assertRedirect(route('contact'));
     $response->assertSessionHasErrors($expectedErrors);
 
-    Mail::assertNothingSent();
+    // Assert no submission was created
+    expect(ContactFormSubmission::count())->toBe(0);
 })->with([
     'missing name' => [
         [
