@@ -46,7 +46,7 @@ class ContributorsPageController extends Controller
             ->where('user_id', $user->id)
             ->with(['department', 'semester', 'course', 'examType'])
             ->latest()
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString();
 
         $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
