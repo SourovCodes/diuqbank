@@ -18,7 +18,7 @@ class ContributorsPageController extends Controller
             ->withSum('questions as total_views', 'view_count')
             ->with('media')
             ->orderByDesc('questions_count')
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString()
             ->through(fn ($user) => [
                 'id' => $user->id,

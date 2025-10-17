@@ -46,7 +46,7 @@ return [
             'throw' => false,
             'report' => false,
         ],
-         'profile-pictures' => [
+        'profile-pictures' => [
             'driver' => 'local',
             'root' => storage_path('app/public/profile-pictures'),
             'url' => env('APP_URL').'/storage/profile-pictures',
@@ -67,7 +67,7 @@ return [
             'throw' => false,
             'report' => false,
         ],
-         'public-cdn' => [
+        'public-cdn' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
