@@ -2,11 +2,14 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\OnlineUsersService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(protected OnlineUsersService $onlineUsersService) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -51,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                 'info' => $request->session()->get('info'),
                 'warning' => $request->session()->get('warning'),
             ],
+            'onlineUsersCount' => $this->onlineUsersService->getOnlineCount(),
         ];
     }
 }
