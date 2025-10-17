@@ -18,7 +18,7 @@ class ContributorsPageController extends Controller
             ->withSum('questions as total_views', 'view_count')
             ->with('media')
             ->orderByDesc('questions_count')
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString()
             ->through(fn ($user) => [
                 'id' => $user->id,
@@ -46,7 +46,7 @@ class ContributorsPageController extends Controller
             ->where('user_id', $user->id)
             ->with(['department', 'semester', 'course', 'examType'])
             ->latest()
-            ->paginate(15)
+            ->paginate(12)
             ->withQueryString();
 
         $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
