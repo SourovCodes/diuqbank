@@ -98,7 +98,6 @@ class QuestionForm
                         TextInput::make('view_count')
                             ->label('View Count')
                             ->numeric()
-                            ->readOnly()
                             ->default(0)
                             ->helperText('Number of times this question has been viewed.'),
                         Select::make('under_review_reason')
