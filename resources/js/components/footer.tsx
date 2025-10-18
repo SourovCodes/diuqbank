@@ -1,11 +1,14 @@
 import { Button } from '@/components/ui/button';
-import { Link } from '@inertiajs/react';
-import { Heart, Mail } from 'lucide-react';
+import type { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { Circle, Heart, Mail } from 'lucide-react';
 
 export default function Footer() {
+    const { onlineUsersCount } = usePage<SharedData>().props;
+
     return (
         <footer className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-            <div className="container mx-auto px-4">
+            <div className="container mx-auto px-4">{/* Logo and description */}
                 <div className="grid grid-cols-1 gap-8 py-8 md:grid-cols-2 lg:grid-cols-4">
                     {/* Logo and description */}
                     <div className="col-span-1 md:col-span-2 lg:col-span-1">
@@ -74,6 +77,12 @@ export default function Footer() {
                                 </Link>
                             </li>
                         </ul>
+                        
+                        {/* Online Users Count */}
+                        <div className="mt-4 inline-flex items-center space-x-1.5 rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 dark:bg-green-950/30 dark:text-green-400">
+                            <Circle className="h-2 w-2 fill-green-500 text-green-500 dark:fill-green-400 dark:text-green-400" />
+                            <span>{onlineUsersCount} online</span>
+                        </div>
                     </div>
 
                     {/* Contact */}

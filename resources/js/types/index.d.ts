@@ -11,6 +11,7 @@ export interface SharedData {
         info?: string;
         warning?: string;
     };
+    onlineUsersCount: number;
     [key: string]: unknown;
 }
 
