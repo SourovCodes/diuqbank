@@ -87,6 +87,11 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                     <h1 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{question.course.name}</h1>
 
                     <div className="mb-4 flex flex-wrap gap-2">
+                        {question.section && (
+                            <Badge className="bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                {question.section}
+                            </Badge>
+                        )}
                         <Badge className="bg-slate-100 px-3 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
                             <School className="mr-1 h-3.5 w-3.5" />
                             {question.department.short_name} - {question.department.name}
@@ -169,8 +174,8 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                         <div className="mb-2 flex justify-end gap-2">
                             {question.pdf_url && (
                                 <Button asChild variant="outline" size="sm" className="text-xs">
-                                    <a 
-                                        href={question.pdf_url} 
+                                    <a
+                                        href={question.pdf_url}
                                         download={`(DIUQBank) ${question.course.name} (${question.department.short_name}), ${question.semester.name}, ${question.exam_type.name}.pdf`}
                                     >
                                         <Download className="mr-1 h-3.5 w-3.5" />

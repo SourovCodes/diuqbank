@@ -26,9 +26,7 @@ export default function Forbidden() {
 
                     {/* Error Message */}
                     <div className="mb-8 space-y-3">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            Access Forbidden
-                        </h2>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Access Forbidden</h2>
                         <p className="text-lg text-slate-600 dark:text-slate-400">
                             You don't have permission to access this page. Please contact an administrator if you believe this is an error.
                         </p>
