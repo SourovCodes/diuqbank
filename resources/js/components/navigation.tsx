@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { FileText, Home, Info, LayoutDashboard, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
+import { FileText, Heart, Home, Info, LayoutDashboard, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleButton from './appearance-dropdown';
 
@@ -22,6 +22,7 @@ const menuItems = [
     { name: 'Contributors', href: '/contributors', icon: Users },
     { name: 'Contact', href: '/contact', icon: Mail },
     { name: 'About', href: '/about', icon: Info },
+    { name: 'Help the Developer', href: '/help-developer', icon: Heart },
 ];
 
 export default function Navigation() {
@@ -296,7 +297,7 @@ export default function Navigation() {
                 </div>
             )}
 
-            {/* Spacer */}
+            {/* Spacer for header */}
             <div className="h-14" />
         </>
     );

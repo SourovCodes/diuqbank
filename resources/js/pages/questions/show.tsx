@@ -95,6 +95,11 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                             <FileText className="mr-1 h-3.5 w-3.5" />
                             {question.exam_type.name}
                         </Badge>
+                        {question.section && (
+                            <Badge className="bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                {question.section}
+                            </Badge>
+                        )}
                         <Badge className="bg-purple-100 px-3 py-1 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                             <Calendar className="mr-1 h-3.5 w-3.5" />
                             {question.semester.name}
@@ -169,8 +174,8 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                         <div className="mb-2 flex justify-end gap-2">
                             {question.pdf_url && (
                                 <Button asChild variant="outline" size="sm" className="text-xs">
-                                    <a 
-                                        href={question.pdf_url} 
+                                    <a
+                                        href={question.pdf_url}
                                         download={`(DIUQBank) ${question.course.name} (${question.department.short_name}), ${question.semester.name}, ${question.exam_type.name}.pdf`}
                                     >
                                         <Download className="mr-1 h-3.5 w-3.5" />

@@ -26,9 +26,7 @@ export default function ServerError() {
 
                     {/* Error Message */}
                     <div className="mb-8 space-y-3">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            Internal Server Error
-                        </h2>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Internal Server Error</h2>
                         <p className="text-lg text-slate-600 dark:text-slate-400">
                             Something went wrong on our end. We're working on fixing it. Please try again later.
                         </p>

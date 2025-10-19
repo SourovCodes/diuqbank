@@ -26,9 +26,7 @@ export default function ServiceUnavailable() {
 
                     {/* Error Message */}
                     <div className="mb-8 space-y-3">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            Service Unavailable
-                        </h2>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Service Unavailable</h2>
                         <p className="text-lg text-slate-600 dark:text-slate-400">
                             We're currently performing maintenance or experiencing high traffic. Please check back in a few minutes.
                         </p>

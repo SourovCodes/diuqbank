@@ -8,7 +8,8 @@ export default function Footer() {
 
     return (
         <footer className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-            <div className="container mx-auto px-4">{/* Logo and description */}
+            <div className="container mx-auto px-4">
+                {/* Logo and description */}
                 <div className="grid grid-cols-1 gap-8 py-8 md:grid-cols-2 lg:grid-cols-4">
                     {/* Logo and description */}
                     <div className="col-span-1 md:col-span-2 lg:col-span-1">
@@ -29,7 +30,11 @@ export default function Footer() {
                         <h3 className="mb-4 text-sm font-semibold tracking-wider text-slate-900 uppercase dark:text-white">Quick Links</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link href="/" prefetch className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+                                <Link
+                                    href="/"
+                                    prefetch
+                                    className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+                                >
                                     Home
                                 </Link>
                             </li>
@@ -77,7 +82,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                         </ul>
-                        
+
                         {/* Online Users Count */}
                         <div className="mt-4 inline-flex items-center space-x-1.5 rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 dark:bg-green-950/30 dark:text-green-400">
                             <Circle className="h-2 w-2 fill-green-500 text-green-500 dark:fill-green-400 dark:text-green-400" />

@@ -19,9 +19,7 @@ export default function NotFound() {
 
                     {/* Error Message */}
                     <div className="mb-8 space-y-3">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            Page Not Found
-                        </h2>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Page Not Found</h2>
                         <p className="text-lg text-slate-600 dark:text-slate-400">
                             Sorry, we couldn't find the page you're looking for. The page might have been moved or deleted.
                         </p>

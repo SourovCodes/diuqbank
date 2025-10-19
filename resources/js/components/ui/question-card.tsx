@@ -71,6 +71,11 @@ export function QuestionCard({ question, currentUserId }: QuestionCardProps) {
             <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 text-xs">
               {question.exam_type}
             </span>
+            {question.section && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-1 text-xs">
+                {question.section}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-1 text-xs">
               <Calendar className="h-3 w-3" />
               {question.semester}

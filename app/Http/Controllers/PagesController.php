@@ -40,4 +40,9 @@ class PagesController extends Controller
     {
         return Inertia::render('contact');
     }
+
+    public function helpDeveloper(): Response
+    {
+        return Inertia::render('help-developer');
+    }
 }
