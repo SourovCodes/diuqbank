@@ -87,11 +87,6 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                     <h1 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{question.course.name}</h1>
 
                     <div className="mb-4 flex flex-wrap gap-2">
-                        {question.section && (
-                            <Badge className="bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                {question.section}
-                            </Badge>
-                        )}
                         <Badge className="bg-slate-100 px-3 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
                             <School className="mr-1 h-3.5 w-3.5" />
                             {question.department.short_name} - {question.department.name}
@@ -100,6 +95,11 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                             <FileText className="mr-1 h-3.5 w-3.5" />
                             {question.exam_type.name}
                         </Badge>
+                        {question.section && (
+                            <Badge className="bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                {question.section}
+                            </Badge>
+                        )}
                         <Badge className="bg-purple-100 px-3 py-1 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                             <Calendar className="mr-1 h-3.5 w-3.5" />
                             {question.semester.name}
