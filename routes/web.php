@@ -8,6 +8,7 @@ Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'pr
 Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-of-service');
 Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');
 Route::post('/contact', \App\Http\Controllers\ContactFormController::class)->name('contact.submit');
+Route::get('/help-developer', [\App\Http\Controllers\PagesController::class, 'helpDeveloper'])->name('help-developer');
 
 Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login'])->name('login');
 Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
