@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\ContactFormSubmissionsController;
 use App\Http\Controllers\Api\ContributorsController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuestionsController;
 use App\Http\Resources\SessionUserResource;
 use Illuminate\Http\Request;
@@ -22,6 +23,11 @@ Route::get('/contributors', [ContributorsController::class, 'index']);
 Route::get('/contributors/{user:username}', [ContributorsController::class, 'show']);
 
 Route::post('/contact', [ContactFormSubmissionsController::class, 'store']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/image', [ProfileController::class, 'updateImage']);
+});
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');

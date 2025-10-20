@@ -22,7 +22,7 @@ class UpdateProfileImageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'avatar' => ['required', 'string'], // Base64 encoded image
+            'avatar' => ['required', 'image', 'max:2048', 'mimes:jpeg,png,jpg,gif,webp'],
         ];
     }
 
@@ -35,6 +35,9 @@ class UpdateProfileImageRequest extends FormRequest
     {
         return [
             'avatar.required' => 'Profile picture is required.',
+            'avatar.image' => 'The file must be an image.',
+            'avatar.max' => 'Profile picture must not exceed 2MB.',
+            'avatar.mimes' => 'Profile picture must be a JPEG, PNG, JPG, GIF, or WebP image.',
         ];
     }
 }
