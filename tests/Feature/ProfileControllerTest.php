@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,12 +20,12 @@ it('clears avatar cache when profile picture is updated', function () {
     // Verify cache exists
     expect(Cache::has($cacheKey))->toBeTrue();
 
-    // Create a base64 encoded test image
-    $imageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    // Create a fake image file
+    $file = UploadedFile::fake()->image('avatar.jpg');
 
     // Update profile picture
-    actingAs($user)->postJson(route('profile.image.update'), [
-        'avatar' => $imageData,
+    actingAs($user)->post(route('profile.image.update'), [
+        'avatar' => $file,
     ])->assertRedirect();
 
     // Verify cache was cleared
