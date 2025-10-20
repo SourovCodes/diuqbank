@@ -11,10 +11,12 @@ class OnlineUsersService
      */
     public function getOnlineCount(): int
     {
-        $userCount = count($this->getOnlineUserIds());
-        $guestCount = count($this->getOnlineGuestIds());
+        return Cache::remember('online-count', now()->addSeconds(30), function () {
+            $userCount = count($this->getOnlineUserIds());
+            $guestCount = count($this->getOnlineGuestIds());
 
-        return $userCount + $guestCount;
+            return $userCount + $guestCount;
+        });
     }
 
     /**
@@ -55,6 +57,7 @@ class OnlineUsersService
         if (! in_array($key, $userIds)) {
             $userIds[] = $key;
             Cache::put('online-user-ids', $userIds, now()->addDay());
+            Cache::forget('online-count');
         }
     }
 
@@ -72,6 +75,7 @@ class OnlineUsersService
         if (! in_array($key, $guestIds)) {
             $guestIds[] = $key;
             Cache::put('online-guest-ids', $guestIds, now()->addDay());
+            Cache::forget('online-count');
         }
     }
 }
