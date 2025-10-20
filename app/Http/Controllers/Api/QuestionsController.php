@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\QuestionDetailResource;
 use App\Http\Resources\QuestionResource;
 use App\Models\Question;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class QuestionsController extends Controller
      */
     public function show(Question $question)
     {
-        //
+        return new QuestionDetailResource($question->load(['department', 'semester', 'course', 'examType','user']));
     }
 
     /**

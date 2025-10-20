@@ -11,6 +11,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/questions', [QuestionsController::class, 'index']);
+Route::get('/questions/{question}', [QuestionsController::class, 'show']);
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
