@@ -36,7 +36,7 @@ class QuestionsController extends Controller
         $courseId = $request->integer('course_id') ?: null;
         $semesterId = $request->integer('semester_id') ?: null;
         $examTypeId = $request->integer('exam_type_id') ?: null;
-        $uploaderId = $request->integer('uploader') ?: null;
+        $userId = $request->integer('user_id') ?: null;
 
         $query = Question::query()
             ->published()
