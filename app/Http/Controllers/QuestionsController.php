@@ -165,7 +165,7 @@ class QuestionsController extends Controller
             }
         }
 
-        $question->load(['department', 'semester', 'course', 'examType', 'user', 'media']);
+        $question->load(['department', 'semester', 'course', 'examType', 'user','user.media', 'media']);
 
         return Inertia::render('questions/show', [
             'question' => QuestionDetailResource::make($question)->resolve(),
