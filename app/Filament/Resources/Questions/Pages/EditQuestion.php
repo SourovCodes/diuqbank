@@ -18,7 +18,7 @@ class EditQuestion extends EditRecord
                 ->label('View Public Page')
                 ->icon('heroicon-o-eye')
                 ->color('gray')
-                ->url(fn (): string => route('questions.show', ['question' => $this->record]))
+                ->url(fn (): string => route('questions.show', ['id' => $this->record]))
                 ->openUrlInNewTab(),
             DeleteAction::make(),
         ];
