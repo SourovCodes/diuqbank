@@ -56,7 +56,7 @@ class QuestionsController extends Controller
      */
     public function show(Question $question)
     {
-        return new QuestionDetailResource($question->load(['department', 'semester', 'course', 'examType','user']));
+        return new QuestionDetailResource($question->load(['department', 'semester', 'course', 'examType', 'user']));
     }
 
     /**
@@ -81,5 +81,16 @@ class QuestionsController extends Controller
     public function destroy(Question $question)
     {
         //
+    }
+
+    public function filters()
+    {
+
+        return response()->json(['data' => [
+            'departments' => \App\Models\Department::orderBy('name')->get(['id', 'name']),
+            'courses' => \App\Models\Course::orderBy('name')->get(['id', 'name', 'department_id']),
+            'semesters' => \App\Models\Semester::orderBy('name')->get(['id', 'name']),
+            'exam_types' => \App\Models\ExamType::orderBy('name')->get(['id', 'name']),
+        ]]);
     }
 }

@@ -10,6 +10,7 @@ Route::get('/user', function (Request $request) {
     return new SessionUserResource($request->user());
 })->middleware('auth:sanctum');
 
+Route::get('/questions/filter-options', [QuestionsController::class, 'filters']);
 Route::get('/questions', [QuestionsController::class, 'index']);
 Route::get('/questions/{question}', [QuestionsController::class, 'show']);
 
