@@ -14,7 +14,7 @@ class ContributorsController extends Controller
      */
     public function index()
     {
-         $contributors = User::query()
+        $contributors = User::query()
             ->has('questions')
             ->withCount('questions')
             ->withSum('questions as total_views', 'view_count')
