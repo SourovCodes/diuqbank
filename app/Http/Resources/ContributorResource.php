@@ -20,7 +20,7 @@ class ContributorResource extends JsonResource
             'student_id' => $this->student_id,
             'questions_count' => $this->questions_count,
             'total_views' => $this->total_views ?? 0,
-            'avatar'=> $this->avatar_url,
+            'avatar' => $this->avatar_url,
         ];
     }
 }

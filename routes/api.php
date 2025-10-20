@@ -18,7 +18,7 @@ Route::post('/questions', [QuestionsController::class, 'store'])->middleware('au
 Route::put('/questions/{question}', [QuestionsController::class, 'update'])->middleware('auth:sanctum');
 
 Route::get('/contributors', [ContributorsController::class, 'index']);
-
+Route::get('/contributors/{user:username}', [ContributorsController::class, 'show']);
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');

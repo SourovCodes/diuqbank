@@ -47,7 +47,8 @@ class ContributorsController extends Controller
      */
     public function show(User $user)
     {
-        //
+
+        return new ContributorResource($user);
     }
 
     /**
