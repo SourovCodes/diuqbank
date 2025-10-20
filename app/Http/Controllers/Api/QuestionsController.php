@@ -6,6 +6,7 @@ use App\Enums\QuestionStatus;
 use App\Enums\UnderReviewReason;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Requests\UpdateQuestionRequest;
 use App\Http\Resources\QuestionDetailResource;
 use App\Http\Resources\QuestionResource;
 use App\Models\Question;
@@ -132,9 +133,65 @@ class QuestionsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Question $question)
+    public function update(UpdateQuestionRequest $request, Question $question)
     {
-        //
+        // Check for duplicate if not confirmed
+        if (! $request->boolean('confirmed_duplicate')) {
+            $duplicate = $this->duplicateChecker->check($request->validated(), $question->id);
+
+            if ($duplicate) {
+                return response()->json([
+                    'message' => 'A question with these exact details already exists.',
+                    'errors' => [
+                        'duplicate' => ['A question with these exact details already exists. Please review and confirm if you want to proceed.'],
+                    ],
+                ], 422);
+            }
+        }
+
+        $duplicateReason = $request->validated('duplicate_reason');
+
+        // Check if any of the key parameters changed
+        $parametersChanged = $question->department_id !== $request->validated('department_id') ||
+                           $question->course_id !== $request->validated('course_id') ||
+                           $question->semester_id !== $request->validated('semester_id') ||
+                           $question->exam_type_id !== $request->validated('exam_type_id');
+
+        $question->update([
+            'department_id' => $request->validated('department_id'),
+            'course_id' => $request->validated('course_id'),
+            'semester_id' => $request->validated('semester_id'),
+            'exam_type_id' => $request->validated('exam_type_id'),
+            'section' => $request->validated('section'),
+            'status' => $duplicateReason !== null ? QuestionStatus::PENDING_REVIEW : $question->status,
+            'under_review_reason' => $duplicateReason !== null ? UnderReviewReason::DUPLICATE : $question->under_review_reason,
+            'duplicate_reason' => $duplicateReason,
+        ]);
+
+        if ($request->hasFile('pdf')) {
+            $question->clearMediaCollection('pdf');
+            $question->load(['course', 'department', 'semester', 'examType']);
+            $fileName = $this->generateQuestionTitle($question).'.pdf';
+            $question->addMediaFromRequest('pdf')
+                ->usingFileName($fileName)
+                ->toMediaCollection('pdf');
+        } elseif ($parametersChanged && $question->hasMedia('pdf')) {
+            // If parameters changed but no new PDF uploaded, rename existing media
+            $question->load(['course', 'department', 'semester', 'examType']);
+            $media = $question->getFirstMedia('pdf');
+            $fileName = $this->generateQuestionTitle($question).'.pdf';
+            $media->file_name = $fileName;
+            $media->save();
+        }
+
+        $message = $duplicateReason !== null
+            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            : 'Question updated successfully!';
+
+        return (new QuestionDetailResource($question->load(['department', 'semester', 'course', 'examType', 'user'])))
+            ->additional([
+                'message' => $message,
+            ]);
     }
 
     /**
