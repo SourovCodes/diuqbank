@@ -45,7 +45,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->toArray(),
-                    'avatar' => $request->user()->getFirstMediaUrl('profile_picture'),
+                    'avatar' => $request->user()->avatar_url,
                 ] : null,
             ],
             'flash' => [
