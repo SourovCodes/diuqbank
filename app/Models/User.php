@@ -15,11 +15,11 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
 {
+    use HasApiTokens;
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-
     use InteractsWithMedia;
-    use HasApiTokens;
 
     public function canAccessPanel(Panel $panel): bool
     {
