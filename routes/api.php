@@ -13,6 +13,7 @@ Route::get('/user', function (Request $request) {
 Route::get('/questions/filter-options', [QuestionsController::class, 'filters']);
 Route::get('/questions', [QuestionsController::class, 'index']);
 Route::get('/questions/{question}', [QuestionsController::class, 'show']);
+Route::post('/questions', [QuestionsController::class, 'store'])->middleware('auth:sanctum');
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
