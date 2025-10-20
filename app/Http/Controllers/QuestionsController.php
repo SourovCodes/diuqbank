@@ -151,8 +151,15 @@ class QuestionsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Question $question): Response
+    public function show(int $id): Response
     {
+        $cacheKey = "question_{$id}";
+
+        $question = cache()->remember($cacheKey, now()->addHours(24), function () use ($id) {
+            return Question::with(['department', 'semester', 'course', 'examType', 'user', 'user.media', 'media'])
+                ->findOrFail($id);
+        });
+
         // Check if question is not published and restrict access to owner only
         if ($question->status !== QuestionStatus::PUBLISHED) {
             if (! auth()->check() || auth()->id() !== $question->user_id) {
@@ -164,8 +171,6 @@ class QuestionsController extends Controller
                 abort(403, $statusMessage);
             }
         }
-
-        $question->load(['department', 'semester', 'course', 'examType', 'user','user.media', 'media']);
 
         return Inertia::render('questions/show', [
             'question' => QuestionDetailResource::make($question)->resolve(),
@@ -263,6 +268,9 @@ class QuestionsController extends Controller
             $media->save();
         }
 
+        // Clear cache for this question
+        cache()->forget("question_{$question->id}");
+
         $message = $duplicateReason !== null
             ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
             : 'Question updated successfully!';
@@ -279,6 +287,9 @@ class QuestionsController extends Controller
         if (auth()->id() !== $question->user_id) {
             abort(403, 'You are not authorized to delete this question.');
         }
+
+        // Clear cache for this question
+        cache()->forget("question_{$question->id}");
 
         // Delete the question
         $question->delete();
