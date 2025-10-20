@@ -92,6 +92,9 @@ class ProfileController extends Controller
         // Clean up temp file
         Storage::disk('local')->delete($tempPath);
 
+        // Clear the cached avatar URL
+        cache()->forget("user.{$user->id}.avatar");
+
         return redirect()->back();
     }
 }
