@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\GoogleAuthController;
+use App\Http\Controllers\Api\ContactFormSubmissionsController;
 use App\Http\Controllers\Api\ContributorsController;
 use App\Http\Controllers\Api\QuestionsController;
 use App\Http\Resources\SessionUserResource;
@@ -19,6 +20,8 @@ Route::put('/questions/{question}', [QuestionsController::class, 'update'])->mid
 
 Route::get('/contributors', [ContributorsController::class, 'index']);
 Route::get('/contributors/{user:username}', [ContributorsController::class, 'show']);
+
+Route::post('/contact', [ContactFormSubmissionsController::class, 'store']);
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
