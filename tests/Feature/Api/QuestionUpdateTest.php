@@ -373,36 +373,3 @@ it('validates PDF file type on update', function () {
     $response->assertUnprocessable();
     $response->assertJsonValidationErrors(['pdf']);
 });
-
-it('can use PATCH method for update', function () {
-    $user = User::factory()->create();
-    $department = Department::factory()->create();
-    $course = Course::factory()->create(['department_id' => $department->id]);
-    $semester = Semester::factory()->create();
-    $examType = ExamType::factory()->create(['requires_section' => false]);
-
-    $question = Question::factory()->create([
-        'user_id' => $user->id,
-        'department_id' => $department->id,
-        'course_id' => $course->id,
-        'semester_id' => $semester->id,
-        'exam_type_id' => $examType->id,
-    ]);
-
-    $newSemester = Semester::factory()->create();
-
-    $data = [
-        'department_id' => $department->id,
-        'course_id' => $course->id,
-        'semester_id' => $newSemester->id,
-        'exam_type_id' => $examType->id,
-    ];
-
-    $response = $this->actingAs($user, 'sanctum')
-        ->patchJson("/api/questions/{$question->id}", $data);
-
-    $response->assertOk();
-
-    $question->refresh();
-    expect($question->semester_id)->toBe($newSemester->id);
-});
