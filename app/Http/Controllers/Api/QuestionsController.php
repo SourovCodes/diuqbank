@@ -44,6 +44,7 @@ class QuestionsController extends Controller
             ->course($courseId)
             ->semester($semesterId)
             ->examType($examTypeId)
+            ->user($userId)
             ->latest()
             ->with(['department', 'semester', 'course', 'examType']);
         $questions = $query->paginate(12)->withQueryString();
