@@ -42,7 +42,7 @@ export default function QuestionEdit({ question, formOptions }: QuestionEditProp
     }
 
     function handleCancel() {
-        router.visit(questionsRoutes.show.url({ question: question.id }));
+        router.visit(questionsRoutes.show.url(question.id));
     }
 
     return (
@@ -53,7 +53,7 @@ export default function QuestionEdit({ question, formOptions }: QuestionEditProp
                 <div className="mb-6">
                     <div className="mb-4">
                         <Button variant="ghost" size="sm" asChild>
-                            <a href={questionsRoutes.show.url({ question: question.id })}>
+                            <a href={questionsRoutes.show.url(question.id)}>
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Back to Question
                             </a>
