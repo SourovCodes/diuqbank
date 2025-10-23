@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FormCombobox } from '@/components/ui/form-combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QuestionCard } from '@/components/ui/question-card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import coursesRoutes from '@/routes/courses';
 import semestersRoutes from '@/routes/semesters';
@@ -396,18 +396,16 @@ export default function QuestionForm({
                         <Label htmlFor="department_id">
                             Department <span className="text-red-500">*</span>
                         </Label>
-                        <Select value={data.department_id} onValueChange={(value) => setData('department_id', value)}>
-                            <SelectTrigger id="department_id" className="w-full" aria-invalid={!!errors.department_id}>
-                                <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {departments.map((dept) => (
-                                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                                        {dept.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <FormCombobox
+                            id="department_id"
+                            value={data.department_id}
+                            onValueChange={(value) => setData('department_id', value)}
+                            options={departments}
+                            placeholder="Select department"
+                            searchPlaceholder="Search departments..."
+                            emptyMessage="No department found."
+                            error={!!errors.department_id}
+                        />
                         {errors.department_id && <p className="text-sm text-red-600 dark:text-red-400">{errors.department_id}</p>}
                     </div>
 
@@ -416,18 +414,18 @@ export default function QuestionForm({
                             Course <span className="text-red-500">*</span>
                         </Label>
                         <div className="flex items-center gap-2">
-                            <Select value={data.course_id} onValueChange={(value) => setData('course_id', value)} disabled={!data.department_id}>
-                                <SelectTrigger id="course_id" className="w-full" aria-invalid={!!errors.course_id}>
-                                    <SelectValue placeholder={data.department_id ? 'Select course' : 'Select department first'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredCourses.map((course) => (
-                                        <SelectItem key={course.id} value={course.id.toString()}>
-                                            {course.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <FormCombobox
+                                id="course_id"
+                                value={data.course_id}
+                                onValueChange={(value) => setData('course_id', value)}
+                                options={filteredCourses}
+                                placeholder={data.department_id ? 'Select course' : 'Select department first'}
+                                searchPlaceholder="Search courses..."
+                                emptyMessage="No course found."
+                                disabled={!data.department_id}
+                                error={!!errors.course_id}
+                                className="flex-1"
+                            />
                             <Button
                                 type="button"
                                 variant="outline"
@@ -451,18 +449,17 @@ export default function QuestionForm({
                             Semester <span className="text-red-500">*</span>
                         </Label>
                         <div className="flex items-center gap-2">
-                            <Select value={data.semester_id} onValueChange={(value) => setData('semester_id', value)}>
-                                <SelectTrigger id="semester_id" className="w-full" aria-invalid={!!errors.semester_id}>
-                                    <SelectValue placeholder="Select semester" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {localSemesters.map((semester) => (
-                                        <SelectItem key={semester.id} value={semester.id.toString()}>
-                                            {semester.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <FormCombobox
+                                id="semester_id"
+                                value={data.semester_id}
+                                onValueChange={(value) => setData('semester_id', value)}
+                                options={localSemesters}
+                                placeholder="Select semester"
+                                searchPlaceholder="Search semesters..."
+                                emptyMessage="No semester found."
+                                error={!!errors.semester_id}
+                                className="flex-1"
+                            />
                             <Button
                                 type="button"
                                 variant="outline"
@@ -481,18 +478,16 @@ export default function QuestionForm({
                         <Label htmlFor="exam_type_id">
                             Exam Type <span className="text-red-500">*</span>
                         </Label>
-                        <Select value={data.exam_type_id} onValueChange={(value) => setData('exam_type_id', value)}>
-                            <SelectTrigger id="exam_type_id" className="w-full" aria-invalid={!!errors.exam_type_id}>
-                                <SelectValue placeholder="Select exam type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {examTypes.map((examType) => (
-                                    <SelectItem key={examType.id} value={examType.id.toString()}>
-                                        {examType.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <FormCombobox
+                            id="exam_type_id"
+                            value={data.exam_type_id}
+                            onValueChange={(value) => setData('exam_type_id', value)}
+                            options={examTypes}
+                            placeholder="Select exam type"
+                            searchPlaceholder="Search exam types..."
+                            emptyMessage="No exam type found."
+                            error={!!errors.exam_type_id}
+                        />
                         {errors.exam_type_id && <p className="text-sm text-red-600 dark:text-red-400">{errors.exam_type_id}</p>}
                     </div>
                 </div>
@@ -529,7 +524,7 @@ export default function QuestionForm({
 
                                 {/* Display Original Question Card */}
                                 {duplicateQuestion && (
-                                    <div className="rounded-md p-3 bg-white dark:bg-slate-950">
+                                    <div className="rounded-md bg-white p-3 dark:bg-slate-950">
                                         <h4 className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-100">Original Question:</h4>
                                         <QuestionCard question={duplicateQuestion} />
                                     </div>
@@ -680,22 +675,17 @@ export default function QuestionForm({
                             <Label htmlFor="new-course-department">
                                 Department <span className="text-red-500">*</span>
                             </Label>
-                            <Select
+                            <FormCombobox
+                                id="new-course-department"
                                 value={courseForm.department_id}
                                 onValueChange={(value) => setCourseForm((prev) => ({ ...prev, department_id: value }))}
+                                options={departments}
+                                placeholder="Select department"
+                                searchPlaceholder="Search departments..."
+                                emptyMessage="No department found."
                                 disabled={courseSubmitting}
-                            >
-                                <SelectTrigger id="new-course-department" aria-invalid={!!courseFormErrors.department_id}>
-                                    <SelectValue placeholder="Select department" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {departments.map((dept) => (
-                                        <SelectItem key={dept.id} value={dept.id.toString()}>
-                                            {dept.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                error={!!courseFormErrors.department_id}
+                            />
                             {courseFormErrors.department_id && (
                                 <p className="text-sm text-red-600 dark:text-red-400">{courseFormErrors.department_id}</p>
                             )}
