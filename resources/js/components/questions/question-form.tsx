@@ -735,7 +735,7 @@ export default function QuestionForm({
                                 type="text"
                                 value={semesterForm.name}
                                 onChange={(event) => setSemesterForm({ name: event.target.value })}
-                                placeholder="e.g., Spring 2025"
+                                placeholder="e.g., Spring 25"
                                 aria-invalid={!!semesterFormErrors.name}
                                 disabled={semesterSubmitting}
                             />
