@@ -313,7 +313,7 @@ export default function QuestionForm({
             } else {
                 toast.error('We could not add the course. Please try again.');
             }
-        } catch (error) {
+        } catch {
             toast.error('We could not add the course. Please try again.');
         } finally {
             setCourseSubmitting(false);
@@ -372,7 +372,7 @@ export default function QuestionForm({
             } else {
                 toast.error('We could not add the semester. Please try again.');
             }
-        } catch (error) {
+        } catch {
             toast.error('We could not add the semester. Please try again.');
         } finally {
             setSemesterSubmitting(false);
