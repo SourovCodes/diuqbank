@@ -2,11 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { QuestionCard } from '@/components/ui/question-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import coursesRoutes from '@/routes/courses';
 import semestersRoutes from '@/routes/semesters';
-import type { Course, Department, ExamType, Semester } from '@/types';
+import type { Course, Department, ExamType, QuestionResource, Semester } from '@/types';
 import { AlertTriangle, FileText, Plus, Upload } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ interface QuestionFormErrors {
     pdf?: string;
     duplicate_reason?: string;
     duplicate?: string;
+    duplicate_question?: string;
 }
 
 interface QuestionFormProps {
@@ -95,6 +97,7 @@ export default function QuestionForm({
 }: QuestionFormProps) {
     const [pdfFileName, setPdfFileName] = useState<string>('');
     const [showDuplicateReason, setShowDuplicateReason] = useState<boolean>(false);
+    const [duplicateQuestion, setDuplicateQuestion] = useState<QuestionResource | null>(null);
     const [localCourses, setLocalCourses] = useState<Course[]>(courses);
     const [localSemesters, setLocalSemesters] = useState<Semester[]>(semesters);
     const [courseDialogOpen, setCourseDialogOpen] = useState<boolean>(false);
@@ -107,6 +110,22 @@ export default function QuestionForm({
     const [semesterSubmitting, setSemesterSubmitting] = useState<boolean>(false);
     const [pendingCourseSelection, setPendingCourseSelection] = useState<{ courseId: string; departmentId: string } | null>(null);
     const [pendingSemesterSelection, setPendingSemesterSelection] = useState<string | null>(null);
+
+    // Parse duplicate question from errors
+    useEffect(() => {
+        if (errors.duplicate_question) {
+            try {
+                const parsed = JSON.parse(errors.duplicate_question) as QuestionResource;
+                setDuplicateQuestion(parsed);
+            } catch (error) {
+                console.error('Failed to parse duplicate question:', error);
+                setDuplicateQuestion(null);
+            }
+        } else {
+            setDuplicateQuestion(null);
+            setShowDuplicateReason(false);
+        }
+    }, [errors.duplicate_question]);
 
     useEffect(() => {
         setLocalCourses(courses);
@@ -507,6 +526,14 @@ export default function QuestionForm({
                                 <p className="text-sm text-amber-800 dark:text-amber-200">
                                     A question with these exact details already exists on the website.
                                 </p>
+
+                                {/* Display Original Question Card */}
+                                {duplicateQuestion && (
+                                    <div className="rounded-md p-3 bg-white dark:bg-slate-950">
+                                        <h4 className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-100">Original Question:</h4>
+                                        <QuestionCard question={duplicateQuestion} />
+                                    </div>
+                                )}
 
                                 <p className="text-sm text-amber-800 dark:text-amber-200">
                                     If you believe this is a unique question and our detection missed it, please explain why below and submit for

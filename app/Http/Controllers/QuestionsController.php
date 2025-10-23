@@ -114,6 +114,7 @@ class QuestionsController extends Controller
             if ($duplicate) {
                 return back()->withErrors([
                     'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                    'duplicate_question' => json_encode(QuestionResource::make($duplicate)->resolve()),
                 ])->withInput();
             }
         }
@@ -231,6 +232,7 @@ class QuestionsController extends Controller
             if ($duplicate) {
                 return back()->withErrors([
                     'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                    'duplicate_question' => json_encode(QuestionResource::make($duplicate)->resolve()),
                 ])->withInput();
             }
         }
