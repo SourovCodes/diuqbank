@@ -85,7 +85,7 @@ after('deploy:vendors', 'upload:assets');
 task('opcache:clear', function () {
     writeln('Attempting to clear OPcache...');
     try {
-        run('cd {{release_or_current_path}} && {{bin/php}} -r "if (function_exists(\'opcache_reset\')) { opcache_reset(); echo \'✓ OPcache cleared via CLI\'; } else { echo \'ℹ OPcache not enabled in CLI mode\'; }"');
+        run('cd {{release_or_current_path}} && php -r "if (function_exists(\'opcache_reset\')) { opcache_reset(); echo \'✓ OPcache cleared via CLI\'; } else { echo \'ℹ OPcache not enabled in CLI mode\'; }"');
     } catch (\Throwable $e) {
         writeln('ℹ Could not clear OPcache via CLI (this is normal if OPcache is only enabled for web requests)');
     }
