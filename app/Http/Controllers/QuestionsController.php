@@ -152,13 +152,13 @@ class QuestionsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $id): Response
+    public function show(Question $question): Response
     {
-        $cacheKey = "question_{$id}";
+        $cacheKey = "question_{$question->id}";
 
-        $question = cache()->remember($cacheKey, now()->addHours(24), function () use ($id) {
+        $question = cache()->remember($cacheKey, now()->addHours(24), function () use ($question) {
             return Question::with(['department', 'semester', 'course', 'examType', 'user', 'user.media', 'media'])
-                ->findOrFail($id);
+                ->findOrFail($question->id);
         });
 
         // Check if question is not published and restrict access to owner only
