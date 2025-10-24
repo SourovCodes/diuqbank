@@ -227,7 +227,7 @@ class QuestionsController extends Controller
     {
         // Check for duplicate if not confirmed
         if (! $request->boolean('confirmed_duplicate')) {
-            $duplicate = $this->duplicateChecker->check($request->validated(), $question->id);
+            $duplicate = $this->duplicateChecker->check($request->validated(), currentQuestionId: $question->id);
 
             if ($duplicate) {
                 return back()->withErrors([

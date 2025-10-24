@@ -10,7 +10,7 @@ class QuestionDuplicateChecker
     /**
      * Check if a duplicate question exists.
      */
-    public function check(array $attributes, ?int $excludeId = null): ?Question
+    public function check(array $attributes, ?int $currentQuestionId = null): ?Question
     {
         $query = Question::query()
             ->where('status', QuestionStatus::PUBLISHED)
@@ -27,12 +27,15 @@ class QuestionDuplicateChecker
             $query->where('section', $section);
         }
 
-        // Exclude current question when updating
-        if ($excludeId !== null) {
-            $query->where('id', '!=', $excludeId);
+        // Get the first matching question (oldest)
+        $firstMatch = $query->orderBy('created_at', 'asc')->first();
+
+        // If no match found or the match is the current question, it's not a duplicate
+        if ($firstMatch === null || ($currentQuestionId !== null && $firstMatch->id === $currentQuestionId)) {
+            return null;
         }
 
-        // Return the oldest duplicate (original question)
-        return $query->orderBy('created_at', 'asc')->first();
+        // Return the duplicate (original question)
+        return $firstMatch;
     }
 }
