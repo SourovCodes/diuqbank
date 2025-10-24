@@ -143,7 +143,7 @@ class QuestionsController extends Controller
         }
 
         $message = $duplicateReason !== null
-            ? 'Question submitted for review. Our team will verify if it\'s a duplicate and get back to you.'
+            ? 'Question submitted for review. We will verify if it\'s a duplicate and get back to you.'
             : 'Question created successfully!';
 
         return redirect()->route('questions.show', $question)->with('success', $message);
