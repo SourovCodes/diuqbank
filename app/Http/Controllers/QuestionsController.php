@@ -73,7 +73,7 @@ class QuestionsController extends Controller
             ->latest()
             ->with(['department', 'semester', 'course', 'examType']);
 
-        $questions = $query->paginate(12)->withQueryString();
+        $questions = $query->paginate(15)->withQueryString();
 
         $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
 
