@@ -13,7 +13,7 @@ class PagesController extends Controller
 {
     public function home(): Response
     {
-        return Inertia::render('welcome', [
+        return Inertia::render('home', [
             'questionsCount' => Question::query()->count(),
             'coursesCount' => Course::query()->count(),
             'departmentsCount' => Department::query()->count(),

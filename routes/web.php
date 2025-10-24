@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/semesters', [\App\Http\Controllers\SemesterController::class, 'store'])->name('semesters.store');
 });
 
-Route::get('/questions/{id}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
+Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
 Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionsController::class, 'incrementView'])->name('questions.view');
 
 Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::class, 'index'])->name('contributors.index');

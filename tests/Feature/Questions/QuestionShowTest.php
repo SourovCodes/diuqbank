@@ -115,6 +115,18 @@ it('allows anyone to view published questions', function () {
     );
 });
 
+it('returns 404 for invalid question id', function () {
+    $response = get(route('questions.show', ['question' => 'invalid-id']));
+
+    $response->assertNotFound();
+});
+
+it('returns 404 for non-existent question id', function () {
+    $response = get(route('questions.show', ['question' => 99999]));
+
+    $response->assertNotFound();
+});
+
 it('caches question data for 24 hours', function () {
     $user = User::factory()->create();
     $question = Question::factory()->for($user)->published()->create();
