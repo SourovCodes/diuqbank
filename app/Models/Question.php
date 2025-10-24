@@ -155,6 +155,17 @@ class Question extends Model implements HasMedia
     }
 
     /**
+     * Scope a query to filter questions by user.
+     */
+    public function scopeUser(Builder $query, $userId): void
+    {
+        if (! $userId) {
+            return;
+        }
+        $query->where('user_id', $userId);
+    }
+
+    /**
      * Scope a query to only include published questions.
      */
     public function scopePublished(Builder $query): void
