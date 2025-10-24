@@ -73,7 +73,7 @@ class QuestionsController extends Controller
             ->latest()
             ->with(['department', 'semester', 'course', 'examType']);
 
-        $questions = $query->paginate(12)->withQueryString();
+        $questions = $query->paginate(15)->withQueryString();
 
         $questions->getCollection()->transform(fn ($question) => QuestionResource::make($question)->resolve());
 
@@ -114,6 +114,7 @@ class QuestionsController extends Controller
             if ($duplicate) {
                 return back()->withErrors([
                     'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                    'duplicate_question' => json_encode(QuestionResource::make($duplicate)->resolve()),
                 ])->withInput();
             }
         }
@@ -151,13 +152,13 @@ class QuestionsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $id): Response
+    public function show(Question $question): Response
     {
-        $cacheKey = "question_{$id}";
+        $cacheKey = "question_{$question->id}";
 
-        $question = cache()->remember($cacheKey, now()->addHours(24), function () use ($id) {
+        $question = cache()->remember($cacheKey, now()->addHours(24), function () use ($question) {
             return Question::with(['department', 'semester', 'course', 'examType', 'user', 'user.media', 'media'])
-                ->findOrFail($id);
+                ->findOrFail($question->id);
         });
 
         // Check if question is not published and restrict access to owner only
@@ -226,11 +227,12 @@ class QuestionsController extends Controller
     {
         // Check for duplicate if not confirmed
         if (! $request->boolean('confirmed_duplicate')) {
-            $duplicate = $this->duplicateChecker->check($request->validated(), $question->id);
+            $duplicate = $this->duplicateChecker->check($request->validated(), currentQuestionId: $question->id);
 
             if ($duplicate) {
                 return back()->withErrors([
                     'duplicate' => 'A question with these exact details already exists. Please review and confirm if you want to proceed.',
+                    'duplicate_question' => json_encode(QuestionResource::make($duplicate)->resolve()),
                 ])->withInput();
             }
         }

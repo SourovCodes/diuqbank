@@ -8,7 +8,7 @@ require 'recipe/laravel.php';
 
 set('repository', 'https://github.com/SourovCodes/diuqbank.git');
 set('writable_mode', 'chmod');
-set('keep_releases', 5);
+set('keep_releases', 2);
 
 add('shared_files', []);
 add('shared_dirs', []);
@@ -80,5 +80,17 @@ before('deploy', 'build:assets');
 
 // Upload assets after the release is prepared but before going live
 after('deploy:vendors', 'upload:assets');
+
+// Clear OPcache after successful deployment
+task('opcache:clear', function () {
+    writeln('Attempting to clear OPcache...');
+    try {
+        run('cd {{release_or_current_path}} && php -r "if (function_exists(\'opcache_reset\')) { opcache_reset(); echo \'✓ OPcache cleared via CLI\'; } else { echo \'ℹ OPcache not enabled in CLI mode\'; }"');
+    } catch (\Throwable $e) {
+        writeln('ℹ Could not clear OPcache via CLI (this is normal if OPcache is only enabled for web requests)');
+    }
+})->desc('Clear OPcache after deployment');
+
+after('deploy:success', 'opcache:clear');
 
 after('deploy:failed', 'deploy:unlock');
