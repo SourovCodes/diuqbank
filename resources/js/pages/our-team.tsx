@@ -32,8 +32,8 @@ export default function OurTeam() {
 
                                 {/* Description */}
                                 <p className="mb-8 max-w-2xl text-slate-600 dark:text-slate-300">
-                                    Building DIUQBank to democratize access to exam preparation materials for all DIU students. 
-                                    Every line of code, every feature, and all operational costs — managed and funded independently.
+                                    Building DIUQBank to democratize access to exam preparation materials for all DIU students. Every line of code,
+                                    every feature, and all operational costs — managed and funded independently.
                                 </p>
 
                                 {/* Tech Stack */}

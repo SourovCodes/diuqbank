@@ -19,6 +19,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
     use InteractsWithMedia;
 
     public function canAccessPanel(Panel $panel): bool
