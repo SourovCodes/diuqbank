@@ -18,105 +18,56 @@ export default function OurTeam() {
 
                 {/* Main Profile Card */}
                 <div className="mb-12">
-                    <Card className="overflow-hidden border border-slate-200 bg-white p-0 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
-                        <CardContent className="p-0">
-                            <div className="grid gap-0 md:grid-cols-5">
-                                {/* Left Section - Avatar & Stats */}
-                                <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 p-10 py-16 dark:from-blue-500 dark:via-blue-600 dark:to-cyan-500 md:col-span-2 md:py-12">
-                                    {/* Decorative elements */}
-                                    <div className="absolute right-0 top-0 h-40 w-40 -translate-y-10 translate-x-10 rounded-full bg-white/10 blur-3xl" />
-                                    <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-10 translate-y-10 rounded-full bg-cyan-400/20 blur-2xl" />
-                                    
-                                    <div className="relative flex h-full flex-col items-center justify-center text-center">
-                                        {/* Avatar */}
-                                        <div className="mb-8">
-                                            <div className="relative">
-                                                <div className="absolute -inset-2 rounded-full bg-white/30 blur-md" />
-                                                <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-4 border-white/40 bg-white/20 shadow-2xl backdrop-blur-sm">
-                                                    <span className="text-6xl font-black text-white drop-shadow-lg">SB</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <h2 className="mb-3 text-3xl font-black text-white drop-shadow-md">Sourov Biswas</h2>
-                                        <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
-                                            <Sparkles className="h-4 w-4 text-yellow-300" />
-                                            <span className="font-bold text-white">Solo Creator</span>
-                                        </div>
-
-                                        {/* Quick Stats */}
-                                        <div className="grid w-full max-w-xs grid-cols-3 gap-4 rounded-lg bg-white/10 p-5 backdrop-blur-sm">
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-white">100%</div>
-                                                <div className="mt-1 text-xs font-medium text-white/80">Built</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-white">100%</div>
-                                                <div className="mt-1 text-xs font-medium text-white/80">Managed</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-white">100%</div>
-                                                <div className="mt-1 text-xs font-medium text-white/80">Funded</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <Card className="border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+                        <CardContent className="p-8 md:p-12">
+                            <div className="flex flex-col items-center text-center">
+                                {/* Avatar */}
+                                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500">
+                                    <span className="text-4xl font-bold text-white">SB</span>
                                 </div>
 
-                                {/* Right Section - Info & Links */}
-                                <div className="p-10 md:col-span-3 md:py-12">
-                                    <div className="mb-8">
-                                        <div className="mb-3 inline-block rounded-lg bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                            Founder • Developer • Maintainer
-                                        </div>
-                                        <h3 className="mb-5 text-2xl font-bold text-slate-900 dark:text-white">
-                                            The One-Person Powerhouse
-                                        </h3>
-                                        <p className="mb-4 text-slate-600 dark:text-slate-300">
-                                            From the initial concept to every line of code, from design to infrastructure, 
-                                            from server management to paying the bills — <span className="font-bold text-slate-900 dark:text-white">everything you see on DIUQBank is the work of one person</span>.
-                                        </p>
-                                        <p className="text-slate-600 dark:text-slate-300">
-                                            This platform exists to democratize access to exam preparation materials for all DIU students. 
-                                            No connections required, no barriers to entry — just pure, accessible education for everyone.
-                                        </p>
-                                    </div>
+                                {/* Name & Role */}
+                                <h2 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">Sourov Biswas</h2>
+                                <p className="mb-6 text-slate-600 dark:text-slate-400">Founder • Developer • Maintainer</p>
 
-                                    {/* Tech Stack Pills */}
-                                    <div className="mb-8">
-                                        <p className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400">TECH STACK</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {['Laravel', 'React', 'Inertia.js', 'Filament', 'TypeScript', 'Tailwind'].map((tech) => (
-                                                <span
-                                                    key={tech}
-                                                    className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"
-                                                >
-                                                    {tech}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
+                                {/* Description */}
+                                <p className="mb-8 max-w-2xl text-slate-600 dark:text-slate-300">
+                                    Building DIUQBank to democratize access to exam preparation materials for all DIU students. 
+                                    Every line of code, every feature, and all operational costs — managed and funded independently.
+                                </p>
 
-                                    {/* Social Links */}
-                                    <div className="flex flex-wrap gap-3">
-                                        <a
-                                            href="https://www.linkedin.com/in/sourov-biswas/"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="group inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg dark:bg-blue-500 dark:hover:bg-blue-600"
+                                {/* Tech Stack */}
+                                <div className="mb-8 flex flex-wrap justify-center gap-2">
+                                    {['Laravel', 'React', 'Inertia.js', 'Filament', 'TypeScript', 'Tailwind'].map((tech) => (
+                                        <span
+                                            key={tech}
+                                            className="rounded-md bg-slate-100 px-3 py-1 text-sm text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"
                                         >
-                                            <Linkedin className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                            <span>Connect on LinkedIn</span>
-                                        </a>
-                                        <a
-                                            href="https://github.com/SourovCodes"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="group inline-flex items-center gap-2 rounded-lg border-2 border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 shadow-md transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-lg dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700"
-                                        >
-                                            <Github className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                            <span>View GitHub</span>
-                                        </a>
-                                    </div>
+                                            {tech}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Social Links */}
+                                <div className="flex flex-wrap justify-center gap-3">
+                                    <a
+                                        href="https://www.linkedin.com/in/sourov-biswas/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                                    >
+                                        <Linkedin className="h-4 w-4" />
+                                        <span>LinkedIn</span>
+                                    </a>
+                                    <a
+                                        href="https://github.com/SourovCodes"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                                    >
+                                        <Github className="h-4 w-4" />
+                                        <span>GitHub</span>
+                                    </a>
                                 </div>
                             </div>
                         </CardContent>
