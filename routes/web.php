@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [\App\Http\Controllers\PagesController::class, 'home'])->name('home');
 Route::get('/about', [\App\Http\Controllers\PagesController::class, 'about'])->name('about');
+Route::get('/our-team', [\App\Http\Controllers\PagesController::class, 'ourTeam'])->name('our-team');
 Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('privacy-policy');
 Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-of-service');
 Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');

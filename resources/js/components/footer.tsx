@@ -74,11 +74,11 @@ export default function Footer() {
                         <ul className="space-y-2">
                             <li>
                                 <Link
-                                    href="/programmers"
+                                    href="/our-team"
                                     prefetch
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                                 >
-                                    Programmers
+                                    Our Team
                                 </Link>
                             </li>
                         </ul>

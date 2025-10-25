@@ -26,6 +26,11 @@ class PagesController extends Controller
         return Inertia::render('about');
     }
 
+    public function ourTeam(): Response
+    {
+        return Inertia::render('our-team');
+    }
+
     public function privacy(): Response
     {
         return Inertia::render('privacy-policy');
