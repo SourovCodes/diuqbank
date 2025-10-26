@@ -74,11 +74,11 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
 
                 // Maximum resolution for the final image
                 const MAX_DIMENSION = 800;
-                
+
                 // Calculate scaled dimensions while maintaining aspect ratio
                 let finalWidth = pixelCrop.width;
                 let finalHeight = pixelCrop.height;
-                
+
                 if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
                     const ratio = Math.min(MAX_DIMENSION / finalWidth, MAX_DIMENSION / finalHeight);
                     finalWidth = Math.round(finalWidth * ratio);
@@ -89,23 +89,13 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                 canvas.height = finalHeight;
 
                 // Draw the cropped portion, scaled to final dimensions
-                ctx.drawImage(
-                    image,
-                    pixelCrop.x,
-                    pixelCrop.y,
-                    pixelCrop.width,
-                    pixelCrop.height,
-                    0,
-                    0,
-                    finalWidth,
-                    finalHeight
-                );
+                ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, finalWidth, finalHeight);
 
                 // Convert canvas to blob with compression
                 canvas.toBlob(
                     async (blob) => {
                         if (!blob) throw new Error('Failed to create blob');
-                        
+
                         // Create a File object from the blob
                         const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
                         resolve(file);

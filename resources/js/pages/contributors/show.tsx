@@ -41,11 +41,7 @@ export default function ContributorShow({ contributor, questions }: ContributorS
                 {/* Contributor Header */}
                 <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex items-start gap-4">
-                        <img
-                            src={contributor.avatar_url}
-                            alt={contributor.name}
-                            className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
-                        />
+                        <img src={contributor.avatar_url} alt={contributor.name} className="h-16 w-16 flex-shrink-0 rounded-full object-cover" />
 
                         <div className="min-w-0 flex-1">
                             <h1 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">{contributor.name}</h1>
