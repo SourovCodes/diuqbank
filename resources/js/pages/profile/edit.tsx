@@ -58,15 +58,20 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
         });
     };
 
-    const handleImageComplete = async (croppedImage: string) => {
+    const handleImageComplete = async (croppedImageFile: File) => {
         setShowImageCropper(false);
         setIsUploadingImage(true);
 
+        // Create FormData to send the file
+        const formData = new FormData();
+        formData.append('avatar', croppedImageFile);
+
         router.post(
             '/profile/image',
-            { avatar: croppedImage },
+            formData,
             {
                 preserveScroll: true,
+                forceFormData: true, // Ensure Inertia sends as multipart/form-data
                 onSuccess: (page) => {
                     // Update preview with the new avatar URL from the response
                     const pageProps = page.props as { user?: User };
