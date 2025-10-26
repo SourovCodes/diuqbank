@@ -92,7 +92,7 @@ export interface QuestionDetailResource {
         name: string;
         username: string;
         student_id: string;
-        profile_picture_url: string;
+        avatar_url: string;
     };
 }
 

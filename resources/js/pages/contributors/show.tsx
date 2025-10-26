@@ -13,7 +13,7 @@ type Contributor = {
     student_id?: string;
     questions_count: number;
     total_views: number;
-    profile_picture_url: string;
+    avatar_url: string;
 };
 
 interface ContributorShowProps extends SharedData {
@@ -42,7 +42,7 @@ export default function ContributorShow({ contributor, questions }: ContributorS
                 <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="flex items-start gap-4">
                         <img
-                            src={contributor.profile_picture_url}
+                            src={contributor.avatar_url}
                             alt={contributor.name}
                             className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
                         />

@@ -27,7 +27,7 @@ class ContributorsPageController extends Controller
                 'student_id' => $user->student_id,
                 'questions_count' => $user->questions_count,
                 'total_views' => $user->total_views ?? 0,
-                'profile_picture_url' => $user->getFirstMediaUrl('profile_picture'),
+                'avatar_url' => $user->avatar_url,
             ]);
 
         return Inertia::render('contributors/index', [
@@ -59,7 +59,7 @@ class ContributorsPageController extends Controller
                 'student_id' => $user->student_id,
                 'questions_count' => $user->questions_count,
                 'total_views' => $user->total_views ?? 0,
-                'profile_picture_url' => $user->getFirstMediaUrl('profile_picture'),
+                'avatar_url' => $user->avatar_url,
             ],
             'questions' => $questions,
         ]);
