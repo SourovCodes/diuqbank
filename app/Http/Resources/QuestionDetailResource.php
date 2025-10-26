@@ -38,11 +38,10 @@ class QuestionDetailResource extends JsonResource
                 'name' => $this->examType->name,
             ],
             'user' => [
-                'id' => $this->user->id,
                 'name' => $this->user->name,
                 'username' => $this->user->username,
                 'student_id' => $this->user->student_id,
-                'profile_picture_url' => $this->user->getFirstMediaUrl('profile_picture'),
+                'avatar' => $this->user->avatar_url,
             ],
         ];
     }

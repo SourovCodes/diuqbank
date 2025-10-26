@@ -26,7 +26,7 @@ class ExamTypeFactory extends Factory
         $examType = $this->faker->randomElement($examTypes);
 
         return [
-            'name' => $examType['name'],
+            'name' => $examType['name'].' '.$this->faker->unique()->numberBetween(1, 999999),
             'requires_section' => $examType['requires_section'],
         ];
     }
