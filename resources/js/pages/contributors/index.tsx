@@ -13,7 +13,7 @@ type Contributor = {
     student_id?: string;
     questions_count: number;
     total_views: number;
-    profile_picture_url: string;
+    avatar_url: string;
 };
 
 interface ContributorsIndexProps extends SharedData {
@@ -45,7 +45,7 @@ export default function ContributorsIndex({ contributors }: ContributorsIndexPro
                                 <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600">
                                     <div className="mb-4 flex items-start gap-4">
                                         <img
-                                            src={contributor.profile_picture_url}
+                                            src={contributor.avatar_url}
                                             alt={contributor.name}
                                             className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
                                         />

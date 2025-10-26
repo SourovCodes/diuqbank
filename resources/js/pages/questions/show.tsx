@@ -252,7 +252,7 @@ export default function QuestionShow({ question, auth }: QuestionShowProps) {
                                         className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-3 transition-all hover:border-blue-400 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
                                     >
                                         <img
-                                            src={question.user.profile_picture_url}
+                                            src={question.user.avatar_url}
                                             alt={question.user.name}
                                             className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
                                         />

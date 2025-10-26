@@ -58,41 +58,42 @@ export default function ProfileEdit({ user }: ProfileEditProps) {
         });
     };
 
-    const handleImageComplete = async (croppedImage: string) => {
+    const handleImageComplete = async (croppedImageFile: File) => {
         setShowImageCropper(false);
         setIsUploadingImage(true);
 
-        router.post(
-            '/profile/image',
-            { avatar: croppedImage },
-            {
-                preserveScroll: true,
-                onSuccess: (page) => {
-                    // Update preview with the new avatar URL from the response
-                    const pageProps = page.props as { user?: User };
-                    const newAvatar = pageProps.user?.avatar;
-                    if (newAvatar) {
-                        setPreviewAvatar(newAvatar);
-                    }
-                    setIsUploadingImage(false);
-                    toast.success('Profile picture updated successfully!');
-                },
-                onError: (errors) => {
-                    setIsUploadingImage(false);
-                    const errorMessages = Object.values(errors).flat();
-                    if (errorMessages.length > 0) {
-                        errorMessages.forEach((error) => {
-                            toast.error(error as string);
-                        });
-                    } else {
-                        toast.error('Failed to update profile picture');
-                    }
-                },
-                onFinish: () => {
-                    setIsUploadingImage(false);
-                },
+        // Create FormData to send the file
+        const formData = new FormData();
+        formData.append('avatar', croppedImageFile);
+
+        router.post('/profile/image', formData, {
+            preserveScroll: true,
+            forceFormData: true, // Ensure Inertia sends as multipart/form-data
+            onSuccess: (page) => {
+                // Update preview with the new avatar URL from the response
+                const pageProps = page.props as { user?: User };
+                const newAvatar = pageProps.user?.avatar;
+                if (newAvatar) {
+                    setPreviewAvatar(newAvatar);
+                }
+                setIsUploadingImage(false);
+                toast.success('Profile picture updated successfully!');
             },
-        );
+            onError: (errors) => {
+                setIsUploadingImage(false);
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                    errorMessages.forEach((error) => {
+                        toast.error(error as string);
+                    });
+                } else {
+                    toast.error('Failed to update profile picture');
+                }
+            },
+            onFinish: () => {
+                setIsUploadingImage(false);
+            },
+        });
     };
 
     const getInitials = (name?: string) => {
