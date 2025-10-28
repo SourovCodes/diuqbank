@@ -1,3 +1,4 @@
+import AffiliateBanner from '@/components/affiliate-banner';
 import Footer from '@/components/footer';
 import Navigation from '@/components/navigation';
 import type { SharedData } from '@/types';
@@ -39,6 +40,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Navigation />
 
             {children}
+
+            {/* Affiliate Banner - Shown on all pages */}
+            <section className="py-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <AffiliateBanner />
+                </div>
+            </section>
+
             <Footer />
 
             <Toaster position="top-right" expand={true} richColors closeButton />
