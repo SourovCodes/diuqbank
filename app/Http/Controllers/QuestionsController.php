@@ -208,8 +208,12 @@ class QuestionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Question $question): Response
+    public function edit(Question $question)
     {
+        return [
+            'user_id' => auth()->id(),
+            'question_user_id' => $question->user_id,
+        ];
         abort_unless(auth()->check() && auth()->id() === $question->user_id, 403);
 
         $formOptions = $this->optionsRepository->getFormOptions();
