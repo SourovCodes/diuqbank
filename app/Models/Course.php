@@ -23,6 +23,18 @@ class Course extends Model
     ];
 
     /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'department_id' => 'integer',
+        ];
+    }
+
+    /**
      * Get the department that owns the course.
      */
     public function department(): BelongsTo
