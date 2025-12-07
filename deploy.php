@@ -8,7 +8,7 @@ require 'recipe/laravel.php';
 
 set('repository', 'https://github.com/SourovCodes/diuqbank.git');
 set('writable_mode', 'chmod');
-set('keep_releases', 2);
+set('keep_releases', 1);
 
 add('shared_files', []);
 add('shared_dirs', []);
