@@ -22,7 +22,6 @@ const menuItems = [
     { name: 'Contributors', href: '/contributors', icon: Users },
     { name: 'Contact', href: '/contact', icon: Mail },
     { name: 'About', href: '/about', icon: Info },
-    { name: 'Help the Developer', href: '/help-developer', icon: Heart },
 ];
 
 export default function Navigation() {
