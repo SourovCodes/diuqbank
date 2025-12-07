@@ -210,10 +210,6 @@ class QuestionsController extends Controller
      */
     public function edit(Question $question)
     {
-        return [
-            'user_id' => auth()->id(),
-            'question_user_id' => $question->user_id,
-        ];
         abort_unless(auth()->check() && auth()->id() === $question->user_id, 403);
 
         $formOptions = $this->optionsRepository->getFormOptions();
