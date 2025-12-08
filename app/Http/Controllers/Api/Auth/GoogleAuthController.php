@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GoogleTokenRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -106,5 +107,70 @@ class GoogleAuthController extends Controller
         }
 
         return $username;
+    }
+
+    /**
+     * Authenticate mobile app users with Google ID token.
+     */
+    public function mobileAuth(GoogleTokenRequest $request): JsonResponse
+    {
+        $idToken = $request->validated()['id_token'];
+
+        // Verify the Google ID token using Socialite
+        try {
+            $googleUser = Socialite::driver('google')
+                ->stateless()
+                ->userFromToken($idToken);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to verify Google ID token.',
+                'error' => $e->getMessage(),
+            ], 401);
+        }
+
+        // Check if email domain is allowed
+        $allowedDomains = ['@diu.edu.bd', '@s.diu.edu.bd'];
+        $userEmail = $googleUser->email;
+        $isAllowedDomain = false;
+
+        foreach ($allowedDomains as $domain) {
+            if (Str::endsWith($userEmail, $domain)) {
+                $isAllowedDomain = true;
+                break;
+            }
+        }
+
+        if (! $isAllowedDomain) {
+            return response()->json([
+                'message' => 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed to register.',
+            ], 403);
+        }
+
+        $user = User::query()
+            ->where('email', $googleUser->email)
+            ->first();
+
+        if (! $user) {
+            $user = User::query()->create([
+                'name' => $googleUser->name,
+                'email' => $googleUser->email,
+                'username' => $this->generateUniqueUsername($googleUser->email),
+                'email_verified_at' => now(),
+                'password' => bcrypt(Str::random(32)),
+            ]);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        // Create Sanctum token for API authentication
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 }

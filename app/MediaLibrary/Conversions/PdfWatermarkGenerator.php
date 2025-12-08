@@ -358,9 +358,20 @@ class PdfWatermarkGenerator extends ImageGenerator
 
     protected function findGhostscriptPath(): ?string
     {
-        $gsPath = trim(shell_exec('which gs 2>/dev/null') ?? '');
+        try {
+            $process = new Process(['which', 'gs']);
+            $process->run();
 
-        return empty($gsPath) ? null : $gsPath;
+            if (! $process->isSuccessful()) {
+                return null;
+            }
+
+            $gsPath = trim($process->getOutput());
+
+            return empty($gsPath) ? null : $gsPath;
+        } catch (\Throwable $exception) {
+            return null;
+        }
     }
 
     public function requirementsAreInstalled(): bool

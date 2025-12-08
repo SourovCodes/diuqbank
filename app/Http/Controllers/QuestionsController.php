@@ -208,7 +208,7 @@ class QuestionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Question $question): Response
+    public function edit(Question $question)
     {
         abort_unless(auth()->check() && auth()->id() === $question->user_id, 403);
 

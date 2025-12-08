@@ -45,6 +45,12 @@ class Question extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
+            'department_id' => 'integer',
+            'course_id' => 'integer',
+            'semester_id' => 'integer',
+            'exam_type_id' => 'integer',
+            'view_count' => 'integer',
             'status' => QuestionStatus::class,
             'under_review_reason' => UnderReviewReason::class,
         ];
