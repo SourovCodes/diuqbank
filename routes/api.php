@@ -32,3 +32,6 @@ Route::middleware('auth:sanctum')->group(function () {
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('guest');
+
+// Google OAuth for Mobile Apps (Flutter)
+Route::post('/auth/google/mobile', [GoogleAuthController::class, 'mobileAuth'])->middleware('guest');
