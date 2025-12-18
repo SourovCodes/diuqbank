@@ -302,6 +302,37 @@ export default function QuestionForm({
                 toast.success('Course added successfully.');
                 handleCourseDialogChange(false, newCourse.department_id.toString());
             } else if (response.status === 422 && payload?.errors) {
+                // Check if it's a duplicate course error - if so, select the existing course
+                const nameError = Array.isArray(payload.errors.name) ? payload.errors.name[0] : payload.errors.name;
+                const isDuplicateError = nameError && (
+                    nameError.toLowerCase().includes('already') ||
+                    nameError.toLowerCase().includes('taken') ||
+                    nameError.toLowerCase().includes('exists') ||
+                    nameError.toLowerCase().includes('unique')
+                );
+
+                if (isDuplicateError) {
+                    // Find the existing course with the same name and department
+                    const existingCourse = localCourses.find(
+                        (course) =>
+                            course.name.toLowerCase() === trimmedName.toLowerCase() &&
+                            course.department_id === parseInt(departmentId, 10)
+                    );
+
+                    if (existingCourse) {
+                        // Select the existing course
+                        setPendingCourseSelection({
+                            courseId: existingCourse.id.toString(),
+                            departmentId: existingCourse.department_id.toString(),
+                        });
+
+                        toast.info('Course already exists. Selected it for you.');
+                        handleCourseDialogChange(false, existingCourse.department_id.toString());
+                        return;
+                    }
+                }
+
+                // Show validation errors if not a duplicate or course not found locally
                 const formattedErrors: NewCourseFormErrors = {};
                 Object.entries(payload.errors).forEach(([key, value]) => {
                     const message = Array.isArray(value) ? value[0] : value;
@@ -503,7 +534,7 @@ export default function QuestionForm({
                             type="text"
                             value={data.section}
                             onChange={(e) => setData('section', e.target.value)}
-                            placeholder="e.g., 65_N, 64_A"
+                            placeholder="Example: 65_N, 64_A"
                             aria-invalid={!!errors.section}
                             className="max-w-xs"
                         />
@@ -700,7 +731,7 @@ export default function QuestionForm({
                                 type="text"
                                 value={courseForm.name}
                                 onChange={(event) => setCourseForm((prev) => ({ ...prev, name: event.target.value }))}
-                                placeholder="e.g., Data Structures"
+                                placeholder="Example: Data Structures"
                                 aria-invalid={!!courseFormErrors.name}
                                 disabled={courseSubmitting}
                             />
@@ -735,7 +766,7 @@ export default function QuestionForm({
                                 type="text"
                                 value={semesterForm.name}
                                 onChange={(event) => setSemesterForm({ name: event.target.value })}
-                                placeholder="e.g., Spring 25"
+                                placeholder="Example: Spring 25"
                                 aria-invalid={!!semesterFormErrors.name}
                                 disabled={semesterSubmitting}
                             />
