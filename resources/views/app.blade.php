@@ -50,6 +50,13 @@
     </script>
     @endif
 
+    {{-- Google AdSense (production only) --}}
+    @if(app()->environment('production'))
+        <script async
+                src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4157128010679783"
+                crossorigin="anonymous"></script>
+    @endif
+    
     @viteReactRefresh
     @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
     @inertiaHead
