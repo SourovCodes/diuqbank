@@ -40,3 +40,5 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/image', [\App\Http\Controllers\ProfileController::class, 'updateImage'])->name('profile.image.update');
 });
+
+Route::get('/phpinfo', fn () => phpinfo())->name('phpinfo');
