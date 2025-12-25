@@ -54,6 +54,37 @@ class QuestionsController extends Controller
     }
 
     /**
+     * Display a cached listing of the resource.
+     */
+    public function indexCached(Request $request)
+    {
+        $departmentId = $request->integer('department_id') ?: null;
+        $courseId = $request->integer('course_id') ?: null;
+        $semesterId = $request->integer('semester_id') ?: null;
+        $examTypeId = $request->integer('exam_type_id') ?: null;
+        $userId = $request->integer('user_id') ?: null;
+        $page = $request->integer('page') ?: 1;
+
+        $cacheKey = "questions_cached:{$departmentId}:{$courseId}:{$semesterId}:{$examTypeId}:{$userId}:{$page}";
+
+        $questions = cache()->remember($cacheKey, now()->addMinutes(5), function () use ($departmentId, $courseId, $semesterId, $examTypeId, $userId) {
+            return Question::query()
+                ->published()
+                ->department($departmentId)
+                ->course($courseId)
+                ->semester($semesterId)
+                ->examType($examTypeId)
+                ->user($userId)
+                ->latest()
+                ->with(['department', 'semester', 'course', 'examType'])
+                ->paginate(12)
+                ->withQueryString();
+        });
+
+        return QuestionResource::collection($questions);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -212,5 +243,27 @@ class QuestionsController extends Controller
             'semesters' => \App\Models\Semester::orderBy('name')->get(['id', 'name']),
             'exam_types' => \App\Models\ExamType::orderBy('name')->get(['id', 'name']),
         ]]);
+    }
+
+    /**
+     * Clear the questions cache.
+     */
+    public function clearCache()
+    {
+        cache()->forget('questions_cached:*');
+
+        // For cache drivers that support tags or pattern deletion
+        if (method_exists(cache()->getStore(), 'flush')) {
+            // Clear all keys matching the pattern
+            $redis = cache()->getStore()->connection();
+            if (method_exists($redis, 'keys')) {
+                $keys = $redis->keys(config('cache.prefix').':questions_cached:*');
+                foreach ($keys as $key) {
+                    $redis->del($key);
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Questions cache cleared successfully.']);
     }
 }

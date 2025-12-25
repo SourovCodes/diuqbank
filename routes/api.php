@@ -15,6 +15,8 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/questions/filter-options', [QuestionsController::class, 'filters']);
 Route::get('/questions', [QuestionsController::class, 'index']);
+Route::get('/questions-cached', [QuestionsController::class, 'indexCached']);
+Route::delete('/questions-cache', [QuestionsController::class, 'clearCache']);
 Route::get('/questions/{question}', [QuestionsController::class, 'show']);
 Route::post('/questions', [QuestionsController::class, 'store'])->middleware('auth:sanctum');
 Route::put('/questions/{question}', [QuestionsController::class, 'update'])->middleware('auth:sanctum');
