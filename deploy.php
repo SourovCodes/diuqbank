@@ -7,18 +7,14 @@ require 'recipe/laravel.php';
 // Config
 
 set('repository', 'https://github.com/SourovCodes/diuqbank.git');
-set('writable_mode', 'chmod');
 set('keep_releases', 1);
 
-add('shared_files', []);
-add('shared_dirs', []);
-add('writable_dirs', []);
 
 // Load environment variables
 $hostname = getenv('DEPLOY_HOSTNAME');
 $remoteUser = getenv('DEPLOY_REMOTE_USER');
 $deployPath = getenv('DEPLOY_PATH');
-$httpUser = getenv('DEPLOY_HTTP_USER');
+
 $sshPort = getenv('DEPLOY_SSH_PORT');
 $branch = getenv('DEPLOY_BRANCH') ?: 'main';
 
@@ -32,9 +28,7 @@ if (! $remoteUser) {
 if (! $deployPath) {
     throw new \RuntimeException('DEPLOY_PATH environment variable is required');
 }
-if (! $httpUser) {
-    throw new \RuntimeException('DEPLOY_HTTP_USER environment variable is required');
-}
+
 if (! $sshPort) {
     throw new \RuntimeException('DEPLOY_SSH_PORT environment variable is required');
 }
@@ -44,7 +38,6 @@ if (! $sshPort) {
 host($hostname)
     ->set('remote_user', $remoteUser)
     ->set('deploy_path', $deployPath)
-    ->set('http_user', $httpUser)
     ->set('port', $sshPort)
     ->set('branch', $branch);
 
@@ -89,11 +82,6 @@ task('deploy:npm', function () {
     writeln('Skipping npm install on server (assets built locally)');
 });
 
-// Clear OPcache
-task('opcache:clear', function () {
-    writeln('Clearing OPcache...');
-    run('{{bin/php}} {{release_or_current_path}}/artisan opcache:clear');
-})->desc('Clear OPcache');
 
 // Hooks
 
@@ -103,7 +91,5 @@ before('deploy', 'build:assets');
 // Upload assets after the release is prepared but before going live
 after('deploy:vendors', 'upload:assets');
 
-// Clear OPcache after deployment
-after('deploy:success', 'opcache:clear');
 
 after('deploy:failed', 'deploy:unlock');
