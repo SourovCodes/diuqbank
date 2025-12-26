@@ -10,9 +10,6 @@ set('repository', 'https://github.com/SourovCodes/diuqbank.git');
 set('writable_mode', 'chmod');
 set('keep_releases', 1);
 
-add('shared_files', []);
-add('shared_dirs', []);
-add('writable_dirs', []);
 
 // Load environment variables
 $hostname = getenv('DEPLOY_HOSTNAME');
