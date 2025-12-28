@@ -4,89 +4,138 @@ namespace Deployer;
 
 require 'recipe/laravel.php';
 
-// Config
+/*
+|--------------------------------------------------------------------------
+| Basic Config
+|--------------------------------------------------------------------------
+*/
 
 set('repository', 'https://github.com/SourovCodes/diuqbank.git');
+set('branch', getenv('DEPLOY_BRANCH') ?: 'main');
+set('keep_releases', 3);
+
+/*
+|--------------------------------------------------------------------------
+| Laravel Shared & Writable Paths
+|--------------------------------------------------------------------------
+*/
+
+set('shared_dirs', [
+    'storage',
+]);
+
+set('shared_files', [
+    '.env',
+]);
+
+set('writable_dirs', [
+    'storage',
+    'bootstrap/cache',
+]);
+
 set('writable_mode', 'chmod');
-set('keep_releases', 1);
 
+/*
+|--------------------------------------------------------------------------
+| Load Environment Variables
+|--------------------------------------------------------------------------
+*/
 
-// Load environment variables
-$hostname = getenv('DEPLOY_HOSTNAME');
+$hostname   = getenv('DEPLOY_HOSTNAME');
 $deployPath = getenv('DEPLOY_PATH');
-$sshPort = getenv('DEPLOY_SSH_PORT');
-$branch = getenv('DEPLOY_BRANCH') ?: 'main';
+$sshPort    = getenv('DEPLOY_SSH_PORT');
 
-// Validate required environment variables
 if (! $hostname) {
     throw new \RuntimeException('DEPLOY_HOSTNAME environment variable is required');
 }
+
 if (! $deployPath) {
     throw new \RuntimeException('DEPLOY_PATH environment variable is required');
 }
+
 if (! $sshPort) {
     throw new \RuntimeException('DEPLOY_SSH_PORT environment variable is required');
 }
 
-// Hosts
+/*
+|--------------------------------------------------------------------------
+| Hosts
+|--------------------------------------------------------------------------
+*/
 
 host($hostname)
     ->set('remote_user', 'sourov')
     ->set('deploy_path', $deployPath)
     ->set('http_user', 'www-data')
-    ->set('port', $sshPort)
-    ->set('branch', $branch);
+    ->set('port', $sshPort);
 
-// Tasks
+/*
+|--------------------------------------------------------------------------
+| Local Asset Build
+|--------------------------------------------------------------------------
+*/
 
-// Build assets locally
 task('build:assets', function () {
-    writeln('Building assets locally...');
+    writeln('📦 Building assets locally...');
     runLocally('npm ci');
     runLocally('npm run build');
 })->desc('Build assets locally');
 
-// Upload built assets
+/*
+|--------------------------------------------------------------------------
+| Upload Built Assets
+|--------------------------------------------------------------------------
+*/
+
 task('upload:assets', function () {
-    writeln('Uploading built assets...');
-    $user = get('remote_user');
-    $hostname = currentHost()->getHostname();
-    $port = get('port');
+    writeln('🚀 Uploading built assets...');
+    $user        = get('remote_user');
+    $hostname    = currentHost()->getHostname();
+    $port        = get('port');
     $releasePath = get('release_path');
-    $archiveName = 'build-assets.tar.gz';
+    $archive     = 'build-assets.tar.gz';
 
-    // Create archive locally
-    writeln('Creating archive...');
-    runLocally("tar -czf {$archiveName} -C public build");
+    runLocally("tar -czf {$archive} -C public build");
+    runLocally("scp -P {$port} {$archive} {$user}@{$hostname}:{$releasePath}/");
+    run("tar -xzf {$releasePath}/{$archive} -C {$releasePath}/public/");
+    runLocally("rm {$archive}");
+    run("rm {$releasePath}/{$archive}");
+})->desc('Upload built assets');
 
-    // Upload archive to server
-    writeln('Uploading archive...');
-    runLocally("scp -P {$port} {$archiveName} {$user}@{$hostname}:{$releasePath}/");
+/*
+|--------------------------------------------------------------------------
+| Skip npm on Server
+|--------------------------------------------------------------------------
+*/
 
-    // Extract archive on server
-    writeln('Extracting archive on server...');
-    run("tar -xzf {$releasePath}/{$archiveName} -C {$releasePath}/public/");
-
-    // Clean up archive on both local and server
-    writeln('Cleaning up...');
-    runLocally("rm {$archiveName}");
-    run("rm {$releasePath}/{$archiveName}");
-})->desc('Upload built assets to server');
-
-// Skip npm tasks on server by overriding them
 task('deploy:npm', function () {
-    writeln('Skipping npm install on server (assets built locally)');
+    writeln('⏭️  Skipping npm install on server');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Fix Permissions After Deploy
+|--------------------------------------------------------------------------
+*/
 
-// Hooks
+task('permissions:fix', function () {
+    run('chmod -R 775 {{release_path}}/storage {{release_path}}/bootstrap/cache');
+})->desc('Fix Laravel writable permissions');
+
+/*
+|--------------------------------------------------------------------------
+| Hooks
+|--------------------------------------------------------------------------
+*/
 
 // Build assets locally before deployment starts
 before('deploy', 'build:assets');
 
-// Upload assets after the release is prepared but before going live
+// Upload assets after vendors are installed
 after('deploy:vendors', 'upload:assets');
 
+// Fix permissions after symlink switch
+after('deploy:symlink', 'permissions:fix');
 
-
+// Unlock if deploy fails
 after('deploy:failed', 'deploy:unlock');
