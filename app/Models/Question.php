@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuestionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +18,19 @@ class Question extends Model
         'course_id',
         'semester_id',
         'exam_type_id',
+        'status',
+        'rejection_reason',
     ];
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => QuestionStatus::class,
+        ];
+    }
 
     /**
      * @return BelongsTo<Department, $this>

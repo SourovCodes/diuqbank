@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources\Questions\Schemas;
 
+use App\Enums\QuestionStatus;
 use App\Models\Course;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -14,6 +17,24 @@ class QuestionForm
     {
         return $schema
             ->components([
+                Section::make('Status')
+                    ->description('Set the review status for this question')
+                    ->icon('heroicon-o-flag')
+                    ->schema([
+                        ToggleButtons::make('status')
+                            ->options(QuestionStatus::class)
+                            ->default(QuestionStatus::PendingReview)
+                            ->inline()
+                            ->live()
+                            ->required(),
+                        Textarea::make('rejection_reason')
+                            ->label('Rejection Reason')
+                            ->placeholder('Explain why this question was rejected...')
+                            ->rows(3)
+                            ->visible(fn (Get $get) => $get('status') === QuestionStatus::Rejected)
+                            ->requiredIf('status', QuestionStatus::Rejected->value),
+                    ])
+                    ->columnSpanFull(),
                 Section::make('Academic Information')
                     ->description('Select the department and course for this question')
                     ->icon('heroicon-o-academic-cap')

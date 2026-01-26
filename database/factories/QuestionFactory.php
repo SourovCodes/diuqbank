@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\QuestionStatus;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\ExamType;
@@ -27,6 +28,37 @@ class QuestionFactory extends Factory
             'course_id' => Course::factory()->create(['department_id' => $department->id])->id,
             'semester_id' => Semester::factory(),
             'exam_type_id' => ExamType::factory(),
+            'status' => fake()->randomElement(QuestionStatus::cases()),
         ];
+    }
+
+    /**
+     * Set the question status to published.
+     */
+    public function published(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::Published,
+        ]);
+    }
+
+    /**
+     * Set the question status to pending review.
+     */
+    public function pendingReview(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::PendingReview,
+        ]);
+    }
+
+    /**
+     * Set the question status to rejected.
+     */
+    public function rejected(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => QuestionStatus::Rejected,
+        ]);
     }
 }

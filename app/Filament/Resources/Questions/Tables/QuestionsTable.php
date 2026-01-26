@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Questions\Tables;
 
+use App\Enums\QuestionStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -15,6 +16,14 @@ class QuestionsTable
     {
         return $table
             ->columns([
+                TextColumn::make('status')
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('rejection_reason')
+                    ->label('Rejection Reason')
+                    ->limit(30)
+                    ->tooltip(fn ($record) => $record->rejection_reason)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('department.short_name')
                     ->label('Dept')
                     ->badge()
@@ -42,6 +51,8 @@ class QuestionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->options(QuestionStatus::class),
                 SelectFilter::make('department')
                     ->relationship('department', 'name')
                     ->preload()

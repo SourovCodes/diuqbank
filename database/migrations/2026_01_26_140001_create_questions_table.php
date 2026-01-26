@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('course_id')->constrained()->cascadeOnDelete();
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
             $table->foreignId('exam_type_id')->constrained()->cascadeOnDelete();
+            $table->string('status')->default('pending_review');
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
 
             $table->unique(['department_id', 'course_id', 'semester_id', 'exam_type_id'], 'questions_unique_combination');
