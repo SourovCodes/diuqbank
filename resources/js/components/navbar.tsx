@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronDown, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, User } from 'lucide-react';
+import { BookOpen, ChevronDown, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
@@ -11,7 +11,8 @@ import type { SharedData } from '@/types';
 
 const navigationItems = [
     { href: '/', label: 'Home' },
-    { href: '/products', label: 'Products' },
+    { href: '/#features', label: 'Features' },
+    { href: '/#how-it-works', label: 'How It Works' },
 ];
 
 export function Navbar() {
@@ -33,11 +34,10 @@ export function Navbar() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
-                    <svg className="h-8 w-8 text-primary" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="32" height="32" rx="8" fill="currentColor" />
-                        <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="text-xl font-bold">3AG</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <BookOpen className="h-5 w-5" />
+                    </div>
+                    <span className="text-xl font-bold">DIU QBank</span>
                 </Link>
 
                 {/* Desktop Navigation */}
