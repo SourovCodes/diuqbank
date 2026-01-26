@@ -1,4 +1,5 @@
 export type * from './auth';
+export type * from './flash';
 
 import type { Auth } from './auth';
 
