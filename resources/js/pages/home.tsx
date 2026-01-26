@@ -89,9 +89,7 @@ export default function Home() {
                                         <Download className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Easy Downloads</CardTitle>
-                                    <CardDescription>
-                                        Download question papers in PDF format for offline studying and printing.
-                                    </CardDescription>
+                                    <CardDescription>Download question papers in PDF format for offline studying and printing.</CardDescription>
                                 </CardHeader>
                             </Card>
 
@@ -139,9 +137,7 @@ export default function Home() {
                     <div className="container mx-auto px-4">
                         <div className="mb-12 text-center">
                             <h2 className="mb-4 text-3xl font-bold">How It Works</h2>
-                            <p className="mx-auto max-w-2xl text-muted-foreground">
-                                Getting started with DIU Question Bank is simple and free.
-                            </p>
+                            <p className="mx-auto max-w-2xl text-muted-foreground">Getting started with DIU Question Bank is simple and free.</p>
                         </div>
 
                         <div className="grid gap-8 md:grid-cols-3">
@@ -160,9 +156,7 @@ export default function Home() {
                                     <Download className="h-8 w-8 text-green-600 dark:text-green-400" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold">2. Download & Study</h3>
-                                <p className="text-muted-foreground">
-                                    Download the question papers and use them to prepare for your upcoming exams.
-                                </p>
+                                <p className="text-muted-foreground">Download the question papers and use them to prepare for your upcoming exams.</p>
                             </div>
 
                             <div className="text-center">
@@ -170,9 +164,7 @@ export default function Home() {
                                     <Upload className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                                 </div>
                                 <h3 className="mb-2 text-xl font-semibold">3. Contribute Back</h3>
-                                <p className="text-muted-foreground">
-                                    Help other students by uploading question papers you have from your exams.
-                                </p>
+                                <p className="text-muted-foreground">Help other students by uploading question papers you have from your exams.</p>
                             </div>
                         </div>
                     </div>
@@ -184,8 +176,8 @@ export default function Home() {
                         <div className="rounded-2xl bg-primary p-8 text-center md:p-16">
                             <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">Ready to Ace Your Exams?</h2>
                             <p className="mx-auto mb-8 max-w-2xl text-primary-foreground/80">
-                                Start exploring our collection of past exam questions. Create an account to contribute and help your fellow
-                                students succeed.
+                                Start exploring our collection of past exam questions. Create an account to contribute and help your fellow students
+                                succeed.
                             </p>
                             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                                 <Link href="/questions">
