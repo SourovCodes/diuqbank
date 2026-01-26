@@ -73,4 +73,22 @@ class Question extends Model
             $this->examType?->name ?? 'Unknown Exam'
         );
     }
+
+    /**
+     * Check if the question matches a search query.
+     * Matches if ALL words in the search appear somewhere in the title.
+     */
+    public function matchesSearch(string $search): bool
+    {
+        $title = strtolower($this->title);
+        $words = preg_split('/\s+/', strtolower(trim($search)));
+
+        foreach ($words as $word) {
+            if ($word !== '' && ! str_contains($title, $word)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

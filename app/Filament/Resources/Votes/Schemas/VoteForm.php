@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\Votes\Schemas;
 
 use App\Models\Submission;
+use App\Models\Vote;
+use Closure;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class VoteForm
@@ -24,14 +27,34 @@ class VoteForm
                             ->native(false)
                             ->preload()
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->live(),
                         Select::make('user_id')
                             ->relationship('user', 'name')
                             ->placeholder('Select a voter')
                             ->native(false)
                             ->preload()
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->rules([
+                                fn (Get $get, ?Vote $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record) {
+                                    $submissionId = $get('submission_id');
+                                    if (! $submissionId || ! $value) {
+                                        return;
+                                    }
+
+                                    $exists = Vote::query()
+                                        ->where('submission_id', $submissionId)
+                                        ->where('user_id', $value)
+                                        ->when($record, fn ($query) => $query->whereNot('id', $record->id))
+                                        ->exists();
+
+                                    if ($exists) {
+                                        $fail('This user has already voted on this submission.');
+                                    }
+                                },
+                            ]),
                         Select::make('value')
                             ->label('Vote Type')
                             ->placeholder('Select vote type')

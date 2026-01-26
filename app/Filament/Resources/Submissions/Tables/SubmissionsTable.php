@@ -57,6 +57,12 @@ class SubmissionsTable
                 SelectFilter::make('question')
                     ->relationship('question', 'id')
                     ->getOptionLabelFromRecordUsing(fn (Question $record) => $record->title)
+                    ->getSearchResultsUsing(fn (string $search) => Question::query()
+                        ->with(['course', 'department', 'semester', 'examType'])
+                        ->get()
+                        ->filter(fn (Question $question) => $question->matchesSearch($search))
+                        ->mapWithKeys(fn (Question $question) => [$question->id => $question->title])
+                        ->toArray())
                     ->preload()
                     ->searchable(),
                 SelectFilter::make('user')
