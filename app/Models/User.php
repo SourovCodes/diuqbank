@@ -2,30 +2,15 @@
 
 namespace App\Models;
 
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
+class User extends Authenticatable
 {
-    use HasApiTokens;
-
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-
-    use InteractsWithMedia;
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->email === 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail();
-    }
 
     /**
      * The attributes that are mass assignable.
@@ -36,9 +21,6 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
         'name',
         'email',
         'password',
-        'student_id',
-        'username',
-        'email_verified_at',
     ];
 
     /**
@@ -56,43 +38,11 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
      *
      * @return array<string, string>
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
-
-    /**
-     * Get the questions for the user.
-     */
-    public function questions(): HasMany
+    protected function casts(): array
     {
-        return $this->hasMany(Question::class);
-    }
-
-    public function registerMediaCollections(): void
-    {
-        $this
-            ->addMediaCollection('profile_picture')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-            ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
-            ->singleFile()
-            ->useDisk(diskName: 'profile-pictures');
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'username';
-    }
-
-    /**
-     * Get the cached avatar URL for the user.
-     */
-    public function getAvatarUrlAttribute(): string
-    {
-        return cache()->remember(
-            key: "user.{$this->id}.avatar",
-            ttl: now()->addDay(),
-            callback: fn () => $this->getFirstMediaUrl('profile_picture')
-        );
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }
