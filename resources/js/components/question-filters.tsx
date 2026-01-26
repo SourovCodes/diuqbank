@@ -3,7 +3,6 @@ import { Book, Calendar, FileText, Filter, School } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ClearFiltersButton } from '@/components/ui/clear-filters-button';
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
-import { cn } from '@/lib/utils';
 import type { Course, Department, ExamType, Semester } from '@/types';
 
 type FilterValue = number | null | undefined;
@@ -123,26 +122,19 @@ export function QuestionFilters({ initialFilters, filterOptions }: QuestionFilte
                     const isActive = rawValue !== null && rawValue !== undefined;
 
                     return (
-                        <div key={config.id}>
-                            <ComboboxFilter
-                                id={config.id}
-                                urlParam={filterKeys[config.id]}
-                                label={config.label}
-                                icon={config.icon}
-                                options={config.options}
-                                value={currentValue}
-                                isActive={isActive}
-                            />
-                        </div>
+                        <ComboboxFilter
+                            key={config.id}
+                            id={config.id}
+                            urlParam={filterKeys[config.id]}
+                            label={config.label}
+                            icon={config.icon}
+                            options={config.options}
+                            value={currentValue}
+                            isActive={isActive}
+                        />
                     );
                 })}
             </div>
-
-            {hasActiveFilters && activeFilterCount > 1 && (
-                <div className="mt-3 block text-center text-sm text-muted-foreground sm:hidden">
-                    {activeFilterCount} active filters
-                </div>
-            )}
         </div>
     );
 }

@@ -19,7 +19,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
     return (
         <Link href={`/questions/${question.id}`} className="group block">
             <div className="relative h-full overflow-hidden rounded-xl border bg-card py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
-                <div className="relative z-10 flex h-full flex-col px-4 py-0">
+                <div className="relative z-10 flex h-full flex-col px-4">
                     <div className="mb-2 flex items-start justify-between gap-2">
                         <h3 className="line-clamp-2 flex-1 text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
                             {question.course?.name ?? 'Unknown Course'}
