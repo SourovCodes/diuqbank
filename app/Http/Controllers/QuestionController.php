@@ -20,28 +20,30 @@ class QuestionController extends Controller
         $questions = Question::query()
             ->with(['department', 'course', 'semester', 'examType'])
             ->where('status', QuestionStatus::Published)
-            ->when($request->filled('department'), fn ($query) => $query->where('department_id', $request->integer('department')))
-            ->when($request->filled('course'), fn ($query) => $query->where('course_id', $request->integer('course')))
-            ->when($request->filled('semester'), fn ($query) => $query->where('semester_id', $request->integer('semester')))
-            ->when($request->filled('exam_type'), fn ($query) => $query->where('exam_type_id', $request->integer('exam_type')))
+            ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->integer('department_id')))
+            ->when($request->filled('course_id'), fn ($query) => $query->where('course_id', $request->integer('course_id')))
+            ->when($request->filled('semester_id'), fn ($query) => $query->where('semester_id', $request->integer('semester_id')))
+            ->when($request->filled('exam_type_id'), fn ($query) => $query->where('exam_type_id', $request->integer('exam_type_id')))
             ->latest()
             ->paginate(12)
             ->withQueryString();
 
         return Inertia::render('questions/index', [
             'questions' => QuestionResource::collection($questions),
-            'departments' => Department::query()->orderBy('name')->get(['id', 'name', 'short_name']),
-            'courses' => Course::query()
-                ->when($request->filled('department'), fn ($query) => $query->where('department_id', $request->integer('department')))
-                ->orderBy('name')
-                ->get(['id', 'name', 'department_id']),
-            'semesters' => Semester::query()->orderBy('name')->get(['id', 'name']),
-            'examTypes' => ExamType::query()->orderBy('name')->get(['id', 'name']),
+            'filterOptions' => [
+                'departments' => Department::query()->orderBy('name')->get(['id', 'name', 'short_name']),
+                'courses' => Course::query()
+                    ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->integer('department_id')))
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'department_id']),
+                'semesters' => Semester::query()->orderBy('name')->get(['id', 'name']),
+                'examTypes' => ExamType::query()->orderBy('name')->get(['id', 'name']),
+            ],
             'filters' => [
-                'department' => $request->input('department'),
-                'course' => $request->input('course'),
-                'semester' => $request->input('semester'),
-                'exam_type' => $request->input('exam_type'),
+                'department' => $request->input('department_id') ? (int) $request->input('department_id') : null,
+                'course' => $request->input('course_id') ? (int) $request->input('course_id') : null,
+                'semester' => $request->input('semester_id') ? (int) $request->input('semester_id') : null,
+                'examType' => $request->input('exam_type_id') ? (int) $request->input('exam_type_id') : null,
             ],
         ]);
     }

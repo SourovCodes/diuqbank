@@ -98,8 +98,8 @@ export function ComboboxFilter({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 transition-all",
-            isActive && "ring-1 ring-blue-200 dark:ring-blue-900",
+            "w-full justify-between transition-all",
+            isActive && "ring-1 ring-ring",
             className
           )}
         >
