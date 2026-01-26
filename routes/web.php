@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\QuestionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -11,6 +12,7 @@ Route::get('/', function () {
     return Inertia::render('home');
 })->name('home');
 
+Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
 
 Route::get('/privacy', function () {
     return Inertia::render('privacy');
@@ -19,8 +21,6 @@ Route::get('/privacy', function () {
 Route::get('/terms', function () {
     return Inertia::render('terms');
 })->name('terms');
-
-
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -37,7 +37,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
 });
 
-
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
@@ -47,7 +46,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
 
-   
 });
 Route::get('/flash-test/{type}', function (string $type) {
     $messages = [
