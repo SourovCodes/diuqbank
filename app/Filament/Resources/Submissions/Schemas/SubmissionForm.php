@@ -21,7 +21,7 @@ class SubmissionForm
                     ->schema([
                         Select::make('question_id')
                             ->relationship('question')
-                            ->getOptionLabelFromRecordUsing(fn (Question $record) => "{$record->department->short_name} - {$record->course->name} - {$record->semester->name} - {$record->examType->name}")
+                            ->getOptionLabelFromRecordUsing(fn (Question $record) => $record->title)
                             ->placeholder('Select a question')
                             ->native(false)
                             ->preload()

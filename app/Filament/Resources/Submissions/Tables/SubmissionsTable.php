@@ -56,7 +56,7 @@ class SubmissionsTable
             ->filters([
                 SelectFilter::make('question')
                     ->relationship('question', 'id')
-                    ->getOptionLabelFromRecordUsing(fn (Question $record) => "{$record->department->short_name} - {$record->course->name}")
+                    ->getOptionLabelFromRecordUsing(fn (Question $record) => $record->title)
                     ->preload()
                     ->searchable(),
                 SelectFilter::make('user')

@@ -19,7 +19,7 @@ class VoteForm
                     ->schema([
                         Select::make('submission_id')
                             ->relationship('submission')
-                            ->getOptionLabelFromRecordUsing(fn (Submission $record) => "Submission #{$record->id} by {$record->user->name}")
+                            ->getOptionLabelFromRecordUsing(fn (Submission $record) => "{$record->question->title} - by {$record->user->name}")
                             ->placeholder('Select a submission')
                             ->native(false)
                             ->preload()

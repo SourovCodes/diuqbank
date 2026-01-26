@@ -58,4 +58,19 @@ class Question extends Model
     {
         return $this->hasMany(Submission::class);
     }
+
+    /**
+     * Get the working title for the question.
+     * Format: "Course Name (DEPT), Semester Name, Exam Type Name"
+     */
+    public function getTitleAttribute(): string
+    {
+        return sprintf(
+            '%s (%s), %s, %s',
+            $this->course?->name ?? 'Unknown Course',
+            $this->department?->short_name ?? 'N/A',
+            $this->semester?->name ?? 'Unknown Semester',
+            $this->examType?->name ?? 'Unknown Exam'
+        );
+    }
 }

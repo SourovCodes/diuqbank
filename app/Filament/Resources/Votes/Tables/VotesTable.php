@@ -15,12 +15,14 @@ class VotesTable
     {
         return $table
             ->columns([
-                TextColumn::make('submission.id')
-                    ->label('Submission')
-                    ->formatStateUsing(fn ($state) => "#{$state}")
-                    ->sortable(),
                 TextColumn::make('submission.question.course.name')
-                    ->label('Course')
+                    ->label('Question')
+                    ->formatStateUsing(fn ($state, $record) => $record->submission?->question?->title ?? 'N/A')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('submission.user.name')
+                    ->label('Submitted By')
+                    ->sortable()
                     ->searchable(),
                 TextColumn::make('user.name')
                     ->label('Voter')
