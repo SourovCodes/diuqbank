@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { FileEdit } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import type { FormOptions, SubmissionFormData } from '@/components/submissions/submission-form';
@@ -44,11 +45,22 @@ export default function Edit({ submission, formOptions }: Props) {
         <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: '/dashboard/submissions' }, { label: 'Edit' }]}>
             <Head title="Edit Submission" />
 
-            <div className="mx-auto max-w-lg">
+            <div className="space-y-8">
+                {/* Page Header */}
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Edit Submission</h1>
+                    <p className="text-muted-foreground">Update the details of your question paper submission.</p>
+                </div>
+
                 <Card>
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Edit Submission</CardTitle>
-                        <CardDescription>Update your question paper submission</CardDescription>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileEdit className="h-5 w-5" />
+                            Question Paper Details
+                        </CardTitle>
+                        <CardDescription>
+                            Update the information about your submission. You can change the classification or upload a new PDF file.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <SubmissionForm

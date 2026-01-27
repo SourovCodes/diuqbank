@@ -1,13 +1,16 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Edit, Eye, FileText, Plus, School, ThumbsUp } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Eye, FileText, Plus, School, ThumbsUp, XCircle } from 'lucide-react';
 
 import { CustomPagination } from '@/components/custom-pagination';
 import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { formatDate } from '@/lib/utils';
 import type { Course, Department, ExamType, Semester } from '@/types';
+
+type QuestionStatus = 'published' | 'pending_review' | 'rejected';
 
 interface SubmissionItem {
     id: number;
@@ -17,6 +20,8 @@ interface SubmissionItem {
     created_at: string;
     question: {
         id: number;
+        status: QuestionStatus;
+        status_label: string;
         department: Department;
         course: Course;
         semester: Semester;
@@ -34,6 +39,23 @@ interface SubmissionsData {
 
 interface Props {
     submissions: SubmissionsData;
+}
+
+function StatusBadge({ status, label }: { status: QuestionStatus; label: string }) {
+    const config = {
+        published: { variant: 'default' as const, icon: CheckCircle, className: 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20' },
+        pending_review: { variant: 'secondary' as const, icon: Clock, className: 'bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-500/20' },
+        rejected: { variant: 'destructive' as const, icon: XCircle, className: 'bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20' },
+    };
+
+    const { icon: Icon, className } = config[status];
+
+    return (
+        <Badge variant="outline" className={className}>
+            <Icon className="mr-1 h-3 w-3" />
+            {label}
+        </Badge>
+    );
 }
 
 export default function MySubmissions({ submissions }: Props) {
@@ -68,9 +90,12 @@ export default function MySubmissions({ submissions }: Props) {
                             {submissions.data.map((submission) => (
                                 <Card key={submission.id} className="group relative overflow-hidden transition-all hover:shadow-md">
                                     <CardHeader className="pb-3">
-                                        <CardTitle className="line-clamp-1 text-base">
-                                            {submission.question.course.name}
-                                        </CardTitle>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <CardTitle className="line-clamp-1 text-base">
+                                                {submission.question.course.name}
+                                            </CardTitle>
+                                            <StatusBadge status={submission.question.status} label={submission.question.status_label} />
+                                        </div>
                                         <CardDescription className="flex flex-wrap gap-2">
                                             <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
                                                 <School className="h-3 w-3" />

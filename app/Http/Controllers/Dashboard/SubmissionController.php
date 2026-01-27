@@ -37,6 +37,8 @@ class SubmissionController extends Controller
                     'created_at' => $submission->created_at->toISOString(),
                     'question' => [
                         'id' => $submission->question->id,
+                        'status' => $submission->question->status->value,
+                        'status_label' => $submission->question->status->getLabel(),
                         'department' => [
                             'id' => $submission->question->department->id,
                             'name' => $submission->question->department->name,

@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { FileUp } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import type { FormOptions, SubmissionFormData } from '@/components/submissions/submission-form';
@@ -28,11 +29,22 @@ export default function Create({ formOptions }: Props) {
         <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: '/dashboard/submissions' }, { label: 'Create' }]}>
             <Head title="Submit Question Paper" />
 
-            <div className="mx-auto max-w-lg">
+            <div className="space-y-8">
+                {/* Page Header */}
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Submit Question Paper</h1>
+                    <p className="text-muted-foreground">Share a question paper with the community to help other students.</p>
+                </div>
+
                 <Card>
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Submit Question Paper</CardTitle>
-                        <CardDescription>Share a question paper with the community</CardDescription>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileUp className="h-5 w-5" />
+                            Question Paper Details
+                        </CardTitle>
+                        <CardDescription>
+                            Fill in the details about the question paper you want to submit. Make sure to select the correct department, course, semester, and exam type.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <SubmissionForm
