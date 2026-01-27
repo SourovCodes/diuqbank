@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\QuestionController;
 use Illuminate\Support\Facades\Route;
+
+Route::apiResource('questions', QuestionController::class)->only(['index', 'show']);
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
