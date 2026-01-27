@@ -38,6 +38,7 @@ interface SubmissionFormProps {
         value: SubmissionFormData[K]
     ) => void;
     errors: SubmissionFormErrors;
+    clearErrors: (...fields: (keyof SubmissionFormData)[]) => void;
     processing: boolean;
     progress?: { percentage?: number } | null;
     onSubmit: (e: FormEvent) => void;
@@ -52,6 +53,7 @@ export function SubmissionForm({
     data,
     setData,
     errors,
+    clearErrors,
     processing,
     progress,
     onSubmit,
@@ -112,6 +114,7 @@ export function SubmissionForm({
     const handleDepartmentChange = (value: string) => {
         setData("department_id", value);
         setData("course_id", "");
+        clearErrors("department_id", "course_id");
     };
 
     const handleCreateCourse = async () => {
@@ -211,7 +214,10 @@ export function SubmissionForm({
                             <SearchableCombobox
                                 options={courseOptions}
                                 value={data.course_id}
-                                onChange={(value) => setData("course_id", value)}
+                                onChange={(value) => {
+                                    setData("course_id", value);
+                                    clearErrors("course_id");
+                                }}
                                 placeholder="Select course..."
                                 searchPlaceholder="Search courses..."
                                 emptyMessage="No course found."
@@ -247,7 +253,10 @@ export function SubmissionForm({
                             <SearchableCombobox
                                 options={semesterOptions}
                                 value={data.semester_id}
-                                onChange={(value) => setData("semester_id", value)}
+                                onChange={(value) => {
+                                    setData("semester_id", value);
+                                    clearErrors("semester_id");
+                                }}
                                 placeholder="Select semester..."
                                 searchPlaceholder="Search semesters..."
                                 emptyMessage="No semester found."
@@ -277,7 +286,10 @@ export function SubmissionForm({
                         <SearchableCombobox
                             options={examTypeOptions}
                             value={data.exam_type_id}
-                            onChange={(value) => setData("exam_type_id", value)}
+                            onChange={(value) => {
+                                setData("exam_type_id", value);
+                                clearErrors("exam_type_id");
+                            }}
                             placeholder="Select exam type..."
                             searchPlaceholder="Search exam types..."
                             emptyMessage="No exam type found."
@@ -295,7 +307,10 @@ export function SubmissionForm({
                     <Label>Question Paper (PDF)</Label>
                     <PdfDropzone
                         value={data.pdf}
-                        onChange={(file) => setData("pdf", file)}
+                        onChange={(file) => {
+                            setData("pdf", file);
+                            clearErrors("pdf");
+                        }}
                         existingPdfUrl={existingPdfUrl}
                         existingPdfName={existingPdfName}
                         disabled={processing}

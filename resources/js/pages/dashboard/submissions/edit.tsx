@@ -19,7 +19,7 @@ interface EditFormData extends SubmissionFormData {
 }
 
 export default function Edit({ submission, formOptions }: Props) {
-    const { data, setData, post, processing, errors, progress } = useForm<EditFormData>({
+    const { data, setData, post, processing, errors, progress, clearErrors } = useForm<EditFormData>({
         department_id: String(submission.department_id),
         course_id: String(submission.course_id),
         semester_id: String(submission.semester_id),
@@ -60,6 +60,7 @@ export default function Edit({ submission, formOptions }: Props) {
                             data={data}
                             setData={setData}
                             errors={errors}
+                            clearErrors={clearErrors}
                             processing={processing}
                             progress={progress}
                             onSubmit={handleSubmit}

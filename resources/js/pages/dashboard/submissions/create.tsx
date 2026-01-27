@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function Create({ formOptions }: Props) {
-    const { data, setData, post, processing, errors, progress } = useForm<SubmissionFormData>({
+    const { data, setData, post, processing, errors, progress, clearErrors } = useForm<SubmissionFormData>({
         department_id: '',
         course_id: '',
         semester_id: '',
@@ -53,6 +53,7 @@ export default function Create({ formOptions }: Props) {
                             data={data}
                             setData={setData}
                             errors={errors}
+                            clearErrors={clearErrors}
                             processing={processing}
                             progress={progress}
                             onSubmit={handleSubmit}
