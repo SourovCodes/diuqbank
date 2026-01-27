@@ -13,6 +13,7 @@ import type { SharedData } from '@/types';
 const navigationItems = [
     { href: '/', label: 'Home' },
     { href: '/questions', label: 'Questions' },
+    { href: '/contributors', label: 'Contributors' },
     { href: '/#features', label: 'Features' },
     { href: '/#how-it-works', label: 'How It Works' },
 ];

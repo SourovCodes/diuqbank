@@ -26,8 +26,10 @@ export function SubmissionCard({ submission }: SubmissionCardProps) {
         return null;
     }
 
+    const href = `${showQuestion.url(question.id)}#submission=${submission.id}`;
+
     return (
-        <Link href={showQuestion.url(question.id)} className="group block">
+        <Link href={href} className="group block">
             <div className="relative h-full overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
                 <h3 className="mb-2 line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary">
                     {question.course?.name ?? 'Unknown Course'}
