@@ -81,11 +81,7 @@ class AuthController extends Controller
      */
     public function user(Request $request): JsonResponse
     {
-        return response()->json([
-            'data' => [
-                'user' => new UserResource($request->user()),
-            ],
-        ]);
+        return (new UserResource($request->user()))->response();
     }
 
     /**
@@ -96,11 +92,7 @@ class AuthController extends Controller
         $request->user()->update($request->validated());
         $request->user()->refresh();
 
-        return response()->json([
-            'data' => [
-                'user' => new UserResource($request->user()),
-            ],
-        ]);
+        return (new UserResource($request->user()))->response();
     }
 
     /**
@@ -109,11 +101,7 @@ class AuthController extends Controller
     public function sendVerificationEmail(Request $request): JsonResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return response()->json([
-                'data' => [
-                    'user' => new UserResource($request->user()),
-                ],
-            ]);
+            return (new UserResource($request->user()))->response();
         }
 
         $request->user()->sendEmailVerificationNotification();
@@ -138,21 +126,13 @@ class AuthController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json([
-                'data' => [
-                    'user' => new UserResource($user),
-                ],
-            ]);
+            return (new UserResource($user))->response();
         }
 
         $user->markEmailAsVerified();
 
         event(new Verified($user));
 
-        return response()->json([
-            'data' => [
-                'user' => new UserResource($user),
-            ],
-        ]);
+        return (new UserResource($user))->response();
     }
 }

@@ -171,11 +171,9 @@ describe('get user', function () {
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'data' => [
-                    'user' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
-                ],
+                'data' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
             ])
-            ->assertJsonPath('data.user.id', $user->id);
+            ->assertJsonPath('data.id', $user->id);
     });
 
     it('cannot get user without authentication', function () {
@@ -206,7 +204,7 @@ describe('email verification', function () {
             ->postJson('/api/v1/auth/email/verification-notification');
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.user.id', $user->id);
+            ->assertJsonPath('data.id', $user->id);
 
         Notification::assertNotSentTo($user, VerifyEmail::class);
     });
@@ -215,7 +213,7 @@ describe('email verification', function () {
         $user = User::factory()->unverified()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
-            'api.v1.verification.verify',
+            'api.v1.auth.verification.verify',
             now()->addMinutes(60),
             ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
         );
@@ -223,7 +221,7 @@ describe('email verification', function () {
         $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.user.id', $user->id);
+            ->assertJsonPath('data.id', $user->id);
 
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
     });
@@ -232,7 +230,7 @@ describe('email verification', function () {
         $user = User::factory()->unverified()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
-            'api.v1.verification.verify',
+            'api.v1.auth.verification.verify',
             now()->addMinutes(60),
             ['id' => $user->id, 'hash' => 'invalid_hash']
         );
@@ -249,7 +247,7 @@ describe('email verification', function () {
         $user = User::factory()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
-            'api.v1.verification.verify',
+            'api.v1.auth.verification.verify',
             now()->addMinutes(60),
             ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
         );
@@ -257,7 +255,7 @@ describe('email verification', function () {
         $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.user.id', $user->id);
+            ->assertJsonPath('data.id', $user->id);
     });
 
     it('cannot verify email with unsigned url', function () {

@@ -11,8 +11,10 @@ Route::apiResource('questions', QuestionController::class)->only(['index', 'show
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses', [CourseController::class, 'store'])
+        ->middleware('throttle:10,1')
         ->name('courses.store');
     Route::post('/semesters', [SemesterController::class, 'store'])
+        ->middleware('throttle:10,1')
         ->name('semesters.store');
 
     Route::get('/submissions/{submission}/vote', [SubmissionVoteController::class, 'show'])
@@ -28,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('submissions.vote.destroy');
 });
 
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1')

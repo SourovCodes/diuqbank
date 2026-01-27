@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCourseRequest extends FormRequest
 {
@@ -23,7 +24,13 @@ class StoreCourseRequest extends FormRequest
     {
         return [
             'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('courses', 'name')
+                    ->where('department_id', $this->input('department_id')),
+            ],
         ];
     }
 
@@ -39,6 +46,7 @@ class StoreCourseRequest extends FormRequest
             'department_id.exists' => 'The selected department does not exist.',
             'name.required' => 'The course name is required.',
             'name.max' => 'The course name must not exceed 255 characters.',
+            'name.unique' => 'This course already exists in the selected department.',
         ];
     }
 }

@@ -38,9 +38,18 @@ class StoreSemesterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if (is_string($this->name)) {
+            // Normalize whitespace
             $normalized = trim(preg_replace('/\s+/', ' ', $this->name));
+
+            // Split into parts and capitalize first word (Fall, Spring, Summer, Short)
+            $parts = explode(' ', $normalized);
+            if (count($parts) === 2) {
+                $parts[0] = ucfirst(strtolower($parts[0]));
+                $normalized = implode(' ', $parts);
+            }
+
             $this->merge([
-                'name' => ucfirst($normalized),
+                'name' => $normalized,
             ]);
         }
     }
