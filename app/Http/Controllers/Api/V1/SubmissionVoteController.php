@@ -55,6 +55,22 @@ class SubmissionVoteController extends Controller
     }
 
     /**
+     * Get the authenticated user's vote for a submission.
+     */
+    public function show(Request $request, Submission $submission): JsonResponse
+    {
+        $this->ensureQuestionIsPublished($submission);
+
+        $vote = $submission->getUserVote($request->user());
+
+        return response()->json([
+            'data' => [
+                'vote' => $vote,
+            ],
+        ]);
+    }
+
+    /**
      * Ensure the submission's question is published.
      */
     private function ensureQuestionIsPublished(Submission $submission): void

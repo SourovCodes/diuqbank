@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 Route::apiResource('questions', QuestionController::class)->only(['index', 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/submissions/{submission}/vote', [SubmissionVoteController::class, 'show'])
+        ->name('submissions.vote.show');
     Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])
         ->middleware('throttle:30,1')
         ->name('submissions.upvote');
