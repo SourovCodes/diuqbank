@@ -43,6 +43,25 @@ class ProfileController extends Controller
         return back();
     }
 
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'avatar' => ['required', 'image', 'max:5120'],
+        ]);
+
+        $user = $request->user();
+        $user->addMediaFromRequest('avatar')
+            ->toMediaCollection('avatar');
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Avatar updated',
+            'description' => 'Your profile picture has been changed.',
+        ]);
+
+        return back();
+    }
+
     public function updatePassword(UpdatePasswordRequest $request): RedirectResponse
     {
         $validated = $request->validated();

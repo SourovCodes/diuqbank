@@ -1,13 +1,14 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Loader2, User } from 'lucide-react';
 
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import DashboardLayout from '@/layouts/dashboard-layout';
-import { password as passwordRoute, update } from '@/routes/dashboard/profile';
+import { avatar as avatarRoute, password as passwordRoute, update } from '@/routes/dashboard/profile';
 import type { User as UserType } from '@/types';
 
 interface ProfileProps {
@@ -65,7 +66,18 @@ export default function Profile({ user }: ProfileProps) {
                         <CardDescription>Update your account's profile information and email address.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleProfileSubmit} className="space-y-4">
+                        <form onSubmit={handleProfileSubmit} className="space-y-6">
+                            {/* Avatar Upload */}
+                            <div className="flex items-center gap-6">
+                                <AvatarUpload currentAvatarUrl={user.avatar_url} userName={user.name} uploadUrl={avatarRoute.url()} />
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium">Profile Picture</p>
+                                    <p className="text-xs text-muted-foreground">Click on the avatar to upload a new image. Max size 5MB.</p>
+                                </div>
+                            </div>
+
+                            <Separator />
+
                             <div className="grid gap-4 md:grid-cols-3">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Name</Label>
