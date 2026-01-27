@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuestionStatus;
 use App\Http\Resources\QuestionResource;
+use App\Http\Resources\SubmissionResource;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\ExamType;
@@ -45,6 +46,24 @@ class QuestionController extends Controller
                 'semester' => $request->input('semester_id') ? (int) $request->input('semester_id') : null,
                 'examType' => $request->input('exam_type_id') ? (int) $request->input('exam_type_id') : null,
             ],
+        ]);
+    }
+
+    public function show(Question $question): Response
+    {
+        abort_unless($question->status === QuestionStatus::Published, 404);
+
+        $question->load(['department', 'course', 'semester', 'examType']);
+
+        $submissions = $question->submissions()
+            ->with(['user', 'media'])
+            ->withSum('votes', 'value')
+            ->orderByDesc('votes_sum_value')
+            ->get();
+
+        return Inertia::render('questions/show', [
+            'question' => (new QuestionResource($question))->resolve(),
+            'submissions' => SubmissionResource::collection($submissions)->resolve(),
         ]);
     }
 }

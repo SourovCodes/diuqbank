@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,6 +14,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
+Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
 
 Route::get('/privacy', function () {
     return Inertia::render('privacy');
@@ -46,6 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
 
+    // Submission voting
+    Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])->name('submissions.upvote');
+    Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])->name('submissions.downvote');
 });
 Route::get('/flash-test/{type}', function (string $type) {
     $messages = [

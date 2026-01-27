@@ -1,13 +1,7 @@
-import { useState, useCallback, useRef } from "react";
 import { router } from "@inertiajs/react";
 
 import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -16,6 +10,12 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type ComboboxOption = {
   id: number;
