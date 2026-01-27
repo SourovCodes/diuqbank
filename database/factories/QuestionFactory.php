@@ -22,13 +22,15 @@ class QuestionFactory extends Factory
     public function definition(): array
     {
         $department = Department::factory()->create();
+        $status = fake()->randomElement(QuestionStatus::cases());
 
         return [
             'department_id' => $department->id,
             'course_id' => Course::factory()->create(['department_id' => $department->id])->id,
             'semester_id' => Semester::factory(),
             'exam_type_id' => ExamType::factory(),
-            'status' => fake()->randomElement(QuestionStatus::cases()),
+            'status' => $status,
+            'rejection_reason' => $status === QuestionStatus::Rejected ? fake()->sentence() : null,
         ];
     }
 
@@ -49,6 +51,7 @@ class QuestionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => QuestionStatus::PendingReview,
+            'rejection_reason' => null,
         ]);
     }
 
@@ -59,6 +62,7 @@ class QuestionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => QuestionStatus::Rejected,
+            'rejection_reason' => fake()->sentence(),
         ]);
     }
 }

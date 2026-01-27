@@ -10,7 +10,7 @@ class SubmissionVoteController extends Controller
 {
     public function upvote(Request $request, Submission $submission): RedirectResponse
     {
-        $user = $request->user();
+        $user = $request->user() ?? abort(401);
         $currentVote = $submission->getUserVote($user);
 
         if ($currentVote === 1) {
@@ -24,7 +24,7 @@ class SubmissionVoteController extends Controller
 
     public function downvote(Request $request, Submission $submission): RedirectResponse
     {
-        $user = $request->user();
+        $user = $request->user() ?? abort(401);
         $currentVote = $submission->getUserVote($user);
 
         if ($currentVote === -1) {

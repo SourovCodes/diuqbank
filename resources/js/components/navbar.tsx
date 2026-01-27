@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, User } from 'lucide-react';
+import { BookOpen, ChevronDown, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
@@ -24,7 +24,7 @@ export function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
@@ -59,14 +59,6 @@ export function Navbar() {
 
                     {auth?.user ? (
                         <>
-                            {/* Dashboard Button */}
-                            <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-                                <Link href="/dashboard">
-                                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                                    Dashboard
-                                </Link>
-                            </Button>
-
                             {/* User Menu */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -86,25 +78,6 @@ export function Navbar() {
                                             <p className="text-sm text-muted-foreground">{auth.user.email}</p>
                                         </div>
                                     </div>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/dashboard" className="cursor-pointer">
-                                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                                            Dashboard
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/dashboard/profile" className="cursor-pointer">
-                                            <User className="mr-2 h-4 w-4" />
-                                            Profile
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/dashboard/settings" className="cursor-pointer">
-                                            <Settings className="mr-2 h-4 w-4" />
-                                            Settings
-                                        </Link>
-                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
                                         <Link href="/logout" method="post" as="button" className="w-full cursor-pointer">
@@ -134,15 +107,14 @@ export function Navbar() {
                                 <span className="sr-only">Toggle menu</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                        <SheetContent side="right" className="w-75 sm:w-100">
                             <SheetHeader>
                                 <SheetTitle>
                                     <Link href="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                                        <svg className="h-8 w-8 text-primary" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <rect width="32" height="32" rx="8" fill="currentColor" />
-                                            <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                        <span className="text-xl font-bold">3AG</span>
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                            <BookOpen className="h-5 w-5" />
+                                        </div>
+                                        <span className="text-xl font-bold">DIU QBank</span>
                                     </Link>
                                 </SheetTitle>
                             </SheetHeader>
@@ -162,26 +134,7 @@ export function Navbar() {
                                 {auth?.user ? (
                                     <>
                                         <div className="my-4 border-t" />
-                                        <Button variant="ghost" className="justify-start" asChild onClick={() => setMobileMenuOpen(false)}>
-                                            <Link href="/dashboard">
-                                                <LayoutDashboard className="mr-2 h-4 w-4" />
-                                                Dashboard
-                                            </Link>
-                                        </Button>
-                                        <Button variant="ghost" className="justify-start" asChild onClick={() => setMobileMenuOpen(false)}>
-                                            <Link href="/dashboard/profile">
-                                                <User className="mr-2 h-4 w-4" />
-                                                Profile
-                                            </Link>
-                                        </Button>
-                                        <Button variant="ghost" className="justify-start" asChild onClick={() => setMobileMenuOpen(false)}>
-                                            <Link href="/dashboard/settings">
-                                                <Settings className="mr-2 h-4 w-4" />
-                                                Settings
-                                            </Link>
-                                        </Button>
-                                        <div className="my-4 border-t" />
-                                        <Button variant="ghost" className="justify-start text-destructive" asChild>
+                                        <Button variant="ghost" className="justify-start text-destructive" asChild onClick={() => setMobileMenuOpen(false)}>
                                             <Link href="/logout" method="post" as="button">
                                                 <LogOut className="mr-2 h-4 w-4" />
                                                 Logout

@@ -86,6 +86,6 @@ class Submission extends Model implements HasMedia
 
     public function incrementViews(): void
     {
-        $this->increment('views');
+        $this->increment('views', 1);
     }
 }

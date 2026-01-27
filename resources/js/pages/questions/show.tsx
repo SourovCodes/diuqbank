@@ -219,11 +219,11 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                     <iframe
                                         key={selectedSubmission.id}
                                         src={selectedSubmission.pdf_url}
-                                        className="h-[calc(100vh-280px)] min-h-[400px] w-full border-0 sm:min-h-[500px] lg:h-[calc(100vh-200px)]"
+                                        className="h-[calc(100vh-280px)] min-h-100 w-full border-0 sm:min-h-125 lg:h-[calc(100vh-200px)]"
                                         title="PDF Viewer"
                                     />
                                 ) : (
-                                    <div className="flex h-[400px] items-center justify-center sm:h-[500px]">
+                                    <div className="flex h-100 items-center justify-center sm:h-125">
                                         <div className="text-center">
                                             <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                                             <p className="text-muted-foreground">No PDF available</p>

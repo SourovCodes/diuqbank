@@ -56,21 +56,23 @@ Route::middleware('auth')->group(function () {
     Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])->name('submissions.upvote');
     Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])->name('submissions.downvote');
 });
-Route::get('/flash-test/{type}', function (string $type) {
-    $messages = [
-        'success' => ['message' => 'Operation completed successfully!', 'description' => 'Your changes have been saved.'],
-        'error' => ['message' => 'Something went wrong!', 'description' => 'Please try again or contact support.'],
-        'warning' => ['message' => 'Please proceed with caution.'], // description is optional
-        'info' => ['message' => 'Here is some useful information.'], // description is optional
-    ];
+if (app()->isLocal()) {
+    Route::get('/flash-test/{type}', function (string $type) {
+        $messages = [
+            'success' => ['message' => 'Operation completed successfully!', 'description' => 'Your changes have been saved.'],
+            'error' => ['message' => 'Something went wrong!', 'description' => 'Please try again or contact support.'],
+            'warning' => ['message' => 'Please proceed with caution.'],
+            'info' => ['message' => 'Here is some useful information.'],
+        ];
 
-    $toast = $messages[$type] ?? ['message' => 'Test message'];
+        $toast = $messages[$type] ?? ['message' => 'Test message'];
 
-    Inertia::flash('toast', [
-        'type' => $type,
-        'message' => $toast['message'],
-        'description' => $toast['description'] ?? null,
-    ]);
+        Inertia::flash('toast', [
+            'type' => $type,
+            'message' => $toast['message'],
+            'description' => $toast['description'] ?? null,
+        ]);
 
-    return back();
-})->whereIn('type', ['success', 'error', 'warning', 'info'])->name('flash.test');
+        return back();
+    })->whereIn('type', ['success', 'error', 'warning', 'info'])->name('flash.test');
+}

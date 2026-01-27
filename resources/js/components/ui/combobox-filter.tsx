@@ -111,7 +111,7 @@ export function ComboboxFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0"
+        className="w-(--radix-popover-trigger-width) min-w-60 p-0"
         align="start"
         sideOffset={4}
       >
@@ -122,7 +122,7 @@ export function ComboboxFilter({
             autoFocus={false}
           />
           <CommandEmpty>No {label.toLowerCase()} found.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-auto">
+          <CommandGroup className="max-h-75 overflow-auto">
             <CommandItem
               key="all"
               value="all"
