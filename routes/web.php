@@ -28,6 +28,14 @@ Route::get('/terms', function () {
     return Inertia::render('terms');
 })->name('terms');
 
+Route::get('/about', function () {
+    return Inertia::render('about');
+})->name('about');
+
+Route::get('/contact', function () {
+    return Inertia::render('contact');
+})->name('contact');
+
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');

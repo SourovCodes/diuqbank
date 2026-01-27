@@ -14,8 +14,8 @@ const navigationItems = [
     { href: '/', label: 'Home' },
     { href: '/questions', label: 'Questions' },
     { href: '/contributors', label: 'Contributors' },
-    { href: '/#features', label: 'Features' },
-    { href: '/#how-it-works', label: 'How It Works' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
 ];
 
 export function Navbar() {
