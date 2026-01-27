@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -66,6 +67,22 @@ class User extends Authenticatable implements HasMedia
     public function votes(): HasMany
     {
         return $this->hasMany(Vote::class);
+    }
+
+    /**
+     * Scope to add contributor statistics: submissions count, total votes, and total views.
+     *
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    public function scopeWithContributorStats(Builder $query): Builder
+    {
+        return $query
+            ->withCount('submissions')
+            ->withSum(['submissions as total_votes' => function ($query) {
+                $query->join('votes', 'submissions.id', '=', 'votes.submission_id');
+            }], 'votes.value')
+            ->withSum('submissions', 'views');
     }
 
     public function registerMediaCollections(): void

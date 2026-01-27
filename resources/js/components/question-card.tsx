@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, Calendar, Clock, School } from 'lucide-react';
 
+import { formatDate } from '@/lib/utils';
+import { show as showQuestion } from '@/routes/questions';
 import type { Question } from '@/types';
 
 interface QuestionCardProps {
@@ -8,16 +10,8 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question }: QuestionCardProps) {
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
     return (
-        <Link href={`/questions/${question.id}`} className="group block">
+        <Link href={showQuestion.url(question.id)} className="group block">
             <div className="relative h-full overflow-hidden rounded-xl border bg-card py-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
                 <div className="relative z-10 flex h-full flex-col px-4">
                     <div className="mb-2 flex items-start justify-between gap-2">

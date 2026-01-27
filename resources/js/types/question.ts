@@ -1,8 +1,3 @@
-export interface QuestionStatus {
-    value: string;
-    label: string;
-}
-
 export interface Department {
     id: number;
     name: string;
@@ -27,8 +22,6 @@ export interface ExamType {
 
 export interface Question {
     id: number;
-    title: string;
-    status: QuestionStatus;
     department?: Department;
     course?: Course;
     semester?: Semester;

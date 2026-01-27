@@ -20,11 +20,6 @@ class QuestionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
-            'status' => [
-                'value' => $this->status->value,
-                'label' => $this->status->getLabel(),
-            ],
             'department' => $this->whenLoaded('department', fn () => [
                 'id' => $this->department->id,
                 'name' => $this->department->name,

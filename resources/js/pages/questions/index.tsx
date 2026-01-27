@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { FileText } from 'lucide-react';
 
 import { CustomPagination } from '@/components/custom-pagination';
+import { EmptyState } from '@/components/empty-state';
 import { QuestionCard } from '@/components/question-card';
 import { QuestionFilters } from '@/components/question-filters';
 import type { Course, Department, ExamType, PaginatedData, Question, Semester } from '@/types';
@@ -43,13 +44,11 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
 
                 {/* Questions Grid */}
                 {questions.data.length === 0 ? (
-                    <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-                        <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground/50" />
-                        <h3 className="mb-2 text-lg font-medium">No questions found</h3>
-                        <p className="text-muted-foreground">
-                            Try adjusting your filters or check back later for new questions.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={FileText}
+                        title="No questions found"
+                        description="Try adjusting your filters or check back later for new questions."
+                    />
                 ) : (
                     <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {questions.data.map((question) => (

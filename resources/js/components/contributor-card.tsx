@@ -2,6 +2,8 @@ import { Link } from '@inertiajs/react';
 import { Eye, FileText, ThumbsUp } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getInitials } from '@/lib/utils';
+import { show as showContributor } from '@/routes/contributors';
 import type { Contributor } from '@/types';
 
 interface ContributorCardProps {
@@ -9,17 +11,8 @@ interface ContributorCardProps {
 }
 
 export function ContributorCard({ contributor }: ContributorCardProps) {
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
-    };
-
     return (
-        <Link href={`/contributors/${contributor.username}`} className="group block">
+        <Link href={showContributor.url(contributor.username)} className="group block">
             <div className="relative h-full overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
                 <div className="flex items-start gap-4">
                     <Avatar className="h-14 w-14 ring-2 ring-background">

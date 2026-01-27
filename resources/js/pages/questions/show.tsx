@@ -13,7 +13,10 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/empty-state';
+import { cn, formatDate } from '@/lib/utils';
+import { login } from '@/routes';
+import { upvote, downvote } from '@/routes/submissions';
 import type { SharedData } from '@/types';
 import type { Question, Submission } from '@/types/question';
 
@@ -80,27 +83,20 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
     const isTopRated = selectedSubmission?.id === submissions[0]?.id;
     const hasMultipleSubmissions = submissions.length > 1;
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
     const handleVote = (type: 'upvote' | 'downvote') => {
         if (!selectedSubmission) return;
 
         if (!auth?.user) {
-            router.visit('/login');
+            router.visit(login.url());
             return;
         }
 
         if (voting) return;
         setVoting(true);
 
+        const voteRoute = type === 'upvote' ? upvote : downvote;
         router.post(
-            `/submissions/${selectedSubmission.id}/${type}`,
+            voteRoute.url(selectedSubmission.id),
             {},
             {
                 preserveScroll: true,
@@ -149,14 +145,11 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                 </div>
 
                 {submissions.length === 0 ? (
-                    /* Empty State */
-                    <div className="rounded-xl border bg-card p-12 text-center">
-                        <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground/50" />
-                        <h3 className="mb-2 text-lg font-medium">No submissions yet</h3>
-                        <p className="text-muted-foreground">
-                            Be the first to submit a solution for this question.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={FileText}
+                        title="No submissions yet"
+                        description="Be the first to submit a solution for this question."
+                    />
                 ) : (
                     /* Main Content */
                     <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">

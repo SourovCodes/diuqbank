@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuestionStatus;
 use App\Http\Resources\ContributorResource;
 use App\Http\Resources\SubmissionResource;
 use App\Models\User;
@@ -15,11 +16,7 @@ class ContributorController extends Controller
     {
         $contributors = User::query()
             ->has('submissions')
-            ->withCount('submissions')
-            ->withSum(['submissions as total_votes' => function ($query) {
-                $query->join('votes', 'submissions.id', '=', 'votes.submission_id');
-            }], 'votes.value')
-            ->withSum('submissions', 'views')
+            ->withContributorStats()
             ->when($request->filled('search'), fn ($query) => $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%'.$request->input('search').'%')
                     ->orWhere('username', 'like', '%'.$request->input('search').'%');
@@ -47,7 +44,7 @@ class ContributorController extends Controller
         $submissions = $user->submissions()
             ->with(['question.department', 'question.course', 'question.semester', 'question.examType', 'media'])
             ->withSum('votes', 'value')
-            ->whereHas('question', fn ($q) => $q->where('status', 'published'))
+            ->whereHas('question', fn ($q) => $q->where('status', QuestionStatus::Published))
             ->orderByDesc('votes_sum_value')
             ->paginate(12);
 

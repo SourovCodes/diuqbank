@@ -1,10 +1,12 @@
 import { Head, router } from '@inertiajs/react';
 import { Search, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ContributorCard } from '@/components/contributor-card';
 import { CustomPagination } from '@/components/custom-pagination';
+import { EmptyState } from '@/components/empty-state';
 import { Input } from '@/components/ui/input';
+import { index as contributorsIndex } from '@/routes/contributors';
 import type { Contributor, PaginatedData } from '@/types';
 
 interface ContributorsIndexProps {
@@ -17,14 +19,24 @@ interface ContributorsIndexProps {
 export default function ContributorsIndex({ contributors, filters }: ContributorsIndexProps) {
     const [searchValue, setSearchValue] = useState(filters.search ?? '');
 
-    const handleSearch = (value: string) => {
-        setSearchValue(value);
+    const performSearch = useCallback((value: string) => {
         router.get(
-            '/contributors',
+            contributorsIndex.url(),
             { search: value || undefined },
             { preserveState: true, preserveScroll: true, replace: true },
         );
-    };
+    }, []);
+
+    // Debounced search effect
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (searchValue !== (filters.search ?? '')) {
+                performSearch(searchValue);
+            }
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [searchValue, filters.search, performSearch]);
 
     return (
         <>
@@ -46,22 +58,22 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
                         type="search"
                         placeholder="Search contributors..."
                         value={searchValue}
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={(e) => setSearchValue(e.target.value)}
                         className="pl-10"
                     />
                 </div>
 
                 {/* Contributors Grid */}
                 {contributors.data.length === 0 ? (
-                    <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-                        <Users className="mx-auto mb-4 h-16 w-16 text-muted-foreground/50" />
-                        <h3 className="mb-2 text-lg font-medium">No contributors found</h3>
-                        <p className="text-muted-foreground">
-                            {filters.search
+                    <EmptyState
+                        icon={Users}
+                        title="No contributors found"
+                        description={
+                            filters.search
                                 ? 'Try adjusting your search terms.'
-                                : 'Be the first to contribute questions!'}
-                        </p>
-                    </div>
+                                : 'Be the first to contribute questions!'
+                        }
+                    />
                 ) : (
                     <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {contributors.data.map((contributor) => (
