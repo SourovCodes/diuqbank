@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuestionStatus;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\ExamType;
@@ -131,7 +132,7 @@ class DatabaseSeeder extends Seeder
         $courses = Course::all();
         $createdCombinations = [];
 
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 1000; $i++) {
             $course = $courses->random();
             $semester = $semesters->random();
             $examType = $examTypes->random();
@@ -144,11 +145,20 @@ class DatabaseSeeder extends Seeder
 
             $createdCombinations[] = $combination;
 
+            // 80% published, 15% pending, 5% rejected
+            $rand = rand(1, 100);
+            $status = match (true) {
+                $rand <= 80 => QuestionStatus::Published,
+                $rand <= 95 => QuestionStatus::PendingReview,
+                default => QuestionStatus::Rejected,
+            };
+
             $question = Question::create([
                 'department_id' => $course->department_id,
                 'course_id' => $course->id,
                 'semester_id' => $semester->id,
                 'exam_type_id' => $examType->id,
+                'status' => $status,
             ]);
 
             // Create 1-3 submissions per question
