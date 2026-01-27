@@ -186,107 +186,109 @@ export function SubmissionForm({
     return (
         <>
             <form onSubmit={onSubmit} className="space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <SearchableCombobox
-                        options={departmentOptions}
-                        value={data.department_id}
-                        onChange={handleDepartmentChange}
-                        placeholder="Select department..."
-                        searchPlaceholder="Search departments..."
-                        emptyMessage="No department found."
-                        disabled={processing}
-                    />
-                    {errors.department_id && (
-                        <p className="text-sm text-destructive">
-                            {errors.department_id}
-                        </p>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="course">Course</Label>
-                    <div className="flex gap-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="department">Department</Label>
                         <SearchableCombobox
-                            options={courseOptions}
-                            value={data.course_id}
-                            onChange={(value) => setData("course_id", value)}
-                            placeholder="Select course..."
-                            searchPlaceholder="Search courses..."
-                            emptyMessage="No course found."
-                            disabled={processing || !data.department_id}
-                            className="flex-1"
+                            options={departmentOptions}
+                            value={data.department_id}
+                            onChange={handleDepartmentChange}
+                            placeholder="Select department..."
+                            searchPlaceholder="Search departments..."
+                            emptyMessage="No department found."
+                            disabled={processing}
                         />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setShowCourseModal(true)}
-                            disabled={processing || !data.department_id}
-                            title="Add new course"
-                        >
-                            <PlusIcon className="h-4 w-4" />
-                        </Button>
+                        {errors.department_id && (
+                            <p className="text-sm text-destructive">
+                                {errors.department_id}
+                            </p>
+                        )}
                     </div>
-                    {errors.course_id && (
-                        <p className="text-sm text-destructive">
-                            {errors.course_id}
-                        </p>
-                    )}
-                    {!data.department_id && (
-                        <p className="text-xs text-muted-foreground">
-                            Select a department first
-                        </p>
-                    )}
-                </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="semester">Semester</Label>
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="course">Course</Label>
+                        <div className="flex gap-2">
+                            <SearchableCombobox
+                                options={courseOptions}
+                                value={data.course_id}
+                                onChange={(value) => setData("course_id", value)}
+                                placeholder="Select course..."
+                                searchPlaceholder="Search courses..."
+                                emptyMessage="No course found."
+                                disabled={processing || !data.department_id}
+                                className="flex-1"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setShowCourseModal(true)}
+                                disabled={processing || !data.department_id}
+                                title="Add new course"
+                            >
+                                <PlusIcon className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        {errors.course_id && (
+                            <p className="text-sm text-destructive">
+                                {errors.course_id}
+                            </p>
+                        )}
+                        {!data.department_id && (
+                            <p className="text-xs text-muted-foreground">
+                                Select a department first
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="semester">Semester</Label>
+                        <div className="flex gap-2">
+                            <SearchableCombobox
+                                options={semesterOptions}
+                                value={data.semester_id}
+                                onChange={(value) => setData("semester_id", value)}
+                                placeholder="Select semester..."
+                                searchPlaceholder="Search semesters..."
+                                emptyMessage="No semester found."
+                                disabled={processing}
+                                className="flex-1"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setShowSemesterModal(true)}
+                                disabled={processing}
+                                title="Add new semester"
+                            >
+                                <PlusIcon className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        {errors.semester_id && (
+                            <p className="text-sm text-destructive">
+                                {errors.semester_id}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="exam_type">Exam Type</Label>
                         <SearchableCombobox
-                            options={semesterOptions}
-                            value={data.semester_id}
-                            onChange={(value) => setData("semester_id", value)}
-                            placeholder="Select semester..."
-                            searchPlaceholder="Search semesters..."
-                            emptyMessage="No semester found."
+                            options={examTypeOptions}
+                            value={data.exam_type_id}
+                            onChange={(value) => setData("exam_type_id", value)}
+                            placeholder="Select exam type..."
+                            searchPlaceholder="Search exam types..."
+                            emptyMessage="No exam type found."
                             disabled={processing}
-                            className="flex-1"
                         />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setShowSemesterModal(true)}
-                            disabled={processing}
-                            title="Add new semester"
-                        >
-                            <PlusIcon className="h-4 w-4" />
-                        </Button>
+                        {errors.exam_type_id && (
+                            <p className="text-sm text-destructive">
+                                {errors.exam_type_id}
+                            </p>
+                        )}
                     </div>
-                    {errors.semester_id && (
-                        <p className="text-sm text-destructive">
-                            {errors.semester_id}
-                        </p>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="exam_type">Exam Type</Label>
-                    <SearchableCombobox
-                        options={examTypeOptions}
-                        value={data.exam_type_id}
-                        onChange={(value) => setData("exam_type_id", value)}
-                        placeholder="Select exam type..."
-                        searchPlaceholder="Search exam types..."
-                        emptyMessage="No exam type found."
-                        disabled={processing}
-                    />
-                    {errors.exam_type_id && (
-                        <p className="text-sm text-destructive">
-                            {errors.exam_type_id}
-                        </p>
-                    )}
                 </div>
 
                 <div className="space-y-2">
