@@ -7,6 +7,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { index as submissionsIndex } from '@/routes/dashboard/submissions';
 import type { FlashData, ToastType } from '@/types';
 
 interface DashboardLayoutProps extends PropsWithChildren {
@@ -53,7 +54,7 @@ export default function DashboardLayout({ children, title, breadcrumbs = [] }: D
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                                    <BreadcrumbLink href={submissionsIndex.url()}>Dashboard</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {breadcrumbs.map((crumb, index) => (
                                     <div key={crumb.label} className="flex items-center gap-2">

@@ -20,30 +20,15 @@ import type {
 import {
     SearchableCombobox,
 } from "@/components/ui/searchable-combobox";
-import type { Course, Department, ExamType, Semester } from "@/types";
+import type {
+    Course,
+    FormOptions,
+    Semester,
+    SubmissionFormData,
+    SubmissionFormErrors,
+} from "@/types";
 
-export interface FormOptions {
-    departments: Department[];
-    semesters: Semester[];
-    courses: Course[];
-    examTypes: ExamType[];
-}
-
-export interface SubmissionFormData {
-    department_id: string;
-    course_id: string;
-    semester_id: string;
-    exam_type_id: string;
-    pdf: File | null;
-}
-
-export interface SubmissionFormErrors {
-    department_id?: string;
-    course_id?: string;
-    semester_id?: string;
-    exam_type_id?: string;
-    pdf?: string;
-}
+export type { FormOptions, SubmissionFormData, SubmissionFormErrors };
 
 interface SubmissionFormProps {
     formOptions: FormOptions;

@@ -8,37 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { formatDate } from '@/lib/utils';
-import type { Course, Department, ExamType, Semester } from '@/types';
-
-type QuestionStatus = 'published' | 'pending_review' | 'rejected';
-
-interface SubmissionItem {
-    id: number;
-    pdf_url: string | null;
-    vote_score: number;
-    views: number;
-    created_at: string;
-    question: {
-        id: number;
-        status: QuestionStatus;
-        status_label: string;
-        department: Department;
-        course: Course;
-        semester: Semester;
-        exam_type: ExamType;
-    };
-}
-
-interface SubmissionsData {
-    data: SubmissionItem[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-}
+import { create, edit } from '@/routes/dashboard/submissions';
+import { show as showQuestion } from '@/routes/questions';
+import type { QuestionStatus, SubmissionItem, SubmissionsIndexData } from '@/types';
 
 interface Props {
-    submissions: SubmissionsData;
+    submissions: SubmissionsIndexData;
 }
 
 function StatusBadge({ status, label }: { status: QuestionStatus; label: string }) {
@@ -71,7 +46,7 @@ export default function MySubmissions({ submissions }: Props) {
                         <p className="text-muted-foreground">Manage your submitted question papers.</p>
                     </div>
                     <Button asChild>
-                        <Link href="/dashboard/submissions/create">
+                        <Link href={create.url()}>
                             <Plus className="mr-2 h-4 w-4" />
                             New Submission
                         </Link>
@@ -126,13 +101,13 @@ export default function MySubmissions({ submissions }: Props) {
                                         </div>
                                         <div className="mt-4 flex gap-2">
                                             <Button variant="outline" size="sm" asChild className="flex-1">
-                                                <Link href={`/questions/${submission.question.id}#submission=${submission.id}`}>
+                                                <Link href={`${showQuestion.url(submission.question.id)}#submission=${submission.id}`}>
                                                     <Eye className="mr-2 h-3.5 w-3.5" />
                                                     View
                                                 </Link>
                                             </Button>
                                             <Button variant="outline" size="sm" asChild className="flex-1">
-                                                <Link href={`/dashboard/submissions/${submission.id}/edit`}>
+                                                <Link href={edit.url(submission.id)}>
                                                     <Edit className="mr-2 h-3.5 w-3.5" />
                                                     Edit
                                                 </Link>

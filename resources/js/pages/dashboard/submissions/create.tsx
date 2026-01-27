@@ -6,6 +6,7 @@ import type { FormOptions, SubmissionFormData } from '@/components/submissions/s
 import { SubmissionForm } from '@/components/submissions/submission-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
+import { index, store } from '@/routes/dashboard/submissions';
 
 interface Props {
     formOptions: FormOptions;
@@ -22,11 +23,11 @@ export default function Create({ formOptions }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post('/dashboard/submissions');
+        post(store.url());
     };
 
     return (
-        <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: '/dashboard/submissions' }, { label: 'Create' }]}>
+        <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: index.url() }, { label: 'Create' }]}>
             <Head title="Submit Question Paper" />
 
             <div className="space-y-8">

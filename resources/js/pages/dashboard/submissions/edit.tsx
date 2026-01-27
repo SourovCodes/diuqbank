@@ -6,19 +6,11 @@ import type { FormOptions, SubmissionFormData } from '@/components/submissions/s
 import { SubmissionForm } from '@/components/submissions/submission-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
-
-interface SubmissionData {
-    id: number;
-    department_id: number;
-    course_id: number;
-    semester_id: number;
-    exam_type_id: number;
-    pdf_url: string | null;
-    pdf_name: string | null;
-}
+import { index, update } from '@/routes/dashboard/submissions';
+import type { SubmissionEditData } from '@/types';
 
 interface Props {
-    submission: SubmissionData;
+    submission: SubmissionEditData;
     formOptions: FormOptions;
 }
 
@@ -38,11 +30,11 @@ export default function Edit({ submission, formOptions }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(`/dashboard/submissions/${submission.id}`);
+        post(update.url(submission.id));
     };
 
     return (
-        <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: '/dashboard/submissions' }, { label: 'Edit' }]}>
+        <DashboardLayout breadcrumbs={[{ label: 'My Submissions', href: index.url() }, { label: 'Edit' }]}>
             <Head title="Edit Submission" />
 
             <div className="space-y-8">

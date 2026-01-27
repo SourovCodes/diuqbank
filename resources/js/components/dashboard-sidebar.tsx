@@ -13,30 +13,34 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { logout } from '@/routes';
+import { show as profileShow } from '@/routes/dashboard/profile';
+import { index as submissionsIndex } from '@/routes/dashboard/submissions';
+import { home } from '@/routes/index';
 import type { SharedData } from '@/types';
 
 const navigationItems = [
     {
         title: 'My Submissions',
-        url: '/dashboard/submissions',
+        url: submissionsIndex.url(),
         icon: FileText,
     },
     {
         title: 'Profile',
-        url: '/dashboard/profile',
+        url: profileShow.url(),
         icon: User,
     },
 ];
 
 export function DashboardSidebar() {
-    const { auth } = usePage<SharedData>().props;
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const { auth, url } = usePage<SharedData & { url: string }>().props;
+    const currentPath = url?.split('?')[0] ?? '';
 
     return (
         <Sidebar>
             <SidebarHeader>
                 <div className="flex items-center gap-2 px-2 py-3">
-                    <Link href="/" className="flex items-center gap-2">
+                    <Link href={home.url()} className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                             <BookOpen className="h-5 w-5" />
                         </div>
@@ -70,7 +74,7 @@ export function DashboardSidebar() {
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
-                                    <Link href="/">
+                                    <Link href={home.url()}>
                                         <Home className="h-4 w-4" />
                                         <span>Back to Website</span>
                                     </Link>
@@ -96,7 +100,7 @@ export function DashboardSidebar() {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
-                            <Link href="/logout" method="post" as="button" className="w-full">
+                            <Link href={logout.url()} method="post" as="button" className="w-full">
                                 <LogOut className="h-4 w-4" />
                                 <span>Logout</span>
                             </Link>

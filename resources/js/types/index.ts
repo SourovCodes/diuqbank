@@ -1,5 +1,6 @@
 export type * from './auth';
 export type * from './contributor';
+export type * from './dashboard';
 export type * from './flash';
 export type * from './pagination';
 export type * from './question';

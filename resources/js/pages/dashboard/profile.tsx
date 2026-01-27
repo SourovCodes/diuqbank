@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import DashboardLayout from '@/layouts/dashboard-layout';
+import { password as passwordRoute, update } from '@/routes/dashboard/profile';
 import type { User as UserType } from '@/types';
 
 interface ProfileProps {
@@ -28,14 +29,14 @@ export default function Profile({ user }: ProfileProps) {
 
     const handleProfileSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        profileForm.put('/dashboard/profile', {
+        profileForm.put(update.url(), {
             preserveScroll: true,
         });
     };
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        passwordForm.put('/dashboard/profile/password', {
+        passwordForm.put(passwordRoute.url(), {
             preserveScroll: true,
             onSuccess: () => {
                 passwordForm.reset();
