@@ -162,12 +162,13 @@ class DatabaseSeeder extends Seeder
                 'status' => $status,
             ]);
 
-            // Create 1-3 submissions per question
-            $submissionCount = rand(1, 3);
-            for ($j = 0; $j < $submissionCount; $j++) {
+            // Create 1-3 submissions per question with unique users
+            $submissionCount = rand(1, min(3, $allUsers->count()));
+            $submissionUsers = $allUsers->random($submissionCount);
+            foreach ($submissionUsers as $submissionUser) {
                 $submission = Submission::create([
                     'question_id' => $question->id,
-                    'user_id' => $allUsers->random()->id,
+                    'user_id' => $submissionUser->id,
                     'views' => rand(0, 500),
                 ]);
 
