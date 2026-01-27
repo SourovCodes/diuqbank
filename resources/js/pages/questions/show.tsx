@@ -12,20 +12,8 @@ import {
 import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import type { Question, SharedData } from '@/types';
-
-interface Submission {
-    id: number;
-    user: {
-        id: number;
-        name: string;
-    } | null;
-    pdf_url: string | null;
-    vote_score: number;
-    user_vote: number | null;
-    views: number;
-    created_at: string;
-}
+import type { SharedData } from '@/types';
+import type { Question, Submission } from '@/types/question';
 
 interface QuestionShowProps {
     question: Question;

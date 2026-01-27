@@ -36,6 +36,19 @@ export interface Question {
     created_at: string;
 }
 
+export interface Submission {
+    id: number;
+    user: {
+        id: number;
+        name: string;
+    } | null;
+    pdf_url: string | null;
+    vote_score: number;
+    user_vote: number | null;
+    views: number;
+    created_at: string;
+}
+
 export interface QuestionFilters {
     department: string | null;
     course: string | null;
