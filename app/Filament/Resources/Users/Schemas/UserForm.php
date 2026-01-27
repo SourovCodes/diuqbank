@@ -2,10 +2,8 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -16,61 +14,65 @@ class UserForm
         return $schema
             ->components([
                 Section::make('Profile')
-                    ->columns(3)
-                    ->columnSpanFull()
-                    ->schema([
-                        SpatieMediaLibraryFileUpload::make('profile_picture')
-                            ->collection('profile_picture')
-                            ->label('Profile picture')
-                            ->image()
-                            ->imageEditor()
-                            ->columnSpan(1),
-                        Grid::make(2)
-                            ->columnSpan(2)
-                            ->schema([
-                                TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('email')
-                                    ->label('Email address')
-                                    ->email()
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                                TextInput::make('username')
-                                    ->required()
-                                    ->unique()
-                                    ->maxLength(255),
-                                TextInput::make('student_id')
-                                    ->label('Student ID')
-                                    ->maxLength(255),
-                            ]),
-                    ]),
-                Section::make('Security')
+                    ->description('User profile information and avatar')
+                    ->icon('heroicon-o-user-circle')
                     ->columns(2)
-                    ->columnSpanFull()
                     ->schema([
+                        SpatieMediaLibraryFileUpload::make('avatar')
+                            ->collection('avatar')
+                            ->avatar()
+                            ->imageEditor()
+                            ->circleCropper()
+                            ->columnSpanFull(),
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-o-user'),
+                        TextInput::make('username')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->alphaDash()
+                            ->prefixIcon('heroicon-o-at-symbol'),
+                    ]),
+                Section::make('Academic Information')
+                    ->description('Student identification details')
+                    ->icon('heroicon-o-academic-cap')
+                    ->schema([
+                        TextInput::make('student_id')
+                            ->label('Student ID')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->placeholder('e.g., 123-45-6789')
+                            ->prefixIcon('heroicon-o-identification'),
+                    ]),
+                Section::make('Account')
+                    ->description('Email and authentication settings')
+                    ->icon('heroicon-o-envelope')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-o-envelope')
+                            ->columnSpanFull(),
                         TextInput::make('password')
                             ->password()
                             ->revealable()
                             ->dehydrated(fn (?string $state): bool => filled($state))
                             ->required(fn (string $operation): bool => $operation === 'create')
-                            ->helperText(fn (string $operation): ?string => $operation === 'edit'
-                                ? 'Leave blank to keep the existing password.'
-                                : null)
-                            ->maxLength(255),
+                            ->minLength(8)
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-o-lock-closed'),
                         TextInput::make('password_confirmation')
-                            ->label('Confirm password')
                             ->password()
                             ->revealable()
+                            ->requiredWith('password')
                             ->same('password')
-                            ->required(fn (string $operation): bool => $operation === 'create')
-                            ->dehydrated(false),
-                        DateTimePicker::make('email_verified_at')
-                            ->label('Email verified at')
-                            ->seconds(false)
-                            ->nullable()
-                            ->native(false),
+                            ->dehydrated(false)
+                            ->prefixIcon('heroicon-o-lock-closed'),
                     ]),
             ]);
     }

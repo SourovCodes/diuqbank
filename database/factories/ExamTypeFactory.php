@@ -16,18 +16,8 @@ class ExamTypeFactory extends Factory
      */
     public function definition(): array
     {
-        $examTypes = [
-            ['name' => 'Final', 'requires_section' => false],
-            ['name' => 'Mid', 'requires_section' => false],
-            ['name' => 'Quiz', 'requires_section' => true],
-            ['name' => 'Lab Final', 'requires_section' => true],
-        ];
-
-        $examType = $this->faker->randomElement($examTypes);
-
         return [
-            'name' => $examType['name'].' '.$this->faker->unique()->numberBetween(1, 999999),
-            'requires_section' => $examType['requires_section'],
+            'name' => fake()->unique()->randomElement(['Midterm', 'Final', 'Quiz', 'Assignment', 'Lab Exam']),
         ];
     }
 }

@@ -3,19 +3,13 @@
 namespace App\Filament\Resources\Questions\Schemas;
 
 use App\Enums\QuestionStatus;
-use App\Enums\UnderReviewReason;
 use App\Models\Course;
-use App\Models\ExamType;
-use App\Models\Question;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\View;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
 class QuestionForm
 {
@@ -23,143 +17,71 @@ class QuestionForm
     {
         return $schema
             ->components([
-                Section::make('Question associations')
-                    ->columns(2)
-                    ->columnSpanFull()
+                Section::make('Status')
+                    ->description('Set the review status for this question')
+                    ->icon('heroicon-o-flag')
                     ->schema([
-                        Select::make('user_id')
-                            ->label('Uploader')
-                            ->relationship('user', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Select::make('department_id')
-                            ->label('Department')
-                            ->relationship('department', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required()
+                        ToggleButtons::make('status')
+                            ->options(QuestionStatus::class)
+                            ->default(QuestionStatus::PendingReview)
+                            ->inline()
                             ->live()
-                            ->afterStateUpdated(fn (callable $set) => $set('course_id', null)),
+                            ->required(),
+                        Textarea::make('rejection_reason')
+                            ->label('Rejection Reason')
+                            ->placeholder('Explain why this question was rejected...')
+                            ->rows(3)
+                            ->visible(fn (Get $get) => $get('status') === QuestionStatus::Rejected)
+                            ->requiredIf('status', QuestionStatus::Rejected->value),
+                    ])
+                    ->columnSpanFull(),
+                Section::make('Academic Information')
+                    ->description('Select the department and course for this question')
+                    ->icon('heroicon-o-academic-cap')
+                    ->schema([
+                        Select::make('department_id')
+                            ->relationship('department', 'name')
+                            ->placeholder('Select a department')
+                            ->native(false)
+                            ->preload()
+                            ->searchable()
+                            ->live()
+                            ->afterStateUpdated(fn (callable $set) => $set('course_id', null))
+                            ->required(),
                         Select::make('course_id')
                             ->label('Course')
-                            ->options(fn (callable $get): array => Course::query()
-                                ->when(
-                                    $get('department_id'),
-                                    fn (Builder $query, $departmentId) => $query->where('department_id', $departmentId),
-                                )
-                                ->orderBy('name')
-                                ->pluck('name', 'id')
-                                ->all())
-                            ->searchable()
+                            ->placeholder('Select a course')
+                            ->native(false)
+                            ->options(fn (Get $get) => Course::query()
+                                ->where('department_id', $get('department_id'))
+                                ->pluck('name', 'id'))
                             ->preload()
-                            ->required()
-                            ->live()
-                            ->disabled(fn (callable $get): bool => blank($get('department_id'))),
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('Exam Details')
+                    ->description('Specify when this question was used')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->schema([
                         Select::make('semester_id')
-                            ->label('Semester')
                             ->relationship('semester', 'name')
-                            ->searchable()
+                            ->placeholder('Select a semester')
+                            ->native(false)
                             ->preload()
+                            ->searchable()
                             ->required(),
                         Select::make('exam_type_id')
-                            ->label('Exam type')
                             ->relationship('examType', 'name')
-                            ->searchable()
+                            ->placeholder('Select an exam type')
+                            ->native(false)
                             ->preload()
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(fn (callable $set) => $set('section', null)),
-                        TextInput::make('section')
-                            ->label('Section')
-                            ->placeholder('A')
-                            ->maxLength(10)
-                            ->helperText('Required when the selected exam type requires a section.')
-                            ->live(onBlur: true)
-                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper(Str::squish($state)) : null)
-                            ->formatStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper(Str::squish($state)) : null)
-                            ->required(fn (callable $get): bool => self::requiresSection($get('exam_type_id')))
-                            ->visible(fn (callable $get): bool => self::requiresSection($get('exam_type_id'))),
-                    ]),
-                Section::make('Status & Review')
+                            ->searchable()
+                            ->required(),
+                    ])
                     ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([
-                        Select::make('status')
-                            ->label('Status')
-                            ->options(QuestionStatus::class)
-                            ->default(QuestionStatus::PUBLISHED)
-                            ->required()
-                            ->live()
-                            ->afterStateHydrated(function (Select $component, $state) {
-                                // Force re-evaluation of dependent fields on load
-                                $component->state($state);
-                            }),
-                        TextInput::make('view_count')
-                            ->label('View Count')
-                            ->numeric()
-                            ->default(0)
-                            ->helperText('Number of times this question has been viewed.'),
-                        Select::make('under_review_reason')
-                            ->label('Under Review Reason')
-                            ->options(UnderReviewReason::class)
-                            ->live()
-                            ->visible(fn (callable $get): bool => $get('status') === QuestionStatus::PENDING_REVIEW)
-                            ->required(fn (callable $get): bool => $get('status') === QuestionStatus::PENDING_REVIEW),
-                        Textarea::make('duplicate_reason')
-                            ->label('Duplicate Reason')
-                            ->rows(3)
-                            ->maxLength(1000)
-                            ->columnSpanFull()
-                            ->visible(fn (callable $get): bool => $get('under_review_reason') === UnderReviewReason::DUPLICATE),
-                        View::make('filament.resources.questions.duplicate-pdf-comparison')
-                            ->viewData(fn (?Question $record): array => [
-                                'record' => $record,
-                                'originalQuestion' => $record ? self::findOriginalQuestion($record) : null,
-                            ])
-                            ->columnSpanFull()
-                            ->visible(fn (callable $get, ?Question $record): bool => $get('under_review_reason') === UnderReviewReason::DUPLICATE &&
-                                $record?->getFirstMedia('pdf') !== null
-                            ),
-                    ]),
-                Section::make('Attachments')
-                    ->columnSpanFull()
-                    ->schema([
-                        SpatieMediaLibraryFileUpload::make('pdf')
-                            ->label('Question PDF')
-                            ->collection('pdf')
-                            ->preserveFilenames()
-                            ->acceptedFileTypes(['application/pdf'])
-                            ->maxSize(10240)
-                            ->required()
-                            ->openable()
-                            ->downloadable(),
-                    ]),
+                    ->columnSpanFull(),
             ]);
-    }
-
-    protected static function requiresSection(null|int|string $examTypeId): bool
-    {
-        if (blank($examTypeId)) {
-            return false;
-        }
-
-        return (bool) ExamType::query()
-            ->whereKey($examTypeId)
-            ->value('requires_section');
-    }
-
-    protected static function findOriginalQuestion(Question $currentQuestion): ?Question
-    {
-        return Question::query()
-            ->where('department_id', $currentQuestion->department_id)
-            ->where('course_id', $currentQuestion->course_id)
-            ->where('semester_id', $currentQuestion->semester_id)
-            ->where('exam_type_id', $currentQuestion->exam_type_id)
-            ->where('section', $currentQuestion->section)
-            ->where('status', QuestionStatus::PUBLISHED)
-            ->where('id', '!=', $currentQuestion->id)
-            ->orderBy('created_at', 'asc')
-            ->first();
     }
 }

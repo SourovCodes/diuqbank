@@ -2,30 +2,20 @@
 
 namespace App\Models;
 
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
+class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens;
-
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
-
-    use InteractsWithMedia;
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->email === 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail();
-    }
+    use HasFactory, InteractsWithMedia, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -34,11 +24,10 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
      */
     protected $fillable = [
         'name',
+        'username',
+        'student_id',
         'email',
         'password',
-        'student_id',
-        'username',
-        'email_verified_at',
     ];
 
     /**
@@ -56,43 +45,65 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
      *
      * @return array<string, string>
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 
     /**
-     * Get the questions for the user.
+     * @return HasMany<Submission, $this>
      */
-    public function questions(): HasMany
+    public function submissions(): HasMany
     {
-        return $this->hasMany(Question::class);
+        return $this->hasMany(Submission::class);
+    }
+
+    /**
+     * @return HasMany<Vote, $this>
+     */
+    public function votes(): HasMany
+    {
+        return $this->hasMany(Vote::class);
+    }
+
+    /**
+     * Scope to add contributor statistics: submissions count, total votes, and total views.
+     *
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    public function scopeWithContributorStats(Builder $query): Builder
+    {
+        return $query
+            ->withCount('submissions')
+            ->withSum(['submissions as total_votes' => function ($query) {
+                $query->join('votes', 'submissions.id', '=', 'votes.submission_id');
+            }], 'votes.value')
+            ->withSum('submissions', 'views');
     }
 
     public function registerMediaCollections(): void
     {
-        $this
-            ->addMediaCollection('profile_picture')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-            ->useFallbackUrl(url: asset('images/fallback-user-image.png'))
+        $this->addMediaCollection('avatar')
             ->singleFile()
-            ->useDisk(diskName: 'profile-pictures');
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     }
 
-    public function getRouteKeyName(): string
+    public function registerMediaConversions(?Media $media = null): void
     {
-        return 'username';
+        $this->addMediaConversion('thumb')
+            ->width(100)
+            ->height(100)
+            ->sharpen(10)
+            ->performOnCollections('avatar');
     }
 
-    /**
-     * Get the cached avatar URL for the user.
-     */
     public function getAvatarUrlAttribute(): string
     {
-        return cache()->remember(
-            key: "user.{$this->id}.avatar",
-            ttl: now()->addDay(),
-            callback: fn () => $this->getFirstMediaUrl('profile_picture')
-        );
+        return $this->getFirstMediaUrl('avatar', 'thumb')
+            ?: 'https://ui-avatars.com/api/?name='.urlencode($this->name);
     }
 }

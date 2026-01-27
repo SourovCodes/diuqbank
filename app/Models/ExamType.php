@@ -11,27 +11,12 @@ class ExamType extends Model
     /** @use HasFactory<\Database\Factories\ExamTypeFactory> */
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
-        'requires_section',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'requires_section' => 'boolean',
-    ];
-
-    /**
-     * Get the questions for the exam type.
+     * @return HasMany<Question, $this>
      */
     public function questions(): HasMany
     {

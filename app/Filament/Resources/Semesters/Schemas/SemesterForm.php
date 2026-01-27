@@ -12,19 +12,17 @@ class SemesterForm
     {
         return $schema
             ->components([
-                Section::make('Semester details')
-                    ->columns(2)
-                    ->columnSpanFull()
+                Section::make('Semester Information')
+                    ->description('Enter the semester details (e.g., Spring 2024, Fall 2025)')
+                    ->icon('heroicon-o-calendar')
                     ->schema([
                         TextInput::make('name')
-                            ->label('Semester name')
+                            ->label('Semester Name')
+                            ->placeholder('e.g., Spring 2024')
                             ->required()
-                            ->minLength(3)
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Use the season and year, e.g., Spring 2025.')
-                            ->placeholder('Fall 23'),
-                    ]),
+                            ->maxLength(255),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 }

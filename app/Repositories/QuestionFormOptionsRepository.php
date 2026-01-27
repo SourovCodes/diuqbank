@@ -12,27 +12,35 @@ class QuestionFormOptionsRepository
 {
     /**
      * Get cached form options for question forms.
+     *
+     * @return array{departments: Collection<int, Department>, semesters: Collection<int, Semester>, courses: Collection<int, Course>, examTypes: Collection<int, ExamType>}
      */
     public function getFormOptions(): array
     {
         return cache()->remember('question_form_options', 3600, fn () => [
-            'departments' => Department::select('id', 'name')->orderBy('name')->get(),
-            'semesters' => Semester::select('id', 'name')->orderedBySemester(),
-            'courses' => Course::select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'examTypes' => ExamType::select('id', 'name', 'requires_section')->orderBy('name')->get(),
+            'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
+            'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
+            'courses' => Course::query()->select('id', 'name', 'department_id')->orderBy('name')->get(),
+            'examTypes' => ExamType::query()->select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
     /**
      * Get cached filter options for question index page.
+     *
+     * @return array{departments: Collection<int, Department>, semesters: Collection<int, Semester>, courses: Collection<int, Course>, examTypes: Collection<int, ExamType>}
      */
     public function getFilterOptions(?int $departmentId): array
     {
         $filterOptions = cache()->remember('filter_options', 3600, fn () => [
-            'departments' => Department::select('id', 'short_name as name')->orderBy('short_name')->get(),
-            'semesters' => Semester::select('id', 'name')->orderedBySemester(),
-            'courses' => Course::with('department:id,short_name')->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'examTypes' => ExamType::select('id', 'name')->orderBy('name')->get(),
+            'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
+            'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
+            'courses' => Course::query()
+                ->with('department:id,short_name')
+                ->select('id', 'name', 'department_id')
+                ->orderBy('name')
+                ->get(),
+            'examTypes' => ExamType::query()->select('id', 'name')->orderBy('name')->get(),
         ]);
 
         $filterOptions['courses'] = $this->getCoursesByDepartment($departmentId, $filterOptions['courses']);
@@ -42,6 +50,9 @@ class QuestionFormOptionsRepository
 
     /**
      * Get courses filtered by department.
+     *
+     * @param  Collection<int, Course>  $allCourses
+     * @return Collection<int, Course>
      */
     public function getCoursesByDepartment(?int $departmentId, Collection $allCourses): Collection
     {

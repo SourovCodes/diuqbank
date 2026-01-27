@@ -5,80 +5,85 @@ namespace App\Filament\Resources\Users\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class UsersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('questions'))
-            ->defaultSort('created_at', 'desc')
             ->columns([
-                SpatieMediaLibraryImageColumn::make('profile_picture')
-                    ->collection('profile_picture')
-                    ->label('Avatar')
+                SpatieMediaLibraryImageColumn::make('avatar')
+                    ->collection('avatar')
+                    ->conversion('thumb')
                     ->circular()
-                    ->height(48)
-                    ->width(48),
+                    ->defaultImageUrl(fn ($record): string => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&background=random'),
                 TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('username')
-                    ->searchable()
-                    ->sortable(),
+                    ->description(fn ($record): string => '@'.$record->username)
+                    ->searchable(['name', 'username'])
+                    ->sortable()
+                    ->weight('bold'),
                 TextColumn::make('student_id')
                     ->label('Student ID')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
+                    ->badge()
+                    ->color('gray')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('—'),
+                TextColumn::make('email')
+                    ->icon('heroicon-o-envelope')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('Email copied'),
                 IconColumn::make('email_verified_at')
                     ->label('Verified')
                     ->boolean()
-                    ->sortable()
-                    ->color(fn (?string $state): string => filled($state) ? 'success' : 'gray'),
-                TextColumn::make('questions_count')
-                    ->label('Questions')
-                    ->counts('questions')
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->sortable(),
+                TextColumn::make('submissions_count')
+                    ->counts('submissions')
+                    ->label('Submissions')
                     ->badge()
-                    ->alignRight()
+                    ->color('info')
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->label('Created')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Joined')
+                    ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                TernaryFilter::make('email_verified')
-                    ->label('Email verified')
-                    ->placeholder('Any status')
-                    ->trueLabel('Verified')
-                    ->falseLabel('Unverified')
+                TernaryFilter::make('email_verified_at')
+                    ->label('Email Verified')
+                    ->nullable()
+                    ->placeholder('All users')
+                    ->trueLabel('Verified only')
+                    ->falseLabel('Unverified only'),
+                TernaryFilter::make('has_student_id')
+                    ->label('Has Student ID')
                     ->queries(
-                        true: fn (Builder $query): Builder => $query->whereNotNull('email_verified_at'),
-                        false: fn (Builder $query): Builder => $query->whereNull('email_verified_at'),
+                        true: fn ($query) => $query->whereNotNull('student_id'),
+                        false: fn ($query) => $query->whereNull('student_id'),
                     ),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }
