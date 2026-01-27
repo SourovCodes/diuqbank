@@ -8,6 +8,7 @@ use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -85,6 +86,7 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         return response()->json([
+            'message' => 'User retrieved successfully.',
             'data' => [
                 'user' => new UserResource($request->user()),
             ],
@@ -139,6 +141,8 @@ class AuthController extends Controller
         }
 
         $user->markEmailAsVerified();
+
+        event(new Verified($user));
 
         return response()->json([
             'message' => 'Email verified successfully.',

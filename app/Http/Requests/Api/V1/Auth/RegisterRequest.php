@@ -24,7 +24,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username', 'alpha_dash'],
+            'username' => ['required', 'string', 'min:3', 'max:30', 'unique:users,username', 'alpha_dash'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ];
@@ -40,6 +40,8 @@ class RegisterRequest extends FormRequest
         return [
             'name.required' => 'Your name is required.',
             'username.required' => 'A username is required.',
+            'username.min' => 'Username must be at least 3 characters.',
+            'username.max' => 'Username must not exceed 30 characters.',
             'username.unique' => 'This username is already taken.',
             'username.alpha_dash' => 'Username may only contain letters, numbers, dashes and underscores.',
             'email.required' => 'The email address is required.',
