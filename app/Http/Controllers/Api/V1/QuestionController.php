@@ -40,7 +40,16 @@ class QuestionController extends Controller
         abort_unless($question->status->value === 'published', 404);
 
         $question->load(['department', 'course', 'semester', 'examType'])
-            ->loadCount('submissions');
+            ->load(['submissions' => function ($query) {
+                $query->with('user')
+                    ->withSum('votes', 'value')
+                    ->withCount([
+                        'votes as upvotes_count' => fn ($q) => $q->where('value', 1),
+                        'votes as downvotes_count' => fn ($q) => $q->where('value', -1),
+                    ])
+                    ->orderByRaw('(SELECT COALESCE(SUM(value), 0) FROM votes WHERE votes.submission_id = submissions.id) DESC')
+                    ->limit(30);
+            }]);
 
         return new QuestionResource($question);
     }

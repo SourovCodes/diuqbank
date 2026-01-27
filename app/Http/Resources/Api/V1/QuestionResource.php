@@ -20,7 +20,6 @@ class QuestionResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'status' => $this->status->value,
             'department' => [
                 'id' => $this->department->id,
                 'name' => $this->department->name,
@@ -38,9 +37,17 @@ class QuestionResource extends JsonResource
                 'id' => $this->examType->id,
                 'name' => $this->examType->name,
             ],
-            'submissions_count' => $this->whenCounted('submissions'),
             'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'submissions' => $this->submissions->map(fn ($submission) => [
+                'id' => $submission->id,
+                'user' => [
+                    'name' => $submission->user->name,
+                    'username' => $submission->user->username,
+                ],
+                'pdf_url' => $submission->getFirstMediaUrl('pdf'),
+                'upvote_count' => (int) $submission->upvotes_count,
+                'downvote_count' => (int) $submission->downvotes_count,
+            ]),
         ];
     }
 }
