@@ -11,7 +11,7 @@ import {
     ThumbsUp,
     User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import type { SharedData } from '@/types';
@@ -22,10 +22,58 @@ interface QuestionShowProps {
     submissions: Submission[];
 }
 
+function getInitialSubmissionId(submissions: Submission[]): number | null {
+    if (submissions.length === 0) return null;
+
+    const hash = window.location.hash;
+    const match = hash.match(/^#submission=(\d+)$/);
+
+    if (match) {
+        const submissionId = parseInt(match[1], 10);
+        const isValid = submissions.some((s) => s.id === submissionId);
+        if (isValid) return submissionId;
+    }
+
+    return submissions[0]?.id ?? null;
+}
+
 export default function QuestionShow({ question, submissions }: QuestionShowProps) {
     const { auth } = usePage<SharedData>().props;
-    const [selectedId, setSelectedId] = useState<number | null>(submissions[0]?.id ?? null);
+    const [selectedId, setSelectedId] = useState<number | null>(() => getInitialSubmissionId(submissions));
     const [voting, setVoting] = useState(false);
+
+    const updateUrlWithSubmission = useCallback(
+        (submissionId: number | null) => {
+            if (submissionId === null) return;
+
+            const isFirstSubmission = submissions[0]?.id === submissionId;
+
+            if (isFirstSubmission) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            } else {
+                history.replaceState(null, '', `#submission=${submissionId}`);
+            }
+        },
+        [submissions],
+    );
+
+    const handleSelectSubmission = useCallback(
+        (submissionId: number) => {
+            setSelectedId(submissionId);
+            updateUrlWithSubmission(submissionId);
+        },
+        [updateUrlWithSubmission],
+    );
+
+    // Sync URL when submissions change (e.g., after voting reorder)
+    useEffect(() => {
+        if (selectedId !== null) {
+            const isValid = submissions.some((s) => s.id === selectedId);
+            if (!isValid && submissions.length > 0) {
+                handleSelectSubmission(submissions[0].id);
+            }
+        }
+    }, [submissions, selectedId, handleSelectSubmission]);
 
     const selectedSubmission = submissions.find((s) => s.id === selectedId) ?? submissions[0] ?? null;
     const selectedIndex = submissions.findIndex((s) => s.id === selectedId);
@@ -65,13 +113,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
 
     const goToPrevious = () => {
         if (selectedIndex > 0) {
-            setSelectedId(submissions[selectedIndex - 1].id);
+            handleSelectSubmission(submissions[selectedIndex - 1].id);
         }
     };
 
     const goToNext = () => {
         if (selectedIndex < submissions.length - 1) {
-            setSelectedId(submissions[selectedIndex + 1].id);
+            handleSelectSubmission(submissions[selectedIndex + 1].id);
         }
     };
 
@@ -244,7 +292,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         {submissions.map((submission, index) => (
                                             <button
                                                 key={submission.id}
-                                                onClick={() => setSelectedId(submission.id)}
+                                                onClick={() => handleSelectSubmission(submission.id)}
                                                 className={cn(
                                                     'w-full rounded-lg p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                                     selectedId === submission.id
