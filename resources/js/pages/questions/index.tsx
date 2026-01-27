@@ -4,10 +4,10 @@ import { FileText } from 'lucide-react';
 import { CustomPagination } from '@/components/custom-pagination';
 import { QuestionCard } from '@/components/question-card';
 import { QuestionFilters } from '@/components/question-filters';
-import type { Course, Department, ExamType, PaginatedData, Question, Semester } from '@/types';
+import type { Course, Department, ExamType, Question, ResourcePaginatedData, Semester } from '@/types';
 
 interface QuestionsIndexProps {
-    questions: PaginatedData<Question>;
+    questions: ResourcePaginatedData<Question>;
     filters: {
         department?: number | null;
         semester?: number | null;
@@ -59,9 +59,9 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
                 )}
 
                 {/* Pagination */}
-                {questions.data.length > 0 && questions.last_page > 1 && (
+                {questions.data.length > 0 && questions.meta.last_page > 1 && (
                     <div className="mt-8">
-                        <CustomPagination currentPage={questions.current_page} totalPages={questions.last_page} />
+                        <CustomPagination currentPage={questions.meta.current_page} totalPages={questions.meta.last_page} />
                     </div>
                 )}
             </div>
