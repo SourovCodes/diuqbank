@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContributorController;
+use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\SubmissionVoteController;
@@ -74,6 +75,16 @@ Route::middleware('auth')->group(function () {
     // Submission voting
     Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])->name('submissions.upvote');
     Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])->name('submissions.downvote');
+
+    // Dashboard routes
+    Route::prefix('dashboard')->name('dashboard.')->middleware('verified')->group(function () {
+
+        // Profile
+        Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    });
 });
 if (app()->isLocal()) {
     Route::get('/flash-test/{type}', function (string $type) {
