@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,9 @@ Route::get('/', function () {
 
 Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
 Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
+
+Route::get('/contributors', [ContributorController::class, 'index'])->name('contributors.index');
+Route::get('/contributors/{user:username}', [ContributorController::class, 'show'])->name('contributors.show');
 
 Route::get('/privacy', function () {
     return Inertia::render('privacy');
