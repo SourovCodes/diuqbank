@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\QuestionStatus;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubmissionRequest;
 use App\Http\Requests\UpdateSubmissionRequest;
 use App\Models\Question;
 use App\Models\Submission;
 use App\Repositories\QuestionFormOptionsRepository;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,9 +18,55 @@ class SubmissionController extends Controller
 {
     public function __construct(private QuestionFormOptionsRepository $optionsRepository) {}
 
+    public function index(Request $request): Response
+    {
+        $submissions = Submission::query()
+            ->where('user_id', $request->user()->id)
+            ->with(['question.department', 'question.course', 'question.semester', 'question.examType', 'media'])
+            ->withSum('votes as vote_score', 'value')
+            ->latest()
+            ->paginate(12);
+
+        return Inertia::render('dashboard/submissions/index', [
+            'submissions' => [
+                'data' => $submissions->map(fn (Submission $submission) => [
+                    'id' => $submission->id,
+                    'pdf_url' => $submission->getFirstMediaUrl('pdf'),
+                    'vote_score' => (int) ($submission->vote_score ?? 0),
+                    'views' => $submission->views,
+                    'created_at' => $submission->created_at->toISOString(),
+                    'question' => [
+                        'id' => $submission->question->id,
+                        'department' => [
+                            'id' => $submission->question->department->id,
+                            'name' => $submission->question->department->name,
+                            'short_name' => $submission->question->department->short_name,
+                        ],
+                        'course' => [
+                            'id' => $submission->question->course->id,
+                            'name' => $submission->question->course->name,
+                        ],
+                        'semester' => [
+                            'id' => $submission->question->semester->id,
+                            'name' => $submission->question->semester->name,
+                        ],
+                        'exam_type' => [
+                            'id' => $submission->question->examType->id,
+                            'name' => $submission->question->examType->name,
+                        ],
+                    ],
+                ]),
+                'current_page' => $submissions->currentPage(),
+                'last_page' => $submissions->lastPage(),
+                'per_page' => $submissions->perPage(),
+                'total' => $submissions->total(),
+            ],
+        ]);
+    }
+
     public function create(): Response
     {
-        return Inertia::render('submissions/create', [
+        return Inertia::render('dashboard/submissions/create', [
             'formOptions' => $this->optionsRepository->getFormOptions(),
         ]);
     }
@@ -50,7 +98,7 @@ class SubmissionController extends Controller
             'description' => 'Your question paper has been submitted for review.',
         ]);
 
-        return redirect()->route('questions.show', $question);
+        return redirect()->route('dashboard.submissions.index');
     }
 
     public function edit(Submission $submission): Response
@@ -59,7 +107,7 @@ class SubmissionController extends Controller
 
         $submission->load(['question.department', 'question.course', 'question.semester', 'question.examType', 'media']);
 
-        return Inertia::render('submissions/edit', [
+        return Inertia::render('dashboard/submissions/edit', [
             'submission' => [
                 'id' => $submission->id,
                 'department_id' => $submission->question->department_id,
@@ -98,7 +146,7 @@ class SubmissionController extends Controller
             'message' => 'Submission updated successfully!',
         ]);
 
-        return redirect()->route('questions.show', $question);
+        return redirect()->route('dashboard.submissions.index');
     }
 
     private function findOrCreateQuestion(int $departmentId, int $courseId, int $semesterId, int $examTypeId): Question
