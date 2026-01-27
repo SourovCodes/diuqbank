@@ -32,7 +32,6 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'User registered successfully. Please verify your email address.',
             'data' => [
                 'user' => new UserResource($user),
                 'token' => $token,
@@ -59,7 +58,6 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Logged in successfully.',
             'data' => [
                 'user' => new UserResource($user),
                 'token' => $token,
@@ -74,10 +72,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Logged out successfully.',
-            'data' => null,
-        ]);
+        return response()->json(null, 204);
     }
 
     /**
@@ -86,7 +81,6 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         return response()->json([
-            'message' => 'User retrieved successfully.',
             'data' => [
                 'user' => new UserResource($request->user()),
             ],
@@ -100,7 +94,6 @@ class AuthController extends Controller
     {
         if ($request->user()->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Email already verified.',
                 'data' => [
                     'user' => new UserResource($request->user()),
                 ],
@@ -109,10 +102,7 @@ class AuthController extends Controller
 
         $request->user()->sendEmailVerificationNotification();
 
-        return response()->json([
-            'message' => 'Verification link sent.',
-            'data' => null,
-        ]);
+        return response()->json(null, 204);
     }
 
     /**
@@ -133,7 +123,6 @@ class AuthController extends Controller
 
         if ($user->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Email already verified.',
                 'data' => [
                     'user' => new UserResource($user),
                 ],
@@ -145,7 +134,6 @@ class AuthController extends Controller
         event(new Verified($user));
 
         return response()->json([
-            'message' => 'Email verified successfully.',
             'data' => [
                 'user' => new UserResource($user),
             ],

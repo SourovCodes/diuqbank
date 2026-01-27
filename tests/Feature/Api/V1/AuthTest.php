@@ -21,7 +21,6 @@ describe('registration', function () {
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'message',
                 'data' => [
                     'user' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
                     'token',
@@ -100,7 +99,6 @@ describe('login', function () {
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'message',
                 'data' => [
                     'user' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
                     'token',
@@ -149,8 +147,7 @@ describe('logout', function () {
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->postJson('/api/v1/auth/logout');
 
-        $response->assertStatus(200)
-            ->assertJson(['message' => 'Logged out successfully.']);
+        $response->assertStatus(204);
 
         $this->assertDatabaseMissing('personal_access_tokens', [
             'tokenable_id' => $user->id,
@@ -196,13 +193,12 @@ describe('email verification', function () {
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->postJson('/api/v1/auth/email/verification-notification');
 
-        $response->assertStatus(200)
-            ->assertJson(['message' => 'Verification link sent.']);
+        $response->assertStatus(204);
 
         Notification::assertSentTo($user, VerifyEmail::class);
     });
 
-    it('returns message when email is already verified', function () {
+    it('returns user when email is already verified', function () {
         $user = User::factory()->create();
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -210,7 +206,7 @@ describe('email verification', function () {
             ->postJson('/api/v1/auth/email/verification-notification');
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Email already verified.']);
+            ->assertJsonPath('data.user.id', $user->id);
 
         Notification::assertNotSentTo($user, VerifyEmail::class);
     });
@@ -227,7 +223,7 @@ describe('email verification', function () {
         $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Email verified successfully.']);
+            ->assertJsonPath('data.user.id', $user->id);
 
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
     });
@@ -249,7 +245,7 @@ describe('email verification', function () {
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     });
 
-    it('returns message when verifying already verified email', function () {
+    it('returns user when verifying already verified email', function () {
         $user = User::factory()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
@@ -261,7 +257,7 @@ describe('email verification', function () {
         $response = $this->getJson($verificationUrl);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Email already verified.']);
+            ->assertJsonPath('data.user.id', $user->id);
     });
 
     it('cannot verify email with unsigned url', function () {
