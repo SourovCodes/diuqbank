@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -59,6 +60,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
+
+    // Submission routes
+    Route::get('/submissions/create', [SubmissionController::class, 'create'])->name('submissions.create');
+    Route::post('/submissions', [SubmissionController::class, 'store'])->name('submissions.store');
+    Route::get('/submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
+    Route::put('/submissions/{submission}', [SubmissionController::class, 'update'])->name('submissions.update');
+
+    // Course and semester creation (JSON API for modal forms)
+    Route::post('/courses', [\App\Http\Controllers\CourseController::class, 'store'])->name('courses.store');
+    Route::post('/semesters', [\App\Http\Controllers\SemesterController::class, 'store'])->name('semesters.store');
 
     // Submission voting
     Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])->name('submissions.upvote');

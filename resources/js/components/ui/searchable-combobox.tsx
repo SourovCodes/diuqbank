@@ -1,0 +1,112 @@
+"use client";
+
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import * as React from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+export interface ComboboxOption {
+    value: string;
+    label: string;
+}
+
+interface SearchableComboboxProps {
+    options: ComboboxOption[];
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+    disabled?: boolean;
+    className?: string;
+}
+
+export function SearchableCombobox({
+    options,
+    value,
+    onChange,
+    placeholder = "Select option...",
+    searchPlaceholder = "Search...",
+    emptyMessage = "No option found.",
+    disabled = false,
+    className,
+}: SearchableComboboxProps) {
+    const [open, setOpen] = React.useState(false);
+    const [search, setSearch] = React.useState("");
+
+    const selectedOption = options.find((option) => option.value === value);
+
+    const filteredOptions = options.filter((option) =>
+        option.label.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className={cn(
+                        "w-full justify-between font-normal",
+                        !value && "text-muted-foreground",
+                        className
+                    )}
+                    disabled={disabled}
+                >
+                    {selectedOption ? selectedOption.label : placeholder}
+                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command shouldFilter={false}>
+                    <CommandInput
+                        placeholder={searchPlaceholder}
+                        value={search}
+                        onValueChange={setSearch}
+                    />
+                    <CommandList>
+                        <CommandEmpty>{emptyMessage}</CommandEmpty>
+                        <CommandGroup>
+                            {filteredOptions.map((option) => (
+                                <CommandItem
+                                    key={option.value}
+                                    value={option.value}
+                                    onSelect={() => {
+                                        onChange(option.value);
+                                        setSearch("");
+                                        setOpen(false);
+                                    }}
+                                >
+                                    <CheckIcon
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            value === option.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                        )}
+                                    />
+                                    {option.label}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+}
