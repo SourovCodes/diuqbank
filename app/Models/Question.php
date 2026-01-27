@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuestionStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -103,5 +104,73 @@ class Question extends Model
         }
 
         return true;
+    }
+
+    /**
+     * Scope a query to only include published questions.
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', QuestionStatus::Published);
+    }
+
+    /**
+     * Scope a query to filter by department.
+     */
+    public function scopeDepartment(Builder $query, $departmentId): void
+    {
+        if (! $departmentId) {
+            return;
+        }
+
+        $query->where('department_id', $departmentId);
+    }
+
+    /**
+     * Scope a query to filter by course.
+     */
+    public function scopeCourse(Builder $query, $courseId): void
+    {
+        if (! $courseId) {
+            return;
+        }
+
+        $query->where('course_id', $courseId);
+    }
+
+    /**
+     * Scope a query to filter by semester.
+     */
+    public function scopeSemester(Builder $query, $semesterId): void
+    {
+        if (! $semesterId) {
+            return;
+        }
+
+        $query->where('semester_id', $semesterId);
+    }
+
+    /**
+     * Scope a query to filter by exam type.
+     */
+    public function scopeExamType(Builder $query, $examTypeId): void
+    {
+        if (! $examTypeId) {
+            return;
+        }
+
+        $query->where('exam_type_id', $examTypeId);
+    }
+
+    /**
+     * Scope a query to apply all filters at once.
+     */
+    public function scopeFiltered(Builder $query, $departmentId, $courseId, $semesterId, $examTypeId): void
+    {
+        $query
+            ->department($departmentId)
+            ->course($courseId)
+            ->semester($semesterId)
+            ->examType($examTypeId);
     }
 }
