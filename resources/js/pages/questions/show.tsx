@@ -1,6 +1,8 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Calendar,
+    ChevronLeft,
+    ChevronRight,
     Eye,
     FileText,
     Loader2,
@@ -26,7 +28,9 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
     const [voting, setVoting] = useState(false);
 
     const selectedSubmission = submissions.find((s) => s.id === selectedId) ?? submissions[0] ?? null;
+    const selectedIndex = submissions.findIndex((s) => s.id === selectedId);
     const isTopRated = selectedSubmission?.id === submissions[0]?.id;
+    const hasMultipleSubmissions = submissions.length > 1;
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -57,6 +61,18 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                 },
             },
         );
+    };
+
+    const goToPrevious = () => {
+        if (selectedIndex > 0) {
+            setSelectedId(submissions[selectedIndex - 1].id);
+        }
+    };
+
+    const goToNext = () => {
+        if (selectedIndex < submissions.length - 1) {
+            setSelectedId(submissions[selectedIndex + 1].id);
+        }
     };
 
     return (
@@ -179,48 +195,94 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                         {/* Submissions Sidebar */}
                         <div className="order-1 w-full shrink-0 lg:order-2 lg:w-72">
                             <div className="rounded-xl border bg-card p-3 sm:p-4 lg:sticky lg:top-4">
-                                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground sm:mb-4">
-                                    {submissions.length} Submission{submissions.length !== 1 && 's'}
-                                </h2>
-
-                                <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-2 lg:overflow-x-visible lg:pb-0">
-                                    {submissions.map((submission, index) => (
+                                {/* Mobile Navigation */}
+                                {hasMultipleSubmissions && (
+                                    <div className="flex items-center justify-between lg:hidden">
                                         <button
-                                            key={submission.id}
-                                            onClick={() => setSelectedId(submission.id)}
-                                            className={cn(
-                                                'shrink-0 rounded-lg p-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-3 lg:w-full',
-                                                selectedId === submission.id
-                                                    ? 'bg-primary/10 ring-1 ring-primary/30'
-                                                    : 'hover:bg-muted',
-                                            )}
+                                            type="button"
+                                            onClick={goToPrevious}
+                                            disabled={selectedIndex === 0}
+                                            aria-label="Previous submission"
+                                            className="inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                                         >
-                                            <div className="mb-1 flex items-center gap-2">
-                                                {index === 0 && (
-                                                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                                                        #1
-                                                    </span>
-                                                )}
-                                                <span className="truncate text-sm font-medium">
-                                                    {submission.user?.name ?? 'Anonymous'}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground sm:gap-3">
-                                                <span className="inline-flex items-center gap-1">
-                                                    <ThumbsUp className="h-3 w-3" />
-                                                    {submission.vote_score}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1">
-                                                    <Eye className="h-3 w-3" />
-                                                    {submission.views}
-                                                </span>
-                                                <span className="hidden sm:inline">
-                                                    {formatDate(submission.created_at)}
-                                                </span>
-                                            </div>
+                                            <ChevronLeft className="h-5 w-5" />
                                         </button>
-                                    ))}
+                                        <div className="text-center">
+                                            <span className="text-sm font-medium">
+                                                {selectedIndex + 1} of {submissions.length}
+                                            </span>
+                                            <p className="text-xs text-muted-foreground">
+                                                {selectedSubmission?.user?.name ?? 'Anonymous'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={goToNext}
+                                            disabled={selectedIndex === submissions.length - 1}
+                                            aria-label="Next submission"
+                                            className="inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                                        >
+                                            <ChevronRight className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Single submission on mobile */}
+                                {!hasMultipleSubmissions && (
+                                    <p className="text-center text-sm text-muted-foreground lg:hidden">
+                                        1 submission by {selectedSubmission?.user?.name ?? 'Anonymous'}
+                                    </p>
+                                )}
+
+                                {/* Desktop List */}
+                                <div className="hidden lg:block">
+                                    <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                                        {submissions.length} Submission{submissions.length !== 1 && 's'}
+                                    </h2>
+
+                                    <div className="space-y-2">
+                                        {submissions.map((submission, index) => (
+                                            <button
+                                                key={submission.id}
+                                                onClick={() => setSelectedId(submission.id)}
+                                                className={cn(
+                                                    'w-full rounded-lg p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                                    selectedId === submission.id
+                                                        ? 'bg-primary/10 ring-1 ring-primary/30'
+                                                        : 'hover:bg-muted',
+                                                )}
+                                            >
+                                                <div className="mb-1 flex items-center gap-2">
+                                                    {index === 0 && (
+                                                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                                            #1
+                                                        </span>
+                                                    )}
+                                                    <span className="truncate text-sm font-medium">
+                                                        {submission.user?.name ?? 'Anonymous'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <ThumbsUp className="h-3 w-3" />
+                                                        {submission.vote_score}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Eye className="h-3 w-3" />
+                                                        {submission.views}
+                                                    </span>
+                                                    <span>{formatDate(submission.created_at)}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
+
+                                {/* Vote CTA */}
+                                <p className="mt-3 text-center text-xs text-muted-foreground sm:mt-4">
+                                    <ThumbsUp className="mr-1 inline h-3 w-3" />
+                                    Upvote quality submissions · Downvote incorrect ones
+                                </p>
                             </div>
                         </div>
                     </div>
