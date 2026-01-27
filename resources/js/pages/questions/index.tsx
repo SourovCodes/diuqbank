@@ -4,10 +4,10 @@ import { FileText } from 'lucide-react';
 import { CustomPagination } from '@/components/custom-pagination';
 import { QuestionCard } from '@/components/question-card';
 import { QuestionFilters } from '@/components/question-filters';
-import type { Course, Department, ExamType, Question, ResourcePaginatedData, Semester } from '@/types';
+import type { Course, Department, ExamType, PaginatedData, Question, Semester } from '@/types';
 
 interface QuestionsIndexProps {
-    questions: ResourcePaginatedData<Question>;
+    questions: PaginatedData<Question>;
     filters: {
         department?: number | null;
         semester?: number | null;
