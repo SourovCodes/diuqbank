@@ -42,7 +42,7 @@ class QuestionController extends Controller
 
         $question->load(['department', 'course', 'semester', 'examType'])
             ->load(['submissions' => function ($query) {
-                $query->with('user')
+                $query->with(['user', 'media'])
                     ->withCount([
                         'votes as upvotes_count' => fn ($q) => $q->where('value', 1),
                         'votes as downvotes_count' => fn ($q) => $q->where('value', -1),

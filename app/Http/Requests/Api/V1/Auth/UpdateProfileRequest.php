@@ -28,8 +28,8 @@ class UpdateProfileRequest extends FormRequest
                 'sometimes',
                 'string',
                 'min:3',
-                'max:255',
-                'regex:/^[a-zA-Z0-9_]+$/',
+                'max:30',
+                'alpha_dash',
                 Rule::unique('users')->ignore($this->user()->id),
             ],
             'student_id' => [
