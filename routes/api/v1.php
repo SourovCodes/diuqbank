@@ -2,9 +2,22 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\QuestionController;
+use App\Http\Controllers\Api\V1\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::apiResource('questions', QuestionController::class)->only(['index', 'show']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])
+        ->middleware('throttle:30,1')
+        ->name('submissions.upvote');
+    Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])
+        ->middleware('throttle:30,1')
+        ->name('submissions.downvote');
+    Route::delete('/submissions/{submission}/vote', [SubmissionVoteController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('submissions.vote.destroy');
+});
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');

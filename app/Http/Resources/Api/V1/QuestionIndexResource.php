@@ -19,24 +19,24 @@ class QuestionIndexResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'department' => [
+            'department' => $this->whenLoaded('department', fn () => [
                 'id' => $this->department->id,
                 'name' => $this->department->name,
                 'short_name' => $this->department->short_name,
-            ],
-            'course' => [
+            ]),
+            'course' => $this->whenLoaded('course', fn () => [
                 'id' => $this->course->id,
                 'name' => $this->course->name,
-            ],
-            'semester' => [
+            ]),
+            'semester' => $this->whenLoaded('semester', fn () => [
                 'id' => $this->semester->id,
                 'name' => $this->semester->name,
-            ],
-            'exam_type' => [
+            ]),
+            'exam_type' => $this->whenLoaded('examType', fn () => [
                 'id' => $this->examType->id,
                 'name' => $this->examType->name,
-            ],
-            'views' => (int) $this->submissions_max_views,
+            ]),
+            'views' => (int) ($this->submissions_max_views ?? 0),
             'created_at' => $this->created_at,
         ];
     }

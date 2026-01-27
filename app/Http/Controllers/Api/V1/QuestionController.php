@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\QuestionStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Question\IndexQuestionRequest;
 use App\Http\Resources\Api\V1\QuestionIndexResource;
 use App\Http\Resources\Api\V1\QuestionResource;
 use App\Models\Question;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class QuestionController extends Controller
@@ -14,20 +15,20 @@ class QuestionController extends Controller
     /**
      * Display a listing of published questions.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexQuestionRequest $request): AnonymousResourceCollection
     {
         $questions = Question::query()
             ->published()
             ->filtered(
-                $request->query('department_id'),
-                $request->query('course_id'),
-                $request->query('semester_id'),
-                $request->query('exam_type_id'),
+                $request->validated('department_id'),
+                $request->validated('course_id'),
+                $request->validated('semester_id'),
+                $request->validated('exam_type_id'),
             )
             ->with(['department', 'course', 'semester', 'examType'])
             ->withMax('submissions', 'views')
             ->latest()
-            ->paginate($request->query('per_page', 15));
+            ->paginate($request->validated('per_page', 15));
 
         return QuestionIndexResource::collection($questions);
     }
@@ -37,7 +38,7 @@ class QuestionController extends Controller
      */
     public function show(Question $question): QuestionResource
     {
-        abort_unless($question->status->value === 'published', 404);
+        abort_unless($question->status === QuestionStatus::Published, 404);
 
         $question->load(['department', 'course', 'semester', 'examType'])
             ->load(['submissions' => function ($query) {
