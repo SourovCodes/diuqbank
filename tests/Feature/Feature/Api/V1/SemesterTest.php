@@ -138,6 +138,24 @@ describe('store semester', function () {
             ->assertJsonValidationErrors(['name']);
     });
 
+    it('trims semester name', function () {
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/semesters', [
+                'name' => '  Fall 25  ',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'data' => [
+                    'name' => 'Fall 25',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('semesters', [
+            'name' => 'Fall 25',
+        ]);
+    });
+
     it('is rate limited to 10 requests per minute', function () {
         for ($i = 10; $i < 20; $i++) {
             $response = $this->actingAs($this->user)

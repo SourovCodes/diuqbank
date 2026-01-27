@@ -135,6 +135,27 @@ describe('store course', function () {
             ->assertJsonValidationErrors(['name']);
     });
 
+    it('trims course name', function () {
+        $department = Department::factory()->create();
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/courses', [
+                'department_id' => $department->id,
+                'name' => '  Introduction to Programming  ',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJson([
+                'data' => [
+                    'name' => 'Introduction to Programming',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('courses', [
+            'name' => 'Introduction to Programming',
+        ]);
+    });
+
     it('is rate limited to 10 requests per minute', function () {
         $department = Department::factory()->create();
 

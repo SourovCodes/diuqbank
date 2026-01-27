@@ -35,6 +35,18 @@ class StoreCourseRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->name)) {
+            $this->merge([
+                'name' => trim($this->name),
+            ]);
+        }
+    }
+
+    /**
      * Get custom messages for validator errors.
      *
      * @return array<string, string>
