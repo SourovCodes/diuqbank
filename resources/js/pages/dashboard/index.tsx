@@ -9,32 +9,18 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { formatDate } from '@/lib/utils';
 import { create, index as submissionsIndex } from '@/routes/dashboard/submissions';
 import { show as showQuestion } from '@/routes/questions';
-import type { QuestionStatus } from '@/types';
+import type { SubmissionItem } from '@/types';
 
-interface Submission {
-    id: number;
-    views: number;
-    vote_score: number;
-    created_at: string;
-    question: {
-        id: number;
-        status: QuestionStatus;
-        status_label: string;
-        course: { name: string };
-        department: { short_name: string };
-        semester: { name: string };
-        exam_type: { name: string };
-    };
+interface DashboardStats {
+    total_submissions: number;
+    published: number;
+    pending_review: number;
+    rejected: number;
 }
 
 interface Props {
-    stats: {
-        total_submissions: number;
-        published: number;
-        pending_review: number;
-        rejected: number;
-    };
-    recentSubmissions: Submission[];
+    stats: DashboardStats;
+    recentSubmissions: SubmissionItem[];
 }
 
 export default function Dashboard({ stats, recentSubmissions }: Props) {
