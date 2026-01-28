@@ -89,8 +89,8 @@ class ImportFromApi extends Command
                     'student_id' =>$question['user']['student_id'],
                 ]);
                 $uploader->timestamps = false;
-                $uploader->created_at = $question['user']['created_at'];
-                $uploader->updated_at = $question['user']['created_at'];
+                $uploader->created_at = \Carbon\Carbon::parse($question['user']['created_at']);
+                $uploader->updated_at = \Carbon\Carbon::parse($question['user']['created_at']);
                 $uploader->save();
             }
 
@@ -107,8 +107,8 @@ class ImportFromApi extends Command
                     'exam_type_id' => $examType->id,
                 ]);
                 $newquestion->timestamps = false;
-                $newquestion->created_at = $question['created_at'];
-                $newquestion->updated_at = $question['created_at'];
+                $newquestion->created_at = \Carbon\Carbon::parse($question['created_at']);
+                $newquestion->updated_at = \Carbon\Carbon::parse($question['created_at']);
                 $newquestion->save();
             }
 
@@ -124,8 +124,8 @@ class ImportFromApi extends Command
                 'user_id' => $uploader->id,
             ]);
             $submission->timestamps = false;
-            $submission->created_at = $question['created_at'];
-            $submission->updated_at = $question['created_at'];
+            $submission->created_at = \Carbon\Carbon::parse($question['created_at']);
+            $submission->updated_at = \Carbon\Carbon::parse($question['created_at']);
             $submission->save();
             if($question['status']==='published' && $newquestion->status != QuestionStatus::Published){
                 $newquestion->status = QuestionStatus::Published;
