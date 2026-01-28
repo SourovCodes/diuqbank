@@ -121,13 +121,13 @@ class DatabaseSeeder extends Seeder
 
         // Create Exam Types
         $examTypes = collect([
-            'Midterm Exam',
-            'Final Exam',
-            'Quiz',
-            'Assignment',
-            'Lab Exam',
-            'Viva',
-        ])->map(fn ($name) => ExamType::create(['name' => $name]));
+            ['name' => 'Midterm Exam', 'requires_section' => true],
+            ['name' => 'Final Exam', 'requires_section' => true],
+            ['name' => 'Quiz', 'requires_section' => true],
+            ['name' => 'Assignment', 'requires_section' => false],
+            ['name' => 'Lab Exam', 'requires_section' => true],
+            ['name' => 'Viva', 'requires_section' => false],
+        ])->map(fn ($data) => ExamType::create($data));
 
         // Create Questions and Submissions
         $courses = Course::all();
@@ -169,6 +169,7 @@ class DatabaseSeeder extends Seeder
                 $submission = Submission::create([
                     'question_id' => $question->id,
                     'user_id' => $submissionUser->id,
+                    'section' => $examType->requires_section ? fake()->randomElement(['A', 'B', 'C', 'D']) : null,
                     'views' => rand(0, 500),
                 ]);
 

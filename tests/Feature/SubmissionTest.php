@@ -388,3 +388,101 @@ test('user cannot update other users submission', function () {
 
     $response->assertStatus(403);
 });
+
+test('section is required when exam type requires section', function () {
+    $user = User::factory()->create();
+    $department = Department::factory()->create();
+    $course = Course::factory()->create(['department_id' => $department->id]);
+    $semester = Semester::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => true]);
+
+    $pdf = createFakePdf();
+
+    $response = $this->actingAs($user)->post(route('dashboard.submissions.store'), [
+        'department_id' => $department->id,
+        'course_id' => $course->id,
+        'semester_id' => $semester->id,
+        'exam_type_id' => $examType->id,
+        'pdf' => $pdf,
+    ]);
+
+    $response->assertSessionHasErrors(['section']);
+});
+
+test('section is optional when exam type does not require section', function () {
+    $user = User::factory()->create();
+    $department = Department::factory()->create();
+    $course = Course::factory()->create(['department_id' => $department->id]);
+    $semester = Semester::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => false]);
+
+    $pdf = createFakePdf();
+
+    $response = $this->actingAs($user)->post(route('dashboard.submissions.store'), [
+        'department_id' => $department->id,
+        'course_id' => $course->id,
+        'semester_id' => $semester->id,
+        'exam_type_id' => $examType->id,
+        'pdf' => $pdf,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+});
+
+test('section is saved when provided', function () {
+    $user = User::factory()->create();
+    $department = Department::factory()->create();
+    $course = Course::factory()->create(['department_id' => $department->id]);
+    $semester = Semester::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => true]);
+
+    $pdf = createFakePdf();
+
+    $this->actingAs($user)->post(route('dashboard.submissions.store'), [
+        'department_id' => $department->id,
+        'course_id' => $course->id,
+        'semester_id' => $semester->id,
+        'exam_type_id' => $examType->id,
+        'section' => 'A',
+        'pdf' => $pdf,
+    ]);
+
+    $this->assertDatabaseHas('submissions', [
+        'user_id' => $user->id,
+        'section' => 'A',
+    ]);
+});
+
+test('section can be updated', function () {
+    $user = User::factory()->create();
+    $department = Department::factory()->create();
+    $course = Course::factory()->create(['department_id' => $department->id]);
+    $semester = Semester::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => true]);
+
+    $question = Question::factory()->published()->create([
+        'department_id' => $department->id,
+        'course_id' => $course->id,
+        'semester_id' => $semester->id,
+        'exam_type_id' => $examType->id,
+    ]);
+
+    $submission = Submission::factory()->create([
+        'user_id' => $user->id,
+        'question_id' => $question->id,
+        'section' => 'A',
+    ]);
+
+    $this->actingAs($user)->put(route('dashboard.submissions.update', $submission), [
+        'department_id' => $department->id,
+        'course_id' => $course->id,
+        'semester_id' => $semester->id,
+        'exam_type_id' => $examType->id,
+        'section' => 'B',
+    ]);
+
+    $this->assertDatabaseHas('submissions', [
+        'id' => $submission->id,
+        'section' => 'B',
+    ]);
+});
