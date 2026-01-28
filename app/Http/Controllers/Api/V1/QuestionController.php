@@ -5,49 +5,42 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\QuestionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Question\IndexQuestionRequest;
-use App\Http\Resources\Api\V1\QuestionIndexResource;
-use App\Http\Resources\Api\V1\QuestionResource;
 use App\Models\Question;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\Services\QuestionCacheService;
+use Illuminate\Http\JsonResponse;
 
 class QuestionController extends Controller
 {
+    public function __construct(
+        protected QuestionCacheService $cacheService
+    ) {}
+
     /**
      * Display a listing of published questions.
      */
-    public function index(IndexQuestionRequest $request): AnonymousResourceCollection
+    public function index(IndexQuestionRequest $request): JsonResponse
     {
-        $questions = Question::query()
-            ->published()
-            ->filtered(
-                $request->validated('department_id'),
-                $request->validated('course_id'),
-                $request->validated('semester_id'),
-                $request->validated('exam_type_id'),
-            )
-            ->with(['department', 'course', 'semester', 'examType'])
-            ->withMax('submissions', 'views')
-            ->latest()
-            ->paginate($request->validated('per_page', 15));
+        $data = $this->cacheService->getIndex(
+            $request->validated('department_id'),
+            $request->validated('course_id'),
+            $request->validated('semester_id'),
+            $request->validated('exam_type_id'),
+            $request->validated('per_page', 15),
+            $request->integer('page', 1),
+        );
 
-        return QuestionIndexResource::collection($questions);
+        return response()->json($data);
     }
 
     /**
      * Display the specified published question.
      */
-    public function show(Question $question): QuestionResource
+    public function show(Question $question): JsonResponse
     {
         abort_unless($question->status === QuestionStatus::Published, 404);
 
-        $question->load(['department', 'course', 'semester', 'examType'])
-            ->load(['submissions' => function ($query) {
-                $query->with(['user', 'media'])
-                    ->withVoteCounts()
-                    ->orderByRaw('(SELECT COALESCE(SUM(value), 0) FROM votes WHERE votes.submission_id = submissions.id) DESC')
-                    ->limit(30);
-            }]);
+        $data = $this->cacheService->getShow($question);
 
-        return new QuestionResource($question);
+        return response()->json($data);
     }
 }

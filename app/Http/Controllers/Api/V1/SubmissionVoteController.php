@@ -6,11 +6,16 @@ use App\Enums\QuestionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Models\User;
+use App\Services\QuestionCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SubmissionVoteController extends Controller
 {
+    public function __construct(
+        protected QuestionCacheService $cacheService
+    ) {}
+
     /**
      * Upvote a submission.
      */
@@ -19,6 +24,8 @@ class SubmissionVoteController extends Controller
         $this->ensureCanVote($request->user(), $submission);
 
         $vote = $submission->upvote($request->user());
+
+        $this->cacheService->clearQuestionCache($submission->question_id);
 
         return $this->voteResponse($submission, $vote->value);
     }
@@ -32,6 +39,8 @@ class SubmissionVoteController extends Controller
 
         $vote = $submission->downvote($request->user());
 
+        $this->cacheService->clearQuestionCache($submission->question_id);
+
         return $this->voteResponse($submission, $vote->value);
     }
 
@@ -43,6 +52,8 @@ class SubmissionVoteController extends Controller
         $this->ensureQuestionIsPublished($submission);
 
         $submission->removeVote($request->user());
+
+        $this->cacheService->clearQuestionCache($submission->question_id);
 
         return response()->json(null, 204);
     }

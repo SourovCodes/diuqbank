@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\UpdateSubmissionRequest;
 use App\Http\Resources\Api\V1\SubmissionResource;
 use App\Models\Question;
 use App\Models\Submission;
+use App\Services\QuestionCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\DB;
 
 class SubmissionController extends Controller
 {
+    public function __construct(
+        protected QuestionCacheService $cacheService
+    ) {}
+
     /**
      * Display a listing of submissions for authenticated user.
      */
@@ -71,6 +76,8 @@ class SubmissionController extends Controller
             return $submission;
         });
 
+        $this->cacheService->clearQuestionCache($submission->question_id);
+
         $submission->load(Submission::QUESTION_RELATIONS)->loadVoteCounts();
 
         return (new SubmissionResource($submission))
@@ -86,6 +93,7 @@ class SubmissionController extends Controller
         $validated = $request->validated();
 
         $submission->load('question');
+        $oldQuestionId = $submission->question_id;
 
         DB::transaction(function () use ($submission, $validated) {
             if ($this->hasQuestionFieldChanges($validated)) {
@@ -121,6 +129,12 @@ class SubmissionController extends Controller
             }
         });
 
+        // Clear cache for both old and new questions if changed
+        $this->cacheService->clearQuestionCache($oldQuestionId);
+        if ($submission->question_id !== $oldQuestionId) {
+            $this->cacheService->clearQuestionCache($submission->question_id);
+        }
+
         $submission->load(Submission::QUESTION_RELATIONS)->loadVoteCounts();
 
         return new SubmissionResource($submission);
@@ -131,7 +145,11 @@ class SubmissionController extends Controller
      */
     public function destroy(DestroySubmissionRequest $request, Submission $submission): JsonResponse
     {
+        $questionId = $submission->question_id;
+
         $submission->delete();
+
+        $this->cacheService->clearQuestionCache($questionId);
 
         return response()->json(null, 204);
     }

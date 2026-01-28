@@ -9,6 +9,7 @@
 - [Overview](#overview)
 - [Authentication](#authentication)
 - [Rate Limiting](#rate-limiting)
+- [Caching](#caching)
 - [Error Responses](#error-responses)
 - [Endpoints](#endpoints)
   - [Options](#options)
@@ -67,6 +68,20 @@ Rate limits are applied to prevent abuse. The following limits apply:
 | Email verification   | 6 requests/min  |
 
 When rate limited, the API returns a `429 Too Many Requests` response.
+
+---
+
+## Caching
+
+The API implements caching for improved performance. Cache is automatically invalidated when data changes.
+
+| Endpoint | Cache Duration | Invalidation Triggers |
+| -------- | -------------- | --------------------- |
+| `GET /options` | 1 hour | Course or semester created |
+| `GET /questions` | 2 minutes | Submission created/updated/deleted, vote cast |
+| `GET /questions/{id}` | 5 minutes | Submission created/updated/deleted on that question, vote cast on that question |
+
+**Note:** Responses may be slightly stale within the cache duration. For real-time data, the cache is invalidated immediately when relevant mutations occur.
 
 ---
 
