@@ -18,7 +18,6 @@ class SubmissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $pdfMedia = $this->getFirstMedia('pdf');
         $user = $request->user();
 
         return [
@@ -47,7 +46,7 @@ class SubmissionResource extends JsonResource
                     'name' => $this->question->examType?->name,
                 ] : null,
             ]),
-            'pdf_url' => $pdfMedia?->getUrl(),
+            'pdf_url' => $this->pdf_url,
             'section' => $this->section,
             'vote_score' => (int) ($this->votes_sum_value ?? 0),
             'user_vote' => $user ? $this->getUserVote($user) : null,

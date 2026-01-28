@@ -32,7 +32,7 @@ class SubmissionController extends Controller
                 'data' => $submissions->map(fn (Submission $submission) => [
                     'id' => $submission->id,
                     'section' => $submission->section,
-                    'pdf_url' => $submission->getFirstMediaUrl('pdf'),
+                    'pdf_url' => $submission->pdf_url,
                     'vote_score' => (int) ($submission->vote_score ?? 0),
                     'views' => $submission->views,
                     'created_at' => $submission->created_at->toISOString(),
@@ -119,7 +119,7 @@ class SubmissionController extends Controller
                 'semester_id' => $submission->question->semester_id,
                 'exam_type_id' => $submission->question->exam_type_id,
                 'section' => $submission->section,
-                'pdf_url' => $submission->getFirstMediaUrl('pdf'),
+                'pdf_url' => $submission->pdf_url,
                 'pdf_name' => $submission->getFirstMedia('pdf')?->file_name,
             ],
             'formOptions' => $this->optionsRepository->getFormOptions(),
