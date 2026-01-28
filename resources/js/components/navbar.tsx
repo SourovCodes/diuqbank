@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, LogOut, Menu, Moon, Sun } from 'lucide-react';
+import { BookOpen, ChevronDown, LayoutDashboard, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
@@ -80,6 +80,12 @@ export function Navbar() {
                                     </div>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
+                                        <Link href="/dashboard" className="cursor-pointer">
+                                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                                            Dashboard
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
                                         <Link href="/logout" method="post" as="button" className="w-full cursor-pointer">
                                             <LogOut className="mr-2 h-4 w-4" />
                                             Logout
@@ -134,6 +140,12 @@ export function Navbar() {
                                 {auth?.user ? (
                                     <>
                                         <div className="my-4 border-t" />
+                                        <Button variant="ghost" className="justify-start" asChild onClick={() => setMobileMenuOpen(false)}>
+                                            <Link href="/dashboard">
+                                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                                Dashboard
+                                            </Link>
+                                        </Button>
                                         <Button variant="ghost" className="justify-start text-destructive" asChild onClick={() => setMobileMenuOpen(false)}>
                                             <Link href="/logout" method="post" as="button">
                                                 <LogOut className="mr-2 h-4 w-4" />

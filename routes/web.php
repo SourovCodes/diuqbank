@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContributorController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\SubmissionController as DashboardSubmissionController;
 use App\Http\Controllers\QuestionController;
@@ -71,21 +72,25 @@ Route::middleware('auth')->group(function () {
     Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])->name('submissions.downvote');
 
     // Dashboard routes
-    Route::prefix('dashboard')->name('dashboard.')->middleware('verified')->group(function () {
+    Route::middleware('verified')->group(function () {
+        Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
-        // Submissions
-        Route::get('/submissions', [DashboardSubmissionController::class, 'index'])->name('submissions.index');
-        Route::get('/submissions/create', [DashboardSubmissionController::class, 'create'])->name('submissions.create');
-        Route::post('/submissions', [DashboardSubmissionController::class, 'store'])->name('submissions.store');
-        Route::get('/submissions/{submission}/edit', [DashboardSubmissionController::class, 'edit'])->name('submissions.edit');
-        Route::put('/submissions/{submission}', [DashboardSubmissionController::class, 'update'])->name('submissions.update');
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
-        // Profile
-        Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-        Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+            // Submissions
+            Route::get('/submissions', [DashboardSubmissionController::class, 'index'])->name('submissions.index');
+            Route::get('/submissions/create', [DashboardSubmissionController::class, 'create'])->name('submissions.create');
+            Route::post('/submissions', [DashboardSubmissionController::class, 'store'])->name('submissions.store');
+            Route::get('/submissions/{submission}/edit', [DashboardSubmissionController::class, 'edit'])->name('submissions.edit');
+            Route::put('/submissions/{submission}', [DashboardSubmissionController::class, 'update'])->name('submissions.update');
 
+            // Profile
+            Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+            Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+            Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+
+        });
     });
 });
 if (app()->isLocal()) {
