@@ -37,6 +37,7 @@ class QuestionResource extends JsonResource
                 'id' => $this->examType->id,
                 'name' => $this->examType->name,
             ]),
+            'submissions_count' => $this->whenCounted('submissions'),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

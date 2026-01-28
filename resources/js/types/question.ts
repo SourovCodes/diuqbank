@@ -27,6 +27,7 @@ export interface Question {
     course?: Course;
     semester?: Semester;
     exam_type?: ExamType;
+    submissions_count?: number;
     created_at: string;
 }
 

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Calendar, Clock, School } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, FileText, School } from 'lucide-react';
 
 import { formatDate } from '@/lib/utils';
 import { show as showQuestion } from '@/routes/questions';
@@ -39,6 +39,12 @@ export function QuestionCard({ question }: QuestionCardProps) {
                             <Clock className="mr-1.5 h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                             <span>{formatDate(question.created_at)}</span>
                         </div>
+                        {question.submissions_count !== undefined && (
+                            <div className="flex items-center">
+                                <FileText className="mr-1.5 h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                                <span>{question.submissions_count} {question.submissions_count === 1 ? 'submission' : 'submissions'}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="absolute right-4 bottom-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 opacity-0 transition-opacity group-hover:opacity-100">

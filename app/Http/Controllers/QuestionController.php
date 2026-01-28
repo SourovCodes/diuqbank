@@ -48,6 +48,7 @@ class QuestionController extends Controller
 
         $questions = Question::query()
             ->with(['department', 'course', 'semester', 'examType'])
+            ->withCount('submissions')
             ->published()
             ->department($departmentId)
             ->course($courseId)
