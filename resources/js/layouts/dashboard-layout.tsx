@@ -2,12 +2,12 @@ import { router } from '@inertiajs/react';
 import { type PropsWithChildren, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import DashboardController from '@/actions/App/Http/Controllers/Dashboard/DashboardController';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
-import DashboardController from '@/actions/App/Http/Controllers/Dashboard/DashboardController';
 import type { FlashData, ToastType } from '@/types';
 
 interface DashboardLayoutProps extends PropsWithChildren {

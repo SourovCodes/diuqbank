@@ -14,6 +14,7 @@ export interface SubmissionQuestion {
 
 export interface SubmissionItem {
     id: number;
+    section: string | null;
     pdf_url: string | null;
     vote_score: number;
     views: number;

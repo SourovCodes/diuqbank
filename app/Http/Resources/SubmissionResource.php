@@ -48,6 +48,7 @@ class SubmissionResource extends JsonResource
                 ] : null,
             ]),
             'pdf_url' => $pdfMedia?->getUrl(),
+            'section' => $this->section,
             'vote_score' => (int) ($this->votes_sum_value ?? 0),
             'user_vote' => $user ? $this->getUserVote($user) : null,
             'views' => $this->views,

@@ -31,6 +31,7 @@ class SubmissionController extends Controller
             'submissions' => [
                 'data' => $submissions->map(fn (Submission $submission) => [
                     'id' => $submission->id,
+                    'section' => $submission->section,
                     'pdf_url' => $submission->getFirstMediaUrl('pdf'),
                     'vote_score' => (int) ($submission->vote_score ?? 0),
                     'views' => $submission->views,

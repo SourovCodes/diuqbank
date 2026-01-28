@@ -61,6 +61,7 @@ export default function MySubmissions({ submissions }: Props) {
                                             </span>
                                             <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                                                 {submission.question.exam_type.name}
+                                                {submission.section && ` (${submission.section})`}
                                             </span>
                                             <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                                                 <Calendar className="h-3 w-3" />

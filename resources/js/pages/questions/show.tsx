@@ -163,6 +163,11 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         <span className="truncate font-medium">
                                             {selectedSubmission?.user?.name ?? 'Anonymous'}
                                         </span>
+                                        {selectedSubmission?.section && (
+                                            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                                Section {selectedSubmission.section}
+                                            </span>
+                                        )}
                                         {isTopRated && (
                                             <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                                                 Top Rated
@@ -302,6 +307,11 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                     <span className="truncate text-sm font-medium">
                                                         {submission.user?.name ?? 'Anonymous'}
                                                     </span>
+                                                    {submission.section && (
+                                                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                                            {submission.section}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                     <span className="inline-flex items-center gap-1">
