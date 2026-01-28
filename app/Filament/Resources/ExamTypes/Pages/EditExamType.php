@@ -14,16 +14,12 @@ class EditExamType extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->after(fn () => app(QuestionFormOptionsRepository::class)->clearCache()),
         ];
     }
 
     protected function afterSave(): void
-    {
-        app(QuestionFormOptionsRepository::class)->clearCache();
-    }
-
-    protected function afterDelete(): void
     {
         app(QuestionFormOptionsRepository::class)->clearCache();
     }
