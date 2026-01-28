@@ -89,6 +89,7 @@ class SubmissionController extends Controller
         $submission = Submission::create([
             'question_id' => $question->id,
             'user_id' => $request->user()->id,
+            'section' => $validated['section'] ?? null,
         ]);
 
         // Handle PDF upload
@@ -116,6 +117,7 @@ class SubmissionController extends Controller
                 'course_id' => $submission->question->course_id,
                 'semester_id' => $submission->question->semester_id,
                 'exam_type_id' => $submission->question->exam_type_id,
+                'section' => $submission->section,
                 'pdf_url' => $submission->getFirstMediaUrl('pdf'),
                 'pdf_name' => $submission->getFirstMedia('pdf')?->file_name,
             ],
@@ -135,8 +137,11 @@ class SubmissionController extends Controller
             $validated['exam_type_id']
         );
 
-        // Update submission's question
-        $submission->update(['question_id' => $question->id]);
+        // Update submission's question and section
+        $submission->update([
+            'question_id' => $question->id,
+            'section' => $validated['section'] ?? null,
+        ]);
 
         // Handle PDF upload if provided
         if ($request->hasFile('pdf')) {

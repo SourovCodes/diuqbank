@@ -18,6 +18,7 @@ export interface Semester {
 export interface ExamType {
     id: number;
     name: string;
+    requires_section?: boolean;
 }
 
 export interface Question {

@@ -18,6 +18,7 @@ export default function Create({ formOptions }: Props) {
         course_id: '',
         semester_id: '',
         exam_type_id: '',
+        section: '',
         pdf: null,
     });
 

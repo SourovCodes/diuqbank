@@ -24,6 +24,7 @@ export default function Edit({ submission, formOptions }: Props) {
         course_id: String(submission.course_id),
         semester_id: String(submission.semester_id),
         exam_type_id: String(submission.exam_type_id),
+        section: submission.section ?? '',
         pdf: null,
         _method: 'put',
     });

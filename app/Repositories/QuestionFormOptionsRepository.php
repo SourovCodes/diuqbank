@@ -21,7 +21,7 @@ class QuestionFormOptionsRepository
             'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
             'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
             'courses' => Course::query()->select('id', 'name', 'department_id')->orderBy('name')->get(),
-            'examTypes' => ExamType::query()->select('id', 'name')->orderBy('name')->get(),
+            'examTypes' => ExamType::query()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ]);
     }
 

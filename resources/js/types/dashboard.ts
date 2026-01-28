@@ -35,6 +35,7 @@ export interface SubmissionEditData {
     course_id: number;
     semester_id: number;
     exam_type_id: number;
+    section: string | null;
     pdf_url: string | null;
     pdf_name: string | null;
 }
@@ -51,6 +52,7 @@ export interface SubmissionFormData {
     course_id: string;
     semester_id: string;
     exam_type_id: string;
+    section: string;
     pdf: File | null;
 }
 
@@ -59,5 +61,6 @@ export interface SubmissionFormErrors {
     course_id?: string;
     semester_id?: string;
     exam_type_id?: string;
+    section?: string;
     pdf?: string;
 }

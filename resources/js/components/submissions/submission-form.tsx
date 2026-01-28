@@ -111,6 +111,14 @@ export function SubmissionForm({
         })
     );
 
+    const selectedExamTypeRequiresSection = useMemo(() => {
+        if (!data.exam_type_id) return false;
+        const examType = formOptions.examTypes.find(
+            (t) => String(t.id) === data.exam_type_id
+        );
+        return examType?.requires_section ?? false;
+    }, [data.exam_type_id, formOptions.examTypes]);
+
     const handleDepartmentChange = (value: string) => {
         setData("department_id", value);
         setData("course_id", "");
@@ -289,6 +297,14 @@ export function SubmissionForm({
                             onChange={(value) => {
                                 setData("exam_type_id", value);
                                 clearErrors("exam_type_id");
+                                // Clear section if new exam type doesn't require it
+                                const newExamType = formOptions.examTypes.find(
+                                    (t) => String(t.id) === value
+                                );
+                                if (!newExamType?.requires_section) {
+                                    setData("section", "");
+                                    clearErrors("section");
+                                }
                             }}
                             placeholder="Select exam type..."
                             searchPlaceholder="Search exam types..."
@@ -302,6 +318,29 @@ export function SubmissionForm({
                         )}
                     </div>
                 </div>
+
+                {selectedExamTypeRequiresSection && (
+                    <div className="space-y-2">
+                        <Label htmlFor="section">
+                            Section <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                            id="section"
+                            value={data.section}
+                            onChange={(e) => {
+                                setData("section", e.target.value);
+                                clearErrors("section");
+                            }}
+                            placeholder="e.g., A, B, C"
+                            disabled={processing}
+                        />
+                        {errors.section && (
+                            <p className="text-sm text-destructive">
+                                {errors.section}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <div className="space-y-2">
                     <Label>Question Paper (PDF)</Label>
