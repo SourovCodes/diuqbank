@@ -87,8 +87,11 @@ class ImportFromApi extends Command
                     'password' => bcrypt('defaultpassword'), 
                     'username' =>$question['user']['username'],
                     'student_id' =>$question['user']['student_id'],
-                    'created_at' => $question['user']['created_at'],
                 ]);
+                $uploader->timestamps = false;
+                $uploader->created_at = $question['user']['created_at'];
+                $uploader->updated_at = $question['user']['created_at'];
+                $uploader->save();
             }
 
             $newquestion = Question::where('department_id', $department->id)
@@ -102,8 +105,11 @@ class ImportFromApi extends Command
                     'course_id' => $course->id,
                     'semester_id' => $semester->id,
                     'exam_type_id' => $examType->id,
-                    'created_at' => $question['created_at'],
                 ]);
+                $newquestion->timestamps = false;
+                $newquestion->created_at = $question['created_at'];
+                $newquestion->updated_at = $question['created_at'];
+                $newquestion->save();
             }
 
             $submissionExists = Submission::where('question_id', $newquestion->id)
@@ -116,8 +122,11 @@ class ImportFromApi extends Command
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
-                'created_at' => $question['created_at'],
             ]);
+            $submission->timestamps = false;
+            $submission->created_at = $question['created_at'];
+            $submission->updated_at = $question['created_at'];
+            $submission->save();
             if($question['status']==='published' && $newquestion->status != QuestionStatus::Published){
                 $newquestion->status = QuestionStatus::Published;
                 $newquestion->save();
