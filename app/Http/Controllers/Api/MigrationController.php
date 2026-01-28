@@ -55,6 +55,7 @@ class MigrationController extends Controller
                     'username' => $question->user->username,
                     'student_id' => $question->user->student_id,
                     'avatar_url' => $question->user->avatar_url,
+                    'created_at' => $question->user->created_at->toISOString(),
                 ],
                 'media' => $media ? [
                     'id' => $media->id,
