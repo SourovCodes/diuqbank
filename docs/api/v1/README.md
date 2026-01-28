@@ -192,6 +192,7 @@ Get all form options for dropdowns/selects (departments, courses, semesters, exa
 ```
 
 **Notes:**
+- **Cached for 1 hour** - Response is cached for performance; cache is invalidated when new courses or semesters are created
 - Departments are sorted alphabetically by name
 - Courses are sorted alphabetically by name and include `department_id` for filtering
 - Semesters are sorted by newest first

@@ -10,6 +10,14 @@ use Illuminate\Support\Collection;
 
 class QuestionFormOptionsRepository
 {
+    public const CACHE_KEY_FORM_OPTIONS = 'question_form_options';
+
+    public const CACHE_KEY_FILTER_OPTIONS = 'filter_options';
+
+    public const CACHE_KEY_API_OPTIONS = 'api_options';
+
+    public const CACHE_TTL = 3600;
+
     /**
      * Get cached form options for question forms.
      *
@@ -17,7 +25,7 @@ class QuestionFormOptionsRepository
      */
     public function getFormOptions(): array
     {
-        return cache()->remember('question_form_options', 3600, fn () => [
+        return cache()->remember(self::CACHE_KEY_FORM_OPTIONS, self::CACHE_TTL, fn () => [
             'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
             'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
             'courses' => Course::query()->select('id', 'name', 'department_id')->orderBy('name')->get(),
@@ -32,7 +40,7 @@ class QuestionFormOptionsRepository
      */
     public function getFilterOptions(?int $departmentId): array
     {
-        $filterOptions = cache()->remember('filter_options', 3600, fn () => [
+        $filterOptions = cache()->remember(self::CACHE_KEY_FILTER_OPTIONS, self::CACHE_TTL, fn () => [
             'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
             'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
             'courses' => Course::query()
@@ -46,6 +54,37 @@ class QuestionFormOptionsRepository
         $filterOptions['courses'] = $this->getCoursesByDepartment($departmentId, $filterOptions['courses']);
 
         return $filterOptions;
+    }
+
+    /**
+     * Get cached options for API endpoint.
+     *
+     * @return array{departments: array, courses: array, semesters: array, exam_types: array}
+     */
+    public function getApiOptions(): array
+    {
+        return cache()->remember(self::CACHE_KEY_API_OPTIONS, self::CACHE_TTL, fn () => [
+            'departments' => Department::query()
+                ->select(['id', 'name', 'short_name'])
+                ->orderBy('name')
+                ->get()
+                ->toArray(),
+            'courses' => Course::query()
+                ->select(['id', 'department_id', 'name'])
+                ->orderBy('name')
+                ->get()
+                ->toArray(),
+            'semesters' => Semester::query()
+                ->select(['id', 'name'])
+                ->latest()
+                ->get()
+                ->toArray(),
+            'exam_types' => ExamType::query()
+                ->select(['id', 'name'])
+                ->orderBy('name')
+                ->get()
+                ->toArray(),
+        ]);
     }
 
     /**
@@ -72,7 +111,8 @@ class QuestionFormOptionsRepository
      */
     public function clearCache(): void
     {
-        cache()->forget('question_form_options');
-        cache()->forget('filter_options');
+        cache()->forget(self::CACHE_KEY_FORM_OPTIONS);
+        cache()->forget(self::CACHE_KEY_FILTER_OPTIONS);
+        cache()->forget(self::CACHE_KEY_API_OPTIONS);
     }
 }
