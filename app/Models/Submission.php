@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,18 @@ class Submission extends Model implements HasMedia
 
     public const string MEDIA_COLLECTION_PDF = 'pdf';
 
+    public const int VOTE_UP = 1;
+
+    public const int VOTE_DOWN = -1;
+
+    /** @var array<int, string> */
+    public const array QUESTION_RELATIONS = [
+        'question.department',
+        'question.course',
+        'question.semester',
+        'question.examType',
+    ];
+
     protected $fillable = [
         'question_id',
         'user_id',
@@ -29,6 +42,28 @@ class Submission extends Model implements HasMedia
         $this->addMediaCollection(self::MEDIA_COLLECTION_PDF)
             ->singleFile()
             ->acceptsMimeTypes(['application/pdf']);
+    }
+
+    /**
+     * Scope to include vote counts.
+     */
+    public function scopeWithVoteCounts(Builder $query): void
+    {
+        $query->withCount([
+            'votes as upvotes_count' => fn ($q) => $q->where('value', self::VOTE_UP),
+            'votes as downvotes_count' => fn ($q) => $q->where('value', self::VOTE_DOWN),
+        ]);
+    }
+
+    /**
+     * Load vote counts on the model.
+     */
+    public function loadVoteCounts(): self
+    {
+        return $this->loadCount([
+            'votes as upvotes_count' => fn ($q) => $q->where('value', self::VOTE_UP),
+            'votes as downvotes_count' => fn ($q) => $q->where('value', self::VOTE_DOWN),
+        ]);
     }
 
     /**
@@ -64,7 +99,7 @@ class Submission extends Model implements HasMedia
     {
         return $this->votes()->updateOrCreate(
             ['user_id' => $user->id],
-            ['value' => 1]
+            ['value' => self::VOTE_UP]
         );
     }
 
@@ -72,7 +107,7 @@ class Submission extends Model implements HasMedia
     {
         return $this->votes()->updateOrCreate(
             ['user_id' => $user->id],
-            ['value' => -1]
+            ['value' => self::VOTE_DOWN]
         );
     }
 

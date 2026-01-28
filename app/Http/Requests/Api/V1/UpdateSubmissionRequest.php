@@ -2,19 +2,21 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Models\Course;
+use App\Http\Requests\Api\V1\Concerns\ValidatesCourseDepartment;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class UpdateSubmissionRequest extends FormRequest
 {
+    use ValidatesCourseDepartment;
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        // Only the owner can update their submission
-        return $this->user() !== null && $this->route('submission')->user_id === $this->user()->id;
+        return $this->user() !== null
+            && $this->route('submission')->user_id === $this->user()->id;
     }
 
     /**
@@ -25,11 +27,11 @@ class UpdateSubmissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['sometimes', 'required', 'exists:departments,id'],
-            'course_id' => ['sometimes', 'required', 'exists:courses,id'],
-            'semester_id' => ['sometimes', 'required', 'exists:semesters,id'],
-            'exam_type_id' => ['sometimes', 'required', 'exists:exam_types,id'],
-            'pdf' => ['sometimes', 'required', 'file', 'mimes:pdf', 'max:10240'], // 10MB max
+            'department_id' => ['sometimes', 'required', 'integer', 'exists:departments,id'],
+            'course_id' => ['sometimes', 'required', 'integer', 'exists:courses,id'],
+            'semester_id' => ['sometimes', 'required', 'integer', 'exists:semesters,id'],
+            'exam_type_id' => ['sometimes', 'required', 'integer', 'exists:exam_types,id'],
+            'pdf' => ['sometimes', 'required', 'file', 'mimes:pdf', 'max:10240'],
         ];
     }
 
@@ -42,35 +44,19 @@ class UpdateSubmissionRequest extends FormRequest
             function (Validator $validator) {
                 if (! $this->hasAny(['department_id', 'course_id', 'semester_id', 'exam_type_id', 'pdf'])) {
                     $validator->errors()->add('pdf', 'At least one field must be provided for update.');
+
+                    return;
                 }
 
-                $this->validateCourseBelongsToDepartment($validator);
+                if ($this->hasAny(['department_id', 'course_id'])) {
+                    $submission = $this->route('submission');
+                    $departmentId = (int) $this->input('department_id', $submission->question->department_id);
+                    $courseId = (int) $this->input('course_id', $submission->question->course_id);
+
+                    $this->validateCourseBelongsToDepartment($validator, $departmentId, $courseId);
+                }
             },
         ];
-    }
-
-    /**
-     * Validate that the course belongs to the selected department.
-     */
-    protected function validateCourseBelongsToDepartment(Validator $validator): void
-    {
-        $submission = $this->route('submission');
-        $departmentId = $this->input('department_id', $submission->question->department_id);
-        $courseId = $this->input('course_id', $submission->question->course_id);
-
-        // Only validate if either field is being updated
-        if (! $this->hasAny(['department_id', 'course_id'])) {
-            return;
-        }
-
-        $course = Course::find($courseId);
-
-        if ($course && $course->department_id !== (int) $departmentId) {
-            $validator->errors()->add(
-                'course_id',
-                'The selected course does not belong to the selected department.'
-            );
-        }
     }
 
     /**

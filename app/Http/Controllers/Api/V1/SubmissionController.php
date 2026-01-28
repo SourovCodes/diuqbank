@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\QuestionStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\DestroySubmissionRequest;
 use App\Http\Requests\Api\V1\StoreSubmissionRequest;
 use App\Http\Requests\Api\V1\UpdateSubmissionRequest;
 use App\Http\Resources\Api\V1\SubmissionResource;
@@ -24,12 +25,9 @@ class SubmissionController extends Controller
         $perPage = min((int) $request->input('per_page', 15), 100);
 
         $submissions = Submission::query()
-            ->where('user_id', auth()->id())
-            ->with(['question.department', 'question.course', 'question.semester', 'question.examType'])
-            ->withCount([
-                'votes as upvotes_count' => fn ($query) => $query->where('value', 1),
-                'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
-            ])
+            ->where('user_id', $request->user()->id)
+            ->with(Submission::QUESTION_RELATIONS)
+            ->withVoteCounts()
             ->latest()
             ->paginate($perPage);
 
@@ -43,8 +41,7 @@ class SubmissionController extends Controller
     {
         $validated = $request->validated();
 
-        $submission = DB::transaction(function () use ($validated) {
-            // Find or create the question
+        $submission = DB::transaction(function () use ($request, $validated) {
             $question = Question::query()->firstOrCreate(
                 [
                     'department_id' => $validated['department_id'],
@@ -53,29 +50,28 @@ class SubmissionController extends Controller
                     'exam_type_id' => $validated['exam_type_id'],
                 ],
                 [
-                    'status' => $this->determineQuestionStatusFromValidated($validated),
+                    'status' => $this->determineQuestionStatus(
+                        $validated['department_id'],
+                        $validated['course_id'],
+                        $validated['semester_id'],
+                        $validated['exam_type_id']
+                    ),
                 ]
             );
 
-            // Create the submission
             $submission = Submission::query()->create([
                 'question_id' => $question->id,
-                'user_id' => auth()->id(),
+                'user_id' => $request->user()->id,
                 'views' => 0,
             ]);
 
-            // Add the PDF to the submission
             $submission->addMedia($validated['pdf'])
                 ->toMediaCollection(Submission::MEDIA_COLLECTION_PDF);
 
             return $submission;
         });
 
-        $submission->load(['question.department', 'question.course', 'question.semester', 'question.examType'])
-            ->loadCount([
-                'votes as upvotes_count' => fn ($query) => $query->where('value', 1),
-                'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
-            ]);
+        $submission->load(Submission::QUESTION_RELATIONS)->loadVoteCounts();
 
         return (new SubmissionResource($submission))
             ->response()
@@ -89,18 +85,10 @@ class SubmissionController extends Controller
     {
         $validated = $request->validated();
 
-        // Eager load question to prevent N+1
         $submission->load('question');
-        $originalQuestionId = $submission->question_id;
 
         DB::transaction(function () use ($submission, $validated) {
-            // Update question if any question-related fields are provided
-            if (
-                isset($validated['department_id']) ||
-                isset($validated['course_id']) ||
-                isset($validated['semester_id']) ||
-                isset($validated['exam_type_id'])
-            ) {
+            if ($this->hasQuestionFieldChanges($validated)) {
                 $questionData = [
                     'department_id' => $validated['department_id'] ?? $submission->question->department_id,
                     'course_id' => $validated['course_id'] ?? $submission->question->course_id,
@@ -108,7 +96,6 @@ class SubmissionController extends Controller
                     'exam_type_id' => $validated['exam_type_id'] ?? $submission->question->exam_type_id,
                 ];
 
-                // Find or create the new question
                 $question = Question::query()->firstOrCreate(
                     $questionData,
                     [
@@ -121,29 +108,20 @@ class SubmissionController extends Controller
                     ]
                 );
 
-                // If question changed, delete existing votes (content context changed)
                 if ($submission->question_id !== $question->id) {
                     $submission->votes()->delete();
                 }
 
-                // Update submission's question
-                $submission->update([
-                    'question_id' => $question->id,
-                ]);
+                $submission->update(['question_id' => $question->id]);
             }
 
-            // Update PDF if provided
             if (isset($validated['pdf'])) {
                 $submission->addMedia($validated['pdf'])
                     ->toMediaCollection(Submission::MEDIA_COLLECTION_PDF);
             }
         });
 
-        $submission->load(['question.department', 'question.course', 'question.semester', 'question.examType'])
-            ->loadCount([
-                'votes as upvotes_count' => fn ($query) => $query->where('value', 1),
-                'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
-            ]);
+        $submission->load(Submission::QUESTION_RELATIONS)->loadVoteCounts();
 
         return new SubmissionResource($submission);
     }
@@ -151,21 +129,26 @@ class SubmissionController extends Controller
     /**
      * Remove the specified submission from storage.
      */
-    public function destroy(Submission $submission): JsonResponse
+    public function destroy(DestroySubmissionRequest $request, Submission $submission): JsonResponse
     {
-        // Authorization is handled via policy/gate
-        if ($submission->user_id !== auth()->id()) {
-            abort(403, 'You can only delete your own submissions.');
-        }
-
         $submission->delete();
 
         return response()->json(null, 204);
     }
 
     /**
+     * Check if any question-related fields are being updated.
+     */
+    protected function hasQuestionFieldChanges(array $validated): bool
+    {
+        return isset($validated['department_id'])
+            || isset($validated['course_id'])
+            || isset($validated['semester_id'])
+            || isset($validated['exam_type_id']);
+    }
+
+    /**
      * Determine question status based on whether all parameters have published questions.
-     * Uses a single optimized query instead of 4 separate queries.
      */
     protected function determineQuestionStatus(int $departmentId, int $courseId, int $semesterId, int $examTypeId): QuestionStatus
     {
@@ -196,18 +179,5 @@ class SubmissionController extends Controller
         }
 
         return QuestionStatus::PendingReview;
-    }
-
-    /**
-     * Determine question status from validated request data.
-     */
-    protected function determineQuestionStatusFromValidated(array $validated): QuestionStatus
-    {
-        return $this->determineQuestionStatus(
-            $validated['department_id'],
-            $validated['course_id'],
-            $validated['semester_id'],
-            $validated['exam_type_id']
-        );
     }
 }

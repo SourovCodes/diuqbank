@@ -43,10 +43,7 @@ class QuestionController extends Controller
         $question->load(['department', 'course', 'semester', 'examType'])
             ->load(['submissions' => function ($query) {
                 $query->with(['user', 'media'])
-                    ->withCount([
-                        'votes as upvotes_count' => fn ($q) => $q->where('value', 1),
-                        'votes as downvotes_count' => fn ($q) => $q->where('value', -1),
-                    ])
+                    ->withVoteCounts()
                     ->orderByRaw('(SELECT COALESCE(SUM(value), 0) FROM votes WHERE votes.submission_id = submissions.id) DESC')
                     ->limit(30);
             }]);

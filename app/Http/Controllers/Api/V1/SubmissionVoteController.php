@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\QuestionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,8 +16,7 @@ class SubmissionVoteController extends Controller
      */
     public function upvote(Request $request, Submission $submission): JsonResponse
     {
-        $this->ensureQuestionIsPublished($submission);
-        $this->ensureNotOwnSubmission($request, $submission);
+        $this->ensureCanVote($request->user(), $submission);
 
         $vote = $submission->upvote($request->user());
 
@@ -28,8 +28,7 @@ class SubmissionVoteController extends Controller
      */
     public function downvote(Request $request, Submission $submission): JsonResponse
     {
-        $this->ensureQuestionIsPublished($submission);
-        $this->ensureNotOwnSubmission($request, $submission);
+        $this->ensureCanVote($request->user(), $submission);
 
         $vote = $submission->downvote($request->user());
 
@@ -65,6 +64,20 @@ class SubmissionVoteController extends Controller
     }
 
     /**
+     * Ensure the user can vote on this submission.
+     */
+    private function ensureCanVote(User $user, Submission $submission): void
+    {
+        $this->ensureQuestionIsPublished($submission);
+
+        abort_if(
+            $submission->user_id === $user->id,
+            403,
+            'You cannot vote on your own submission.'
+        );
+    }
+
+    /**
      * Ensure the submission's question is published.
      */
     private function ensureQuestionIsPublished(Submission $submission): void
@@ -75,26 +88,11 @@ class SubmissionVoteController extends Controller
     }
 
     /**
-     * Ensure the user is not voting on their own submission.
-     */
-    private function ensureNotOwnSubmission(Request $request, Submission $submission): void
-    {
-        abort_if(
-            $submission->user_id === $request->user()->id,
-            403,
-            'You cannot vote on your own submission.'
-        );
-    }
-
-    /**
      * Return a standardized vote response with updated counts.
      */
     private function voteResponse(Submission $submission, int $voteValue): JsonResponse
     {
-        $submission->loadCount([
-            'votes as upvotes_count' => fn ($query) => $query->where('value', 1),
-            'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
-        ]);
+        $submission->loadVoteCounts();
 
         return response()->json([
             'data' => [

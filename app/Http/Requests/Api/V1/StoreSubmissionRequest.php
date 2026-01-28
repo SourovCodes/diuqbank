@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Models\Course;
+use App\Http\Requests\Api\V1\Concerns\ValidatesCourseDepartment;
 use App\Models\Question;
 use App\Models\Submission;
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +10,8 @@ use Illuminate\Validation\Validator;
 
 class StoreSubmissionRequest extends FormRequest
 {
+    use ValidatesCourseDepartment;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -30,7 +32,7 @@ class StoreSubmissionRequest extends FormRequest
             'course_id' => ['required', 'integer', 'exists:courses,id'],
             'semester_id' => ['required', 'integer', 'exists:semesters,id'],
             'exam_type_id' => ['required', 'integer', 'exists:exam_types,id'],
-            'pdf' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10MB max
+            'pdf' => ['required', 'file', 'mimes:pdf', 'max:10240'],
         ];
     }
 
@@ -41,29 +43,14 @@ class StoreSubmissionRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                $this->validateCourseBelongsToDepartment($validator);
+                $this->validateCourseBelongsToDepartment(
+                    $validator,
+                    (int) $this->input('department_id'),
+                    (int) $this->input('course_id')
+                );
                 $this->validateNoDuplicateSubmission($validator);
             },
         ];
-    }
-
-    /**
-     * Validate that the course belongs to the selected department.
-     */
-    protected function validateCourseBelongsToDepartment(Validator $validator): void
-    {
-        if ($validator->errors()->hasAny(['department_id', 'course_id'])) {
-            return;
-        }
-
-        $course = Course::find($this->input('course_id'));
-
-        if ($course && $course->department_id !== (int) $this->input('department_id')) {
-            $validator->errors()->add(
-                'course_id',
-                'The selected course does not belong to the selected department.'
-            );
-        }
     }
 
     /**
