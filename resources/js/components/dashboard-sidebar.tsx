@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FileText, Home, LogOut, User } from 'lucide-react';
+import { BookOpen, FileText, Home, LayoutDashboard, LogOut, User } from 'lucide-react';
 
+import DashboardController from '@/actions/App/Http/Controllers/Dashboard/DashboardController';
 import {
     Sidebar,
     SidebarContent,
@@ -20,6 +21,11 @@ import { home } from '@/routes/index';
 import type { SharedData } from '@/types';
 
 const navigationItems = [
+    {
+        title: 'Dashboard',
+        url: DashboardController.url(),
+        icon: LayoutDashboard,
+    },
     {
         title: 'My Submissions',
         url: submissionsIndex.url(),
