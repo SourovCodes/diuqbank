@@ -62,7 +62,7 @@ class MigrationController extends Controller
                     'mime_type' => $media->mime_type,
                     'size' => $media->size,
                     'url' => $question->pdf_url,
-                    'original_url' => $media->getFullUrl(),
+                    'original_url' => $media->getTemporaryUrl(now()->addHour()),
                 ] : null,
             ];
         });
