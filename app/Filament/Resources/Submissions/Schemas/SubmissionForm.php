@@ -40,6 +40,11 @@ class SubmissionForm
                             ->preload()
                             ->searchable()
                             ->required(),
+                        TextInput::make('section')
+                            ->label('Section')
+                            ->placeholder('e.g., A, B, C')
+                            ->maxLength(255)
+                            ->helperText('Optional: Specify the section if required by the exam type'),
                         TextInput::make('views')
                             ->label('View Count')
                             ->numeric()
@@ -48,7 +53,7 @@ class SubmissionForm
                             ->dehydrated()
                             ->helperText('Automatically tracked'),
                     ])
-                    ->columns(2)
+                    ->columns(3)
                     ->columnSpanFull(),
                 Section::make('PDF Document')
                     ->description('Upload the question paper in PDF format (max 10MB)')

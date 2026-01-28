@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('exam_types', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->boolean('requires_section')->default(false);
             $table->timestamps();
         });
     }

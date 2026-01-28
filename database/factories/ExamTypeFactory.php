@@ -18,6 +18,7 @@ class ExamTypeFactory extends Factory
     {
         return [
             'name' => fake()->unique()->randomElement(['Midterm', 'Final', 'Quiz', 'Assignment', 'Lab Exam']),
+            'requires_section' => fake()->boolean(30),
         ];
     }
 }

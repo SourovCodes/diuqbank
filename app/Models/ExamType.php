@@ -13,7 +13,18 @@ class ExamType extends Model
 
     protected $fillable = [
         'name',
+        'requires_section',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'requires_section' => 'boolean',
+        ];
+    }
 
     /**
      * @return HasMany<Question, $this>

@@ -31,6 +31,11 @@ class SubmissionsTable
                     ->label('Exam')
                     ->badge()
                     ->color('success'),
+                TextColumn::make('section')
+                    ->label('Section')
+                    ->placeholder('-')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('user.name')
                     ->label('Submitted By')
                     ->sortable()

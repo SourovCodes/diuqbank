@@ -19,6 +19,7 @@ class Submission extends Model implements HasMedia
     protected $fillable = [
         'question_id',
         'user_id',
+        'section',
         'views',
     ];
 

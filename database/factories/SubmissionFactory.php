@@ -21,6 +21,7 @@ class SubmissionFactory extends Factory
         return [
             'question_id' => Question::factory(),
             'user_id' => User::factory(),
+            'section' => fake()->optional(0.3)->randomElement(['A', 'B', 'C', 'D', 'E']),
             'views' => fake()->numberBetween(0, 1000),
         ];
     }

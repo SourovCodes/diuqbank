@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('question_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->text('section')->nullable();
             $table->unsignedInteger('views')->default(0);
             $table->timestamps();
 
