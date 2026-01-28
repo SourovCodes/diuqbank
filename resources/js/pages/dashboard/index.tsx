@@ -1,7 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { Calendar, CheckCircle, Clock, Eye, FileText, Plus, School, ThumbsUp, XCircle } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/empty-state';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
@@ -34,23 +35,6 @@ interface Props {
         rejected: number;
     };
     recentSubmissions: Submission[];
-}
-
-function StatusBadge({ status, label }: { status: QuestionStatus; label: string }) {
-    const config = {
-        published: { icon: CheckCircle, className: 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20' },
-        pending_review: { icon: Clock, className: 'bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-500/20' },
-        rejected: { icon: XCircle, className: 'bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20' },
-    };
-
-    const { icon: Icon, className } = config[status];
-
-    return (
-        <Badge variant="outline" className={className}>
-            <Icon className="mr-1 h-3 w-3" />
-            {label}
-        </Badge>
-    );
 }
 
 export default function Dashboard({ stats, recentSubmissions }: Props) {
@@ -128,19 +112,11 @@ export default function Dashboard({ stats, recentSubmissions }: Props) {
                     </CardHeader>
                     <CardContent>
                         {recentSubmissions.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-8 text-center">
-                                <FileText className="h-12 w-12 text-muted-foreground/50" />
-                                <h3 className="mt-4 text-lg font-semibold">No submissions yet</h3>
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                    Start contributing by uploading your first question paper!
-                                </p>
-                                <Button className="mt-4" asChild>
-                                    <Link href={create.url()}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        New Submission
-                                    </Link>
-                                </Button>
-                            </div>
+                            <EmptyState
+                                icon={FileText}
+                                title="No submissions yet"
+                                description="Start contributing by uploading your first question paper!"
+                            />
                         ) : (
                             <div className="space-y-4">
                                 {recentSubmissions.map((submission) => (

@@ -1,36 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, CheckCircle, Clock, Edit, Eye, FileText, Plus, School, ThumbsUp, XCircle } from 'lucide-react';
+import { Calendar, Edit, Eye, FileText, Plus, School, ThumbsUp } from 'lucide-react';
 
 import { CustomPagination } from '@/components/custom-pagination';
 import { EmptyState } from '@/components/empty-state';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { formatDate } from '@/lib/utils';
 import { create, edit } from '@/routes/dashboard/submissions';
 import { show as showQuestion } from '@/routes/questions';
-import type { QuestionStatus, SubmissionItem, SubmissionsIndexData } from '@/types';
+import type { SubmissionsIndexData } from '@/types';
 
 interface Props {
     submissions: SubmissionsIndexData;
-}
-
-function StatusBadge({ status, label }: { status: QuestionStatus; label: string }) {
-    const config = {
-        published: { variant: 'default' as const, icon: CheckCircle, className: 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20' },
-        pending_review: { variant: 'secondary' as const, icon: Clock, className: 'bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-500/20' },
-        rejected: { variant: 'destructive' as const, icon: XCircle, className: 'bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20' },
-    };
-
-    const { icon: Icon, className } = config[status];
-
-    return (
-        <Badge variant="outline" className={className}>
-            <Icon className="mr-1 h-3 w-3" />
-            {label}
-        </Badge>
-    );
 }
 
 export default function MySubmissions({ submissions }: Props) {
