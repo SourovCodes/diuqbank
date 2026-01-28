@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
+use App\Http\Requests\Api\V1\Auth\UpdateAvatarRequest;
 use App\Http\Requests\Api\V1\Auth\UpdateProfileRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
@@ -93,6 +94,18 @@ class AuthController extends Controller
         $request->user()->refresh();
 
         return (new UserResource($request->user()))->response();
+    }
+
+    /**
+     * Update the authenticated user's avatar.
+     */
+    public function updateAvatar(UpdateAvatarRequest $request): JsonResponse
+    {
+        $request->user()
+            ->addMediaFromRequest('avatar')
+            ->toMediaCollection('avatar');
+
+        return (new UserResource($request->user()->refresh()))->response();
     }
 
     /**

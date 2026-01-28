@@ -53,6 +53,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/user', [AuthController::class, 'user'])->name('user');
         Route::patch('/user', [AuthController::class, 'updateProfile'])->name('user.update');
+        Route::post('/user/avatar', [AuthController::class, 'updateAvatar'])->name('user.avatar');
 
         Route::post('/email/verification-notification', [AuthController::class, 'sendVerificationEmail'])
             ->middleware('throttle:6,1')
