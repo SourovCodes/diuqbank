@@ -53,7 +53,7 @@ test('questions can be filtered by department', function () {
         'course_id' => $course2->id,
     ]);
 
-    $response = $this->get('/questions?department_id=' . $department1->id);
+    $response = $this->get('/questions?department_id='.$department1->id);
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
@@ -77,7 +77,7 @@ test('questions can be filtered by course', function () {
         'course_id' => $course2->id,
     ]);
 
-    $response = $this->get('/questions?course_id=' . $course1->id);
+    $response = $this->get('/questions?course_id='.$course1->id);
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
@@ -94,7 +94,7 @@ test('questions can be filtered by semester', function () {
     $question1 = Question::factory()->published()->create(['semester_id' => $semester1->id]);
     $question2 = Question::factory()->published()->create(['semester_id' => $semester2->id]);
 
-    $response = $this->get('/questions?semester_id=' . $semester1->id);
+    $response = $this->get('/questions?semester_id='.$semester1->id);
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
@@ -111,7 +111,7 @@ test('questions can be filtered by exam type', function () {
     $question1 = Question::factory()->published()->create(['exam_type_id' => $examType1->id]);
     $question2 = Question::factory()->published()->create(['exam_type_id' => $examType2->id]);
 
-    $response = $this->get('/questions?exam_type_id=' . $examType1->id);
+    $response = $this->get('/questions?exam_type_id='.$examType1->id);
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
