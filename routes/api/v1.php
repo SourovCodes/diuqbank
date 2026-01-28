@@ -2,11 +2,14 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseController;
+use App\Http\Controllers\Api\V1\OptionController;
 use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\SemesterController;
 use App\Http\Controllers\Api\V1\SubmissionController;
 use App\Http\Controllers\Api\V1\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/options', OptionController::class)->name('options');
 
 Route::apiResource('questions', QuestionController::class)->only(['index', 'show']);
 

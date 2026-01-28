@@ -11,6 +11,7 @@
 - [Rate Limiting](#rate-limiting)
 - [Error Responses](#error-responses)
 - [Endpoints](#endpoints)
+  - [Options](#options)
   - [Authentication](#authentication-endpoints)
   - [Questions](#questions)
   - [Submissions](#submissions)
@@ -119,6 +120,82 @@ When rate limited, the API returns a `429 Too Many Requests` response.
 ---
 
 ## Endpoints
+
+---
+
+## Options
+
+### GET /options
+
+Get all form options for dropdowns/selects (departments, courses, semesters, exam types) in a single request.
+
+**Response (200 OK):**
+
+```json
+{
+  "data": {
+    "departments": [
+      {
+        "id": 1,
+        "name": "Computer Science and Engineering",
+        "short_name": "CSE"
+      },
+      {
+        "id": 2,
+        "name": "Electrical and Electronic Engineering",
+        "short_name": "EEE"
+      }
+    ],
+    "courses": [
+      {
+        "id": 1,
+        "department_id": 1,
+        "name": "Algorithm Design"
+      },
+      {
+        "id": 2,
+        "department_id": 1,
+        "name": "Data Structures"
+      },
+      {
+        "id": 3,
+        "department_id": 2,
+        "name": "Circuit Analysis"
+      }
+    ],
+    "semesters": [
+      {
+        "id": 5,
+        "name": "Spring 26"
+      },
+      {
+        "id": 4,
+        "name": "Fall 25"
+      },
+      {
+        "id": 3,
+        "name": "Summer 25"
+      }
+    ],
+    "exam_types": [
+      {
+        "id": 1,
+        "name": "Final"
+      },
+      {
+        "id": 2,
+        "name": "Midterm"
+      }
+    ]
+  }
+}
+```
+
+**Notes:**
+- Departments are sorted alphabetically by name
+- Courses are sorted alphabetically by name and include `department_id` for filtering
+- Semesters are sorted by newest first
+- Exam types are sorted alphabetically by name
 
 ---
 
