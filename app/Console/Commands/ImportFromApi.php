@@ -87,6 +87,7 @@ class ImportFromApi extends Command
                     'password' => bcrypt('defaultpassword'), 
                     'username' =>$question['user']['username'],
                     'student_id' =>$question['user']['student_id'],
+                    'created_at' => $question['user']['created_at'],
                 ]);
             }
 
@@ -101,6 +102,7 @@ class ImportFromApi extends Command
                     'course_id' => $course->id,
                     'semester_id' => $semester->id,
                     'exam_type_id' => $examType->id,
+                    'created_at' => $question['created_at'],
                 ]);
             }
 
@@ -114,6 +116,7 @@ class ImportFromApi extends Command
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
+                'created_at' => $question['created_at'],
             ]);
             if($question['status']==='published' && $newquestion->status != QuestionStatus::Published){
                 $newquestion->status = QuestionStatus::Published;
