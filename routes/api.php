@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\ContactFormSubmissionsController;
 use App\Http\Controllers\Api\ContributorsController;
+use App\Http\Controllers\Api\MigrationController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuestionsController;
 use App\Http\Resources\SessionUserResource;
@@ -28,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile/image', [ProfileController::class, 'updateImage']);
 });
+
+// Migration Export API
+Route::get('/migration/questions', [MigrationController::class, 'questions']);
 
 // Google OAuth for SPA
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('guest');
