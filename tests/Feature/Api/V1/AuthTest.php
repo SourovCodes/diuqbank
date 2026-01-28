@@ -21,10 +21,8 @@ describe('registration', function () {
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'data' => [
-                    'user' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
-                    'token',
-                ],
+                'data' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
+                'token',
             ]);
 
         $this->assertDatabaseHas('users', [
@@ -99,10 +97,8 @@ describe('login', function () {
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'data' => [
-                    'user' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
-                    'token',
-                ],
+                'data' => ['id', 'name', 'username', 'email', 'email_verified_at', 'created_at'],
+                'token',
             ]);
     });
 
