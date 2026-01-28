@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\SemesterController;
+use App\Http\Controllers\Api\V1\SubmissionController;
 use App\Http\Controllers\Api\V1\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/semesters', [SemesterController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('semesters.store');
+
+    Route::get('/submissions', [SubmissionController::class, 'index'])
+        ->name('submissions.index');
+    Route::post('/submissions', [SubmissionController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('submissions.store');
+    Route::post('/submissions/{submission}', [SubmissionController::class, 'update'])
+        ->middleware('throttle:10,1')
+        ->name('submissions.update');
 
     Route::get('/submissions/{submission}/vote', [SubmissionVoteController::class, 'show'])
         ->name('submissions.vote.show');

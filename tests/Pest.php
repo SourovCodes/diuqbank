@@ -41,7 +41,26 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function createFakePdf(string $filename = 'test.pdf', int $sizeInKb = 100): Illuminate\Http\UploadedFile
 {
-    // ..
+    $path = sys_get_temp_dir().'/'.uniqid().'_'.$filename;
+
+    // Create a minimal valid PDF file
+    $pdfContent = "%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/Resources <<\n/Font <<\n/F1 <<\n/Type /Font\n/Subtype /Type1\n/BaseFont /Helvetica\n>>\n>>\n>>\n/MediaBox [0 0 612 792]\n>>\nendobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000115 00000 n\ntrailer\n<<\n/Size 4\n/Root 1 0 R\n>>\nstartxref\n296\n%%EOF";
+
+    // Pad the file to the desired size
+    if ($sizeInKb > 1) {
+        $pdfContent .= str_repeat("\n%", ($sizeInKb * 1024) - strlen($pdfContent));
+    }
+
+    file_put_contents($path, $pdfContent);
+
+    // Use Symfony UploadedFile directly in test mode with actual file size
+    return new Illuminate\Http\UploadedFile(
+        $path,
+        $filename,
+        'application/pdf',
+        UPLOAD_ERR_OK,
+        true  // test mode
+    );
 }
