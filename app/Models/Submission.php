@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Submission extends Model implements HasMedia
 {
@@ -25,9 +26,22 @@ class Submission extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('pdf')
+        $this
+            ->addMediaCollection('pdf')
+            ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
-            ->acceptsMimeTypes(['application/pdf']);
+            ->useDisk(diskName: 'local')
+            ->storeConversionsOnDisk('public')
+            ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this
+            ->addMediaConversion('watermarked')
+            ->performOnCollections('pdf')
+            ->withoutManipulations()
+            ->nonQueued();
     }
 
     /**
@@ -88,5 +102,35 @@ class Submission extends Model implements HasMedia
     public function incrementViews(): void
     {
         $this->increment('views', 1);
+    }
+
+    /**
+     * Get the PDF URL accessor.
+     */
+    protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function (): ?string {
+                $media = $this->getFirstMedia('pdf');
+
+                if (! $media) {
+                    return null;
+                }
+
+                if ($media->hasGeneratedConversion('watermarked')) {
+                    return $media->getFullUrl('watermarked');
+                }
+
+                try {
+                    if ($media->disk === 's3' || $media->disk === 'local') {
+                        return $media->getTemporaryUrl(now()->addMinutes(5));
+                    } else {
+                        return $media->getFullUrl();
+                    }
+                } catch (\RuntimeException $exception) {
+                    return $media->getFullUrl();
+                }
+            }
+        );
     }
 }
