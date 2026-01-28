@@ -23,8 +23,19 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
 
+            // Validate email domain
+            $email = $googleUser->getEmail();
+            if (! $this->isValidDiuEmail($email)) {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => 'Only DIU email addresses (@diu.edu.bd or @s.diu.edu.bd) are allowed.',
+                ]);
+
+                return redirect()->route('login');
+            }
+
             // Find user by email
-            $user = User::query()->where('email', $googleUser->getEmail())->first();
+            $user = User::query()->where('email', $email)->first();
 
             if ($user) {
                 // Update existing user's avatar from Google if they don't have one
@@ -93,5 +104,10 @@ class GoogleController extends Controller
         }
 
         return $username;
+    }
+
+    private function isValidDiuEmail(string $email): bool
+    {
+        return preg_match('/^[a-zA-Z0-9._%+-]+@(diu\.edu\.bd|s\.diu\.edu\.bd)$/', $email) === 1;
     }
 }

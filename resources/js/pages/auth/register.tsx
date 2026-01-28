@@ -36,6 +36,19 @@ export default function Register() {
                                     </div>
 
                                     <div className="space-y-2">
+                                        <Label htmlFor="username">Username</Label>
+                                        <Input
+                                            id="username"
+                                            name="username"
+                                            type="text"
+                                            placeholder="johndoe"
+                                            autoComplete="username"
+                                            aria-invalid={!!errors.username}
+                                        />
+                                        {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
                                         <Input
                                             id="email"

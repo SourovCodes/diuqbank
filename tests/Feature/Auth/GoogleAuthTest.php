@@ -12,11 +12,11 @@ test('google redirect redirects to google', function () {
 
 test('google callback logs in existing user by email', function () {
     $existingUser = User::factory()->create([
-        'email' => 'existing@example.com',
+        'email' => 'existing@diu.edu.bd',
     ]);
 
     $abstractUser = Mockery::mock(SocialiteUser::class);
-    $abstractUser->shouldReceive('getEmail')->andReturn('existing@example.com');
+    $abstractUser->shouldReceive('getEmail')->andReturn('existing@diu.edu.bd');
     $abstractUser->shouldReceive('getName')->andReturn('Existing User');
     $abstractUser->shouldReceive('getAvatar')->andReturn('https://example.com/avatar2.jpg');
 
@@ -53,8 +53,25 @@ test('authenticated users cannot access google redirect', function () {
 
 test('generateUsername from email', function () {
     // Test the username generation logic
-    $user1 = User::factory()->create(['email' => 'test@example.com', 'username' => 'testuser']);
+    $user1 = User::factory()->create(['email' => 'test@diu.edu.bd', 'username' => 'testuser']);
 
     // Verify existing user has username
     expect($user1->username)->toBe('testuser');
+});
+
+test('google callback rejects non-DIU email addresses', function () {
+    $abstractUser = Mockery::mock(SocialiteUser::class);
+    $abstractUser->shouldReceive('getEmail')->andReturn('invalid@gmail.com');
+    $abstractUser->shouldReceive('getName')->andReturn('Invalid User');
+    $abstractUser->shouldReceive('getAvatar')->andReturn('https://example.com/avatar.jpg');
+
+    $provider = Mockery::mock('Laravel\Socialite\Contracts\Provider');
+    $provider->shouldReceive('user')->andReturn($abstractUser);
+
+    Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+    $response = $this->get(route('auth.google.callback'));
+
+    $response->assertRedirect(route('login'));
+    $this->assertGuest();
 });
