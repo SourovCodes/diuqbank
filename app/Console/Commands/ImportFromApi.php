@@ -80,13 +80,13 @@ class ImportFromApi extends Command
             );
 
             $uploader = User::where('email', $question['user']['email'])->first();
-            if (!$uploader) {
+            if (! $uploader) {
                 $uploader = User::create([
                     'name' => $question['user']['name'],
                     'email' => $question['user']['email'],
-                    'password' => bcrypt('defaultpassword'), 
-                    'username' =>$question['user']['username'],
-                    'student_id' =>$question['user']['student_id'],
+                    'password' => bcrypt('defaultpassword'),
+                    'username' => $question['user']['username'],
+                    'student_id' => $question['user']['student_id'],
                 ]);
                 $uploader->timestamps = false;
                 $uploader->created_at = \Carbon\Carbon::parse($question['user']['created_at']);
@@ -99,7 +99,7 @@ class ImportFromApi extends Command
                 ->where('semester_id', $semester->id)
                 ->where('exam_type_id', $examType->id)
                 ->first();
-            if (!$newquestion) {
+            if (! $newquestion) {
                 $newquestion = Question::create([
                     'department_id' => $department->id,
                     'course_id' => $course->id,
@@ -117,6 +117,7 @@ class ImportFromApi extends Command
                 ->exists();
             if ($submissionExists) {
                 $this->warn('Submission already exists for Question ID: '.$newquestion->id.' and User ID: '.$uploader->id.'. Skipping.');
+
                 continue;
             }
             $submission = Submission::create([
@@ -127,11 +128,11 @@ class ImportFromApi extends Command
             $submission->created_at = \Carbon\Carbon::parse($question['created_at']);
             $submission->updated_at = \Carbon\Carbon::parse($question['created_at']);
             $submission->save();
-            if($question['status']==='published' && $newquestion->status != QuestionStatus::Published){
+            if ($question['status'] === 'published' && $newquestion->status != QuestionStatus::Published) {
                 $newquestion->status = QuestionStatus::Published;
                 $newquestion->save();
             }
-            
+
             // Add your import logic here
         }
     }
