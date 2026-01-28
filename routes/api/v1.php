@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::apiResource('questions', QuestionController::class)->only(['index', 'show']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/courses', [CourseController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('courses.store');
@@ -23,9 +23,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/submissions', [SubmissionController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('submissions.store');
-    Route::post('/submissions/{submission}', [SubmissionController::class, 'update'])
+    Route::patch('/submissions/{submission}', [SubmissionController::class, 'update'])
         ->middleware('throttle:10,1')
         ->name('submissions.update');
+    Route::delete('/submissions/{submission}', [SubmissionController::class, 'destroy'])
+        ->middleware('throttle:10,1')
+        ->name('submissions.destroy');
 
     Route::get('/submissions/{submission}/vote', [SubmissionVoteController::class, 'show'])
         ->name('submissions.vote.show');

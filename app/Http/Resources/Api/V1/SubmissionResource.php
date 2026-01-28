@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +22,7 @@ class SubmissionResource extends JsonResource
             'id' => $this->id,
             'question' => new QuestionIndexResource($this->whenLoaded('question')),
             'views' => $this->views,
-            'pdf_url' => $this->getFirstMediaUrl('pdf'),
+            'pdf_url' => $this->getFirstMediaUrl(Submission::MEDIA_COLLECTION_PDF),
             'upvote_count' => (int) ($this->upvotes_count ?? 0),
             'downvote_count' => (int) ($this->downvotes_count ?? 0),
             'created_at' => $this->created_at,

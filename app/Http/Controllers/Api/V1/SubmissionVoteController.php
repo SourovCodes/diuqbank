@@ -16,14 +16,11 @@ class SubmissionVoteController extends Controller
     public function upvote(Request $request, Submission $submission): JsonResponse
     {
         $this->ensureQuestionIsPublished($submission);
+        $this->ensureNotOwnSubmission($request, $submission);
 
         $vote = $submission->upvote($request->user());
 
-        return response()->json([
-            'data' => [
-                'vote' => $vote->value,
-            ],
-        ]);
+        return $this->voteResponse($submission, $vote->value);
     }
 
     /**
@@ -32,14 +29,11 @@ class SubmissionVoteController extends Controller
     public function downvote(Request $request, Submission $submission): JsonResponse
     {
         $this->ensureQuestionIsPublished($submission);
+        $this->ensureNotOwnSubmission($request, $submission);
 
         $vote = $submission->downvote($request->user());
 
-        return response()->json([
-            'data' => [
-                'vote' => $vote->value,
-            ],
-        ]);
+        return $this->voteResponse($submission, $vote->value);
     }
 
     /**
@@ -75,6 +69,39 @@ class SubmissionVoteController extends Controller
      */
     private function ensureQuestionIsPublished(Submission $submission): void
     {
+        $submission->loadMissing('question');
+
         abort_unless($submission->question->status === QuestionStatus::Published, 404);
+    }
+
+    /**
+     * Ensure the user is not voting on their own submission.
+     */
+    private function ensureNotOwnSubmission(Request $request, Submission $submission): void
+    {
+        abort_if(
+            $submission->user_id === $request->user()->id,
+            403,
+            'You cannot vote on your own submission.'
+        );
+    }
+
+    /**
+     * Return a standardized vote response with updated counts.
+     */
+    private function voteResponse(Submission $submission, int $voteValue): JsonResponse
+    {
+        $submission->loadCount([
+            'votes as upvotes_count' => fn ($query) => $query->where('value', 1),
+            'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
+        ]);
+
+        return response()->json([
+            'data' => [
+                'vote' => $voteValue,
+                'upvote_count' => (int) $submission->upvotes_count,
+                'downvote_count' => (int) $submission->downvotes_count,
+            ],
+        ]);
     }
 }

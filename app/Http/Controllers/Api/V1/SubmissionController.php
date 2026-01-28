@@ -10,6 +10,7 @@ use App\Http\Resources\Api\V1\SubmissionResource;
 use App\Models\Question;
 use App\Models\Submission;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,8 +19,10 @@ class SubmissionController extends Controller
     /**
      * Display a listing of submissions for authenticated user.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        $perPage = min((int) $request->input('per_page', 15), 100);
+
         $submissions = Submission::query()
             ->where('user_id', auth()->id())
             ->with(['question.department', 'question.course', 'question.semester', 'question.examType'])
@@ -28,7 +31,7 @@ class SubmissionController extends Controller
                 'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
             ])
             ->latest()
-            ->paginate(15);
+            ->paginate($perPage);
 
         return SubmissionResource::collection($submissions);
     }
@@ -63,7 +66,7 @@ class SubmissionController extends Controller
 
             // Add the PDF to the submission
             $submission->addMedia($validated['pdf'])
-                ->toMediaCollection('pdf');
+                ->toMediaCollection(Submission::MEDIA_COLLECTION_PDF);
 
             return $submission;
         });
@@ -85,6 +88,10 @@ class SubmissionController extends Controller
     public function update(UpdateSubmissionRequest $request, Submission $submission): SubmissionResource
     {
         $validated = $request->validated();
+
+        // Eager load question to prevent N+1
+        $submission->load('question');
+        $originalQuestionId = $submission->question_id;
 
         DB::transaction(function () use ($submission, $validated) {
             // Update question if any question-related fields are provided
@@ -114,6 +121,11 @@ class SubmissionController extends Controller
                     ]
                 );
 
+                // If question changed, delete existing votes (content context changed)
+                if ($submission->question_id !== $question->id) {
+                    $submission->votes()->delete();
+                }
+
                 // Update submission's question
                 $submission->update([
                     'question_id' => $question->id,
@@ -123,7 +135,7 @@ class SubmissionController extends Controller
             // Update PDF if provided
             if (isset($validated['pdf'])) {
                 $submission->addMedia($validated['pdf'])
-                    ->toMediaCollection('pdf');
+                    ->toMediaCollection(Submission::MEDIA_COLLECTION_PDF);
             }
         });
 
@@ -133,35 +145,53 @@ class SubmissionController extends Controller
                 'votes as downvotes_count' => fn ($query) => $query->where('value', -1),
             ]);
 
-        return new SubmissionResource($submission->fresh(['question.department', 'question.course', 'question.semester', 'question.examType']));
+        return new SubmissionResource($submission);
+    }
+
+    /**
+     * Remove the specified submission from storage.
+     */
+    public function destroy(Submission $submission): JsonResponse
+    {
+        // Authorization is handled via policy/gate
+        if ($submission->user_id !== auth()->id()) {
+            abort(403, 'You can only delete your own submissions.');
+        }
+
+        $submission->delete();
+
+        return response()->json(null, 204);
     }
 
     /**
      * Determine question status based on whether all parameters have published questions.
+     * Uses a single optimized query instead of 4 separate queries.
      */
     protected function determineQuestionStatus(int $departmentId, int $courseId, int $semesterId, int $examTypeId): QuestionStatus
     {
-        $hasDepartmentPublished = Question::query()
-            ->where('department_id', $departmentId)
+        $publishedCounts = Question::query()
             ->where('status', QuestionStatus::Published)
-            ->exists();
+            ->where(function ($query) use ($departmentId, $courseId, $semesterId, $examTypeId) {
+                $query->where('department_id', $departmentId)
+                    ->orWhere('course_id', $courseId)
+                    ->orWhere('semester_id', $semesterId)
+                    ->orWhere('exam_type_id', $examTypeId);
+            })
+            ->selectRaw('
+                MAX(CASE WHEN department_id = ? THEN 1 ELSE 0 END) as has_department,
+                MAX(CASE WHEN course_id = ? THEN 1 ELSE 0 END) as has_course,
+                MAX(CASE WHEN semester_id = ? THEN 1 ELSE 0 END) as has_semester,
+                MAX(CASE WHEN exam_type_id = ? THEN 1 ELSE 0 END) as has_exam_type
+            ', [$departmentId, $courseId, $semesterId, $examTypeId])
+            ->first();
 
-        $hasCoursePublished = Question::query()
-            ->where('course_id', $courseId)
-            ->where('status', QuestionStatus::Published)
-            ->exists();
-
-        $hasSemesterPublished = Question::query()
-            ->where('semester_id', $semesterId)
-            ->where('status', QuestionStatus::Published)
-            ->exists();
-
-        $hasExamTypePublished = Question::query()
-            ->where('exam_type_id', $examTypeId)
-            ->where('status', QuestionStatus::Published)
-            ->exists();
-
-        if ($hasDepartmentPublished && $hasCoursePublished && $hasSemesterPublished && $hasExamTypePublished) {
+        if (
+            $publishedCounts &&
+            $publishedCounts->has_department &&
+            $publishedCounts->has_course &&
+            $publishedCounts->has_semester &&
+            $publishedCounts->has_exam_type
+        ) {
             return QuestionStatus::Published;
         }
 

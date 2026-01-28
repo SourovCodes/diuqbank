@@ -16,6 +16,8 @@ class Submission extends Model implements HasMedia
 
     use InteractsWithMedia;
 
+    public const string MEDIA_COLLECTION_PDF = 'pdf';
+
     protected $fillable = [
         'question_id',
         'user_id',
@@ -24,7 +26,7 @@ class Submission extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('pdf')
+        $this->addMediaCollection(self::MEDIA_COLLECTION_PDF)
             ->singleFile()
             ->acceptsMimeTypes(['application/pdf']);
     }

@@ -383,7 +383,7 @@ describe('update submission', function () {
         $pdf = createFakePdf('updated-question.pdf', 2048);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", [
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
                 'pdf' => $pdf,
             ]);
 
@@ -408,7 +408,7 @@ describe('update submission', function () {
         $newExamType = ExamType::factory()->create();
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", [
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
                 'department_id' => $newDepartment->id,
                 'course_id' => $newCourse->id,
                 'semester_id' => $newSemester->id,
@@ -439,7 +439,7 @@ describe('update submission', function () {
         $pdf = createFakePdf('new-question.pdf', 2048);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", [
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
                 'department_id' => $newDepartment->id,
                 'course_id' => $newCourse->id,
                 'semester_id' => $this->semester->id,
@@ -461,7 +461,7 @@ describe('update submission', function () {
 
         $pdf = createFakePdf('updated-question.pdf', 1024);
 
-        $response = $this->postJson("/api/v1/submissions/{$submission->id}", [
+        $response = $this->patchJson("/api/v1/submissions/{$submission->id}", [
             'pdf' => $pdf,
         ]);
 
@@ -478,20 +478,20 @@ describe('update submission', function () {
         $pdf = createFakePdf('updated-question.pdf', 1024);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", [
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
                 'pdf' => $pdf,
             ]);
 
         $response->assertStatus(403);
     });
 
-    it('requires pdf file', function () {
+    it('requires at least one field for update', function () {
         $submission = Submission::factory()->create([
             'user_id' => $this->user->id,
         ]);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", []);
+            ->patchJson("/api/v1/submissions/{$submission->id}", []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['pdf']);
@@ -519,7 +519,7 @@ describe('update submission', function () {
             $pdf = createFakePdf("updated{$i}.pdf", 1024);
 
             $response = $this->actingAs($this->user)
-                ->postJson("/api/v1/submissions/{$submission->id}", [
+                ->patchJson("/api/v1/submissions/{$submission->id}", [
                     'pdf' => $pdf,
                 ]);
 
@@ -534,10 +534,267 @@ describe('update submission', function () {
         $pdf = createFakePdf('rate-limited.pdf', 1024);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/v1/submissions/{$submission->id}", [
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
                 'pdf' => $pdf,
             ]);
 
         $response->assertStatus(429);
+    });
+
+    it('deletes votes when question is changed', function () {
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+        ]);
+
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        // Create some votes
+        $voter = User::factory()->create();
+        $submission->upvote($voter);
+
+        expect($submission->votes()->count())->toBe(1);
+
+        $newDepartment = Department::factory()->create();
+        $newCourse = Course::factory()->create(['department_id' => $newDepartment->id]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
+                'department_id' => $newDepartment->id,
+                'course_id' => $newCourse->id,
+                'semester_id' => $this->semester->id,
+                'exam_type_id' => $this->examType->id,
+            ]);
+
+        $response->assertStatus(200);
+
+        // Votes should be deleted when question changes
+        expect($submission->fresh()->votes()->count())->toBe(0);
+    });
+});
+
+describe('delete submission', function () {
+    it('can delete own submission', function () {
+        $submission = Submission::factory()->create([
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->deleteJson("/api/v1/submissions/{$submission->id}");
+
+        $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('submissions', ['id' => $submission->id]);
+    });
+
+    it('cannot delete other user submission', function () {
+        $otherUser = User::factory()->create();
+        $submission = Submission::factory()->create([
+            'user_id' => $otherUser->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->deleteJson("/api/v1/submissions/{$submission->id}");
+
+        $response->assertStatus(403);
+    });
+
+    it('requires authentication', function () {
+        $submission = Submission::factory()->create([
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->deleteJson("/api/v1/submissions/{$submission->id}");
+
+        $response->assertStatus(401);
+    });
+});
+
+describe('store submission validation', function () {
+    it('validates course belongs to department', function () {
+        $otherDepartment = Department::factory()->create();
+        $courseFromOtherDepartment = Course::factory()->create(['department_id' => $otherDepartment->id]);
+
+        $pdf = createFakePdf('question.pdf', 1024);
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/submissions', [
+                'department_id' => $this->department->id,
+                'course_id' => $courseFromOtherDepartment->id,
+                'semester_id' => $this->semester->id,
+                'exam_type_id' => $this->examType->id,
+                'pdf' => $pdf,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['course_id']);
+    });
+
+    it('prevents duplicate submission for same question', function () {
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+        ]);
+
+        Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        $pdf = createFakePdf('duplicate.pdf', 1024);
+
+        $response = $this->actingAs($this->user)
+            ->postJson('/api/v1/submissions', [
+                'department_id' => $this->department->id,
+                'course_id' => $this->course->id,
+                'semester_id' => $this->semester->id,
+                'exam_type_id' => $this->examType->id,
+                'pdf' => $pdf,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['question']);
+    });
+});
+
+describe('update submission validation', function () {
+    it('validates course belongs to department when updating', function () {
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+        ]);
+
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        $otherDepartment = Department::factory()->create();
+        $courseFromOtherDepartment = Course::factory()->create(['department_id' => $otherDepartment->id]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson("/api/v1/submissions/{$submission->id}", [
+                'department_id' => $this->department->id,
+                'course_id' => $courseFromOtherDepartment->id,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['course_id']);
+    });
+});
+
+describe('submission voting', function () {
+    it('prevents user from voting on own submission', function () {
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+            'status' => QuestionStatus::Published,
+        ]);
+
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/v1/submissions/{$submission->id}/upvote");
+
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'You cannot vote on your own submission.']);
+    });
+
+    it('allows other users to upvote submission', function () {
+        $submissionOwner = User::factory()->create();
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+            'status' => QuestionStatus::Published,
+        ]);
+
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $submissionOwner->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/v1/submissions/{$submission->id}/upvote");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'vote',
+                    'upvote_count',
+                    'downvote_count',
+                ],
+            ])
+            ->assertJson([
+                'data' => [
+                    'vote' => 1,
+                    'upvote_count' => 1,
+                    'downvote_count' => 0,
+                ],
+            ]);
+    });
+
+    it('allows other users to downvote submission', function () {
+        $submissionOwner = User::factory()->create();
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+            'status' => QuestionStatus::Published,
+        ]);
+
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $submissionOwner->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/v1/submissions/{$submission->id}/downvote");
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'vote' => -1,
+                    'upvote_count' => 0,
+                    'downvote_count' => 1,
+                ],
+            ]);
+    });
+
+    it('returns 404 for non-published question submissions', function () {
+        $question = Question::factory()->create([
+            'department_id' => $this->department->id,
+            'course_id' => $this->course->id,
+            'semester_id' => $this->semester->id,
+            'exam_type_id' => $this->examType->id,
+            'status' => QuestionStatus::PendingReview,
+        ]);
+
+        $submissionOwner = User::factory()->create();
+        $submission = Submission::factory()->create([
+            'question_id' => $question->id,
+            'user_id' => $submissionOwner->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/v1/submissions/{$submission->id}/upvote");
+
+        $response->assertStatus(404);
     });
 });

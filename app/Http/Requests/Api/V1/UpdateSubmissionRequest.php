@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Models\Course;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateSubmissionRequest extends FormRequest
 {
@@ -37,12 +39,38 @@ class UpdateSubmissionRequest extends FormRequest
     public function after(): array
     {
         return [
-            function ($validator) {
+            function (Validator $validator) {
                 if (! $this->hasAny(['department_id', 'course_id', 'semester_id', 'exam_type_id', 'pdf'])) {
                     $validator->errors()->add('pdf', 'At least one field must be provided for update.');
                 }
+
+                $this->validateCourseBelongsToDepartment($validator);
             },
         ];
+    }
+
+    /**
+     * Validate that the course belongs to the selected department.
+     */
+    protected function validateCourseBelongsToDepartment(Validator $validator): void
+    {
+        $submission = $this->route('submission');
+        $departmentId = $this->input('department_id', $submission->question->department_id);
+        $courseId = $this->input('course_id', $submission->question->course_id);
+
+        // Only validate if either field is being updated
+        if (! $this->hasAny(['department_id', 'course_id'])) {
+            return;
+        }
+
+        $course = Course::find($courseId);
+
+        if ($course && $course->department_id !== (int) $departmentId) {
+            $validator->errors()->add(
+                'course_id',
+                'The selected course does not belong to the selected department.'
+            );
+        }
     }
 
     /**
