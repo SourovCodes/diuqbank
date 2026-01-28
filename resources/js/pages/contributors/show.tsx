@@ -40,21 +40,21 @@ export default function ContributorShow({ contributor, submissions }: Contributo
                         <div className="flex gap-6 sm:gap-8">
                             <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 text-2xl font-bold">
-                                    <FileText className="h-5 w-5 text-muted-foreground" />
+                                    <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                     {contributor.submissions_count}
                                 </div>
                                 <p className="text-sm text-muted-foreground">Submissions</p>
                             </div>
                             <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 text-2xl font-bold">
-                                    <ThumbsUp className="h-5 w-5 text-muted-foreground" />
+                                    <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />
                                     {contributor.total_votes}
                                 </div>
                                 <p className="text-sm text-muted-foreground">Votes</p>
                             </div>
                             <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 text-2xl font-bold">
-                                    <Eye className="h-5 w-5 text-muted-foreground" />
+                                    <Eye className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
                                     {contributor.total_views}
                                 </div>
                                 <p className="text-sm text-muted-foreground">Views</p>

@@ -21,14 +21,14 @@ export function QuestionCard({ question }: QuestionCardProps) {
                     </div>
 
                     <div className="mb-4 flex flex-wrap gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                             <School className="h-3.5 w-3.5" />
                             {question.department?.short_name ?? 'N/A'}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                             {question.exam_type?.name ?? 'Unknown'}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                             <Calendar className="h-3 w-3" />
                             {question.semester?.name ?? 'Unknown'}
                         </span>
@@ -36,7 +36,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
 
                     <div className="mt-auto mb-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground sm:text-sm">
                         <div className="flex items-center">
-                            <Clock className="mr-1.5 h-3.5 w-3.5" />
+                            <Clock className="mr-1.5 h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                             <span>{formatDate(question.created_at)}</span>
                         </div>
                     </div>

@@ -33,21 +33,21 @@ export function ContributorCard({ contributor }: ContributorCardProps) {
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-4">
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-1 text-lg font-semibold text-foreground">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                             {contributor.submissions_count}
                         </div>
                         <p className="text-xs text-muted-foreground">Submissions</p>
                     </div>
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-1 text-lg font-semibold text-foreground">
-                            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                            <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                             {contributor.total_votes}
                         </div>
                         <p className="text-xs text-muted-foreground">Votes</p>
                     </div>
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-1 text-lg font-semibold text-foreground">
-                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <Eye className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                             {contributor.total_views}
                         </div>
                         <p className="text-xs text-muted-foreground">Views</p>

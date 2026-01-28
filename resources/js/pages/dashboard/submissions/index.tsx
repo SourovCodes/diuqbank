@@ -55,14 +55,14 @@ export default function MySubmissions({ submissions }: Props) {
                                             <StatusBadge status={submission.question.status} label={submission.question.status_label} />
                                         </div>
                                         <CardDescription className="flex flex-wrap gap-2">
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                                                 <School className="h-3 w-3" />
                                                 {submission.question.department.short_name}
                                             </span>
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                                                 {submission.question.exam_type.name}
                                             </span>
-                                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                                                 <Calendar className="h-3 w-3" />
                                                 {submission.question.semester.name}
                                             </span>
@@ -72,11 +72,11 @@ export default function MySubmissions({ submissions }: Props) {
                                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                                             <div className="flex items-center gap-4">
                                                 <span className="flex items-center gap-1">
-                                                    <ThumbsUp className="h-3.5 w-3.5" />
+                                                    <ThumbsUp className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                                                     {submission.vote_score}
                                                 </span>
                                                 <span className="flex items-center gap-1">
-                                                    <Eye className="h-3.5 w-3.5" />
+                                                    <Eye className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                                                     {submission.views}
                                                 </span>
                                             </div>

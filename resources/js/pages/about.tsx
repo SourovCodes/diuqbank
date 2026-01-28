@@ -25,7 +25,7 @@ export default function About() {
                 <section className="mb-16">
                     <div className="rounded-2xl border bg-card p-8">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                                 <Target className="h-6 w-6" />
                             </div>
                             <div>
@@ -46,7 +46,7 @@ export default function About() {
                     <div className="grid gap-6 md:grid-cols-3">
                         <Card>
                             <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                                     <Users className="h-6 w-6" />
                                 </div>
                                 <CardTitle>Community Driven</CardTitle>
@@ -58,7 +58,7 @@ export default function About() {
 
                         <Card>
                             <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
                                     <GraduationCap className="h-6 w-6" />
                                 </div>
                                 <CardTitle>Academic Excellence</CardTitle>
@@ -70,7 +70,7 @@ export default function About() {
 
                         <Card>
                             <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
                                     <Heart className="h-6 w-6" />
                                 </div>
                                 <CardTitle>Free & Open</CardTitle>

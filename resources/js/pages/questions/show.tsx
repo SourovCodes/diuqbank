@@ -131,14 +131,14 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
 
                 {/* Question Meta */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-2.5 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                         <School className="h-3.5 w-3.5" />
                         {question.department?.name ?? 'N/A'}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2.5 py-1 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                         {question.exam_type?.name ?? 'Unknown'}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-purple-100 px-2.5 py-1 text-sm text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                         <Calendar className="h-3.5 w-3.5" />
                         {question.semester?.name ?? 'Unknown'}
                     </span>

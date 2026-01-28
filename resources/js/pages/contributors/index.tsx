@@ -53,7 +53,7 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
 
                 {/* Search */}
                 <div className="relative mb-6 max-w-md">
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-blue-600 dark:text-blue-400" />
                     <Input
                         type="search"
                         placeholder="Search contributors..."

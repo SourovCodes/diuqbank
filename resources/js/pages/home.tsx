@@ -61,7 +61,7 @@ export default function Home() {
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                                         <FileText className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Extensive Collection</CardTitle>
@@ -73,7 +73,7 @@ export default function Home() {
 
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                                         <Filter className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Smart Filtering</CardTitle>
@@ -85,7 +85,7 @@ export default function Home() {
 
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                                         <Download className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Easy Downloads</CardTitle>
@@ -95,7 +95,7 @@ export default function Home() {
 
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                                         <Upload className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Community Driven</CardTitle>
@@ -107,7 +107,7 @@ export default function Home() {
 
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
                                         <GraduationCap className="h-6 w-6" />
                                     </div>
                                     <CardTitle>All Departments</CardTitle>
@@ -119,7 +119,7 @@ export default function Home() {
 
                             <Card>
                                 <CardHeader>
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
                                         <Users className="h-6 w-6" />
                                     </div>
                                     <CardTitle>Verified Content</CardTitle>

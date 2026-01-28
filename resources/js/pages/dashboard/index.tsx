@@ -48,7 +48,7 @@ export default function Dashboard({ stats, recentSubmissions }: Props) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{stats.total_submissions}</div>
@@ -118,23 +118,23 @@ export default function Dashboard({ stats, recentSubmissions }: Props) {
                                             </div>
                                             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                                                 <span className="inline-flex items-center gap-1">
-                                                    <School className="h-3 w-3" />
+                                                    <School className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                                                     {submission.question.department.short_name}
                                                 </span>
-                                                <span>{submission.question.exam_type.name}</span>
+                                                <span className="text-amber-600 dark:text-amber-400">{submission.question.exam_type.name}</span>
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Calendar className="h-3 w-3" />
+                                                    <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                                                     {submission.question.semester.name}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                             <span className="flex items-center gap-1">
-                                                <ThumbsUp className="h-3.5 w-3.5" />
+                                                <ThumbsUp className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                                                 {submission.vote_score}
                                             </span>
                                             <span className="flex items-center gap-1">
-                                                <Eye className="h-3.5 w-3.5" />
+                                                <Eye className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                                                 {submission.views}
                                             </span>
                                             <span className="hidden sm:inline">{formatDate(submission.created_at)}</span>

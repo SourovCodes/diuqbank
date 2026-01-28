@@ -21,22 +21,22 @@ export default function Contact() {
                 <div className="mb-16 grid gap-6 md:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                                 <Mail className="h-6 w-6" />
                             </div>
                             <CardTitle>Email Us</CardTitle>
                             <CardDescription>Send us an email and we&apos;ll get back to you within 24-48 hours.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <a href="mailto:support@diuqbank.com" className="text-primary hover:underline">
-                                support@diuqbank.com
+                            <a href="mailto:sourov2305101004@diu.edu.bd" className="text-primary hover:underline">
+                                sourov2305101004@diu.edu.bd
                             </a>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                                 <MessageSquare className="h-6 w-6" />
                             </div>
                             <CardTitle>Community Support</CardTitle>
@@ -51,7 +51,7 @@ export default function Contact() {
 
                     <Card>
                         <CardHeader>
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                                 <MapPin className="h-6 w-6" />
                             </div>
                             <CardTitle>Location</CardTitle>
@@ -70,7 +70,7 @@ export default function Contact() {
 
                     <Card>
                         <CardHeader>
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                                 <Clock className="h-6 w-6" />
                             </div>
                             <CardTitle>Response Time</CardTitle>
