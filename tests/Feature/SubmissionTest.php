@@ -26,22 +26,22 @@ function createFakePdf(string $name = 'test.pdf', int $sizeKb = 1): UploadedFile
 }
 
 test('guest cannot access submission create page', function () {
-    $response = $this->get('/submissions/create');
+    $response = $this->get('/dashboard/submissions/create');
 
     $response->assertRedirect('/login');
 });
 
 test('authenticated user can view submission create page', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     Department::factory()->create();
     Semester::factory()->create();
     ExamType::factory()->create();
 
-    $response = $this->actingAs($user)->get('/submissions/create');
+    $response = $this->actingAs($user)->get('/dashboard/submissions/create');
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('submissions/create')
+        ->component('dashboard/submissions/create')
         ->has('formOptions.departments')
         ->has('formOptions.courses')
         ->has('formOptions.semesters')
@@ -50,11 +50,11 @@ test('authenticated user can view submission create page', function () {
 });
 
 test('user can create submission with existing question', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
-    $examType = ExamType::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => false]);
 
     $question = Question::factory()->published()->create([
         'department_id' => $department->id,
@@ -65,7 +65,7 @@ test('user can create submission with existing question', function () {
 
     $pdf = createFakePdf();
 
-    $response = $this->actingAs($user)->post('/submissions', [
+    $response = $this->actingAs($user)->post('/dashboard/submissions', [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -73,7 +73,7 @@ test('user can create submission with existing question', function () {
         'pdf' => $pdf,
     ]);
 
-    $response->assertRedirect(route('questions.show', $question));
+    $response->assertRedirect(route('dashboard.submissions.index'));
 
     $this->assertDatabaseHas('submissions', [
         'question_id' => $question->id,
@@ -82,15 +82,15 @@ test('user can create submission with existing question', function () {
 });
 
 test('user can create submission and new question is created when none exists', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
-    $examType = ExamType::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => false]);
 
     $pdf = createFakePdf();
 
-    $response = $this->actingAs($user)->post('/submissions', [
+    $response = $this->actingAs($user)->post('/dashboard/submissions', [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -106,7 +106,7 @@ test('user can create submission and new question is created when none exists', 
     ])->first();
 
     expect($question)->not->toBeNull();
-    $response->assertRedirect(route('questions.show', $question));
+    $response->assertRedirect(route('dashboard.submissions.index'));
 
     $this->assertDatabaseHas('submissions', [
         'question_id' => $question->id,
@@ -115,11 +115,11 @@ test('user can create submission and new question is created when none exists', 
 });
 
 test('new question is auto-published when all 4 parameters have published questions', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
-    $examType = ExamType::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => false]);
 
     // Create published questions for each parameter
     Question::factory()->published()->create(['department_id' => $department->id]);
@@ -129,7 +129,7 @@ test('new question is auto-published when all 4 parameters have published questi
 
     $pdf = createFakePdf();
 
-    $this->actingAs($user)->post('/submissions', [
+    $this->actingAs($user)->post('/dashboard/submissions', [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -148,11 +148,11 @@ test('new question is auto-published when all 4 parameters have published questi
 });
 
 test('new question is pending review when not all parameters have published questions', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
-    $examType = ExamType::factory()->create();
+    $examType = ExamType::factory()->create(['requires_section' => false]);
 
     // Only create published questions for some parameters
     Question::factory()->published()->create(['department_id' => $department->id]);
@@ -161,7 +161,7 @@ test('new question is pending review when not all parameters have published ques
 
     $pdf = createFakePdf();
 
-    $this->actingAs($user)->post('/submissions', [
+    $this->actingAs($user)->post('/dashboard/submissions', [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -261,9 +261,9 @@ test('creating duplicate semester returns existing semester', function () {
 });
 
 test('submission requires all fields', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
 
-    $response = $this->actingAs($user)->post('/submissions', []);
+    $response = $this->actingAs($user)->post('/dashboard/submissions', []);
 
     $response->assertSessionHasErrors([
         'department_id',
@@ -275,7 +275,7 @@ test('submission requires all fields', function () {
 });
 
 test('submission requires valid pdf file', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
@@ -283,7 +283,7 @@ test('submission requires valid pdf file', function () {
 
     $invalidFile = UploadedFile::fake()->create('test.txt', 1000, 'text/plain');
 
-    $response = $this->actingAs($user)->post('/submissions', [
+    $response = $this->actingAs($user)->post('/dashboard/submissions', [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -295,34 +295,34 @@ test('submission requires valid pdf file', function () {
 });
 
 test('user can view edit page for their own submission', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $submission = Submission::factory()->create(['user_id' => $user->id]);
     Department::factory()->create();
     Semester::factory()->create();
     ExamType::factory()->create();
 
-    $response = $this->actingAs($user)->get("/submissions/{$submission->id}/edit");
+    $response = $this->actingAs($user)->get("/dashboard/submissions/{$submission->id}/edit");
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('submissions/edit')
+        ->component('dashboard/submissions/edit')
         ->has('submission')
         ->has('formOptions')
     );
 });
 
 test('user cannot view edit page for other users submission', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $otherUser = User::factory()->create();
     $submission = Submission::factory()->create(['user_id' => $otherUser->id]);
 
-    $response = $this->actingAs($user)->get("/submissions/{$submission->id}/edit");
+    $response = $this->actingAs($user)->get("/dashboard/submissions/{$submission->id}/edit");
 
     $response->assertStatus(403);
 });
 
 test('user can update their own submission', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
@@ -344,9 +344,9 @@ test('user can update their own submission', function () {
     $newDepartment = Department::factory()->create();
     $newCourse = Course::factory()->create(['department_id' => $newDepartment->id]);
     $newSemester = Semester::factory()->create();
-    $newExamType = ExamType::factory()->create();
+    $newExamType = ExamType::factory()->create(['requires_section' => false]);
 
-    $response = $this->actingAs($user)->put("/submissions/{$submission->id}", [
+    $response = $this->actingAs($user)->put("/dashboard/submissions/{$submission->id}", [
         'department_id' => $newDepartment->id,
         'course_id' => $newCourse->id,
         'semester_id' => $newSemester->id,
@@ -361,7 +361,7 @@ test('user can update their own submission', function () {
         'exam_type_id' => $newExamType->id,
     ])->first();
 
-    $response->assertRedirect(route('questions.show', $newQuestion));
+    $response->assertRedirect(route('dashboard.submissions.index'));
 
     $this->assertDatabaseHas('submissions', [
         'id' => $submission->id,
@@ -370,7 +370,7 @@ test('user can update their own submission', function () {
 });
 
 test('user cannot update other users submission', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $otherUser = User::factory()->create();
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
@@ -379,7 +379,7 @@ test('user cannot update other users submission', function () {
 
     $submission = Submission::factory()->create(['user_id' => $otherUser->id]);
 
-    $response = $this->actingAs($user)->put("/submissions/{$submission->id}", [
+    $response = $this->actingAs($user)->put("/dashboard/submissions/{$submission->id}", [
         'department_id' => $department->id,
         'course_id' => $course->id,
         'semester_id' => $semester->id,
@@ -390,7 +390,7 @@ test('user cannot update other users submission', function () {
 });
 
 test('section is required when exam type requires section', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
@@ -410,7 +410,7 @@ test('section is required when exam type requires section', function () {
 });
 
 test('section is optional when exam type does not require section', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
@@ -430,7 +430,7 @@ test('section is optional when exam type does not require section', function () 
 });
 
 test('section is saved when provided', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
@@ -454,7 +454,7 @@ test('section is saved when provided', function () {
 });
 
 test('section can be updated', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $department = Department::factory()->create();
     $course = Course::factory()->create(['department_id' => $department->id]);
     $semester = Semester::factory()->create();
