@@ -46,7 +46,8 @@ class GoogleController extends Controller
                 // Update existing user's avatar from Google if they don't have one
                 if (! $user->hasMedia('avatar') && $googleUser->getAvatar()) {
                     try {
-                        $user->addMediaFromUrl($googleUser->getAvatar())
+                        $avatarUrl = $this->getFullSizeAvatarUrl($googleUser->getAvatar());
+                        $user->addMediaFromUrl($avatarUrl)
                             ->toMediaCollection('avatar');
                     } catch (\Exception $e) {
                         // Silently fail if avatar download fails
@@ -68,7 +69,8 @@ class GoogleController extends Controller
                 // Add avatar from Google
                 if ($googleUser->getAvatar()) {
                     try {
-                        $user->addMediaFromUrl($googleUser->getAvatar())
+                        $avatarUrl = $this->getFullSizeAvatarUrl($googleUser->getAvatar());
+                        $user->addMediaFromUrl($avatarUrl)
                             ->toMediaCollection('avatar');
                     } catch (\Exception $e) {
                         // Silently fail if avatar download fails
@@ -114,5 +116,18 @@ class GoogleController extends Controller
     private function isValidDiuEmail(string $email): bool
     {
         return preg_match('/^[a-zA-Z0-9._%+-]+@(diu\.edu\.bd|s\.diu\.edu\.bd)$/', $email) === 1;
+    }
+
+    private function getFullSizeAvatarUrl(string $url): string
+    {
+        // Google avatar URLs end with "=s96-c" or similar size params
+        // Remove everything from the last "=s" to get the full size image
+        $lastEqualS = strrpos($url, '=s');
+
+        if ($lastEqualS !== false) {
+            return substr($url, 0, $lastEqualS);
+        }
+
+        return $url;
     }
 }
