@@ -95,14 +95,9 @@ export function Navbar() {
                             </DropdownMenu>
                         </>
                     ) : (
-                        <>
-                            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                                <Link href="/login">Login</Link>
-                            </Button>
-                            <Button size="sm" asChild>
-                                <Link href="/register">Get Started</Link>
-                            </Button>
-                        </>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="/login">Login</Link>
+                        </Button>
                     )}
 
                     {/* Mobile Menu */}
@@ -158,9 +153,6 @@ export function Navbar() {
                                         <div className="my-4 border-t" />
                                         <Button variant="ghost" className="justify-start" asChild onClick={() => setMobileMenuOpen(false)}>
                                             <Link href="/login">Login</Link>
-                                        </Button>
-                                        <Button asChild onClick={() => setMobileMenuOpen(false)}>
-                                            <Link href="/register">Get Started</Link>
                                         </Button>
                                     </>
                                 )}
