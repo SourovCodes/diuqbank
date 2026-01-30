@@ -13,7 +13,7 @@ class EmailVerificationController extends Controller
     public function notice(): Response|RedirectResponse
     {
         if (request()->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard.index'));
+            return redirect()->intended(route('dashboard'));
         }
 
         return Inertia::render('auth/verify-email');
@@ -28,13 +28,13 @@ class EmailVerificationController extends Controller
             'message' => 'Email verified successfully!',
         ]);
 
-        return redirect()->intended(route('dashboard.index'));
+        return redirect()->intended(route('dashboard'));
     }
 
     public function send(): RedirectResponse
     {
         if (request()->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard.index'));
+            return redirect()->intended(route('dashboard'));
         }
 
         request()->user()->sendEmailVerificationNotification();
