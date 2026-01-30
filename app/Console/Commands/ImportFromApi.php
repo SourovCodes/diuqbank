@@ -91,7 +91,7 @@ class ImportFromApi extends Command
                 $uploader = User::create([
                     'name' => $question['user']['name'],
                     'email' => $question['user']['email'],
-                    'password' => bcrypt('defaultpassword'),
+                    'password' => bcrypt(\Illuminate\Support\Str::random(32)),
                     'username' => $question['user']['username'],
                     'student_id' => $question['user']['student_id'],
                 ]);
