@@ -336,7 +336,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                             <iframe
                                 key={selectedSubmission.id}
                                 src={selectedSubmission.pdf_url}
-                                className="h-[calc(100vh-260px)] min-h-100 w-full border-0 sm:min-h-125 lg:h-[calc(100vh-200px)]"
+                                className={cn(
+                                    'w-full border-0',
+                                    isFullscreen
+                                        ? 'h-full min-h-0'
+                                        : 'h-[calc(100vh-260px)] min-h-100 sm:min-h-125 lg:h-[calc(100vh-200px)]'
+                                )}
+                                style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                 title="PDF Viewer"
                             />
                         ) : (
