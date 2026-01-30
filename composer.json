@@ -20,6 +20,7 @@
         "spatie/laravel-backup": "^9.3"
     },
     "require-dev": {
+        "deployer/deployer": "^7.5",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.2",
