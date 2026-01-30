@@ -122,14 +122,14 @@ class ImportFromApi extends Command
             $submission->updated_at = \Carbon\Carbon::parse($question['created_at']);
             $submission->save();
 
-            // Attach PDF from original_url if present
-            if (!empty($question['original_url'])) {
+            // Attach PDF from media.original_url if present
+            if (!empty($question['media']['original_url'])) {
                 try {
-                    $submission->addMediaFromUrl($question['original_url'])
+                    $submission->addMediaFromUrl($question['media']['original_url'])
                         ->toMediaCollection('pdf');
-                    $this->info('PDF attached from URL: ' . $question['original_url']);
+                    $this->info('PDF attached from URL: ' . $question['media']['original_url']);
                 } catch (\Exception $e) {
-                    $this->error('Failed to attach PDF from URL: ' . $question['original_url'] . ' - ' . $e->getMessage());
+                    $this->error('Failed to attach PDF from URL: ' . $question['media']['original_url'] . ' - ' . $e->getMessage());
                 }
             }
 
