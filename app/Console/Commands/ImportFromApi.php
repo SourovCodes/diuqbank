@@ -100,7 +100,15 @@ class ImportFromApi extends Command
                 $uploader->updated_at = \Carbon\Carbon::parse($question['user']['created_at']);
                 $uploader->save();
 
-    
+                if (! empty($question['user']['avatar_url'])) {
+                    try {
+                        $uploader->addMediaFromUrl($question['user']['avatar_url'])
+                            ->toMediaCollection('avatar');
+                        $this->info('Avatar attached for user: '.$uploader->email);
+                    } catch (\Exception $e) {
+                        $this->error('Failed to attach avatar for user: '.$uploader->email.' - '.$e->getMessage());
+                    }
+                }
             }
 
             $newquestion = Question::where('department_id', $department->id)
@@ -124,7 +132,7 @@ class ImportFromApi extends Command
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
-                'view_count'=> $question['view_count'] ?? 0,
+                'view_count' => $question['view_count'] ?? 0,
                 'section' => $question['section'] ?? null,
 
             ]);
