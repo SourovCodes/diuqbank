@@ -1,15 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, CheckCircle, Clock, Eye, FileText, Plus, School, ThumbsUp, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, FileText, Plus, XCircle } from 'lucide-react';
 
-import { EmptyState } from '@/components/empty-state';
-import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardLayout from '@/layouts/dashboard-layout';
-import { formatDate } from '@/lib/utils';
-import { create, index as submissionsIndex } from '@/routes/dashboard/submissions';
-import { show as showQuestion } from '@/routes/questions';
-import type { SubmissionItem } from '@/types';
+import { create } from '@/routes/dashboard/submissions';
 
 interface DashboardStats {
     total_submissions: number;
@@ -20,10 +15,9 @@ interface DashboardStats {
 
 interface Props {
     stats: DashboardStats;
-    recentSubmissions: SubmissionItem[];
 }
 
-export default function Dashboard({ stats, recentSubmissions }: Props) {
+export default function Dashboard({ stats }: Props) {
     return (
         <DashboardLayout>
             <Head title="Dashboard" />
@@ -82,69 +76,6 @@ export default function Dashboard({ stats, recentSubmissions }: Props) {
                         </CardContent>
                     </Card>
                 </div>
-
-                {/* Recent Submissions */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Recent Submissions</CardTitle>
-                                <CardDescription>Your latest question paper submissions.</CardDescription>
-                            </div>
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={submissionsIndex.url()}>View All</Link>
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {recentSubmissions.length === 0 ? (
-                            <EmptyState
-                                icon={FileText}
-                                title="No submissions yet"
-                                description="Start contributing by uploading your first question paper!"
-                            />
-                        ) : (
-                            <div className="space-y-4">
-                                {recentSubmissions.map((submission) => (
-                                    <Link
-                                        key={submission.id}
-                                        href={showQuestion({ question: submission.question.id })}
-                                        className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                                    >
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium">{submission.question.course.name}</span>
-                                                <StatusBadge status={submission.question.status} label={submission.question.status_label} />
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                                                <span className="inline-flex items-center gap-1">
-                                                    <School className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                                                    {submission.question.department.short_name}
-                                                </span>
-                                                <span className="text-amber-600 dark:text-amber-400">{submission.question.exam_type.name}</span>
-                                                <span className="inline-flex items-center gap-1">
-                                                    <Calendar className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                                                    {submission.question.semester.name}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            <span className="flex items-center gap-1">
-                                                <ThumbsUp className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                                                {submission.vote_score}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Eye className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
-                                                {submission.views}
-                                            </span>
-                                            <span className="hidden sm:inline">{formatDate(submission.created_at)}</span>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
             </div>
         </DashboardLayout>
     );

@@ -44,7 +44,7 @@ export default function MySubmissions({ submissions }: Props) {
                     />
                 ) : (
                     <>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4">
                             {submissions.data.map((submission) => (
                                 <Card key={submission.id} className="group relative overflow-hidden transition-all hover:shadow-md">
                                     <CardHeader className="pb-3">

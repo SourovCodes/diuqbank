@@ -30,15 +30,8 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        $recentSubmissions = Submission::with(['question.course', 'question.department', 'question.semester', 'question.examType'])
-            ->where('user_id', $user->id)
-            ->latest()
-            ->take(5)
-            ->get();
-
         return Inertia::render('dashboard/index', [
             'stats' => $stats,
-            'recentSubmissions' => $recentSubmissions,
         ]);
     }
 }
