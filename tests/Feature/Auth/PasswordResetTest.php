@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Inertia\Testing\AssertableInertia as Assert;
 
+// All password reset tests are skipped - using Google OAuth only
+// These tests are kept for reference if password reset is re-enabled
+
 test('forgot password page can be rendered', function () {
     $response = $this->get('/forgot-password');
 
@@ -14,7 +17,7 @@ test('forgot password page can be rendered', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('auth/forgot-password')
     );
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset link can be requested', function () {
     Notification::fake();
@@ -26,13 +29,13 @@ test('password reset link can be requested', function () {
     ]);
 
     Notification::assertSentTo($user, ResetPassword::class);
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset link request requires email', function () {
     $response = $this->post('/forgot-password', []);
 
     $response->assertSessionHasErrors('email');
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset link request requires valid email format', function () {
     $response = $this->post('/forgot-password', [
@@ -40,7 +43,7 @@ test('password reset link request requires valid email format', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset link request fails for non-existent email', function () {
     Notification::fake();
@@ -52,7 +55,7 @@ test('password reset link request fails for non-existent email', function () {
     // Laravel returns error for non-existent emails
     $response->assertSessionHasErrors('email');
     Notification::assertNothingSent();
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('reset password page can be rendered with valid token', function () {
     $user = User::factory()->create();
@@ -66,7 +69,7 @@ test('reset password page can be rendered with valid token', function () {
         ->has('token')
         ->has('email')
     );
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password can be reset with valid token', function () {
     $user = User::factory()->create();
@@ -82,7 +85,7 @@ test('password can be reset with valid token', function () {
     $response->assertRedirect('/login');
 
     expect(Hash::check('newpassword123', $user->fresh()->password))->toBeTrue();
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset requires token', function () {
     $user = User::factory()->create();
@@ -94,7 +97,7 @@ test('password reset requires token', function () {
     ]);
 
     $response->assertSessionHasErrors('token');
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset requires email', function () {
     $user = User::factory()->create();
@@ -107,7 +110,7 @@ test('password reset requires email', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset requires password confirmation', function () {
     $user = User::factory()->create();
@@ -121,7 +124,7 @@ test('password reset requires password confirmation', function () {
     ]);
 
     $response->assertSessionHasErrors('password');
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset fails with invalid token', function () {
     $user = User::factory()->create([
@@ -139,7 +142,7 @@ test('password reset fails with invalid token', function () {
 
     // Password should remain unchanged
     expect(Hash::check('oldpassword', $user->fresh()->password))->toBeTrue();
-});
+})->skip('Password reset disabled - using Google OAuth only');
 
 test('password reset fails with wrong email', function () {
     $user = User::factory()->create([
@@ -158,4 +161,4 @@ test('password reset fails with wrong email', function () {
 
     // Password should remain unchanged
     expect(Hash::check('oldpassword', $user->fresh()->password))->toBeTrue();
-});
+})->skip('Password reset disabled - using Google OAuth only');

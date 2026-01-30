@@ -4,6 +4,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 
+// All registration tests are skipped - using Google OAuth only
+// These tests are kept for reference if credential-based registration is re-enabled
+
 test('register page can be rendered', function () {
     $response = $this->get('/register');
 
@@ -11,7 +14,7 @@ test('register page can be rendered', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('auth/register')
     );
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('authenticated user is redirected from register page', function () {
     $user = User::factory()->create();
@@ -19,7 +22,7 @@ test('authenticated user is redirected from register page', function () {
     $response = $this->actingAs($user)->get('/register');
 
     $response->assertRedirect('/dashboard');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('user can register with valid DIU email', function () {
     $response = $this->post('/register', [
@@ -38,7 +41,7 @@ test('user can register with valid DIU email', function () {
         'username' => 'testuser',
         'email' => 'testuser@diu.edu.bd',
     ]);
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('user can register with student DIU email', function () {
     $response = $this->post('/register', [
@@ -55,7 +58,7 @@ test('user can register with student DIU email', function () {
     $this->assertDatabaseHas('users', [
         'email' => 'student@s.diu.edu.bd',
     ]);
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('user cannot register with non-DIU email', function () {
     $response = $this->post('/register', [
@@ -68,7 +71,7 @@ test('user cannot register with non-DIU email', function () {
 
     $response->assertSessionHasErrors('email');
     $this->assertGuest();
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires name', function () {
     $response = $this->post('/register', [
@@ -79,7 +82,7 @@ test('registration requires name', function () {
     ]);
 
     $response->assertSessionHasErrors('name');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires username', function () {
     $response = $this->post('/register', [
@@ -90,7 +93,7 @@ test('registration requires username', function () {
     ]);
 
     $response->assertSessionHasErrors('username');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires unique username', function () {
     User::factory()->create(['username' => 'existinguser']);
@@ -104,7 +107,7 @@ test('registration requires unique username', function () {
     ]);
 
     $response->assertSessionHasErrors('username');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires unique email', function () {
     User::factory()->create(['email' => 'existing@diu.edu.bd']);
@@ -118,7 +121,7 @@ test('registration requires unique email', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires password confirmation', function () {
     $response = $this->post('/register', [
@@ -130,7 +133,7 @@ test('registration requires password confirmation', function () {
     ]);
 
     $response->assertSessionHasErrors('password');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registration requires minimum password length', function () {
     $response = $this->post('/register', [
@@ -142,7 +145,7 @@ test('registration requires minimum password length', function () {
     ]);
 
     $response->assertSessionHasErrors('password');
-});
+})->skip('Registration disabled - using Google OAuth only');
 
 test('registered user password is hashed', function () {
     $this->post('/register', [
@@ -157,4 +160,4 @@ test('registered user password is hashed', function () {
 
     expect(Hash::check('password123', $user->password))->toBeTrue();
     expect($user->password)->not->toBe('password123');
-});
+})->skip('Registration disabled - using Google OAuth only');

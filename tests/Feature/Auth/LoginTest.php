@@ -9,7 +9,7 @@ test('login page can be rendered', function () {
 
     $response->assertStatus(200);
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('auth/login')
+        ->component('auth/google-only-login')
     );
 });
 
@@ -33,7 +33,7 @@ test('user can login with valid credentials', function () {
 
     $response->assertRedirect();
     $this->assertAuthenticatedAs($user);
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('user cannot login with invalid password', function () {
     $user = User::factory()->create([
@@ -47,7 +47,7 @@ test('user cannot login with invalid password', function () {
 
     $response->assertSessionHasErrors('email');
     $this->assertGuest();
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('user cannot login with non-existent email', function () {
     $response = $this->post('/login', [
@@ -57,7 +57,7 @@ test('user cannot login with non-existent email', function () {
 
     $response->assertSessionHasErrors('email');
     $this->assertGuest();
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('login requires email', function () {
     $response = $this->post('/login', [
@@ -65,7 +65,7 @@ test('login requires email', function () {
     ]);
 
     $response->assertSessionHasErrors('email');
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('login requires password', function () {
     $response = $this->post('/login', [
@@ -73,7 +73,7 @@ test('login requires password', function () {
     ]);
 
     $response->assertSessionHasErrors('password');
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('user can logout', function () {
     $user = User::factory()->create();
@@ -105,7 +105,7 @@ test('login is rate limited after too many attempts', function () {
 
     $response->assertSessionHasErrors('email');
     expect(session('errors')->get('email')[0])->toContain('Too many login attempts');
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
 
 test('user can login with remember me option', function () {
     $user = User::factory()->create([
@@ -123,4 +123,4 @@ test('user can login with remember me option', function () {
 
     // Check that remember token is set
     expect($user->fresh()->remember_token)->not->toBeNull();
-});
+})->skip('Credential-based login disabled - using Google OAuth only');
