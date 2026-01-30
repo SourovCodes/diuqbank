@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\BackupsStats;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -61,11 +62,16 @@ class Backups extends Page implements HasTable
     public static function getNavigationBadge(): ?string
     {
         try {
-            $disk = 'backups';
+            $disks = config('backup.backup.destination.disks', ['backups']);
             $backupName = config('backup.backup.name');
-            $backupDestination = BackupDestination::create($disk, $backupName);
+            $total = 0;
 
-            return (string) $backupDestination->backups()->count();
+            foreach ($disks as $disk) {
+                $backupDestination = BackupDestination::create($disk, $backupName);
+                $total += $backupDestination->backups()->count();
+            }
+
+            return (string) $total;
         } catch (\Exception) {
             return null;
         }
@@ -81,6 +87,13 @@ class Backups extends Page implements HasTable
         return 'Total backups stored';
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            BackupsStats::class,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -89,6 +102,91 @@ class Backups extends Page implements HasTable
                 ->icon(Heroicon::ArrowPath)
                 ->color('gray')
                 ->action(fn () => null),
+
+            ActionGroup::make([
+                Action::make('run_monitor')
+                    ->label('Check Health')
+                    ->icon(Heroicon::OutlinedHeart)
+                    ->color('info')
+                    ->action(function (): void {
+                        try {
+                            $exitCode = Artisan::call('backup:monitor');
+
+                            if ($exitCode === 0) {
+                                Notification::make()
+                                    ->title('Health Check Passed')
+                                    ->body('All backup health checks are passing.')
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Health Check Warning')
+                                    ->body('One or more backup health checks failed. Review your backup configuration.')
+                                    ->warning()
+                                    ->send();
+                            }
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Health Check Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
+                Action::make('run_cleanup')
+                    ->label('Run Cleanup')
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalIcon(Heroicon::OutlinedTrash)
+                    ->modalHeading('Run Backup Cleanup')
+                    ->modalDescription('This will remove old backups according to your retention policy. Recent backups will be preserved.')
+                    ->modalSubmitActionLabel('Run Cleanup')
+                    ->action(function (): void {
+                        try {
+                            Artisan::call('backup:clean');
+
+                            Notification::make()
+                                ->title('Cleanup Complete')
+                                ->body('Old backups have been removed according to retention policy.')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Cleanup Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
+                Action::make('list_backups')
+                    ->label('View Details')
+                    ->icon(Heroicon::OutlinedListBullet)
+                    ->color('gray')
+                    ->modalContent(function () {
+                        try {
+                            Artisan::call('backup:list');
+                            $output = Artisan::output();
+
+                            return view('filament.pages.backups.list-output', [
+                                'output' => $output,
+                            ]);
+                        } catch (\Exception $e) {
+                            return view('filament.pages.backups.list-output', [
+                                'output' => 'Failed to retrieve backup list: '.$e->getMessage(),
+                            ]);
+                        }
+                    })
+                    ->modalHeading('Backup Details')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close'),
+            ])
+                ->label('Tools')
+                ->icon(Heroicon::Wrench)
+                ->color('gray')
+                ->button(),
 
             Action::make('create_backup')
                 ->label('Create Backup')
@@ -159,11 +257,19 @@ class Backups extends Page implements HasTable
                     ->description(fn (array $record): string => $record['path'])
                     ->searchable(query: fn (array $record, string $search): bool => str_contains(strtolower($record['path']), strtolower($search))),
 
-                TextColumn::make('disk')
+                TextColumn::make('disk_label')
                     ->label('Storage')
                     ->badge()
-                    ->color('gray')
-                    ->icon(Heroicon::OutlinedCloud),
+                    ->color(fn (array $record): string => match ($record['disk']) {
+                        'backups' => 'info',
+                        'local-backups' => 'warning',
+                        default => 'gray',
+                    })
+                    ->icon(fn (array $record): string => match ($record['disk']) {
+                        'backups' => 'heroicon-o-cloud',
+                        'local-backups' => 'heroicon-o-server',
+                        default => 'heroicon-o-circle-stack',
+                    }),
 
                 TextColumn::make('date')
                     ->label('Created')
@@ -174,12 +280,22 @@ class Backups extends Page implements HasTable
                         : $records
                     ),
 
+                TextColumn::make('age')
+                    ->label('Age')
+                    ->badge()
+                    ->color(fn (array $record): string => match (true) {
+                        $record['age_days'] > 7 => 'danger',
+                        $record['age_days'] > 1 => 'warning',
+                        default => 'success',
+                    })
+                    ->tooltip(fn (array $record): string => "Created: {$record['date']}"),
+
                 TextColumn::make('size')
                     ->label('Size')
                     ->badge()
                     ->color(fn (array $record): string => match (true) {
-                        $record['size_raw'] > 100 * 1024 * 1024 => 'warning',
                         $record['size_raw'] > 500 * 1024 * 1024 => 'danger',
+                        $record['size_raw'] > 100 * 1024 * 1024 => 'warning',
                         default => 'success',
                     }),
             ])
@@ -220,32 +336,69 @@ class Backups extends Page implements HasTable
 
     private function getBackupRecords(): array
     {
-        $disk = 'backups';
+        $disks = config('backup.backup.destination.disks', ['backups']);
         $backupName = config('backup.backup.name');
+        $result = [];
 
-        try {
-            $backupDestination = BackupDestination::create($disk, $backupName);
-            $backups = $backupDestination->backups();
+        foreach ($disks as $disk) {
+            try {
+                $backupDestination = BackupDestination::create($disk, $backupName);
+                $backups = $backupDestination->backups();
 
-            $result = [];
-            foreach ($backups as $index => $backup) {
-                $result[$index] = [
-                    'path' => $backup->path(),
-                    'filename' => basename($backup->path()),
-                    'disk' => $disk,
-                    'date' => $backup->date()->toDateTimeString(),
-                    'size' => Number::fileSize($backup->sizeInBytes()),
-                    'size_raw' => $backup->sizeInBytes(),
-                ];
+                foreach ($backups as $backup) {
+                    $date = $backup->date();
+                    $ageDays = round($date->diffInMinutes() / (24 * 60), 2);
+
+                    $result[] = [
+                        'path' => $backup->path(),
+                        'filename' => basename($backup->path()),
+                        'disk' => $disk,
+                        'disk_label' => $this->getDiskLabel($disk),
+                        'date' => $date->toDateTimeString(),
+                        'age' => $this->formatAge($ageDays),
+                        'age_days' => $ageDays,
+                        'size' => Number::fileSize($backup->sizeInBytes()),
+                        'size_raw' => $backup->sizeInBytes(),
+                    ];
+                }
+            } catch (\Exception) {
+                // Continue to next disk if one fails
+                continue;
             }
-
-            // Sort by date descending (newest first)
-            uasort($result, fn (array $a, array $b): int => strcmp($b['date'], $a['date']));
-
-            return $result;
-        } catch (\Exception) {
-            return [];
         }
+
+        // Sort by date descending (newest first)
+        usort($result, fn (array $a, array $b): int => strcmp($b['date'], $a['date']));
+
+        return $result;
+    }
+
+    private function getDiskLabel(string $disk): string
+    {
+        return match ($disk) {
+            'backups' => 'S3 Cloud',
+            'local-backups' => 'Local',
+            default => ucfirst($disk),
+        };
+    }
+
+    private function formatAge(float $days): string
+    {
+        if ($days < 1) {
+            $hours = round($days * 24, 1);
+
+            return $hours <= 1 ? 'Less than 1 hour' : "{$hours} hours";
+        }
+
+        if ($days < 7) {
+            $roundedDays = round($days, 1);
+
+            return $roundedDays == 1 ? '1 day' : "{$roundedDays} days";
+        }
+
+        $weeks = round($days / 7, 1);
+
+        return $weeks == 1 ? '1 week' : "{$weeks} weeks";
     }
 
     private function getDownloadUrl(array $record): string
