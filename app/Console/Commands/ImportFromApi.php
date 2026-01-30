@@ -20,7 +20,7 @@ class ImportFromApi extends Command
      *
      * @var string
      */
-    protected $signature = 'app:import-from-api';
+    protected $signature = 'app:import-from-api {--limit= : Limit the number of questions to import}';
 
     /**
      * The console command description.
@@ -36,6 +36,12 @@ class ImportFromApi extends Command
     {
         $questions = Http::get('https://diuqbank.com/api/migration/questions')->json('data');
         $this->info('Fetched '.count($questions).' questions from API.');
+
+        $limit = $this->option('limit');
+        if ($limit) {
+            $questions = array_slice($questions, 0, (int) $limit);
+            $this->info('Limiting import to '.$limit.' questions.');
+        }
 
         foreach ($questions as $question) {
             // Process each question as needed
