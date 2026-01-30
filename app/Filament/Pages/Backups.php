@@ -192,10 +192,10 @@ class Backups extends Page implements HasTable
                     currentPage: $page,
                 );
             })
-            ->resolveSelectedRecordsUsing(function (array $keys): array {
+            ->resolveSelectedRecordsUsing(function (array $keys): \Illuminate\Support\Collection {
                 $allRecords = $this->getBackupRecords();
 
-                return array_filter($allRecords, fn (array $record): bool => in_array($record['path'], $keys, true));
+                return collect(array_filter($allRecords, fn (array $record): bool => in_array($record['path'], $keys, true)));
             })
             ->columns([
                 IconColumn::make('health')
@@ -273,9 +273,9 @@ class Backups extends Page implements HasTable
                         ->modalIcon(Heroicon::OutlinedTrash)
                         ->modalIconColor('danger')
                         ->modalHeading('Delete Selected Backups')
-                        ->modalDescription(fn (array $records): string => 'Are you sure you want to permanently delete '.count($records).' selected backup(s)?')
+                        ->modalDescription(fn (\Illuminate\Support\Collection $records): string => 'Are you sure you want to permanently delete '.$records->count().' selected backup(s)?')
                         ->modalSubmitActionLabel('Delete Backups')
-                        ->action(fn (array $records) => $this->deleteBackups($records))
+                        ->action(fn (\Illuminate\Support\Collection $records) => $this->deleteBackups($records->all()))
                         ->deselectRecordsAfterCompletion(),
                 ]),
             ])
