@@ -9,6 +9,7 @@ use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\SubmissionController as DashboardSubmissionController;
+use App\Http\Controllers\DiskStatusController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,8 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('home');
 })->name('home');
+
+Route::get('/disk-status', DiskStatusController::class)->name('disk-status');
 
 Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
 Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');

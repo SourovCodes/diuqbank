@@ -26,6 +26,7 @@ export function PdfDropzone({
     className,
 }: PdfDropzoneProps) {
     const [isDragActive, setIsDragActive] = React.useState(false);
+    const [removedExisting, setRemovedExisting] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -54,6 +55,7 @@ export function PdfDropzone({
             const file = files[0];
             if (file.type === "application/pdf") {
                 onChange(file);
+                setRemovedExisting(false);
             }
         }
     };
@@ -62,11 +64,13 @@ export function PdfDropzone({
         const files = e.target.files;
         if (files && files.length > 0) {
             onChange(files[0]);
+            setRemovedExisting(false);
         }
     };
 
     const handleRemove = () => {
         onChange(null);
+        setRemovedExisting(true);
         if (inputRef.current) {
             inputRef.current.value = "";
         }
@@ -79,7 +83,7 @@ export function PdfDropzone({
     };
 
     const displayFileName = value?.name || existingPdfName;
-    const hasFile = value || (existingPdfUrl && !value);
+    const hasFile = value || (existingPdfUrl && !removedExisting);
 
     const formatFileSize = (bytes: number): string => {
         if (bytes < 1024) return `${bytes} B`;
