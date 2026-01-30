@@ -1,9 +1,8 @@
 <?php
 
 use App\Filament\Pages\Backups;
-use App\Filament\Widgets\BackupsStats;
+use App\Filament\Widgets\BackupDestinationsWidget;
 use App\Models\User;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Livewire\livewire;
@@ -68,7 +67,7 @@ describe('Page Configuration', function () {
     });
 
     it('has the correct navigation icon', function () {
-        expect(Backups::getNavigationIcon())->toBe(Heroicon::OutlinedCircleStack);
+        expect(Backups::getNavigationIcon())->toBe('heroicon-o-circle-stack');
     });
 
     it('has a navigation badge color', function () {
@@ -80,40 +79,38 @@ describe('Page Configuration', function () {
     });
 });
 
-describe('Stats Widget', function () {
+describe('Destinations Widget', function () {
     beforeEach(function () {
         $this->user = User::factory()->create(['email' => 'sourov2305101004@diu.edu.bd']);
         $this->actingAs($this->user);
     });
 
-    it('includes BackupsStats widget in header widgets', function () {
+    it('includes BackupDestinationsWidget in header widgets', function () {
         $page = new Backups;
         $method = new ReflectionMethod($page, 'getHeaderWidgets');
         $widgets = $method->invoke($page);
 
-        expect($widgets)->toContain(BackupsStats::class);
+        expect($widgets)->toContain(BackupDestinationsWidget::class);
     });
 
-    it('can render the stats widget', function () {
-        livewire(BackupsStats::class)
+    it('can render the destinations widget', function () {
+        livewire(BackupDestinationsWidget::class)
             ->assertOk();
     });
 
-    it('stats widget has polling enabled', function () {
-        $widget = new BackupsStats;
-        $reflection = new ReflectionClass($widget);
+    it('destinations widget has polling enabled', function () {
+        $reflection = new ReflectionClass(BackupDestinationsWidget::class);
         $property = $reflection->getProperty('pollingInterval');
 
-        expect($property->getValue($widget))->toBe('30s');
+        expect($property->getValue(null))->toBe('30s');
     });
 
-    it('stats widget returns stats array', function () {
-        $widget = new BackupsStats;
-        $method = new ReflectionMethod($widget, 'getStats');
-        $stats = $method->invoke($widget);
+    it('destinations widget spans full width', function () {
+        $widget = new BackupDestinationsWidget;
+        $reflection = new ReflectionClass($widget);
+        $property = $reflection->getProperty('columnSpan');
 
-        expect($stats)->toBeArray();
-        expect($stats)->toHaveCount(4);
+        expect($property->getValue($widget))->toBe('full');
     });
 });
 
@@ -134,7 +131,7 @@ describe('Table Display', function () {
 
         expect($page->instance()->table(new \Filament\Tables\Table($page->instance()))
             ->getColumns())
-            ->toHaveCount(5);
+            ->toHaveCount(6);
     });
 
     it('has empty state configured', function () {

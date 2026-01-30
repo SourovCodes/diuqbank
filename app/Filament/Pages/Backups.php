@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Widgets\BackupsStats;
+use App\Filament\Widgets\BackupDestinationsWidget;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -86,7 +86,7 @@ class Backups extends Page implements HasTable
     protected function getHeaderWidgets(): array
     {
         return [
-            BackupsStats::class,
+            BackupDestinationsWidget::class,
         ];
     }
 
@@ -171,6 +171,8 @@ class Backups extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->heading('All Backups')
+            ->description('Individual backup files across all destinations')
             ->paginated(false)
             ->striped()
             ->poll('30s')
