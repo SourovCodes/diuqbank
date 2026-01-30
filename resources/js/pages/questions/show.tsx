@@ -169,43 +169,57 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                         description="Be the first to submit a solution for this question."
                     />
                 ) : (
-                    <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
-                        {/* Submission Tabs */}
-                        <div className="flex items-center justify-between border-b bg-muted/30">
-                            {/* Tab Navigation */}
-                            <div className="flex items-center">
-                                {/* Mobile: Prev/Next */}
-                                <div className="flex items-center sm:hidden">
-                                    <button
-                                        type="button"
-                                        onClick={goToPrevious}
-                                        disabled={selectedIndex === 0}
-                                        aria-label="Previous submission"
-                                        className="inline-flex h-10 w-10 items-center justify-center border-r text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </button>
-                                    <span className="flex items-center gap-1.5 px-3 text-sm font-medium">
-                                        #{selectedSubmission?.id}
-                                        {selectedSubmission?.section && (
-                                            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                                                {selectedSubmission.section}
+                    <>
+                        {/* Multiple submissions hint */}
+                        {submissions.length > 1 && (
+                            <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground sm:mb-4">
+                                <ChevronLeft className="h-4 w-4 shrink-0 text-primary sm:hidden" />
+                                <ChevronRight className="-ml-3 h-4 w-4 shrink-0 text-primary sm:hidden" />
+                                <span>
+                                    <span className="font-medium text-foreground">{submissions.length} submissions</span>
+                                    <span className="hidden sm:inline"> — click tabs to switch</span>
+                                    <span className="sm:hidden"> — swipe to browse</span>
+                                    <span className="hidden sm:inline">, vote to rank</span>
+                                </span>
+                            </div>
+                        )}
+
+                        <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
+                            {/* Submission Tabs */}
+                            <div className="flex items-center justify-between gap-1 border-b bg-muted/30">
+                                {/* Tab Navigation */}
+                                <div className="flex min-w-0 items-center">
+                                    {/* Mobile: Prev/Next */}
+                                    <div className="flex items-center sm:hidden">
+                                        <button
+                                            type="button"
+                                            onClick={goToPrevious}
+                                            disabled={selectedIndex === 0}
+                                            aria-label="Previous submission"
+                                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center border-r bg-muted/50 text-foreground transition-colors hover:bg-muted active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                        >
+                                            <ChevronLeft className="h-5 w-5" />
+                                        </button>
+                                        <span className="flex min-w-0 items-center gap-1.5 px-3 text-sm">
+                                            <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">
+                                                {selectedIndex + 1}/{submissions.length}
                                             </span>
-                                        )}
-                                        <span className="text-muted-foreground">
-                                            ({selectedIndex + 1}/{submissions.length})
+                                            {selectedSubmission?.section && (
+                                                <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                                    {selectedSubmission.section}
+                                                </span>
+                                            )}
                                         </span>
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={goToNext}
-                                        disabled={selectedIndex === submissions.length - 1}
-                                        aria-label="Next submission"
-                                        className="inline-flex h-10 w-10 items-center justify-center border-l text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </button>
-                                </div>
+                                        <button
+                                            type="button"
+                                            onClick={goToNext}
+                                            disabled={selectedIndex === submissions.length - 1}
+                                            aria-label="Next submission"
+                                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center border-l bg-muted/50 text-foreground transition-colors hover:bg-muted active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                        >
+                                            <ChevronRight className="h-5 w-5" />
+                                        </button>
+                                    </div>
 
                                 {/* Desktop: Scrollable Tabs */}
                                 <div className="hidden overflow-x-auto sm:flex">
@@ -214,10 +228,10 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                             key={submission.id}
                                             onClick={() => handleSelectSubmission(submission.id)}
                                             className={cn(
-                                                'relative flex shrink-0 items-center gap-2 border-r px-4 py-2.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                                                'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                                                 selectedId === submission.id
-                                                    ? 'bg-background text-foreground'
-                                                    : 'text-muted-foreground',
+                                                    ? 'bg-background font-medium text-foreground shadow-sm'
+                                                    : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                                             )}
                                         >
                                             {/* Active indicator */}
@@ -225,14 +239,19 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />
                                             )}
 
-                                            {/* Rank badge for #1 */}
-                                            {index === 0 ? (
-                                                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-xs font-semibold text-primary">
-                                                    1
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">#{submission.id}</span>
-                                            )}
+                                            {/* Rank badge */}
+                                            <span
+                                                className={cn(
+                                                    'flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold',
+                                                    index === 0
+                                                        ? 'bg-primary/10 text-primary'
+                                                        : selectedId === submission.id
+                                                          ? 'bg-muted text-foreground'
+                                                          : 'bg-muted/50 text-muted-foreground',
+                                                )}
+                                            >
+                                                {index + 1}
+                                            </span>
 
                                             {/* Section badge */}
                                             {submission.section && (
@@ -259,7 +278,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                             </div>
 
                             {/* Controls */}
-                            <div className="flex items-center gap-1 px-2 sm:px-3">
+                            <div className="flex shrink-0 items-center gap-0.5 px-1 sm:gap-1 sm:px-3">
                                 {/* Fullscreen Button */}
                                 <button
                                     type="button"
@@ -270,7 +289,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                     {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                                 </button>
 
-                                <div className="mx-1 h-5 w-px bg-border" />
+                                <div className="mx-0.5 hidden h-5 w-px bg-border sm:mx-1 sm:block" />
 
                                 {/* Voting */}
                                 <button
@@ -288,7 +307,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                 </button>
                                 <span
                                     className={cn(
-                                        'min-w-6 text-center text-sm font-semibold tabular-nums',
+                                        'hidden min-w-6 text-center text-sm font-semibold tabular-nums sm:block',
                                         (selectedSubmission?.vote_score ?? 0) > 0 &&
                                             'text-green-600 dark:text-green-400',
                                         (selectedSubmission?.vote_score ?? 0) < 0 && 'text-red-600 dark:text-red-400',
@@ -328,7 +347,8 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                 </div>
                             </div>
                         )}
-                    </div>
+                        </div>
+                    </>
                 )}
             </div>
         </>
