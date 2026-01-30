@@ -18,9 +18,8 @@ test('unverified user is redirected to verification notice', function () {
 
     $response = $this->actingAs($user)->get('/dashboard');
 
-    // Dashboard may allow unverified users - just check redirect or success
-    $response->assertStatus(302);
-})->skip('Unverified users may access dashboard');
+    $response->assertRedirect(route('verification.notice'));
+});
 
 test('verified user can access dashboard', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
