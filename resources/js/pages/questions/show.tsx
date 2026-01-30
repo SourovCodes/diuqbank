@@ -3,6 +3,7 @@ import {
     Calendar,
     ChevronLeft,
     ChevronRight,
+    Download,
     FileText,
     Loader2,
     Maximize2,
@@ -288,6 +289,20 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                 >
                                     {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                                 </button>
+
+                                {/* Download Button */}
+                                {selectedSubmission?.pdf_url && (
+                                    <a
+                                        href={selectedSubmission.pdf_url}
+                                        download
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="Download PDF"
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                    </a>
+                                )}
 
                                 <div className="mx-0.5 hidden h-5 w-px bg-border sm:mx-1 sm:block" />
 
