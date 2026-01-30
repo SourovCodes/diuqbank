@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Joaopaulolndev\FilamentEditEnv\FilamentEditEnvPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -51,6 +52,11 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentEditEnvPlugin::make()
+                    ->showButton(fn () => auth()->user()->id === 1)
+                    ->setIcon('heroicon-o-cog'),
             ])
             ->authMiddleware([
                 Authenticate::class,

@@ -41,9 +41,9 @@ set('writable_mode', 'chmod');
 |--------------------------------------------------------------------------
 */
 
-$hostname   = getenv('DEPLOY_HOSTNAME');
+$hostname = getenv('DEPLOY_HOSTNAME');
 $deployPath = getenv('DEPLOY_PATH');
-$sshPort    = getenv('DEPLOY_SSH_PORT');
+$sshPort = getenv('DEPLOY_SSH_PORT');
 
 if (! $hostname) {
     throw new \RuntimeException('DEPLOY_HOSTNAME environment variable is required');
@@ -87,11 +87,11 @@ task('build:assets', function () {
 
 task('upload:assets', function () {
     writeln('🚀 Uploading built assets...');
-    $user        = get('remote_user');
-    $hostname    = currentHost()->getHostname();
-    $port        = get('port');
+    $user = get('remote_user');
+    $hostname = currentHost()->getHostname();
+    $port = get('port');
     $releasePath = get('release_path');
-    $archive     = 'build-assets.tar.gz';
+    $archive = 'build-assets.tar.gz';
 
     runLocally("tar -czf {$archive} -C public build");
     runLocally("scp -P {$port} {$archive} {$user}@{$hostname}:{$releasePath}/");

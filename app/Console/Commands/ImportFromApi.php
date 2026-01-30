@@ -84,7 +84,7 @@ class ImportFromApi extends Command
                     'requires_section' => $question['exam_type']['requires_section'],
                 ],
             );
-            $question['user']['email'] = "sourov2305101004@diu.edu.bd";
+            $question['user']['email'] = 'sourov2305101004@diu.edu.bd';
 
             $uploader = User::where('email', $question['user']['email'])->first();
             if (! $uploader) {
@@ -119,7 +119,6 @@ class ImportFromApi extends Command
                 $newquestion->save();
             }
 
-          
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
@@ -130,13 +129,13 @@ class ImportFromApi extends Command
             $submission->save();
 
             // Attach PDF from media.original_url if present
-            if (!empty($question['media']['original_url'])) {
+            if (! empty($question['media']['original_url'])) {
                 try {
                     $submission->addMediaFromUrl($question['media']['original_url'])
                         ->toMediaCollection('pdf');
-                    $this->info('PDF attached from URL: ' . $question['media']['original_url']);
+                    $this->info('PDF attached from URL: '.$question['media']['original_url']);
                 } catch (\Exception $e) {
-                    $this->error('Failed to attach PDF from URL: ' . $question['media']['original_url'] . ' - ' . $e->getMessage());
+                    $this->error('Failed to attach PDF from URL: '.$question['media']['original_url'].' - '.$e->getMessage());
                 }
             }
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5f3738c4d3f10c6460f728d0c094e7c4",
+    "content-hash": "990951266ba76f77fa7b7963480b845a",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2416,6 +2416,141 @@
                 "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.19"
             },
             "time": "2026-01-13T15:29:20+00:00"
+        },
+        {
+            "name": "jeffersongoncalves/filament-ace-editor-field",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jeffersongoncalves/filament-ace-editor-field.git",
+                "reference": "600869977f6a9b6f7aecfd1f000ffe7c5aec7064"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jeffersongoncalves/filament-ace-editor-field/zipball/600869977f6a9b6f7aecfd1f000ffe7c5aec7064",
+                "reference": "600869977f6a9b6f7aecfd1f000ffe7c5aec7064",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0",
+                "php": "^8.2|^8.3",
+                "spatie/laravel-package-tools": "^1.14.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.21",
+                "orchestra/testbench": "^9.0|^10.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "JeffersonGoncalves\\Filament\\AceEditorField\\AceEditorFieldServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "JeffersonGoncalves\\Filament\\AceEditorField\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jefferson Gonçalves",
+                    "email": "gerson.simao.92@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A Laravel Filament v4 field that integrates the Ace code editor into your forms, providing a rich, syntax‑highlighted code editing experience.",
+            "homepage": "https://github.com/jeffersongoncalves/filament-ace-editor-field",
+            "keywords": [
+                "ace-editor",
+                "filament",
+                "filament-ace-editor-field",
+                "jeffersongoncalves",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/jeffersongoncalves/filament-ace-editor-field/issues",
+                "source": "https://github.com/jeffersongoncalves/filament-ace-editor-field/tree/1.0.3"
+            },
+            "time": "2025-08-17T17:59:21+00:00"
+        },
+        {
+            "name": "joaopaulolndev/filament-edit-env",
+            "version": "v2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/joaopaulolndev/filament-edit-env.git",
+                "reference": "f46de145413418901659b16cbaa15c136533b71a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/joaopaulolndev/filament-edit-env/zipball/f46de145413418901659b16cbaa15c136533b71a",
+                "reference": "f46de145413418901659b16cbaa15c136533b71a",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0",
+                "jeffersongoncalves/filament-ace-editor-field": "^1.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.15.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.9|^8.6",
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "pestphp/pest": "^2.1|^3.4.7",
+                "pestphp/pest-plugin-arch": "^2.0|^3.0",
+                "pestphp/pest-plugin-laravel": "^2.0|^3.1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Joaopaulolndev\\FilamentEditEnv\\FilamentEditEnvServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Joaopaulolndev\\FilamentEditEnv\\": "src/",
+                    "Joaopaulolndev\\FilamentEditEnv\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "João Paulo Leite Nascimento",
+                    "email": "joaopauloln7@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Package to edit env file",
+            "homepage": "https://github.com/joaopaulolndev/filament-edit-env",
+            "keywords": [
+                "filament-edit-env",
+                "joaopaulolndev",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/joaopaulolndev/filament-edit-env/issues",
+                "source": "https://github.com/joaopaulolndev/filament-edit-env"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/joaopaulolndev",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-08-17T17:51:10+00:00"
         },
         {
             "name": "kirschbaum-development/eloquent-power-joins",
