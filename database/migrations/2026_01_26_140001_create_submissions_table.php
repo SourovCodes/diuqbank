@@ -18,8 +18,6 @@ return new class extends Migration
             $table->text('section')->nullable();
             $table->unsignedInteger('views')->default(0);
             $table->timestamps();
-
-            $table->unique(['question_id', 'user_id']);
         });
     }
 
