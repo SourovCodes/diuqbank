@@ -8,34 +8,34 @@ use Filament\Support\Contracts\HasLabel;
 
 enum QuestionStatus: string implements HasColor, HasIcon, HasLabel
 {
-    case PUBLISHED = 'published';
-    case PENDING_REVIEW = 'pending_review';
-    case NEED_FIX = 'need_fix';
+    case Published = 'published';
+    case PendingReview = 'pending_review';
+    case Rejected = 'rejected';
 
-    public function getLabel(): ?string
+    public function getLabel(): string
     {
         return match ($this) {
-            self::PUBLISHED => 'Published',
-            self::PENDING_REVIEW => 'Pending Review',
-            self::NEED_FIX => 'Need Fix',
+            self::Published => 'Published',
+            self::PendingReview => 'Pending Review',
+            self::Rejected => 'Rejected',
         };
     }
 
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::PUBLISHED => 'success',
-            self::PENDING_REVIEW => 'warning',
-            self::NEED_FIX => 'danger',
+            self::Published => 'success',
+            self::PendingReview => 'warning',
+            self::Rejected => 'danger',
         };
     }
 
     public function getIcon(): ?string
     {
         return match ($this) {
-            self::PUBLISHED => 'heroicon-m-check-circle',
-            self::PENDING_REVIEW => 'heroicon-m-clock',
-            self::NEED_FIX => 'heroicon-m-x-circle',
+            self::Published => 'heroicon-o-check-circle',
+            self::PendingReview => 'heroicon-o-clock',
+            self::Rejected => 'heroicon-o-x-circle',
         };
     }
 }

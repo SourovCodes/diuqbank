@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreCourseRequest extends FormRequest
 {
@@ -13,16 +11,14 @@ class StoreCourseRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /**
+     * @return array<string, array<int, mixed>>
+     */
     public function rules(): array
     {
         return [
             'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('courses', 'name')->where(fn (QueryBuilder $query) => $query->where('department_id', $this->integer('department_id'))),
-            ],
+            'name' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -39,12 +35,5 @@ class StoreCourseRequest extends FormRequest
                 'name' => trim(preg_replace('/\s+/', ' ', $this->name)),
             ]);
         }
-    }
-
-    public function messages(): array
-    {
-        return [
-            'name.unique' => 'A course with this name already exists for the selected department.',
-        ];
     }
 }

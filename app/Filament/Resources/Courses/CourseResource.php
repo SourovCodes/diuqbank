@@ -13,14 +13,15 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use UnitEnum;
 
 class CourseResource extends Resource
 {
     protected static ?string $model = Course::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Academic';
 
     public static function form(Schema $schema): Schema
     {
@@ -46,26 +47,5 @@ class CourseResource extends Resource
             'create' => CreateCourse::route('/create'),
             'edit' => EditCourse::route('/{record}/edit'),
         ];
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return [
-            'name',
-            'department.name',
-        ];
-    }
-
-    public static function getGlobalSearchResultDetails(Model $record): array
-    {
-        return [
-            'Department' => optional($record->department)->name,
-            'Questions' => (string) ($record->questions_count ?? 0),
-        ];
-    }
-
-    public static function getGlobalSearchEloquentQuery(): Builder
-    {
-        return parent::getGlobalSearchEloquentQuery()->with(['department'])->withCount('questions');
     }
 }

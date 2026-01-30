@@ -25,12 +25,12 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->regexify('[a-z]{5,10}_[a-z]{3,5}'),
+            'student_id' => fake()->unique()->numerify('###-##-####'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'student_id' => fake()->optional()->numerify('STU-####'),
-            'username' => fake()->unique()->userName(),
         ];
     }
 

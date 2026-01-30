@@ -11,18 +11,13 @@ class Department extends Model
     /** @use HasFactory<\Database\Factories\DepartmentFactory> */
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'short_name',
     ];
 
     /**
-     * Get the courses for the department.
+     * @return HasMany<Course, $this>
      */
     public function courses(): HasMany
     {
@@ -30,7 +25,7 @@ class Department extends Model
     }
 
     /**
-     * Get the questions for the department.
+     * @return HasMany<Question, $this>
      */
     public function questions(): HasMany
     {

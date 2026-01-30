@@ -16,14 +16,8 @@ class SemesterFactory extends Factory
      */
     public function definition(): array
     {
-        $seasons = ['Spring', 'Summer', 'Fall'];
-        $years = range(20, 30);
-
-        $season = $this->faker->randomElement($seasons);
-        $year = $this->faker->randomElement($years);
-
         return [
-            'name' => $season.' '.$year,
+            'name' => fake()->randomElement(['Spring', 'Summer', 'Fall', 'Winter']).' '.fake()->year(),
         ];
     }
 }

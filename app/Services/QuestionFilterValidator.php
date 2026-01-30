@@ -6,6 +6,9 @@ class QuestionFilterValidator
 {
     /**
      * Validate filter parameters and return array of invalid parameter names.
+     *
+     * @param  array{departments: \Illuminate\Support\Collection, semesters: \Illuminate\Support\Collection, courses: \Illuminate\Support\Collection, examTypes: \Illuminate\Support\Collection}  $filterOptions
+     * @return array<int, string>
      */
     public function getInvalidParams(
         array $filterOptions,

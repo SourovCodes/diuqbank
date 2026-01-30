@@ -1,7 +1,7 @@
 <?php
 
 use App\MediaLibrary\Conversions\PdfWatermarkGenerator;
-use App\Models\Question;
+use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\MediaLibrary\Conversions\ImageGenerators\Pdf as BasePdfGenerator;
@@ -14,21 +14,21 @@ uses(RefreshDatabase::class);
 it('includes the uploader name within the watermark text', function () {
     $user = User::factory()->create(['name' => 'Uploader Name']);
 
-    $question = Question::factory()
-        ->for($user, 'user')
+    $submission = Submission::factory()
+        ->for($user)
         ->create();
 
-    $question->setRelation('user', $user);
+    $submission->setRelation('user', $user);
 
     $media = new Media;
     $media->id = 123;
-    $media->model_type = $question->getMorphClass();
-    $media->model_id = $question->getKey();
+    $media->model_type = $submission->getMorphClass();
+    $media->model_id = $submission->getKey();
     $media->collection_name = 'pdf';
     $media->mime_type = 'application/pdf';
     $media->disk = 'public';
     $media->file_name = 'example.pdf';
-    $media->setRelation('model', $question);
+    $media->setRelation('model', $submission);
 
     $fallback = \Mockery::mock(BasePdfGenerator::class);
 

@@ -1,44 +1,123 @@
 <?php
 
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ContributorController;
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\ProfileController;
+use App\Http\Controllers\Dashboard\SubmissionController as DashboardSubmissionController;
+use App\Http\Controllers\DiskStatusController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::get('/', [\App\Http\Controllers\PagesController::class, 'home'])->name('home');
-Route::get('/about', [\App\Http\Controllers\PagesController::class, 'about'])->name('about');
-Route::get('/our-team', [\App\Http\Controllers\PagesController::class, 'ourTeam'])->name('our-team');
-Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('privacy-policy');
-Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-of-service');
-Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');
-Route::post('/contact', \App\Http\Controllers\ContactFormController::class)->name('contact.submit');
-Route::get('/help-developer', [\App\Http\Controllers\PagesController::class, 'helpDeveloper'])->name('help-developer');
+Route::get('/', function () {
+    return Inertia::render('home');
+})->name('home');
 
-Route::get('/login', [\App\Http\Controllers\Auth\AuthController::class, 'login'])->name('login');
-Route::post('/logout', [\App\Http\Controllers\Auth\AuthController::class, 'logout'])->name('logout');
-Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
-Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+Route::get('/disk-status', DiskStatusController::class)->name('disk-status');
 
-Route::get('/questions', [\App\Http\Controllers\QuestionsController::class, 'index'])->name('questions.index');
+Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
+Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/questions/create', [\App\Http\Controllers\QuestionsController::class, 'create'])->name('questions.create');
-    Route::post('/questions', [\App\Http\Controllers\QuestionsController::class, 'store'])->name('questions.store');
-    Route::get('/questions/{question}/edit', [\App\Http\Controllers\QuestionsController::class, 'edit'])->name('questions.edit');
-    Route::put('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'update'])->name('questions.update');
-    Route::delete('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'destroy'])->name('questions.destroy');
+Route::get('/contributors', [ContributorController::class, 'index'])->name('contributors.index');
+Route::get('/contributors/{user:username}', [ContributorController::class, 'show'])->name('contributors.show');
+
+Route::get('/privacy', function () {
+    return Inertia::render('privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('terms');
+})->name('terms');
+
+Route::get('/about', function () {
+    return Inertia::render('about');
+})->name('about');
+
+Route::get('/contact', function () {
+    return Inertia::render('contact');
+})->name('contact');
+
+// Guest routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store']);
+
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
+
+    // Google OAuth routes
+    Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
+
+    // Password reset routes
+    Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+});
+
+// Authenticated routes
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    // Email verification routes
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
+
+    // Course and semester creation (JSON API for modal forms)
     Route::post('/courses', [\App\Http\Controllers\CourseController::class, 'store'])->name('courses.store');
     Route::post('/semesters', [\App\Http\Controllers\SemesterController::class, 'store'])->name('semesters.store');
+
+    // Submission voting
+    Route::post('/submissions/{submission}/upvote', [SubmissionVoteController::class, 'upvote'])->name('submissions.upvote');
+    Route::post('/submissions/{submission}/downvote', [SubmissionVoteController::class, 'downvote'])->name('submissions.downvote');
+
+    // Dashboard routes
+    Route::middleware('verified')->group(function () {
+        Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
+
+            // Submissions
+            Route::get('/submissions', [DashboardSubmissionController::class, 'index'])->name('submissions.index');
+            Route::get('/submissions/create', [DashboardSubmissionController::class, 'create'])->name('submissions.create');
+            Route::post('/submissions', [DashboardSubmissionController::class, 'store'])->name('submissions.store');
+            Route::get('/submissions/{submission}/edit', [DashboardSubmissionController::class, 'edit'])->name('submissions.edit');
+            Route::put('/submissions/{submission}', [DashboardSubmissionController::class, 'update'])->name('submissions.update');
+
+            // Profile
+            Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+            Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+            Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+
+        });
+    });
 });
+if (app()->isLocal()) {
+    Route::get('/flash-test/{type}', function (string $type) {
+        $messages = [
+            'success' => ['message' => 'Operation completed successfully!', 'description' => 'Your changes have been saved.'],
+            'error' => ['message' => 'Something went wrong!', 'description' => 'Please try again or contact support.'],
+            'warning' => ['message' => 'Please proceed with caution.'],
+            'info' => ['message' => 'Here is some useful information.'],
+        ];
 
-Route::get('/questions/{question}', [\App\Http\Controllers\QuestionsController::class, 'show'])->name('questions.show');
-Route::post('/questions/{question}/view', [\App\Http\Controllers\QuestionsController::class, 'incrementView'])->name('questions.view');
+        $toast = $messages[$type] ?? ['message' => 'Test message'];
 
-Route::get('/contributors', [\App\Http\Controllers\ContributorsPageController::class, 'index'])->name('contributors.index');
-Route::get('/contributors/{user}', [\App\Http\Controllers\ContributorsPageController::class, 'show'])->name('contributors.show');
+        Inertia::flash('toast', [
+            'type' => $type,
+            'message' => $toast['message'],
+            'description' => $toast['description'] ?? null,
+        ]);
 
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/image', [\App\Http\Controllers\ProfileController::class, 'updateImage'])->name('profile.image.update');
-});
-
-Route::get('/phpinfo', fn () => phpinfo())->name('phpinfo');
+        return back();
+    })->whereIn('type', ['success', 'error', 'warning', 'info'])->name('flash.test');
+}

@@ -11,6 +11,9 @@ class StoreSemesterRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /**
+     * @return array<string, array<int, mixed>>
+     */
     public function rules(): array
     {
         return [
@@ -18,7 +21,6 @@ class StoreSemesterRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'unique:semesters,name',
                 'regex:/^(Fall|Spring|Summer|Short) \d{2}$/',
             ],
         ];
@@ -34,10 +36,12 @@ class StoreSemesterRequest extends FormRequest
         }
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [
-            'name.unique' => 'This semester already exists.',
             'name.regex' => 'The semester name must be in the format: Fall 20, Spring 23, Summer 25, or Short 25. If you believe this is a valid semester name, please contact us via our contact page.',
         ];
     }

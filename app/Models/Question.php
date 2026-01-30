@@ -3,69 +3,38 @@
 namespace App\Models;
 
 use App\Enums\QuestionStatus;
-use App\Enums\UnderReviewReason;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Question extends Model implements HasMedia
+class Question extends Model
 {
     /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
 
-    use InteractsWithMedia;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'user_id',
         'department_id',
         'course_id',
         'semester_id',
         'exam_type_id',
-        'section',
         'status',
-        'under_review_reason',
-        'duplicate_reason',
-        'view_count',
+        'rejection_reason',
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     protected function casts(): array
     {
         return [
-            'user_id' => 'integer',
-            'department_id' => 'integer',
-            'course_id' => 'integer',
-            'semester_id' => 'integer',
-            'exam_type_id' => 'integer',
-            'view_count' => 'integer',
             'status' => QuestionStatus::class,
-            'under_review_reason' => UnderReviewReason::class,
         ];
     }
 
     /**
-     * Get the user that owns the question.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get the department that owns the question.
+     * @return BelongsTo<Department, $this>
      */
     public function department(): BelongsTo
     {
@@ -73,7 +42,7 @@ class Question extends Model implements HasMedia
     }
 
     /**
-     * Get the course that owns the question.
+     * @return BelongsTo<Course, $this>
      */
     public function course(): BelongsTo
     {
@@ -81,7 +50,7 @@ class Question extends Model implements HasMedia
     }
 
     /**
-     * Get the semester that owns the question.
+     * @return BelongsTo<Semester, $this>
      */
     public function semester(): BelongsTo
     {
@@ -89,86 +58,52 @@ class Question extends Model implements HasMedia
     }
 
     /**
-     * Get the exam type that owns the question.
+     * @return BelongsTo<ExamType, $this>
      */
     public function examType(): BelongsTo
     {
         return $this->belongsTo(ExamType::class);
     }
 
-    public function registerMediaCollections(): void
+    /**
+     * @return HasMany<Submission, $this>
+     */
+    public function submissions(): HasMany
     {
-        $this
-            ->addMediaCollection('pdf')
-            ->acceptsMimeTypes(['application/pdf'])
-            ->singleFile()
-            ->useDisk(diskName: 'local')
-            ->storeConversionsOnDisk('public-cdn')
-            ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this
-            ->addMediaConversion('watermarked')
-            ->performOnCollections('pdf')
-            ->withoutManipulations()
-            ->nonQueued();
+        return $this->hasMany(Submission::class);
     }
 
     /**
-     * Scope a query to filter questions by department.
+     * Get the working title for the question.
+     * Format: "Course Name (DEPT), Semester Name, Exam Type Name"
      */
-    public function scopeDepartment(Builder $query, $departmentId): void
+    public function getTitleAttribute(): string
     {
-        if (! $departmentId) {
-            return;
-        }
-        $query->where('department_id', $departmentId);
+        return sprintf(
+            '%s (%s), %s, %s',
+            $this->course?->name ?? 'Unknown Course',
+            $this->department?->short_name ?? 'N/A',
+            $this->semester?->name ?? 'Unknown Semester',
+            $this->examType?->name ?? 'Unknown Exam'
+        );
     }
 
     /**
-     * Scope a query to filter questions by course.
+     * Check if the question matches a search query.
+     * Matches if ALL words in the search appear somewhere in the title.
      */
-    public function scopeCourse(Builder $query, $courseId): void
+    public function matchesSearch(string $search): bool
     {
-        if (! $courseId) {
-            return;
-        }
-        $query->where('course_id', $courseId);
-    }
+        $title = strtolower($this->title);
+        $words = preg_split('/\s+/', strtolower(trim($search)));
 
-    /**
-     * Scope a query to filter questions by semester.
-     */
-    public function scopeSemester(Builder $query, $semesterId): void
-    {
-        if (! $semesterId) {
-            return;
+        foreach ($words as $word) {
+            if ($word !== '' && ! str_contains($title, $word)) {
+                return false;
+            }
         }
-        $query->where('semester_id', $semesterId);
-    }
 
-    /**
-     * Scope a query to filter questions by exam type.
-     */
-    public function scopeExamType(Builder $query, $examTypeId): void
-    {
-        if (! $examTypeId) {
-            return;
-        }
-        $query->where('exam_type_id', $examTypeId);
-    }
-
-    /**
-     * Scope a query to filter questions by user.
-     */
-    public function scopeUser(Builder $query, $userId): void
-    {
-        if (! $userId) {
-            return;
-        }
-        $query->where('user_id', $userId);
+        return true;
     }
 
     /**
@@ -176,46 +111,66 @@ class Question extends Model implements HasMedia
      */
     public function scopePublished(Builder $query): void
     {
-        $query->where('status', QuestionStatus::PUBLISHED);
+        $query->where('status', QuestionStatus::Published);
     }
 
     /**
-     * Get the PDF URL accessor.
+     * Scope a query to filter by department.
      */
-    protected function pdfUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    public function scopeDepartment(Builder $query, $departmentId): void
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: function (): ?string {
-                $media = $this->getFirstMedia('pdf');
+        if (! $departmentId) {
+            return;
+        }
 
-                if (! $media) {
-                    return null;
-                }
-
-                if ($media->hasGeneratedConversion('watermarked')) {
-                    return $media->getFullUrl('watermarked');
-                }
-
-                try {
-                    if ($media->disk === 's3' || $media->disk === 'local') {
-                        return $media->getTemporaryUrl(now()->addMinutes(5));
-                    } else {
-                        return $media->getFullUrl();
-                    }
-                } catch (\RuntimeException $exception) {
-                    return $media->getFullUrl();
-                }
-            }
-        );
+        $query->where('department_id', $departmentId);
     }
 
     /**
-     * Get the PDF size accessor.
+     * Scope a query to filter by course.
      */
-    protected function pdfSize(): \Illuminate\Database\Eloquent\Casts\Attribute
+    public function scopeCourse(Builder $query, $courseId): void
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => $this->getFirstMedia('pdf')?->size ?? 0
-        );
+        if (! $courseId) {
+            return;
+        }
+
+        $query->where('course_id', $courseId);
+    }
+
+    /**
+     * Scope a query to filter by semester.
+     */
+    public function scopeSemester(Builder $query, $semesterId): void
+    {
+        if (! $semesterId) {
+            return;
+        }
+
+        $query->where('semester_id', $semesterId);
+    }
+
+    /**
+     * Scope a query to filter by exam type.
+     */
+    public function scopeExamType(Builder $query, $examTypeId): void
+    {
+        if (! $examTypeId) {
+            return;
+        }
+
+        $query->where('exam_type_id', $examTypeId);
+    }
+
+    /**
+     * Scope a query to apply all filters at once.
+     */
+    public function scopeFiltered(Builder $query, $departmentId, $courseId, $semesterId, $examTypeId): void
+    {
+        $query
+            ->department($departmentId)
+            ->course($courseId)
+            ->semester($semesterId)
+            ->examType($examTypeId);
     }
 }

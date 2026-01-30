@@ -13,9 +13,18 @@ class CourseController extends Controller
 
     public function store(StoreCourseRequest $request): JsonResponse
     {
-        $course = Course::create($request->validated());
+        $validated = $request->validated();
 
-        $this->optionsRepository->clearCache();
+        $course = Course::firstOrCreate(
+            [
+                'name' => $validated['name'],
+                'department_id' => $validated['department_id'],
+            ]
+        );
+
+        if ($course->wasRecentlyCreated) {
+            $this->optionsRepository->clearCache();
+        }
 
         return response()->json([
             'course' => [
@@ -23,6 +32,6 @@ class CourseController extends Controller
                 'name' => $course->name,
                 'department_id' => $course->department_id,
             ],
-        ], 201);
+        ], $course->wasRecentlyCreated ? 201 : 200);
     }
 }

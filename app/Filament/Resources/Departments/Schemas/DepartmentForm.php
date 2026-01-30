@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Departments\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class DepartmentForm
 {
@@ -13,30 +12,23 @@ class DepartmentForm
     {
         return $schema
             ->components([
-                Section::make('Department details')
-                    ->columns(2)
-                    ->columnSpanFull()
+                Section::make('Department Information')
+                    ->description('Enter the department details')
+                    ->icon('heroicon-o-building-office')
                     ->schema([
                         TextInput::make('name')
-                            ->label('Department name')
-                            ->required()
+                            ->label('Department Name')
+                            ->placeholder('e.g., Computer Science & Engineering')
                             ->maxLength(255)
-                            ->unique()
-                            ->placeholder('Computer Science and Engineering'),
+                            ->required(),
                         TextInput::make('short_name')
-                            ->label('Short code')
-                            ->required()
+                            ->label('Short Name / Abbreviation')
+                            ->placeholder('e.g., CSE')
                             ->maxLength(10)
-                            ->minLength(2)
-                            ->unique()
-                            ->regex('/^[A-Za-z0-9&.-]+$/')
-                            ->helperText('Use uppercase letters, numbers, or . - & (e.g., CSE).')
-                            ->live(onBlur: true)
-                            ->formatStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper($state) : null)
-                            ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper($state) : null)
-                            ->validationAttribute('short code')
-                            ->placeholder('CSE'),
-                    ]),
+                            ->required(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }
