@@ -71,15 +71,13 @@ host($hostname)
 
 /*
 |--------------------------------------------------------------------------
-| Local Asset Build
+| Local Asset Build (Skipped - GitHub Actions builds assets)
 |--------------------------------------------------------------------------
 */
 
 task('build:assets', function () {
-    writeln('📦 Building assets locally...');
-    runLocally('npm ci');
-    runLocally('npm run build');
-})->desc('Build assets locally');
+    writeln('⏭️  Skipping local build - assets already built by CI');
+})->desc('Skip local asset build (handled by CI)');
 
 /*
 |--------------------------------------------------------------------------
