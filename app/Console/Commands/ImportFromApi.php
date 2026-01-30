@@ -84,7 +84,7 @@ class ImportFromApi extends Command
                     'requires_section' => $question['exam_type']['requires_section'],
                 ],
             );
-            $question['user']['email'] = 'sourov2305101004@diu.edu.bd';
+            // $question['user']['email'] = 'sourov2305101004@diu.edu.bd';
 
             $uploader = User::where('email', $question['user']['email'])->first();
             if (! $uploader) {
