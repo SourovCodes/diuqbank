@@ -89,6 +89,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     {
         $this->addMediaCollection('avatar')
             ->singleFile()
+            ->useDisk('avatars')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     }
 

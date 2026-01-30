@@ -30,8 +30,8 @@ class Submission extends Model implements HasMedia
             ->addMediaCollection('pdf')
             ->acceptsMimeTypes(['application/pdf'])
             ->singleFile()
-            ->useDisk(diskName: 'local')
-            ->storeConversionsOnDisk('public')
+            ->useDisk('submissions')
+            ->storeConversionsOnDisk('submissions-conversions')
             ->useFallbackUrl(url('/pdf/fallback-pdf.pdf'));
     }
 
@@ -118,15 +118,11 @@ class Submission extends Model implements HasMedia
                 }
 
                 if ($media->hasGeneratedConversion('watermarked')) {
-                    return $media->getFullUrl('watermarked');
+                    return $media->getUrl('watermarked');
                 }
 
                 try {
-                    if ($media->disk === 's3' || $media->disk === 'local') {
-                        return $media->getTemporaryUrl(now()->addMinutes(5));
-                    } else {
-                        return $media->getFullUrl();
-                    }
+                    return $media->getTemporaryUrl(now()->addMinutes(5));
                 } catch (\RuntimeException $exception) {
                     return $media->getFullUrl();
                 }
