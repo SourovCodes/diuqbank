@@ -116,5 +116,5 @@ test('user password is hidden from serialization', function () {
 test('user email_verified_at is cast to datetime', function () {
     $user = User::factory()->create(['email_verified_at' => '2025-01-15 10:00:00']);
 
-    expect($user->email_verified_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($user->email_verified_at)->toBeInstanceOf(\Carbon\CarbonImmutable::class);
 });
