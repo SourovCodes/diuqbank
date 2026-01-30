@@ -99,6 +99,8 @@ class ImportFromApi extends Command
                 $uploader->created_at = \Carbon\Carbon::parse($question['user']['created_at']);
                 $uploader->updated_at = \Carbon\Carbon::parse($question['user']['created_at']);
                 $uploader->save();
+
+    
             }
 
             $newquestion = Question::where('department_id', $department->id)
@@ -122,6 +124,9 @@ class ImportFromApi extends Command
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
+                'view_count'=> $question['view_count'] ?? 0,
+                'section' => $question['section'] ?? null,
+
             ]);
             $submission->timestamps = false;
             $submission->created_at = \Carbon\Carbon::parse($question['created_at']);
