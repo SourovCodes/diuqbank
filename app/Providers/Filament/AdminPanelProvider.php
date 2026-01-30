@@ -55,7 +55,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentEditEnvPlugin::make()
-                    ->showButton(fn () => auth()->user()->id === 1)
+
+                    ->showButton(fn () => true)
                     ->setIcon('heroicon-o-cog'),
             ])
             ->authMiddleware([
