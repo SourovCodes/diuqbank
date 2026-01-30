@@ -6,6 +6,8 @@ use App\Filament\Widgets\BackupDestinationsWidget;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -19,6 +21,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Number;
@@ -173,12 +176,27 @@ class Backups extends Page implements HasTable
         return $table
             ->heading('All Backups')
             ->description('Individual backup files across all destinations')
-            ->paginated(false)
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(10)
             ->striped()
             ->poll('30s')
             ->deferLoading()
             ->defaultSort('date', 'desc')
-            ->records(fn (): array => $this->getBackupRecords())
+            ->records(function (int $page, int $recordsPerPage): LengthAwarePaginator {
+                $allRecords = collect($this->getBackupRecords());
+
+                return new LengthAwarePaginator(
+                    items: $allRecords->forPage($page, $recordsPerPage),
+                    total: $allRecords->count(),
+                    perPage: $recordsPerPage,
+                    currentPage: $page,
+                );
+            })
+            ->resolveSelectedRecordsUsing(function (array $keys): array {
+                $allRecords = $this->getBackupRecords();
+
+                return array_filter($allRecords, fn (array $record): bool => in_array($record['path'], $keys, true));
+            })
             ->columns([
                 IconColumn::make('health')
                     ->label('')
@@ -245,6 +263,22 @@ class Backups extends Page implements HasTable
                     ->modalSubmitActionLabel('Delete Backup')
                     ->action(fn (array $record) => $this->deleteBackup($record)),
             ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('delete')
+                        ->label('Delete Selected')
+                        ->icon(Heroicon::Trash)
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalIcon(Heroicon::OutlinedTrash)
+                        ->modalIconColor('danger')
+                        ->modalHeading('Delete Selected Backups')
+                        ->modalDescription(fn (array $records): string => 'Are you sure you want to permanently delete '.count($records).' selected backup(s)?')
+                        ->modalSubmitActionLabel('Delete Backups')
+                        ->action(fn (array $records) => $this->deleteBackups($records))
+                        ->deselectRecordsAfterCompletion(),
+                ]),
+            ])
             ->emptyStateHeading('No Backups Yet')
             ->emptyStateDescription('Create your first backup to protect your data.')
             ->emptyStateIcon(Heroicon::OutlinedShieldExclamation)
@@ -275,10 +309,12 @@ class Backups extends Page implements HasTable
                 foreach ($destination->backups() as $backup) {
                     $date = $backup->date();
                     $ageDays = round($date->diffInMinutes() / (24 * 60), 2);
+                    $path = $backup->path();
 
-                    $result[] = [
-                        'path' => $backup->path(),
-                        'filename' => basename($backup->path()),
+                    // Use path as key for record identification
+                    $result[$path] = [
+                        'path' => $path,
+                        'filename' => basename($path),
                         'disk' => $destination->diskName(),
                         'disk_label' => $this->getDiskLabel($destination->diskName()),
                         'date' => $date->toDateTimeString(),
@@ -291,7 +327,8 @@ class Backups extends Page implements HasTable
                 }
             }
 
-            usort($result, fn (array $a, array $b): int => strcmp($b['date'], $a['date']));
+            // Sort by date descending
+            uasort($result, fn (array $a, array $b): int => strcmp($b['date'], $a['date']));
 
             return $result;
         } catch (\Exception) {
@@ -497,6 +534,52 @@ class Backups extends Page implements HasTable
             Notification::make()
                 ->title('Delete Failed')
                 ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    private function deleteBackups(array $records): void
+    {
+        $deleted = 0;
+        $failed = 0;
+
+        foreach ($records as $record) {
+            try {
+                $backupDestination = BackupDestination::create(
+                    $record['disk'],
+                    config('backup.backup.name')
+                );
+
+                $backup = $backupDestination->backups()->first(
+                    fn (Backup $backup): bool => $backup->path() === $record['path']
+                );
+
+                if ($backup) {
+                    $backup->delete();
+                    $deleted++;
+                }
+            } catch (\Exception) {
+                $failed++;
+            }
+        }
+
+        if ($deleted > 0 && $failed === 0) {
+            Notification::make()
+                ->title('Backups Deleted')
+                ->body("{$deleted} backup(s) have been permanently removed.")
+                ->success()
+                ->send();
+        } elseif ($deleted > 0 && $failed > 0) {
+            Notification::make()
+                ->title('Partial Success')
+                ->body("{$deleted} backup(s) deleted, {$failed} failed.")
+                ->warning()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Delete Failed')
+                ->body('Failed to delete the selected backups.')
                 ->danger()
                 ->send();
         }
