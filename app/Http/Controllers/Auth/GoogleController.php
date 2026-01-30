@@ -38,6 +38,11 @@ class GoogleController extends Controller
             $user = User::query()->where('email', $email)->first();
 
             if ($user) {
+                // Mark email as verified since Google has verified it
+                if (! $user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                }
+
                 // Update existing user's avatar from Google if they don't have one
                 if (! $user->hasMedia('avatar') && $googleUser->getAvatar()) {
                     try {
@@ -59,7 +64,7 @@ class GoogleController extends Controller
                     'email_verified_at' => now(),
                     'password' => Hash::make(Str::random(32)), // Random password for OAuth users
                 ]);
-
+                $user->markEmailAsVerified();
                 // Add avatar from Google
                 if ($googleUser->getAvatar()) {
                     try {
