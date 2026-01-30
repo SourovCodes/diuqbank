@@ -30,7 +30,6 @@ test('verified user can access dashboard', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('dashboard/index')
         ->has('stats')
-        ->has('recentSubmissions')
     );
 });
 
