@@ -45,21 +45,24 @@ Route::get('/contact', function () {
 
 // Guest routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store']);
-
-    Route::get('/register', [RegisterController::class, 'create'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store']);
+    // Google OAuth login page
+    Route::get('/login', fn () => Inertia::render('auth/google-only-login'))->name('login');
 
     // Google OAuth routes
     Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
 
-    // Password reset routes
-    Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+    // Legacy auth routes (commented out - using Google OAuth only)
+    // Route::get('/login', [LoginController::class, 'create'])->name('login');
+    // Route::post('/login', [LoginController::class, 'store']);
+    // Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    // Route::post('/register', [RegisterController::class, 'store']);
+
+    // Password reset routes (commented out - using Google OAuth only)
+    // Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    // Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
+    // Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    // Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
 });
 
 // Authenticated routes
