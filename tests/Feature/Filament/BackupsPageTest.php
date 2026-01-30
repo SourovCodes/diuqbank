@@ -3,12 +3,14 @@
 use App\Filament\Pages\Backups;
 use App\Filament\Widgets\BackupDestinationsWidget;
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Livewire\livewire;
 
 beforeEach(function () {
     Storage::fake('backups');
+    Artisan::shouldReceive('call')->andReturn(0)->byDefault();
 });
 
 describe('Access Control', function () {
