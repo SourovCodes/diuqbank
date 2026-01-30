@@ -39,7 +39,7 @@ class ImportFromApi extends Command
 
         foreach ($questions as $question) {
             // Process each question as needed
-            // $this->info('Processing Question ID: '.$question['id']);
+            $this->info('Processing Question ID: '.$question['id']);
             $department = Department::firstOrCreate(
                 [
                     'name' => $question['department']['name'],
@@ -112,14 +112,7 @@ class ImportFromApi extends Command
                 $newquestion->save();
             }
 
-            $submissionExists = Submission::where('question_id', $newquestion->id)
-                ->where('user_id', $uploader->id)
-                ->exists();
-            if ($submissionExists) {
-                $this->warn('Submission already exists for Question ID: '.$newquestion->id.' and User ID: '.$uploader->id.'. Skipping.');
-
-                continue;
-            }
+          
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
