@@ -9,6 +9,8 @@ use Illuminate\Support\Number;
 use Spatie\Backup\Config\Config;
 use Spatie\Backup\Tasks\Monitor\BackupDestinationStatus;
 use Spatie\Backup\Tasks\Monitor\BackupDestinationStatusFactory;
+use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
+use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes;
 
 class BackupsStats extends StatsOverviewWidget
 {
@@ -28,7 +30,7 @@ class BackupsStats extends StatsOverviewWidget
                 $this->getHealthStat($statuses),
                 $this->getBackupCountStat($statuses),
                 $this->getStorageUsedStat($statuses, $config),
-                $this->getNewestBackupStat($statuses),
+                $this->getNewestBackupStat($statuses, $config),
             ];
         } catch (\Exception) {
             return $this->getEmptyStats();
@@ -67,20 +69,23 @@ class BackupsStats extends StatsOverviewWidget
             return Stat::make('Health Status', 'Unreachable')
                 ->description(count($unreachableDisks).' disk(s) unreachable')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
-                ->color('danger');
+                ->color('danger')
+                ->chart([1, 1, 1, 1, 1, 1, 1]);
         }
 
         if (count($unhealthyDisks) > 0) {
             return Stat::make('Health Status', 'Unhealthy')
                 ->description(count($unhealthyDisks).' of '.$totalDisks.' disks unhealthy')
                 ->descriptionIcon('heroicon-m-x-circle')
-                ->color('danger');
+                ->color('danger')
+                ->chart([7, 5, 3, 2, 1, 1, 1]);
         }
 
         return Stat::make('Health Status', 'Healthy')
-            ->description("All {$totalDisks} disks healthy")
+            ->description("All {$totalDisks} disk(s) healthy")
             ->descriptionIcon('heroicon-m-check-circle')
-            ->color('success');
+            ->color('success')
+            ->chart([1, 2, 3, 5, 6, 7, 7]);
     }
 
     /**
@@ -93,19 +98,30 @@ class BackupsStats extends StatsOverviewWidget
 
         foreach ($statuses as $status) {
             $destination = $status->backupDestination();
+
+            if (! $destination->isReachable()) {
+                continue;
+            }
+
             $count = $destination->backups()->count();
             $totalCount += $count;
             $diskCounts[$destination->diskName()] = $count;
         }
 
         $diskDetails = collect($diskCounts)
-            ->map(fn ($count, $disk) => $this->getDiskLabel($disk).': '.$count)
+            ->map(fn (int $count, string $disk): string => $this->getDiskLabel($disk).': '.$count)
             ->implode(', ');
 
-        return Stat::make('Total Backups', (string) $totalCount)
+        $stat = Stat::make('Total Backups', (string) $totalCount)
             ->description($diskDetails ?: 'No backups available')
-            ->descriptionIcon('heroicon-m-archive-box')
-            ->color($totalCount === 0 ? 'danger' : 'primary');
+            ->descriptionIcon('heroicon-m-archive-box');
+
+        if ($totalCount === 0) {
+            return $stat->color('danger');
+        }
+
+        return $stat->color('primary')
+            ->chart(array_values($diskCounts) ?: [0]);
     }
 
     /**
@@ -114,17 +130,23 @@ class BackupsStats extends StatsOverviewWidget
     private function getStorageUsedStat(Collection $statuses, Config $config): Stat
     {
         $totalUsedBytes = 0;
+        $reachableCount = 0;
 
         foreach ($statuses as $status) {
-            $totalUsedBytes += $status->backupDestination()->usedStorage();
+            $destination = $status->backupDestination();
+
+            if (! $destination->isReachable()) {
+                continue;
+            }
+
+            $totalUsedBytes += $destination->usedStorage();
+            $reachableCount++;
         }
 
         $usedFormatted = Number::fileSize((int) $totalUsedBytes);
-
-        // Get max storage from config (default 5000 MB) - per disk
-        $maxMegabytes = $config->monitoredBackups->monitorBackups[0]['healthChecks'][\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class] ?? 5000;
+        $maxMegabytes = $this->getMaxStorageMegabytes($config);
         $maxBytesPerDisk = $maxMegabytes * 1024 * 1024;
-        $totalMaxBytes = $maxBytesPerDisk * $statuses->count();
+        $totalMaxBytes = $maxBytesPerDisk * max($reachableCount, 1);
         $percentUsed = $totalMaxBytes > 0 ? round(($totalUsedBytes / $totalMaxBytes) * 100, 1) : 0;
 
         $color = match (true) {
@@ -134,21 +156,27 @@ class BackupsStats extends StatsOverviewWidget
         };
 
         return Stat::make('Storage Used', $usedFormatted)
-            ->description("{$percentUsed}% of ".Number::fileSize($totalMaxBytes).' total limit')
+            ->description("{$percentUsed}% of ".Number::fileSize($totalMaxBytes).' limit')
             ->descriptionIcon('heroicon-m-server')
-            ->color($color);
+            ->color($color)
+            ->chart($this->generateStorageChart($percentUsed));
     }
 
     /**
      * @param  Collection<int, BackupDestinationStatus>  $statuses
      */
-    private function getNewestBackupStat(Collection $statuses): Stat
+    private function getNewestBackupStat(Collection $statuses, Config $config): Stat
     {
         $newestBackup = null;
         $newestDisk = null;
 
         foreach ($statuses as $status) {
             $destination = $status->backupDestination();
+
+            if (! $destination->isReachable()) {
+                continue;
+            }
+
             $backup = $destination->newestBackup();
 
             if ($backup && ($newestBackup === null || $backup->date()->gt($newestBackup->date()))) {
@@ -167,10 +195,7 @@ class BackupsStats extends StatsOverviewWidget
         $date = $newestBackup->date();
         $ageInDays = round($date->diffInMinutes() / (24 * 60), 2);
         $ageFormatted = $date->diffForHumans();
-
-        // Get max age from config (default 1 day)
-        $config = app(Config::class);
-        $maxAgeDays = $config->monitoredBackups->monitorBackups[0]['healthChecks'][\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class] ?? 1;
+        $maxAgeDays = $this->getMaxAgeDays($config);
 
         $color = match (true) {
             $ageInDays > $maxAgeDays => 'danger',
@@ -178,8 +203,12 @@ class BackupsStats extends StatsOverviewWidget
             default => 'success',
         };
 
+        $ageDescription = $ageInDays < 1
+            ? 'Less than 1 day old'
+            : round($ageInDays, 1).' day(s) old';
+
         return Stat::make('Newest Backup', $ageFormatted)
-            ->description($this->getDiskLabel($newestDisk)." • {$ageInDays} days old")
+            ->description($this->getDiskLabel($newestDisk).' • '.$ageDescription)
             ->descriptionIcon('heroicon-m-calendar')
             ->color($color);
     }
@@ -193,6 +222,34 @@ class BackupsStats extends StatsOverviewWidget
         };
     }
 
+    private function getMaxAgeDays(Config $config): int
+    {
+        return $config->monitoredBackups->monitorBackups[0]['healthChecks'][MaximumAgeInDays::class] ?? 1;
+    }
+
+    private function getMaxStorageMegabytes(Config $config): int
+    {
+        return $config->monitoredBackups->monitorBackups[0]['healthChecks'][MaximumStorageInMegabytes::class] ?? 5000;
+    }
+
+    /**
+     * @return array<int>
+     */
+    private function generateStorageChart(float $percentUsed): array
+    {
+        $points = 7;
+        $chart = [];
+
+        for ($i = 0; $i < $points; $i++) {
+            $chart[] = (int) min(10, max(1, $percentUsed / 10));
+        }
+
+        return $chart;
+    }
+
+    /**
+     * @return array<Stat>
+     */
     private function getEmptyStats(): array
     {
         return [
