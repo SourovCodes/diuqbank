@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 
 import MainLayout from '@/layouts/main-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel2';
+const appName = import.meta.env.VITE_APP_NAME || 'DIUQBank';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
