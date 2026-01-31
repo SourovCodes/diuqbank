@@ -132,7 +132,7 @@ class ImportFromApi extends Command
             $submission = Submission::create([
                 'question_id' => $newquestion->id,
                 'user_id' => $uploader->id,
-                'views' => $question['view_count'] ?? 0,
+                'views' => $question['view_count'] ,
                 'section' => $question['section'] ?? null,
 
             ]);
