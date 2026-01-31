@@ -4,6 +4,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Download,
+    Eye,
     FileText,
     Loader2,
     Maximize2,
@@ -17,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
-import { downvote, upvote } from '@/routes/submissions';
+import { downvote, upvote, view as trackView } from '@/routes/submissions';
 import type { SharedData } from '@/types';
 import type { Question, Submission } from '@/types/question';
 
@@ -46,6 +47,17 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
     const [selectedId, setSelectedId] = useState<number | null>(() => getInitialSubmissionId(submissions));
     const [voting, setVoting] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [viewCounts, setViewCounts] = useState<Record<number, number>>(() => {
+        // Initialize view counts from submissions
+        return submissions.reduce(
+            (acc, s) => {
+                acc[s.id] = s.views;
+                return acc;
+            },
+            {} as Record<number, number>,
+        );
+    });
+    const trackedViewsRef = useRef<Set<number>>(new Set());
     const containerRef = useRef<HTMLDivElement>(null);
 
     const toggleFullscreen = useCallback(() => {
@@ -99,6 +111,37 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
             }
         }
     }, [submissions, selectedId, handleSelectSubmission]);
+
+    // Track view when a submission is selected
+    useEffect(() => {
+        if (selectedId === null) return;
+        if (trackedViewsRef.current.has(selectedId)) return;
+
+        // Delay view tracking by 5 seconds
+        const timer = setTimeout(() => {
+            // Mark as tracked immediately to prevent duplicate calls
+            trackedViewsRef.current.add(selectedId);
+
+            // Send view tracking request
+            fetch(trackView.url(selectedId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then((res) => res.json())
+                .then((data: { success: boolean; views: number; already_viewed: boolean }) => {
+                    if (data.success) {
+                        setViewCounts((prev) => ({ ...prev, [selectedId]: data.views }));
+                    }
+                })
+                .catch(() => {
+                    // Silently fail - view tracking is not critical
+                });
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, [selectedId]);
 
     const selectedSubmission = submissions.find((s) => s.id === selectedId) ?? submissions[0] ?? null;
     const selectedIndex = submissions.findIndex((s) => s.id === selectedId);
@@ -302,6 +345,17 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                     >
                                         <Download className="h-4 w-4" />
                                     </a>
+                                )}
+
+                                {/* View Count */}
+                                {selectedSubmission && (
+                                    <span
+                                        className="inline-flex items-center gap-1 px-2 text-xs text-muted-foreground tabular-nums"
+                                        title="Views"
+                                    >
+                                        <Eye className="h-3.5 w-3.5" />
+                                        {viewCounts[selectedSubmission.id] ?? selectedSubmission.views}
+                                    </span>
                                 )}
 
                                 <div className="mx-0.5 hidden h-5 w-px bg-border sm:mx-1 sm:block" />
