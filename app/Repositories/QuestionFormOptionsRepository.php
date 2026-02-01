@@ -18,7 +18,7 @@ class QuestionFormOptionsRepository
     public function getFormOptions(): array
     {
         return cache()->remember('question_form_options', 3600, fn () => [
-            'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
+            'departments' => Department::query()->withCount('questions')->orderByDesc('questions_count')->get(),
             'semesters' => $this->getSortedSemesters(),
             'courses' => Course::query()->select('id', 'name', 'department_id')->orderBy('name')->get(),
             'examTypes' => ExamType::query()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
@@ -33,7 +33,7 @@ class QuestionFormOptionsRepository
     public function getFilterOptions(?int $departmentId): array
     {
         $filterOptions = cache()->remember('filter_options', 3600, fn () => [
-            'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
+            'departments' => Department::query()->withCount('questions')->orderByDesc('questions_count')->get(),
             'semesters' => $this->getSortedSemesters(),
             'courses' => Course::query()
                 ->with('department:id,short_name')
