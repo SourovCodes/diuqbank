@@ -19,7 +19,7 @@ class QuestionFormOptionsRepository
     {
         return cache()->remember('question_form_options', 3600, fn () => [
             'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
-            'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
+            'semesters' => $this->getSortedSemesters(),
             'courses' => Course::query()->select('id', 'name', 'department_id')->orderBy('name')->get(),
             'examTypes' => ExamType::query()->select('id', 'name', 'requires_section')->orderBy('name')->get(),
         ]);
@@ -34,7 +34,7 @@ class QuestionFormOptionsRepository
     {
         $filterOptions = cache()->remember('filter_options', 3600, fn () => [
             'departments' => Department::query()->select('id', 'name', 'short_name')->orderBy('name')->get(),
-            'semesters' => Semester::query()->select('id', 'name')->orderBy('name')->get(),
+            'semesters' => $this->getSortedSemesters(),
             'courses' => Course::query()
                 ->with('department:id,short_name')
                 ->select('id', 'name', 'department_id')
@@ -74,5 +74,44 @@ class QuestionFormOptionsRepository
     {
         cache()->forget('question_form_options');
         cache()->forget('filter_options');
+    }
+
+    /**
+     * Get semesters sorted by year (latest first) then by type (Fall, Summer, Spring, Short).
+     *
+     * @return Collection<int, Semester>
+     */
+    private function getSortedSemesters(): Collection
+    {
+        $typeOrder = ['Fall' => 1, 'Summer' => 2, 'Spring' => 3, 'Short' => 4];
+
+        return Semester::query()
+            ->select('id', 'name')
+            ->get()
+            ->sortBy([
+                fn (Semester $a, Semester $b) => $this->extractYear($b->name) <=> $this->extractYear($a->name),
+                fn (Semester $a, Semester $b) => ($typeOrder[$this->extractType($a->name)] ?? 99) <=> ($typeOrder[$this->extractType($b->name)] ?? 99),
+            ])
+            ->values();
+    }
+
+    /**
+     * Extract the year from a semester name (e.g., "Fall 23" -> 23).
+     */
+    private function extractYear(string $name): int
+    {
+        preg_match('/(\d+)$/', $name, $matches);
+
+        return (int) ($matches[1] ?? 0);
+    }
+
+    /**
+     * Extract the type from a semester name (e.g., "Fall 23" -> "Fall").
+     */
+    private function extractType(string $name): string
+    {
+        preg_match('/^(\w+)/', $name, $matches);
+
+        return $matches[1] ?? '';
     }
 }
