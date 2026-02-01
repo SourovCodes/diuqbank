@@ -13,6 +13,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - filament/filament (FILAMENT) - v4
 - inertiajs/inertia-laravel (INERTIA) - v2
 - laravel/framework (LARAVEL) - v12
+- laravel/nightwatch (NIGHTWATCH) - v1
 - laravel/prompts (PROMPTS) - v0
 - laravel/socialite (SOCIALITE) - v5
 - laravel/wayfinder (WAYFINDER) - v0
