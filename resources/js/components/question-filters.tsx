@@ -49,7 +49,7 @@ export function QuestionFilters({ initialFilters, filterOptions }: QuestionFilte
             id: 'department',
             label: 'Department',
             icon: <School className="h-4 w-4 text-blue-600 dark:text-blue-400" />,
-            options: filterOptions.departments,
+            options: filterOptions.departments.map((d) => ({ id: d.id, name: d.short_name })),
         },
         {
             id: 'course',
