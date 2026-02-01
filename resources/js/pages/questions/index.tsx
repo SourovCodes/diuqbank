@@ -1,10 +1,12 @@
-import { Head } from '@inertiajs/react';
-import { FileText } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { FileText, Upload } from 'lucide-react';
 
 import { CustomPagination } from '@/components/custom-pagination';
 import { EmptyState } from '@/components/empty-state';
 import { QuestionCard } from '@/components/question-card';
 import { QuestionFilters } from '@/components/question-filters';
+import { Button } from '@/components/ui/button';
+import dashboard from '@/routes/dashboard';
 import type { Course, Department, ExamType, PaginatedData, Question, Semester } from '@/types';
 
 interface QuestionsIndexProps {
@@ -30,11 +32,19 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
 
             <div className="container mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight">Question Bank</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Browse past exam questions by department, course, semester, and exam type.
-                    </p>
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Question Bank</h1>
+                        <p className="mt-2 text-muted-foreground">
+                            Browse past exam questions by department, course, semester, and exam type.
+                        </p>
+                    </div>
+                    <Button asChild className="w-full sm:w-auto">
+                        <Link href={dashboard.submissions.create().url}>
+                            <Upload />
+                            Upload Question
+                        </Link>
+                    </Button>
                 </div>
 
                 {/* Filters */}
