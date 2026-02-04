@@ -45,7 +45,8 @@ export default function Create({ formOptions }: Props) {
                             Question Paper Details
                         </CardTitle>
                         <CardDescription>
-                            Fill in the details about the question paper you want to submit. Make sure to select the correct department, course, semester, and exam type.
+                            Fill in the details about the question paper you want to submit. Make sure to select the correct department, course,
+                            semester, and exam type.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>

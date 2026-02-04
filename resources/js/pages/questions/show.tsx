@@ -228,11 +228,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                 </div>
 
                 {submissions.length === 0 ? (
-                    <EmptyState
-                        icon={FileText}
-                        title="No submissions yet"
-                        description="Be the first to submit a solution for this question."
-                    />
+                    <EmptyState icon={FileText} title="No submissions yet" description="Be the first to submit a solution for this question." />
                 ) : (
                     <>
                         {/* Multiple submissions hint */}
@@ -262,7 +258,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                     key={submission.id}
                                                     onClick={() => handleSelectSubmission(submission.id)}
                                                     className={cn(
-                                                        'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                                                        'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
                                                         selectedId === submission.id
                                                             ? 'bg-background font-medium text-foreground shadow-sm'
                                                             : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
@@ -333,19 +329,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                             key={selectedSubmission.id}
                                             data={selectedSubmission.pdf_url}
                                             type="application/pdf"
-                                            className={cn(
-                                                'w-full',
-                                                isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125'
-                                            )}
+                                            className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
                                             style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                             title={question.course?.name ?? 'PDF Viewer'}
                                         >
                                             <iframe
                                                 src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                                className={cn(
-                                                    'w-full border-0',
-                                                    isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125'
-                                                )}
+                                                className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
                                                 style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                                 title={question.course?.name ?? 'PDF Viewer'}
                                             />
@@ -365,29 +355,27 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                             <div className="w-80 shrink-0 space-y-4">
                                 {/* Uploader Card */}
                                 <div className="rounded-xl border bg-card p-4">
-                                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Uploaded by
-                                    </h3>
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Uploaded by</h3>
                                     {selectedSubmission?.user ? (
                                         <Link
                                             href={showContributor.url({ user: selectedSubmission.user.username })}
-                                            className="flex items-center gap-3 rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                                            className="-mx-2 flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
                                         >
                                             <Avatar>
                                                 <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
                                                 <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate font-medium text-foreground">
-                                                    {selectedSubmission.user.name}
-                                                </p>
+                                                <p className="truncate font-medium text-foreground">{selectedSubmission.user.name}</p>
                                                 <p className="text-sm text-muted-foreground">View profile →</p>
                                             </div>
                                         </Link>
                                     ) : (
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                                                <AvatarFallback>
+                                                    <User className="h-4 w-4" />
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-medium text-foreground">Anonymous</p>
@@ -399,7 +387,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
 
                                 {/* Voting Card */}
                                 <div className="rounded-xl border bg-card p-4">
-                                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Rate this submission
                                     </h3>
                                     <div className="flex items-center justify-center gap-4">
@@ -409,14 +397,18 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                             disabled={voting}
                                             className={cn(
                                                 'flex flex-col items-center gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-green-900/20',
-                                                selectedSubmission?.user_vote === 1 &&
-                                                    'bg-green-100 dark:bg-green-900/30',
+                                                selectedSubmission?.user_vote === 1 && 'bg-green-100 dark:bg-green-900/30',
                                             )}
                                         >
                                             {voting ? (
                                                 <Loader2 className="h-6 w-6 animate-spin text-green-600" />
                                             ) : (
-                                                <ThumbsUp className={cn('h-6 w-6', selectedSubmission?.user_vote === 1 ? 'text-green-600' : 'text-muted-foreground')} />
+                                                <ThumbsUp
+                                                    className={cn(
+                                                        'h-6 w-6',
+                                                        selectedSubmission?.user_vote === 1 ? 'text-green-600' : 'text-muted-foreground',
+                                                    )}
+                                                />
                                             )}
                                             <span className="text-xs text-muted-foreground">Upvote</span>
                                         </button>
@@ -439,11 +431,15 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                             disabled={voting}
                                             className={cn(
                                                 'flex flex-col items-center gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-red-900/20',
-                                                selectedSubmission?.user_vote === -1 &&
-                                                    'bg-red-100 dark:bg-red-900/30',
+                                                selectedSubmission?.user_vote === -1 && 'bg-red-100 dark:bg-red-900/30',
                                             )}
                                         >
-                                            <ThumbsDown className={cn('h-6 w-6', selectedSubmission?.user_vote === -1 ? 'text-red-600' : 'text-muted-foreground')} />
+                                            <ThumbsDown
+                                                className={cn(
+                                                    'h-6 w-6',
+                                                    selectedSubmission?.user_vote === -1 ? 'text-red-600' : 'text-muted-foreground',
+                                                )}
+                                            />
                                             <span className="text-xs text-muted-foreground">Downvote</span>
                                         </button>
                                     </div>
@@ -451,9 +447,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
 
                                 {/* Stats Card */}
                                 <div className="rounded-xl border bg-card p-4">
-                                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Submission Info
-                                    </h3>
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Submission Info</h3>
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-3 text-sm">
                                             <Eye className="h-4 w-4 text-muted-foreground" />
@@ -492,15 +486,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 key={submission.id}
                                                 onClick={() => handleSelectSubmission(submission.id)}
                                                 className={cn(
-                                                    'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                                                    'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
                                                     selectedId === submission.id
                                                         ? 'bg-background font-medium text-foreground shadow-sm'
                                                         : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                                                 )}
                                             >
-                                                {selectedId === submission.id && (
-                                                    <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />
-                                                )}
+                                                {selectedId === submission.id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />}
                                                 <span
                                                     className={cn(
                                                         'flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold',
@@ -546,19 +538,21 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-foreground">
-                                                    {selectedSubmission.user.name}
-                                                </span>
+                                                <span className="text-sm font-medium text-foreground">{selectedSubmission.user.name}</span>
                                                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
                                                     <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">{viewCounts[selectedSubmission.id] ?? selectedSubmission.views} views</span>
+                                                    <span className="tabular-nums">
+                                                        {viewCounts[selectedSubmission.id] ?? selectedSubmission.views} views
+                                                    </span>
                                                 </span>
                                             </div>
                                         </Link>
                                     ) : (
                                         <div className="flex items-center gap-3">
                                             <Avatar size="sm">
-                                                <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
+                                                <AvatarFallback>
+                                                    <User className="h-3 w-3" />
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-medium text-foreground">Anonymous</span>
@@ -636,19 +630,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         key={selectedSubmission.id}
                                         data={selectedSubmission.pdf_url}
                                         type="application/pdf"
-                                        className={cn(
-                                            'w-full',
-                                            isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125'
-                                        )}
+                                        className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
                                         style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                         title={question.course?.name ?? 'PDF Viewer'}
                                     >
                                         <iframe
                                             src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                            className={cn(
-                                                'w-full border-0',
-                                                isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125'
-                                            )}
+                                            className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
                                             style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                             title={question.course?.name ?? 'PDF Viewer'}
                                         />
@@ -711,19 +699,21 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0">
-                                                <p className="truncate text-sm font-medium text-foreground">
-                                                    {selectedSubmission.user.name}
-                                                </p>
+                                                <p className="truncate text-sm font-medium text-foreground">{selectedSubmission.user.name}</p>
                                                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
                                                     <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">{viewCounts[selectedSubmission.id] ?? selectedSubmission.views}</span>
+                                                    <span className="tabular-nums">
+                                                        {viewCounts[selectedSubmission.id] ?? selectedSubmission.views}
+                                                    </span>
                                                 </p>
                                             </div>
                                         </Link>
                                     ) : (
                                         <div className="flex items-center gap-2.5">
                                             <Avatar size="sm">
-                                                <AvatarFallback><User className="h-3 w-3" /></AvatarFallback>
+                                                <AvatarFallback>
+                                                    <User className="h-3 w-3" />
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium text-foreground">Anonymous</p>
@@ -804,19 +794,13 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         key={selectedSubmission.id}
                                         data={selectedSubmission.pdf_url}
                                         type="application/pdf"
-                                        className={cn(
-                                            'w-full',
-                                            isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100'
-                                        )}
+                                        className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100')}
                                         style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                         title={question.course?.name ?? 'PDF Viewer'}
                                     >
                                         <iframe
                                             src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                            className={cn(
-                                                'w-full border-0',
-                                                isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100'
-                                            )}
+                                            className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100')}
                                             style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                             title={question.course?.name ?? 'PDF Viewer'}
                                         />

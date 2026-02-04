@@ -35,9 +35,7 @@ export default function QuestionsIndex({ questions, filters, filterOptions }: Qu
                 <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Question Bank</h1>
-                        <p className="mt-2 text-muted-foreground">
-                            Browse past exam questions by department, course, semester, and exam type.
-                        </p>
+                        <p className="mt-2 text-muted-foreground">Browse past exam questions by department, course, semester, and exam type.</p>
                     </div>
                     <Button asChild className="w-full sm:w-auto">
                         <Link href={dashboard.submissions.create().url}>

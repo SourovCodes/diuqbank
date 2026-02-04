@@ -117,8 +117,8 @@ export default function Terms() {
                         <h2 className="text-2xl font-semibold">9. Limitation of Liability</h2>
                         <p className="mt-4 text-muted-foreground">
                             To the maximum extent permitted by law, DIU Question Bank and its operators shall not be liable for any indirect,
-                            incidental, special, consequential, or punitive damages resulting from your use of the platform. This includes, but is
-                            not limited to, any reliance on content accuracy for exam preparation.
+                            incidental, special, consequential, or punitive damages resulting from your use of the platform. This includes, but is not
+                            limited to, any reliance on content accuracy for exam preparation.
                         </p>
                     </section>
 

@@ -102,7 +102,7 @@ export default function Register() {
                                         type="button"
                                         variant="outline"
                                         className="w-full"
-                                        onClick={() => window.location.href = '/auth/google'}
+                                        onClick={() => (window.location.href = '/auth/google')}
                                     >
                                         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                                             <path

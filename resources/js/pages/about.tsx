@@ -32,8 +32,8 @@ export default function About() {
                                 <h2 className="mb-3 text-2xl font-semibold">Our Mission</h2>
                                 <p className="text-muted-foreground">
                                     We believe that every student deserves access to quality study materials. DIU Question Bank was created to bridge
-                                    the gap between students and past exam questions, making it easier for everyone to understand exam patterns, practice
-                                    effectively, and excel in their academics.
+                                    the gap between students and past exam questions, making it easier for everyone to understand exam patterns,
+                                    practice effectively, and excel in their academics.
                                 </p>
                             </div>
                         </div>

@@ -141,7 +141,12 @@ export function Navbar() {
                                                 Dashboard
                                             </Link>
                                         </Button>
-                                        <Button variant="ghost" className="justify-start text-destructive" asChild onClick={() => setMobileMenuOpen(false)}>
+                                        <Button
+                                            variant="ghost"
+                                            className="justify-start text-destructive"
+                                            asChild
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
                                             <Link href="/logout" method="post" as="button">
                                                 <LogOut className="mr-2 h-4 w-4" />
                                                 Logout

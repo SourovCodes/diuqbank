@@ -17,15 +17,11 @@ export function ContributorCard({ contributor }: ContributorCardProps) {
                 <div className="flex items-start gap-4">
                     <Avatar className="h-14 w-14 ring-2 ring-background">
                         <AvatarImage src={contributor.avatar_url} alt={contributor.name} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                            {getInitials(contributor.name)}
-                        </AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary">{getInitials(contributor.name)}</AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 overflow-hidden">
-                        <h3 className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">
-                            {contributor.name}
-                        </h3>
+                        <h3 className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">{contributor.name}</h3>
                         <p className="truncate text-sm text-muted-foreground">@{contributor.username}</p>
                     </div>
                 </div>

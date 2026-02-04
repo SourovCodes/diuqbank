@@ -103,10 +103,7 @@ export function QuestionFilters({ initialFilters, filterOptions }: QuestionFilte
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="mr-2 flex flex-wrap gap-2">
                             {activeFilters.map((filter) => (
-                                <Badge
-                                    key={filter?.id}
-                                    className="gap-1 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20"
-                                >
+                                <Badge key={filter?.id} className="gap-1 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20">
                                     {filter?.icon}
                                     <span>{filter?.name}</span>
                                 </Badge>

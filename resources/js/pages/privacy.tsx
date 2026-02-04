@@ -74,8 +74,8 @@ export default function Privacy() {
                         <h2 className="text-2xl font-semibold">5. Data Security</h2>
                         <p className="mt-4 text-muted-foreground">
                             We implement appropriate technical and organizational security measures to protect your personal information. Passwords
-                            are hashed using industry-standard algorithms, and all data transmission is encrypted using SSL/TLS. However, no method
-                            of transmission over the Internet is 100% secure.
+                            are hashed using industry-standard algorithms, and all data transmission is encrypted using SSL/TLS. However, no method of
+                            transmission over the Internet is 100% secure.
                         </p>
                     </section>
 

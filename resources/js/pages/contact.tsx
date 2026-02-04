@@ -43,7 +43,12 @@ export default function Contact() {
                             <CardDescription>Join our community for quick help from fellow students.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <a href="https://facebook.com/groups/diuqbank" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            <a
+                                href="https://facebook.com/groups/diuqbank"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                            >
                                 Facebook Group
                             </a>
                         </CardContent>
@@ -101,8 +106,8 @@ export default function Contact() {
                         <div className="rounded-lg border bg-card p-6">
                             <h3 className="mb-2 font-semibold">My submission was rejected. What should I do?</h3>
                             <p className="text-muted-foreground">
-                                Submissions may be rejected if they are duplicates, low quality, or incorrectly categorized. Check the rejection reason
-                                and feel free to resubmit with the necessary corrections.
+                                Submissions may be rejected if they are duplicates, low quality, or incorrectly categorized. Check the rejection
+                                reason and feel free to resubmit with the necessary corrections.
                             </p>
                         </div>
 
@@ -116,8 +121,8 @@ export default function Contact() {
                         <div className="rounded-lg border bg-card p-6">
                             <h3 className="mb-2 font-semibold">How can I report incorrect or inappropriate content?</h3>
                             <p className="text-muted-foreground">
-                                Please email us at support@diuqbank.com with the details of the content you&apos;d like to report. Include the question
-                                ID and a description of the issue.
+                                Please email us at support@diuqbank.com with the details of the content you&apos;d like to report. Include the
+                                question ID and a description of the issue.
                             </p>
                         </div>
                     </div>

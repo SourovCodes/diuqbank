@@ -42,7 +42,9 @@ export function QuestionCard({ question }: QuestionCardProps) {
                         {question.submissions_count !== undefined && (
                             <div className="flex items-center">
                                 <FileText className="mr-1.5 h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                                <span>{question.submissions_count} {question.submissions_count === 1 ? 'submission' : 'submissions'}</span>
+                                <span>
+                                    {question.submissions_count} {question.submissions_count === 1 ? 'submission' : 'submissions'}
+                                </span>
                             </div>
                         )}
                     </div>

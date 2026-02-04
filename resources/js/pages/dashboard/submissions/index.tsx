@@ -49,9 +49,7 @@ export default function MySubmissions({ submissions }: Props) {
                                 <Card key={submission.id} className="group relative overflow-hidden transition-all hover:shadow-md">
                                     <CardHeader className="pb-3">
                                         <div className="flex items-start justify-between gap-2">
-                                            <CardTitle className="line-clamp-1 text-base">
-                                                {submission.question.course.name}
-                                            </CardTitle>
+                                            <CardTitle className="line-clamp-1 text-base">{submission.question.course.name}</CardTitle>
                                             <StatusBadge status={submission.question.status} label={submission.question.status_label} />
                                         </div>
                                         <CardDescription className="flex flex-wrap gap-2">
@@ -102,12 +100,7 @@ export default function MySubmissions({ submissions }: Props) {
                             ))}
                         </div>
 
-                        {submissions.last_page > 1 && (
-                            <CustomPagination
-                                currentPage={submissions.current_page}
-                                totalPages={submissions.last_page}
-                            />
-                        )}
+                        {submissions.last_page > 1 && <CustomPagination currentPage={submissions.current_page} totalPages={submissions.last_page} />}
                     </>
                 )}
             </div>

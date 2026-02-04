@@ -1,42 +1,23 @@
-import axios from "axios";
-import { PlusIcon } from "lucide-react";
-import type { FormEvent} from "react";
-import { useMemo, useState } from "react";
+import axios from 'axios';
+import { PlusIcon } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PdfDropzone } from "@/components/ui/pdf-dropzone";
-import type {
-    ComboboxOption} from "@/components/ui/searchable-combobox";
-import {
-    SearchableCombobox,
-} from "@/components/ui/searchable-combobox";
-import type {
-    Course,
-    FormOptions,
-    Semester,
-    SubmissionFormData,
-    SubmissionFormErrors,
-} from "@/types";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PdfDropzone } from '@/components/ui/pdf-dropzone';
+import type { ComboboxOption } from '@/components/ui/searchable-combobox';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
+import type { Course, FormOptions, Semester, SubmissionFormData, SubmissionFormErrors } from '@/types';
 
 export type { FormOptions, SubmissionFormData, SubmissionFormErrors };
 
 interface SubmissionFormProps {
     formOptions: FormOptions;
     data: SubmissionFormData;
-    setData: <K extends keyof SubmissionFormData>(
-        key: K,
-        value: SubmissionFormData[K]
-    ) => void;
+    setData: <K extends keyof SubmissionFormData>(key: K, value: SubmissionFormData[K]) => void;
     errors: SubmissionFormErrors;
     clearErrors: (...fields: (keyof SubmissionFormData)[]) => void;
     processing: boolean;
@@ -62,36 +43,26 @@ export function SubmissionForm({
     existingPdfUrl,
     existingPdfName,
 }: SubmissionFormProps) {
-    const [localCourses, setLocalCourses] = useState<Course[]>(
-        formOptions.courses
-    );
-    const [localSemesters, setLocalSemesters] = useState<Semester[]>(
-        formOptions.semesters
-    );
+    const [localCourses, setLocalCourses] = useState<Course[]>(formOptions.courses);
+    const [localSemesters, setLocalSemesters] = useState<Semester[]>(formOptions.semesters);
 
     // Modal states
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [showSemesterModal, setShowSemesterModal] = useState(false);
-    const [newCourseName, setNewCourseName] = useState("");
-    const [newSemesterName, setNewSemesterName] = useState("");
-    const [courseModalError, setCourseModalError] = useState("");
-    const [semesterModalError, setSemesterModalError] = useState("");
+    const [newCourseName, setNewCourseName] = useState('');
+    const [newSemesterName, setNewSemesterName] = useState('');
+    const [courseModalError, setCourseModalError] = useState('');
+    const [semesterModalError, setSemesterModalError] = useState('');
     const [creatingCourse, setCreatingCourse] = useState(false);
     const [creatingSemester, setCreatingSemester] = useState(false);
 
-    const departmentOptions: ComboboxOption[] = formOptions.departments.map(
-        (dept) => ({
-            value: String(dept.id),
-            label: `${dept.name} (${dept.short_name})`,
-        })
-    );
+    const departmentOptions: ComboboxOption[] = formOptions.departments.map((dept) => ({
+        value: String(dept.id),
+        label: `${dept.name} (${dept.short_name})`,
+    }));
 
     const courseOptions: ComboboxOption[] = useMemo(() => {
-        const filtered = data.department_id
-            ? localCourses.filter(
-                  (c) => c.department_id === Number(data.department_id)
-              )
-            : localCourses;
+        const filtered = data.department_id ? localCourses.filter((c) => c.department_id === Number(data.department_id)) : localCourses;
 
         return filtered.map((course) => ({
             value: String(course.id),
@@ -104,35 +75,31 @@ export function SubmissionForm({
         label: sem.name,
     }));
 
-    const examTypeOptions: ComboboxOption[] = formOptions.examTypes.map(
-        (type) => ({
-            value: String(type.id),
-            label: type.name,
-        })
-    );
+    const examTypeOptions: ComboboxOption[] = formOptions.examTypes.map((type) => ({
+        value: String(type.id),
+        label: type.name,
+    }));
 
     const selectedExamTypeRequiresSection = useMemo(() => {
         if (!data.exam_type_id) return false;
-        const examType = formOptions.examTypes.find(
-            (t) => String(t.id) === data.exam_type_id
-        );
+        const examType = formOptions.examTypes.find((t) => String(t.id) === data.exam_type_id);
         return examType?.requires_section ?? false;
     }, [data.exam_type_id, formOptions.examTypes]);
 
     const handleDepartmentChange = (value: string) => {
-        setData("department_id", value);
-        setData("course_id", "");
-        clearErrors("department_id", "course_id");
+        setData('department_id', value);
+        setData('course_id', '');
+        clearErrors('department_id', 'course_id');
     };
 
     const handleCreateCourse = async () => {
         if (!newCourseName.trim()) return;
 
         setCreatingCourse(true);
-        setCourseModalError("");
+        setCourseModalError('');
 
         try {
-            const response = await axios.post("/courses", {
+            const response = await axios.post('/courses', {
                 name: newCourseName.trim(),
                 department_id: data.department_id,
             });
@@ -143,17 +110,15 @@ export function SubmissionForm({
                 const exists = prev.some((c) => c.id === newCourse.id);
                 return exists ? prev : [...prev, newCourse];
             });
-            setData("course_id", String(newCourse.id));
-            setNewCourseName("");
+            setData('course_id', String(newCourse.id));
+            setNewCourseName('');
             setShowCourseModal(false);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.data?.errors) {
                 const errors = error.response.data.errors;
-                setCourseModalError(
-                    errors.name?.[0] || "Failed to create course"
-                );
+                setCourseModalError(errors.name?.[0] || 'Failed to create course');
             } else {
-                setCourseModalError("Failed to create course");
+                setCourseModalError('Failed to create course');
             }
         } finally {
             setCreatingCourse(false);
@@ -164,10 +129,10 @@ export function SubmissionForm({
         if (!newSemesterName.trim()) return;
 
         setCreatingSemester(true);
-        setSemesterModalError("");
+        setSemesterModalError('');
 
         try {
-            const response = await axios.post("/semesters", {
+            const response = await axios.post('/semesters', {
                 name: newSemesterName.trim(),
             });
 
@@ -177,17 +142,15 @@ export function SubmissionForm({
                 const exists = prev.some((s) => s.id === newSemester.id);
                 return exists ? prev : [...prev, newSemester];
             });
-            setData("semester_id", String(newSemester.id));
-            setNewSemesterName("");
+            setData('semester_id', String(newSemester.id));
+            setNewSemesterName('');
             setShowSemesterModal(false);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.data?.errors) {
                 const errors = error.response.data.errors;
-                setSemesterModalError(
-                    errors.name?.[0] || "Failed to create semester"
-                );
+                setSemesterModalError(errors.name?.[0] || 'Failed to create semester');
             } else {
-                setSemesterModalError("Failed to create semester");
+                setSemesterModalError('Failed to create semester');
             }
         } finally {
             setCreatingSemester(false);
@@ -209,11 +172,7 @@ export function SubmissionForm({
                             emptyMessage="No department found."
                             disabled={processing}
                         />
-                        {errors.department_id && (
-                            <p className="text-sm text-destructive">
-                                {errors.department_id}
-                            </p>
-                        )}
+                        {errors.department_id && <p className="text-sm text-destructive">{errors.department_id}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -223,8 +182,8 @@ export function SubmissionForm({
                                 options={courseOptions}
                                 value={data.course_id}
                                 onChange={(value) => {
-                                    setData("course_id", value);
-                                    clearErrors("course_id");
+                                    setData('course_id', value);
+                                    clearErrors('course_id');
                                 }}
                                 placeholder="Select course..."
                                 searchPlaceholder="Search courses..."
@@ -243,16 +202,8 @@ export function SubmissionForm({
                                 <PlusIcon className="h-4 w-4" />
                             </Button>
                         </div>
-                        {errors.course_id && (
-                            <p className="text-sm text-destructive">
-                                {errors.course_id}
-                            </p>
-                        )}
-                        {!data.department_id && (
-                            <p className="text-xs text-muted-foreground">
-                                Select a department first
-                            </p>
-                        )}
+                        {errors.course_id && <p className="text-sm text-destructive">{errors.course_id}</p>}
+                        {!data.department_id && <p className="text-xs text-muted-foreground">Select a department first</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -262,8 +213,8 @@ export function SubmissionForm({
                                 options={semesterOptions}
                                 value={data.semester_id}
                                 onChange={(value) => {
-                                    setData("semester_id", value);
-                                    clearErrors("semester_id");
+                                    setData('semester_id', value);
+                                    clearErrors('semester_id');
                                 }}
                                 placeholder="Select semester..."
                                 searchPlaceholder="Search semesters..."
@@ -282,11 +233,7 @@ export function SubmissionForm({
                                 <PlusIcon className="h-4 w-4" />
                             </Button>
                         </div>
-                        {errors.semester_id && (
-                            <p className="text-sm text-destructive">
-                                {errors.semester_id}
-                            </p>
-                        )}
+                        {errors.semester_id && <p className="text-sm text-destructive">{errors.semester_id}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -295,15 +242,13 @@ export function SubmissionForm({
                             options={examTypeOptions}
                             value={data.exam_type_id}
                             onChange={(value) => {
-                                setData("exam_type_id", value);
-                                clearErrors("exam_type_id");
+                                setData('exam_type_id', value);
+                                clearErrors('exam_type_id');
                                 // Clear section if new exam type doesn't require it
-                                const newExamType = formOptions.examTypes.find(
-                                    (t) => String(t.id) === value
-                                );
+                                const newExamType = formOptions.examTypes.find((t) => String(t.id) === value);
                                 if (!newExamType?.requires_section) {
-                                    setData("section", "");
-                                    clearErrors("section");
+                                    setData('section', '');
+                                    clearErrors('section');
                                 }
                             }}
                             placeholder="Select exam type..."
@@ -311,11 +256,7 @@ export function SubmissionForm({
                             emptyMessage="No exam type found."
                             disabled={processing}
                         />
-                        {errors.exam_type_id && (
-                            <p className="text-sm text-destructive">
-                                {errors.exam_type_id}
-                            </p>
-                        )}
+                        {errors.exam_type_id && <p className="text-sm text-destructive">{errors.exam_type_id}</p>}
                     </div>
                 </div>
 
@@ -328,17 +269,13 @@ export function SubmissionForm({
                             id="section"
                             value={data.section}
                             onChange={(e) => {
-                                setData("section", e.target.value);
-                                clearErrors("section");
+                                setData('section', e.target.value);
+                                clearErrors('section');
                             }}
                             placeholder="e.g., A, B, C"
                             disabled={processing}
                         />
-                        {errors.section && (
-                            <p className="text-sm text-destructive">
-                                {errors.section}
-                            </p>
-                        )}
+                        {errors.section && <p className="text-sm text-destructive">{errors.section}</p>}
                     </div>
                 )}
 
@@ -347,17 +284,15 @@ export function SubmissionForm({
                     <PdfDropzone
                         value={data.pdf}
                         onChange={(file) => {
-                            setData("pdf", file);
-                            clearErrors("pdf");
+                            setData('pdf', file);
+                            clearErrors('pdf');
                         }}
                         existingPdfUrl={existingPdfUrl}
                         existingPdfName={existingPdfName}
                         disabled={processing}
                         error={errors.pdf}
                     />
-                    {errors.pdf && (
-                        <p className="text-sm text-destructive">{errors.pdf}</p>
-                    )}
+                    {errors.pdf && <p className="text-sm text-destructive">{errors.pdf}</p>}
                     {progress && progress.percentage !== undefined && (
                         <div className="space-y-1">
                             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -368,18 +303,12 @@ export function SubmissionForm({
                                     }}
                                 />
                             </div>
-                            <p className="text-center text-xs text-muted-foreground">
-                                Uploading... {progress.percentage}%
-                            </p>
+                            <p className="text-center text-xs text-muted-foreground">Uploading... {progress.percentage}%</p>
                         </div>
                     )}
                 </div>
 
-                <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={processing}
-                >
+                <Button type="submit" className="w-full" disabled={processing}>
                     {processing ? submittingLabel : submitLabel}
                 </Button>
             </form>
@@ -390,17 +319,15 @@ export function SubmissionForm({
                 onOpenChange={(open) => {
                     setShowCourseModal(open);
                     if (!open) {
-                        setNewCourseName("");
-                        setCourseModalError("");
+                        setNewCourseName('');
+                        setCourseModalError('');
                     }
                 }}
             >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add New Course</DialogTitle>
-                        <DialogDescription>
-                            Create a new course for the selected department.
-                        </DialogDescription>
+                        <DialogDescription>Create a new course for the selected department.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
@@ -411,10 +338,10 @@ export function SubmissionForm({
                                 value={newCourseName}
                                 onChange={(e) => {
                                     setNewCourseName(e.target.value);
-                                    setCourseModalError("");
+                                    setCourseModalError('');
                                 }}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
+                                    if (e.key === 'Enter') {
                                         e.preventDefault();
                                         handleCreateCourse();
                                     }
@@ -422,11 +349,7 @@ export function SubmissionForm({
                                 disabled={creatingCourse}
                                 autoFocus
                             />
-                            {courseModalError && (
-                                <p className="text-sm text-destructive">
-                                    {courseModalError}
-                                </p>
-                            )}
+                            {courseModalError && <p className="text-sm text-destructive">{courseModalError}</p>}
                         </div>
                     </div>
                     <DialogFooter>
@@ -434,18 +357,15 @@ export function SubmissionForm({
                             variant="outline"
                             onClick={() => {
                                 setShowCourseModal(false);
-                                setNewCourseName("");
-                                setCourseModalError("");
+                                setNewCourseName('');
+                                setCourseModalError('');
                             }}
                             disabled={creatingCourse}
                         >
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleCreateCourse}
-                            disabled={!newCourseName.trim() || creatingCourse}
-                        >
-                            {creatingCourse ? "Creating..." : "Create Course"}
+                        <Button onClick={handleCreateCourse} disabled={!newCourseName.trim() || creatingCourse}>
+                            {creatingCourse ? 'Creating...' : 'Create Course'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -457,33 +377,29 @@ export function SubmissionForm({
                 onOpenChange={(open) => {
                     setShowSemesterModal(open);
                     if (!open) {
-                        setNewSemesterName("");
-                        setSemesterModalError("");
+                        setNewSemesterName('');
+                        setSemesterModalError('');
                     }
                 }}
             >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add New Semester</DialogTitle>
-                        <DialogDescription>
-                            Create a new semester option.
-                        </DialogDescription>
+                        <DialogDescription>Create a new semester option.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="new-semester-name">
-                                Semester Name
-                            </Label>
+                            <Label htmlFor="new-semester-name">Semester Name</Label>
                             <Input
                                 id="new-semester-name"
                                 placeholder="e.g., Fall 26"
                                 value={newSemesterName}
                                 onChange={(e) => {
                                     setNewSemesterName(e.target.value);
-                                    setSemesterModalError("");
+                                    setSemesterModalError('');
                                 }}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
+                                    if (e.key === 'Enter') {
                                         e.preventDefault();
                                         handleCreateSemester();
                                     }
@@ -491,11 +407,7 @@ export function SubmissionForm({
                                 disabled={creatingSemester}
                                 autoFocus
                             />
-                            {semesterModalError && (
-                                <p className="text-sm text-destructive">
-                                    {semesterModalError}
-                                </p>
-                            )}
+                            {semesterModalError && <p className="text-sm text-destructive">{semesterModalError}</p>}
                         </div>
                     </div>
                     <DialogFooter>
@@ -503,22 +415,15 @@ export function SubmissionForm({
                             variant="outline"
                             onClick={() => {
                                 setShowSemesterModal(false);
-                                setNewSemesterName("");
-                                setSemesterModalError("");
+                                setNewSemesterName('');
+                                setSemesterModalError('');
                             }}
                             disabled={creatingSemester}
                         >
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleCreateSemester}
-                            disabled={
-                                !newSemesterName.trim() || creatingSemester
-                            }
-                        >
-                            {creatingSemester
-                                ? "Creating..."
-                                : "Create Semester"}
+                        <Button onClick={handleCreateSemester} disabled={!newSemesterName.trim() || creatingSemester}>
+                            {creatingSemester ? 'Creating...' : 'Create Semester'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

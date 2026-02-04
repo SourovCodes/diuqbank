@@ -20,11 +20,7 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
     const [searchValue, setSearchValue] = useState(filters.search ?? '');
 
     const performSearch = useCallback((value: string) => {
-        router.get(
-            contributorsIndex.url(),
-            { search: value || undefined },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        router.get(contributorsIndex.url(), { search: value || undefined }, { preserveState: true, preserveScroll: true, replace: true });
     }, []);
 
     // Debounced search effect
@@ -46,9 +42,7 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight">Contributors</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Meet the amazing people who contribute questions to help others learn.
-                    </p>
+                    <p className="mt-2 text-muted-foreground">Meet the amazing people who contribute questions to help others learn.</p>
                 </div>
 
                 {/* Search */}
@@ -68,11 +62,7 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
                     <EmptyState
                         icon={Users}
                         title="No contributors found"
-                        description={
-                            filters.search
-                                ? 'Try adjusting your search terms.'
-                                : 'Be the first to contribute questions!'
-                        }
+                        description={filters.search ? 'Try adjusting your search terms.' : 'Be the first to contribute questions!'}
                     />
                 ) : (
                     <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -85,10 +75,7 @@ export default function ContributorsIndex({ contributors, filters }: Contributor
                 {/* Pagination */}
                 {contributors.data.length > 0 && contributors.meta.last_page > 1 && (
                     <div className="mt-8">
-                        <CustomPagination
-                            currentPage={contributors.meta.current_page}
-                            totalPages={contributors.meta.last_page}
-                        />
+                        <CustomPagination currentPage={contributors.meta.current_page} totalPages={contributors.meta.last_page} />
                     </div>
                 )}
             </div>
