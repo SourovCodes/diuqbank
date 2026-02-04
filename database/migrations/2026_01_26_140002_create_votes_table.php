@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('votes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('submission_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('submission_id')->constrained();
+            $table->foreignId('user_id')->constrained();
             $table->tinyInteger('value'); // 1 for upvote, -1 for downvote
             $table->timestamps();
 

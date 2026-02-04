@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('question_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained();
+            $table->foreignId('user_id')->constrained();
             $table->text('section')->nullable();
             $table->unsignedInteger('views')->default(0);
             $table->timestamps();

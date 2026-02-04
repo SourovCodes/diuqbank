@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('department_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('exam_type_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('department_id')->constrained();
+            $table->foreignId('course_id')->constrained();
+            $table->foreignId('semester_id')->constrained();
+            $table->foreignId('exam_type_id')->constrained();
             $table->string('status')->default('pending_review');
             $table->text('rejection_reason')->nullable();
             $table->timestamps();
