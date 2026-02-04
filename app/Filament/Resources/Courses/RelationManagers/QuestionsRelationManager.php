@@ -3,14 +3,20 @@
 namespace App\Filament\Resources\Courses\RelationManagers;
 
 use App\Enums\QuestionStatus;
+use App\Models\Course;
+use App\Models\Department;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class QuestionsRelationManager extends RelationManager
 {
@@ -65,6 +71,43 @@ class QuestionsRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('moveToCourse')
+                        ->label('Move to Course')
+                        ->icon('heroicon-o-arrow-right-circle')
+                        ->form([
+                            Select::make('department_id')
+                                ->label('Department')
+                                ->options(Department::query()->pluck('name', 'id'))
+                                ->searchable()
+                                ->required()
+                                ->reactive()
+                                ->afterStateUpdated(fn (callable $set) => $set('course_id', null)),
+                            Select::make('course_id')
+                                ->label('Course')
+                                ->options(function (callable $get) {
+                                    $departmentId = $get('department_id');
+                                    if (! $departmentId) {
+                                        return [];
+                                    }
+
+                                    return Course::where('department_id', $departmentId)->pluck('name', 'id');
+                                })
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update([
+                                'department_id' => $data['department_id'],
+                                'course_id' => $data['course_id'],
+                            ]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Questions moved')
+                                ->body("{$records->count()} question(s) moved to new course.")
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -6,6 +6,7 @@ use App\Filament\Resources\Semesters\RelationManagers\QuestionsRelationManager;
 use App\Models\Question;
 use App\Models\Semester;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
@@ -78,5 +79,29 @@ describe('QuestionsRelationManager on Semester', function () {
             ->assertTableColumnExists('course.name')
             ->assertTableColumnExists('examType.name')
             ->assertTableColumnExists('submissions_count');
+    });
+
+    it('can move questions to another semester', function () {
+        $semester = Semester::factory()->create(['name' => 'Spring 2024']);
+        $newSemester = Semester::factory()->create(['name' => 'Fall 2024']);
+
+        $questions = Question::factory()->count(2)->create([
+            'semester_id' => $semester->id,
+        ]);
+
+        livewire(QuestionsRelationManager::class, [
+            'ownerRecord' => $semester,
+            'pageClass' => EditSemester::class,
+        ])
+            ->selectTableRecords($questions->pluck('id')->toArray())
+            ->callAction(TestAction::make('moveToSemester')->table()->bulk(), [
+                'semester_id' => $newSemester->id,
+            ])
+            ->assertNotified();
+
+        $questions->each(function ($question) use ($newSemester) {
+            $question->refresh();
+            expect($question->semester_id)->toBe($newSemester->id);
+        });
     });
 });

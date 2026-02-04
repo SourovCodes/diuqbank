@@ -3,14 +3,19 @@
 namespace App\Filament\Resources\Semesters\RelationManagers;
 
 use App\Enums\QuestionStatus;
+use App\Models\Semester;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class QuestionsRelationManager extends RelationManager
 {
@@ -65,6 +70,26 @@ class QuestionsRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('moveToSemester')
+                        ->label('Move to Semester')
+                        ->icon('heroicon-o-arrow-right-circle')
+                        ->form([
+                            Select::make('semester_id')
+                                ->label('Semester')
+                                ->options(Semester::query()->pluck('name', 'id'))
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update(['semester_id' => $data['semester_id']]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Questions moved')
+                                ->body("{$records->count()} question(s) moved to new semester.")
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

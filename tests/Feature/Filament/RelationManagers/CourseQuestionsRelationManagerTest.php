@@ -4,8 +4,10 @@ use App\Enums\QuestionStatus;
 use App\Filament\Resources\Courses\Pages\EditCourse;
 use App\Filament\Resources\Courses\RelationManagers\QuestionsRelationManager;
 use App\Models\Course;
+use App\Models\Department;
 use App\Models\Question;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
@@ -86,5 +88,33 @@ describe('QuestionsRelationManager on Course', function () {
             ->assertTableColumnExists('semester.name')
             ->assertTableColumnExists('examType.name')
             ->assertTableColumnExists('submissions_count');
+    });
+
+    it('can move questions to another course', function () {
+        $course = Course::factory()->create();
+        $newDepartment = Department::factory()->create();
+        $newCourse = Course::factory()->create(['department_id' => $newDepartment->id]);
+
+        $questions = Question::factory()->count(2)->create([
+            'department_id' => $course->department_id,
+            'course_id' => $course->id,
+        ]);
+
+        livewire(QuestionsRelationManager::class, [
+            'ownerRecord' => $course,
+            'pageClass' => EditCourse::class,
+        ])
+            ->selectTableRecords($questions->pluck('id')->toArray())
+            ->callAction(TestAction::make('moveToCourse')->table()->bulk(), [
+                'department_id' => $newDepartment->id,
+                'course_id' => $newCourse->id,
+            ])
+            ->assertNotified();
+
+        $questions->each(function ($question) use ($newDepartment, $newCourse) {
+            $question->refresh();
+            expect($question->department_id)->toBe($newDepartment->id);
+            expect($question->course_id)->toBe($newCourse->id);
+        });
     });
 });

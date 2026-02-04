@@ -9,6 +9,7 @@ use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\Semester;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
@@ -108,5 +109,39 @@ describe('QuestionsRelationManager on Department', function () {
             ->assertTableColumnExists('semester.name')
             ->assertTableColumnExists('examType.name')
             ->assertTableColumnExists('submissions_count');
+    });
+
+    it('can move questions to another department', function () {
+        $department = Department::factory()->create(['name' => 'Computer Science']);
+        $newDepartment = Department::factory()->create(['name' => 'Mathematics']);
+        $newCourse = Course::factory()->create(['department_id' => $newDepartment->id]);
+
+        $questions = Question::factory()
+            ->count(2)
+            ->sequence(
+                ['semester_id' => Semester::factory(), 'exam_type_id' => ExamType::factory()],
+                ['semester_id' => Semester::factory(), 'exam_type_id' => ExamType::factory()],
+            )
+            ->create([
+                'department_id' => $department->id,
+                'course_id' => Course::factory()->create(['department_id' => $department->id]),
+            ]);
+
+        livewire(QuestionsRelationManager::class, [
+            'ownerRecord' => $department,
+            'pageClass' => EditDepartment::class,
+        ])
+            ->selectTableRecords($questions->pluck('id')->toArray())
+            ->callAction(TestAction::make('moveToDepartment')->table()->bulk(), [
+                'department_id' => $newDepartment->id,
+                'course_id' => $newCourse->id,
+            ])
+            ->assertNotified();
+
+        $questions->each(function ($question) use ($newDepartment, $newCourse) {
+            $question->refresh();
+            expect($question->department_id)->toBe($newDepartment->id);
+            expect($question->course_id)->toBe($newCourse->id);
+        });
     });
 });

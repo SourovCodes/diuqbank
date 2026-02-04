@@ -6,6 +6,7 @@ use App\Filament\Resources\ExamTypes\RelationManagers\QuestionsRelationManager;
 use App\Models\ExamType;
 use App\Models\Question;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
@@ -78,5 +79,29 @@ describe('QuestionsRelationManager on ExamType', function () {
             ->assertTableColumnExists('course.name')
             ->assertTableColumnExists('semester.name')
             ->assertTableColumnExists('submissions_count');
+    });
+
+    it('can move questions to another exam type', function () {
+        $examType = ExamType::factory()->create(['name' => 'Midterm']);
+        $newExamType = ExamType::factory()->create(['name' => 'Final']);
+
+        $questions = Question::factory()->count(2)->create([
+            'exam_type_id' => $examType->id,
+        ]);
+
+        livewire(QuestionsRelationManager::class, [
+            'ownerRecord' => $examType,
+            'pageClass' => EditExamType::class,
+        ])
+            ->selectTableRecords($questions->pluck('id')->toArray())
+            ->callAction(TestAction::make('moveToExamType')->table()->bulk(), [
+                'exam_type_id' => $newExamType->id,
+            ])
+            ->assertNotified();
+
+        $questions->each(function ($question) use ($newExamType) {
+            $question->refresh();
+            expect($question->exam_type_id)->toBe($newExamType->id);
+        });
     });
 });
