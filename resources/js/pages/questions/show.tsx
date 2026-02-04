@@ -400,20 +400,33 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                             </div>
                         </div>
 
-                        {/* PDF Frame */}
+                        {/* PDF Viewer */}
                         {selectedSubmission?.pdf_url ? (
-                            <iframe
+                            <object
                                 key={selectedSubmission.id}
-                                src={selectedSubmission.pdf_url}
+                                data={selectedSubmission.pdf_url}
+                                type="application/pdf"
                                 className={cn(
-                                    'w-full border-0',
+                                    'w-full',
                                     isFullscreen
                                         ? 'h-full min-h-0'
                                         : 'h-[calc(100vh-260px)] min-h-100 sm:min-h-125 lg:h-[calc(100vh-200px)]'
                                 )}
                                 style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
-                                title="PDF Viewer"
-                            />
+                                title={question.course?.name ?? 'PDF Viewer'}
+                            >
+                                <iframe
+                                    src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
+                                    className={cn(
+                                        'w-full border-0',
+                                        isFullscreen
+                                            ? 'h-full min-h-0'
+                                            : 'h-[calc(100vh-260px)] min-h-100 sm:min-h-125 lg:h-[calc(100vh-200px)]'
+                                    )}
+                                    style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
+                                    title={question.course?.name ?? 'PDF Viewer'}
+                                />
+                            </object>
                         ) : (
                             <div className="flex h-100 items-center justify-center sm:h-125">
                                 <div className="text-center">
