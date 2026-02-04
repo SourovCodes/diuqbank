@@ -25,6 +25,8 @@ class SubmissionResource extends JsonResource
             'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
+                'username' => $this->user->username,
+                'avatar_url' => $this->user->avatar_url,
             ]),
             'question' => $this->whenLoaded('question', fn () => [
                 'id' => $this->question->id,

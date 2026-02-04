@@ -36,6 +36,8 @@ export interface Submission {
     user: {
         id: number;
         name: string;
+        username: string;
+        avatar_url: string;
     } | null;
     section: string | null;
     pdf_url: string | null;
