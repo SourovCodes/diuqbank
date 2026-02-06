@@ -4,6 +4,7 @@ export type * from './dashboard';
 export type * from './flash';
 export type * from './pagination';
 export type * from './question';
+export type * from './server-status';
 
 import type { Auth } from './auth';
 

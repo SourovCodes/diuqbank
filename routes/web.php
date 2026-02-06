@@ -11,6 +11,7 @@ use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\SubmissionController as DashboardSubmissionController;
 use App\Http\Controllers\DiskStatusController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ServerStatusController;
 use App\Http\Controllers\SubmissionViewController;
 use App\Http\Controllers\SubmissionVoteController;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +75,8 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::get('/server-status', ServerStatusController::class)->name('server-status');
 
     // Email verification routes
     Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
