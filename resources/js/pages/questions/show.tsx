@@ -319,7 +319,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         {selectedSubmission?.user ? (
                                             <Link
                                                 href={showContributor.url({ user: selectedSubmission.user.username })}
-                                                className="-ml-1 hidden items-center gap-2.5 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50 sm:flex"
+                                                className="-ml-1 hidden items-center gap-2.5 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50 sm:flex lg:hidden"
                                             >
                                                 <Avatar size="sm">
                                                     <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
@@ -341,7 +341,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 </div>
                                             </Link>
                                         ) : (
-                                            <div className="hidden items-center gap-2.5 sm:flex">
+                                            <div className="hidden items-center gap-2.5 sm:flex lg:hidden">
                                                 <Avatar size="sm">
                                                     <AvatarFallback>
                                                         <User className="h-3 w-3" />
