@@ -208,7 +208,6 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
             <Head title={question.course?.name ?? 'Question'} />
 
             <div className="container mx-auto px-4 py-4 sm:py-6">
-                {/* Header Section */}
                 <div className="mb-4 space-y-3 sm:mb-6">
                     <h1 className="text-xl font-semibold sm:text-2xl">{question.course?.name ?? 'Question'}</h1>
 
@@ -231,26 +230,20 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                     <EmptyState icon={FileText} title="No submissions yet" description="Be the first to submit a solution for this question." />
                 ) : (
                     <>
-                        {/* Multiple submissions hint */}
                         {submissions.length > 1 && (
                             <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground sm:mb-4">
-                                <ChevronLeft className="h-4 w-4 shrink-0 text-primary sm:hidden" />
-                                <ChevronRight className="-ml-3 h-4 w-4 shrink-0 text-primary sm:hidden" />
+                                <ChevronLeft className="h-4 w-4 shrink-0 text-primary" />
+                                <ChevronRight className="-ml-3 h-4 w-4 shrink-0 text-primary" />
                                 <span>
                                     <span className="font-medium text-foreground">{submissions.length} submissions</span>
-                                    <span className="hidden sm:inline"> — click tabs to switch</span>
-                                    <span className="sm:hidden"> — swipe to browse</span>
-                                    <span className="hidden sm:inline">, vote to rank</span>
+                                    <span> — swipe or tap to switch</span>
                                 </span>
                             </div>
                         )}
 
-                        {/* Desktop Layout with Sidebar */}
-                        <div className="hidden lg:flex lg:gap-6">
-                            {/* Main Content */}
-                            <div className="min-w-0 flex-1">
+                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                            <div className="min-w-0 space-y-3">
                                 <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
-                                    {/* Tabs Row */}
                                     <div className="flex items-center justify-between border-b bg-muted/30">
                                         <div className="flex min-w-0 flex-1 overflow-x-auto">
                                             {submissions.map((submission, index) => (
@@ -298,7 +291,6 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 </button>
                                             ))}
                                         </div>
-                                        {/* Controls */}
                                         <div className="flex shrink-0 items-center gap-1 px-3">
                                             <button
                                                 type="button"
@@ -323,19 +315,85 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         </div>
                                     </div>
 
-                                    {/* PDF Viewer */}
+                                    <div className="flex items-center justify-between gap-3 border-b bg-background px-3 py-2">
+                                        {selectedSubmission?.user ? (
+                                            <Link
+                                                href={showContributor.url({ user: selectedSubmission.user.username })}
+                                                className="-ml-1 hidden items-center gap-2.5 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50 sm:flex"
+                                            >
+                                                <Avatar size="sm">
+                                                    <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
+                                                    <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0">
+                                                    <p className="max-w-[220px] truncate text-sm font-medium text-foreground">
+                                                        {selectedSubmission.user.name}
+                                                    </p>
+                                                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <Eye className="h-3 w-3" />
+                                                        <span className="tabular-nums">
+                                                            {viewCounts[selectedSubmission.id] ?? selectedSubmission.views}
+                                                        </span>
+                                                        {selectedSubmission.created_at && (
+                                                            <span className="hidden sm:inline">• {formatDate(selectedSubmission.created_at)}</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ) : (
+                                            <div className="hidden items-center gap-2.5 sm:flex">
+                                                <Avatar size="sm">
+                                                    <AvatarFallback>
+                                                        <User className="h-3 w-3" />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-foreground">Anonymous</p>
+                                                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <Eye className="h-3 w-3" />
+                                                        <span className="tabular-nums">{viewCounts[selectedSubmission?.id ?? 0] ?? 0}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-1 lg:hidden">
+                                            <button
+                                                type="button"
+                                                onClick={goToPrevious}
+                                                disabled={selectedIndex === 0}
+                                                aria-label="Previous submission"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+                                            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary tabular-nums">
+                                                {selectedIndex + 1}/{submissions.length}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={goToNext}
+                                                disabled={selectedIndex === submissions.length - 1}
+                                                aria-label="Next submission"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     {selectedSubmission?.pdf_url ? (
                                         <object
                                             key={selectedSubmission.id}
                                             data={selectedSubmission.pdf_url}
                                             type="application/pdf"
-                                            className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
+                                            className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-220px)] min-h-125')}
                                             style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                             title={question.course?.name ?? 'PDF Viewer'}
                                         >
                                             <iframe
                                                 src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                                className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
+                                                className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-220px)] min-h-125')}
                                                 style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
                                                 title={question.course?.name ?? 'PDF Viewer'}
                                             />
@@ -351,9 +409,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                 </div>
                             </div>
 
-                            {/* Sidebar */}
-                            <div className="w-80 shrink-0 space-y-4">
-                                {/* Uploader Card */}
+                            <aside className="order-2 space-y-4 lg:order-none lg:sticky lg:top-4">
                                 <div className="rounded-xl border bg-card p-4">
                                     <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Uploaded by</h3>
                                     {selectedSubmission?.user ? (
@@ -366,7 +422,9 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                                 <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate font-medium text-foreground">{selectedSubmission.user.name}</p>
+                                                <p className="max-w-[200px] truncate font-medium text-foreground">
+                                                    {selectedSubmission.user.name}
+                                                </p>
                                                 <p className="text-sm text-muted-foreground">View profile →</p>
                                             </div>
                                         </Link>
@@ -385,7 +443,6 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                     )}
                                 </div>
 
-                                {/* Voting Card */}
                                 <div className="rounded-xl border bg-card p-4">
                                     <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Rate this submission
@@ -445,7 +502,6 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                     </div>
                                 </div>
 
-                                {/* Stats Card */}
                                 <div className="rounded-xl border bg-card p-4">
                                     <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Submission Info</h3>
                                     <div className="space-y-3">
@@ -472,348 +528,7 @@ export default function QuestionShow({ question, submissions }: QuestionShowProp
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Tablet Layout (sm to lg) */}
-                        <div className="hidden sm:block lg:hidden">
-                            <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
-                                {/* Tabs Row */}
-                                <div className="flex items-center border-b bg-muted/30">
-                                    <div className="flex min-w-0 flex-1 overflow-x-auto">
-                                        {submissions.map((submission, index) => (
-                                            <button
-                                                key={submission.id}
-                                                onClick={() => handleSelectSubmission(submission.id)}
-                                                className={cn(
-                                                    'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
-                                                    selectedId === submission.id
-                                                        ? 'bg-background font-medium text-foreground shadow-sm'
-                                                        : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-                                                )}
-                                            >
-                                                {selectedId === submission.id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />}
-                                                <span
-                                                    className={cn(
-                                                        'flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold',
-                                                        index === 0
-                                                            ? 'bg-primary/10 text-primary'
-                                                            : selectedId === submission.id
-                                                              ? 'bg-muted text-foreground'
-                                                              : 'bg-muted/50 text-muted-foreground',
-                                                    )}
-                                                >
-                                                    {index + 1}
-                                                </span>
-                                                {submission.section && (
-                                                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                                                        {submission.section}
-                                                    </span>
-                                                )}
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex items-center gap-1 text-xs tabular-nums',
-                                                        submission.vote_score > 0 && 'text-green-600 dark:text-green-400',
-                                                        submission.vote_score < 0 && 'text-red-600 dark:text-red-400',
-                                                        submission.vote_score === 0 && 'text-muted-foreground',
-                                                    )}
-                                                >
-                                                    <ThumbsUp className="h-3 w-3" />
-                                                    {submission.vote_score}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Info & Controls Row */}
-                                <div className="flex items-center justify-between border-b bg-background px-4 py-2">
-                                    {selectedSubmission?.user ? (
-                                        <Link
-                                            href={showContributor.url({ user: selectedSubmission.user.username })}
-                                            className="-ml-1 flex items-center gap-3 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50"
-                                        >
-                                            <Avatar size="sm">
-                                                <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
-                                                <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-foreground">{selectedSubmission.user.name}</span>
-                                                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">
-                                                        {viewCounts[selectedSubmission.id] ?? selectedSubmission.views} views
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        </Link>
-                                    ) : (
-                                        <div className="flex items-center gap-3">
-                                            <Avatar size="sm">
-                                                <AvatarFallback>
-                                                    <User className="h-3 w-3" />
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-foreground">Anonymous</span>
-                                                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">{viewCounts[selectedSubmission?.id ?? 0] ?? 0} views</span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            type="button"
-                                            onClick={toggleFullscreen}
-                                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        >
-                                            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                                        </button>
-                                        {selectedSubmission?.pdf_url && (
-                                            <a
-                                                href={selectedSubmission.pdf_url}
-                                                download
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                aria-label="Download PDF"
-                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                            >
-                                                <Download className="h-4 w-4" />
-                                            </a>
-                                        )}
-                                        <div className="mx-1 h-5 w-px bg-border" />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleVote('upvote')}
-                                            disabled={voting}
-                                            aria-label="Upvote submission"
-                                            className={cn(
-                                                'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-green-100 hover:text-green-600 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-green-900/30 dark:hover:text-green-400',
-                                                selectedSubmission?.user_vote === 1 &&
-                                                    'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-                                            )}
-                                        >
-                                            {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
-                                        </button>
-                                        <span
-                                            className={cn(
-                                                'min-w-6 text-center text-sm font-semibold tabular-nums',
-                                                (selectedSubmission?.vote_score ?? 0) > 0 && 'text-green-600 dark:text-green-400',
-                                                (selectedSubmission?.vote_score ?? 0) < 0 && 'text-red-600 dark:text-red-400',
-                                            )}
-                                        >
-                                            {selectedSubmission?.vote_score ?? 0}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleVote('downvote')}
-                                            disabled={voting}
-                                            aria-label="Downvote submission"
-                                            className={cn(
-                                                'inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-red-100 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-red-900/30 dark:hover:text-red-400',
-                                                selectedSubmission?.user_vote === -1 &&
-                                                    'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-                                            )}
-                                        >
-                                            <ThumbsDown className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* PDF Viewer */}
-                                {selectedSubmission?.pdf_url ? (
-                                    <object
-                                        key={selectedSubmission.id}
-                                        data={selectedSubmission.pdf_url}
-                                        type="application/pdf"
-                                        className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
-                                        style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
-                                        title={question.course?.name ?? 'PDF Viewer'}
-                                    >
-                                        <iframe
-                                            src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                            className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-200px)] min-h-125')}
-                                            style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
-                                            title={question.course?.name ?? 'PDF Viewer'}
-                                        />
-                                    </object>
-                                ) : (
-                                    <div className="flex h-125 items-center justify-center">
-                                        <div className="text-center">
-                                            <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-                                            <p className="text-muted-foreground">No PDF available</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Mobile Layout */}
-                        <div className="sm:hidden">
-                            <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
-                                {/* Navigation Row */}
-                                <div className="flex items-center border-b bg-muted/30">
-                                    <button
-                                        type="button"
-                                        onClick={goToPrevious}
-                                        disabled={selectedIndex === 0}
-                                        aria-label="Previous submission"
-                                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center border-r text-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
-                                    >
-                                        <ChevronLeft className="h-5 w-5" />
-                                    </button>
-                                    <div className="flex flex-1 items-center justify-center gap-2 px-3">
-                                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary tabular-nums">
-                                            {selectedIndex + 1} of {submissions.length}
-                                        </span>
-                                        {selectedSubmission?.section && (
-                                            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-                                                {selectedSubmission.section}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={goToNext}
-                                        disabled={selectedIndex === submissions.length - 1}
-                                        aria-label="Next submission"
-                                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center border-l text-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
-                                    >
-                                        <ChevronRight className="h-5 w-5" />
-                                    </button>
-                                </div>
-
-                                {/* Uploader & Actions Row */}
-                                <div className="flex items-center justify-between border-b bg-background px-3 py-2">
-                                    {selectedSubmission?.user ? (
-                                        <Link
-                                            href={showContributor.url({ user: selectedSubmission.user.username })}
-                                            className="-ml-1 flex items-center gap-2.5 rounded-md px-1 py-0.5 transition-colors active:bg-muted/50"
-                                        >
-                                            <Avatar size="sm">
-                                                <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
-                                                <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="min-w-0">
-                                                <p className="truncate text-sm font-medium text-foreground">{selectedSubmission.user.name}</p>
-                                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                    <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">
-                                                        {viewCounts[selectedSubmission.id] ?? selectedSubmission.views}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    ) : (
-                                        <div className="flex items-center gap-2.5">
-                                            <Avatar size="sm">
-                                                <AvatarFallback>
-                                                    <User className="h-3 w-3" />
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="min-w-0">
-                                                <p className="truncate text-sm font-medium text-foreground">Anonymous</p>
-                                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                    <Eye className="h-3 w-3" />
-                                                    <span className="tabular-nums">{viewCounts[selectedSubmission?.id ?? 0] ?? 0}</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center gap-0.5">
-                                        <button
-                                            type="button"
-                                            onClick={toggleFullscreen}
-                                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted"
-                                        >
-                                            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                                        </button>
-                                        {selectedSubmission?.pdf_url && (
-                                            <a
-                                                href={selectedSubmission.pdf_url}
-                                                download
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                aria-label="Download PDF"
-                                                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted"
-                                            >
-                                                <Download className="h-4 w-4" />
-                                            </a>
-                                        )}
-                                        <div className="mx-0.5 h-5 w-px bg-border" />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleVote('upvote')}
-                                            disabled={voting}
-                                            aria-label="Upvote submission"
-                                            className={cn(
-                                                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors active:bg-green-100 disabled:pointer-events-none disabled:opacity-50 dark:active:bg-green-900/30',
-                                                selectedSubmission?.user_vote === 1
-                                                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                                                    : 'text-muted-foreground',
-                                            )}
-                                        >
-                                            {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
-                                        </button>
-                                        <span
-                                            className={cn(
-                                                'min-w-5 text-center text-sm font-semibold tabular-nums',
-                                                (selectedSubmission?.vote_score ?? 0) > 0 && 'text-green-600 dark:text-green-400',
-                                                (selectedSubmission?.vote_score ?? 0) < 0 && 'text-red-600 dark:text-red-400',
-                                                (selectedSubmission?.vote_score ?? 0) === 0 && 'text-muted-foreground',
-                                            )}
-                                        >
-                                            {selectedSubmission?.vote_score ?? 0}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleVote('downvote')}
-                                            disabled={voting}
-                                            aria-label="Downvote submission"
-                                            className={cn(
-                                                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors active:bg-red-100 disabled:pointer-events-none disabled:opacity-50 dark:active:bg-red-900/30',
-                                                selectedSubmission?.user_vote === -1
-                                                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                                                    : 'text-muted-foreground',
-                                            )}
-                                        >
-                                            <ThumbsDown className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* PDF Viewer */}
-                                {selectedSubmission?.pdf_url ? (
-                                    <object
-                                        key={selectedSubmission.id}
-                                        data={selectedSubmission.pdf_url}
-                                        type="application/pdf"
-                                        className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100')}
-                                        style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
-                                        title={question.course?.name ?? 'PDF Viewer'}
-                                    >
-                                        <iframe
-                                            src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
-                                            className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-260px)] min-h-100')}
-                                            style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
-                                            title={question.course?.name ?? 'PDF Viewer'}
-                                        />
-                                    </object>
-                                ) : (
-                                    <div className="flex h-100 items-center justify-center">
-                                        <div className="text-center">
-                                            <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-                                            <p className="text-muted-foreground">No PDF available</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            </aside>
                         </div>
                     </>
                 )}
