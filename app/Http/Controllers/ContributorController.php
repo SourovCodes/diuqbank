@@ -7,6 +7,7 @@ use App\Http\Resources\ContributorResource;
 use App\Http\Resources\SubmissionResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,21 +15,29 @@ class ContributorController extends Controller
 {
     public function index(Request $request): Response
     {
-        $contributors = User::query()
-            ->has('submissions')
-            ->withContributorStats()
-            ->when($request->filled('search'), fn ($query) => $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->input('search').'%')
-                    ->orWhere('username', 'like', '%'.$request->input('search').'%');
-            }))
-            ->orderByDesc('submissions_count')
-            ->paginate(24)
-            ->withQueryString();
+        $search = trim((string) $request->input('search', ''));
+        $cacheKey = 'contributors:index:'.md5((string) json_encode([
+            'search' => $search,
+            'page' => $request->integer('page', 1),
+        ]));
+
+        $contributors = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($search) {
+            return User::query()
+                ->has('submissions')
+                ->withContributorStats()
+                ->when($search !== '', fn ($query) => $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('username', 'like', '%'.$search.'%');
+                }))
+                ->orderByDesc('submissions_count')
+                ->paginate(24)
+                ->withQueryString();
+        });
 
         return Inertia::render('contributors/index', [
             'contributors' => ContributorResource::collection($contributors),
             'filters' => [
-                'search' => $request->input('search'),
+                'search' => $search,
             ],
         ]);
     }

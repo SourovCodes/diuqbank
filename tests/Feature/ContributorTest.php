@@ -3,7 +3,12 @@
 use App\Models\Question;
 use App\Models\Submission;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    Cache::flush();
+});
 
 test('contributors index page can be rendered', function () {
     $response = $this->get('/contributors');
@@ -64,6 +69,37 @@ test('contributors can be searched by username', function () {
         ->has('contributors.data', 1)
         ->where('contributors.data.0.username', 'johndoe123')
     );
+});
+
+test('contributors index uses cached results', function () {
+    $existingContributor = User::factory()->create();
+    Submission::factory()->create(['user_id' => $existingContributor->id]);
+
+    $this->get('/contributors')
+        ->assertStatus(200)
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('contributors/index')
+            ->has('contributors.data', 1)
+        );
+
+    $newContributor = User::factory()->create();
+    Submission::factory()->create(['user_id' => $newContributor->id]);
+
+    $this->get('/contributors')
+        ->assertStatus(200)
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('contributors/index')
+            ->has('contributors.data', 1)
+        );
+
+    Cache::flush();
+
+    $this->get('/contributors')
+        ->assertStatus(200)
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('contributors/index')
+            ->has('contributors.data', 2)
+        );
 });
 
 test('contributor show page displays user profile', function () {
