@@ -14,6 +14,7 @@
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
         @production
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4157128010679783" crossorigin="anonymous"></script>
             <script async src="https://www.googletagmanager.com/gtag/js?id=G-QPKSEMRTZ2"></script>
             <script>
                 window.dataLayer = window.dataLayer || [];
