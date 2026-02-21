@@ -64,3 +64,20 @@ test('terms page is accessible to guests', function () {
 
     $response->assertStatus(200);
 });
+
+test('google analytics tag is not rendered outside production', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertDontSee('G-QPKSEMRTZ2');
+});
+
+test('google analytics tag is rendered in production', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertSee('https://www.googletagmanager.com/gtag/js?id=G-QPKSEMRTZ2', false);
+    $response->assertSee("gtag('config', 'G-QPKSEMRTZ2');", false);
+});
