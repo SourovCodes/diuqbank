@@ -10,6 +10,7 @@ use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\SubmissionController as DashboardSubmissionController;
 use App\Http\Controllers\DiskStatusController;
+use App\Http\Controllers\PublicSubmissionController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ServerStatusController;
 use App\Http\Controllers\SubmissionViewController;
@@ -25,6 +26,7 @@ Route::get('/disk-status', DiskStatusController::class)->name('disk-status');
 
 Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
 Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
+Route::get('/public/submissions', PublicSubmissionController::class)->name('public.submissions.index');
 
 Route::get('/contributors', [ContributorController::class, 'index'])->name('contributors.index');
 Route::get('/contributors/{user:username}', [ContributorController::class, 'show'])->name('contributors.show');
