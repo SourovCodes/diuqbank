@@ -33,6 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/local',
             'serve' => true,
             'throw' => false,
             'report' => false,
@@ -72,6 +73,7 @@ return [
         'submissions' => [
             'driver' => 'local',
             'root' => storage_path('app/private/submissions'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/submissions',
             'serve' => true,
             'throw' => false,
             'report' => false,
@@ -109,6 +111,7 @@ return [
         'local-backups' => [
             'driver' => 'local',
             'root' => storage_path('app/backups'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/local-backups',
             'serve' => true,
             'throw' => false,
             'report' => false,
