@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 /**
  * @mixin Submission
@@ -49,7 +50,7 @@ class PublicSubmissionResource extends JsonResource
 
         try {
             return $media->getTemporaryUrl(now()->addMinutes(5));
-        } catch (\RuntimeException $exception) {
+        } catch (Throwable $exception) {
             return $media->getFullUrl();
         }
     }
