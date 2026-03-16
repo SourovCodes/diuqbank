@@ -21,7 +21,8 @@ class PublicSubmissionController extends Controller
             ])
             ->withSum('votes', 'value')
             ->latest()
-            ->get();
+            ->paginate(100)
+            ->withQueryString();
 
         return PublicSubmissionResource::collection($submissions);
     }
