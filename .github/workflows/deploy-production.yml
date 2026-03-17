@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-php-
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest --no-dev --optimize-autoloader
+        run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,8 +51,6 @@ jobs:
           dep: deploy
         env:
           DEPLOY_HOSTNAME: ${{ vars.DEPLOY_HOSTNAME }}
-          DEPLOY_REMOTE_USER: ${{ vars.DEPLOY_REMOTE_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
-          DEPLOY_HTTP_USER: ${{ vars.DEPLOY_HTTP_USER }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
           DEPLOY_BRANCH: main

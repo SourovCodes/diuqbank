@@ -4,106 +4,152 @@ namespace Deployer;
 
 require 'recipe/laravel.php';
 
-// Config
+/*
+|--------------------------------------------------------------------------
+| Basic Config
+|--------------------------------------------------------------------------
+*/
 
 set('repository', 'https://github.com/SourovCodes/diuqbank.git');
+set('branch', getenv('DEPLOY_BRANCH') ?: 'main');
+set('keep_releases', 2);
+
+/*
+|--------------------------------------------------------------------------
+| Laravel Shared & Writable Paths
+|--------------------------------------------------------------------------
+*/
+
+set('shared_dirs', [
+    'storage',
+]);
+
+set('shared_files', [
+    '.env',
+]);
+
+set('writable_dirs', [
+    'storage',
+    'bootstrap/cache',
+]);
+
 set('writable_mode', 'chmod');
-set('keep_releases', 1);
 
-add('shared_files', []);
-add('shared_dirs', []);
-add('writable_dirs', []);
+/*
+|--------------------------------------------------------------------------
+| Load Environment Variables
+|--------------------------------------------------------------------------
+*/
 
-// Load environment variables
 $hostname = getenv('DEPLOY_HOSTNAME');
-$remoteUser = getenv('DEPLOY_REMOTE_USER');
 $deployPath = getenv('DEPLOY_PATH');
-$httpUser = getenv('DEPLOY_HTTP_USER');
 $sshPort = getenv('DEPLOY_SSH_PORT');
-$branch = getenv('DEPLOY_BRANCH') ?: 'main';
 
-// Validate required environment variables
 if (! $hostname) {
     throw new \RuntimeException('DEPLOY_HOSTNAME environment variable is required');
 }
-if (! $remoteUser) {
-    throw new \RuntimeException('DEPLOY_REMOTE_USER environment variable is required');
-}
+
 if (! $deployPath) {
     throw new \RuntimeException('DEPLOY_PATH environment variable is required');
 }
-if (! $httpUser) {
-    throw new \RuntimeException('DEPLOY_HTTP_USER environment variable is required');
-}
+
 if (! $sshPort) {
     throw new \RuntimeException('DEPLOY_SSH_PORT environment variable is required');
 }
 
-// Hosts
+/*
+|--------------------------------------------------------------------------
+| Hosts
+|--------------------------------------------------------------------------
+*/
 
 host($hostname)
-    ->set('remote_user', $remoteUser)
+    ->set('remote_user', 'sourov')
     ->set('deploy_path', $deployPath)
-    ->set('http_user', $httpUser)
-    ->set('port', $sshPort)
-    ->set('branch', $branch);
+    ->set('http_user', 'www-data')
+    ->set('port', $sshPort);
 
-// Tasks
+/*
+|--------------------------------------------------------------------------
+| Local Asset Build (Skipped - GitHub Actions builds assets)
+|--------------------------------------------------------------------------
+*/
 
-// Build assets locally
 task('build:assets', function () {
-    writeln('Building assets locally...');
-    runLocally('npm ci');
-    runLocally('npm run build');
-})->desc('Build assets locally');
+    writeln('⏭️  Skipping local build - assets already built by CI');
+})->desc('Skip local asset build (handled by CI)');
 
-// Upload built assets
+/*
+|--------------------------------------------------------------------------
+| Upload Built Assets
+|--------------------------------------------------------------------------
+*/
+
 task('upload:assets', function () {
-    writeln('Uploading built assets...');
+    writeln('🚀 Uploading built assets...');
     $user = get('remote_user');
     $hostname = currentHost()->getHostname();
     $port = get('port');
     $releasePath = get('release_path');
-    $archiveName = 'build-assets.tar.gz';
+    $archive = 'build-assets.tar.gz';
 
-    // Create archive locally
-    writeln('Creating archive...');
-    runLocally("tar -czf {$archiveName} -C public build");
+    runLocally("tar -czf {$archive} -C public build");
+    runLocally("scp -P {$port} {$archive} {$user}@{$hostname}:{$releasePath}/");
+    run("tar -xzf {$releasePath}/{$archive} -C {$releasePath}/public/");
+    runLocally("rm {$archive}");
+    run("rm {$releasePath}/{$archive}");
+})->desc('Upload built assets');
 
-    // Upload archive to server
-    writeln('Uploading archive...');
-    runLocally("scp -P {$port} {$archiveName} {$user}@{$hostname}:{$releasePath}/");
+/*
+|--------------------------------------------------------------------------
+| Skip npm on Server
+|--------------------------------------------------------------------------
+*/
 
-    // Extract archive on server
-    writeln('Extracting archive on server...');
-    run("tar -xzf {$releasePath}/{$archiveName} -C {$releasePath}/public/");
-
-    // Clean up archive on both local and server
-    writeln('Cleaning up...');
-    runLocally("rm {$archiveName}");
-    run("rm {$releasePath}/{$archiveName}");
-})->desc('Upload built assets to server');
-
-// Skip npm tasks on server by overriding them
 task('deploy:npm', function () {
-    writeln('Skipping npm install on server (assets built locally)');
+    writeln('⏭️  Skipping npm install on server');
 });
 
-// Clear OPcache
-task('opcache:clear', function () {
-    writeln('Clearing OPcache...');
-    run('{{bin/php}} {{release_or_current_path}}/artisan opcache:clear');
-})->desc('Clear OPcache');
+/*
+|--------------------------------------------------------------------------
+| Fix Permissions After Deploy
+|--------------------------------------------------------------------------
+*/
 
-// Hooks
+task('permissions:fix', function () {
+    // Use find to only chmod files owned by the deploy user, avoiding permission errors on www-data owned files
+    run('find {{release_path}}/storage {{release_path}}/bootstrap/cache -user $(whoami) -exec chmod 775 {} \; 2>/dev/null || true');
+})->desc('Fix Laravel writable permissions');
+
+/*
+|--------------------------------------------------------------------------
+| Restart Queue Workers
+|--------------------------------------------------------------------------
+*/
+
+task('queue:restart', function () {
+    writeln('🔄 Gracefully restarting queue workers...');
+    // This signals workers to finish their current job, then restart
+    run('cd {{release_path}} && php artisan queue:restart');
+})->desc('Gracefully restart queue workers');
+
+/*
+|--------------------------------------------------------------------------
+| Hooks
+|--------------------------------------------------------------------------
+*/
 
 // Build assets locally before deployment starts
 before('deploy', 'build:assets');
 
-// Upload assets after the release is prepared but before going live
+// Upload assets after vendors are installed
 after('deploy:vendors', 'upload:assets');
 
-// Clear OPcache after deployment
-after('deploy:success', 'opcache:clear');
+// Fix permissions after symlink switch
+after('deploy:symlink', 'permissions:fix');
 
+// Restart queue workers after deployment
+after('deploy:symlink', 'queue:restart');
+
+// Unlock if deploy fails
 after('deploy:failed', 'deploy:unlock');

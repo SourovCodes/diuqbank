@@ -1,46 +1,52 @@
 <?php
 
-use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\TrackOnlineUsers;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-use Sentry\Laravel\Integration;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        $middleware->encryptCookies(except: ['appearance']);
-
+    ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            HandleAppearance::class,
-            TrackOnlineUsers::class,
-
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'submissions/*/view', // Disable CSRF for view tracking endpoint
+        ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->respond(function ($response) {
-            if (! app()->environment('local') && in_array($response->getStatusCode(), [403, 404, 500, 503])) {
-                return inertia('errors/'.$response->getStatusCode())
-                    ->toResponse(request())
-                    ->setStatusCode($response->getStatusCode());
-            } elseif ($response->getStatusCode() === 419) {
-                return back()->with([
-                    'warning' => 'The page expired, please try again.',
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+            $status = $response->getStatusCode();
+
+            // Handle expired sessions (CSRF token mismatch) - redirect back with toast
+            if ($status === 419) {
+                Inertia::flash('toast', [
+                    'type' => 'warning',
+                    'message' => 'Page Expired',
+                    'description' => 'Your session expired. Please try again.',
                 ]);
+
+                return back();
+            }
+
+            // In production, render custom error pages for common HTTP errors
+            if (! app()->environment(['local', 'testing']) && in_array($status, [400, 401, 403, 404, 405, 429, 500, 503])) {
+                return Inertia::render('error', ['status' => $status])
+                    ->toResponse($request)
+                    ->setStatusCode($status);
             }
 
             return $response;
         });
-        Integration::handles($exceptions);
-
     })->create();

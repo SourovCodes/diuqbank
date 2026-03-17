@@ -13,25 +13,25 @@ class CourseForm
     {
         return $schema
             ->components([
-                Section::make('Course details')
-                    ->columns(2)
-                    ->columnSpanFull()
+                Section::make('Course Information')
+                    ->description('Enter the course details')
+                    ->icon('heroicon-o-book-open')
                     ->schema([
                         Select::make('department_id')
                             ->label('Department')
                             ->relationship('department', 'name')
-                            ->searchable()
                             ->preload()
+                            ->searchable()
+                            ->native(false)
                             ->required(),
                         TextInput::make('name')
-                            ->label('Course title')
-                            ->required()
+                            ->label('Course Name')
+                            ->placeholder('e.g., Introduction to Programming')
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Use the official course title, e.g., Data Structures and Algorithms.')
-                            ->placeholder('Data Structures and Algorithms'),
-
-                    ]),
+                            ->required(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }

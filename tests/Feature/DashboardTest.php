@@ -1,106 +1,208 @@
 <?php
 
-use App\Enums\QuestionStatus;
 use App\Models\Question;
+use App\Models\Submission;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 
-it('displays the dashboard page for authenticated users', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->get('/dashboard');
-
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->component('dashboard/index')
-        ->has('stats')
-        ->has('questions')
-    );
-});
-
-it('redirects unauthenticated users to login', function () {
+// Dashboard Tests
+test('guest cannot access dashboard', function () {
     $response = $this->get('/dashboard');
 
     $response->assertRedirect('/login');
 });
 
-it('shows correct statistics for the user', function () {
-    $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-
-    // Create questions for the authenticated user
-    Question::factory()->create(['user_id' => $user->id, 'status' => QuestionStatus::PUBLISHED, 'view_count' => 10]);
-    Question::factory()->create(['user_id' => $user->id, 'status' => QuestionStatus::PUBLISHED, 'view_count' => 20]);
-    Question::factory()->create(['user_id' => $user->id, 'status' => QuestionStatus::PENDING_REVIEW, 'view_count' => 5]);
-    Question::factory()->create(['user_id' => $user->id, 'status' => QuestionStatus::NEED_FIX, 'view_count' => 3]);
-
-    // Create questions for other user (should not be counted)
-    Question::factory()->create(['user_id' => $otherUser->id, 'status' => QuestionStatus::PUBLISHED, 'view_count' => 100]);
+test('unverified user is redirected to verification notice', function () {
+    $user = User::factory()->unverified()->create();
 
     $response = $this->actingAs($user)->get('/dashboard');
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
+    $response->assertRedirect(route('verification.notice'));
+});
+
+test('verified user can access dashboard', function () {
+    $user = User::factory()->create(['email_verified_at' => now()]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertStatus(200);
+    $response->assertInertia(fn (Assert $page) => $page
         ->component('dashboard/index')
-        ->where('stats.total_questions', 4)
+        ->has('stats')
+    );
+});
+
+test('dashboard displays correct submission stats', function () {
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $otherUser = User::factory()->create();
+
+    $publishedQuestion1 = Question::factory()->published()->create();
+    $publishedQuestion2 = Question::factory()->published()->create();
+    $pendingQuestion = Question::factory()->pendingReview()->create();
+    $rejectedQuestion = Question::factory()->rejected()->create();
+
+    Submission::factory()->create([
+        'user_id' => $user->id,
+        'question_id' => $publishedQuestion1->id,
+    ]);
+    Submission::factory()->create([
+        'user_id' => $user->id,
+        'question_id' => $publishedQuestion2->id,
+    ]);
+    Submission::factory()->create([
+        'user_id' => $user->id,
+        'question_id' => $pendingQuestion->id,
+    ]);
+    Submission::factory()->create([
+        'user_id' => $user->id,
+        'question_id' => $rejectedQuestion->id,
+    ]);
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertStatus(200);
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('dashboard/index')
+        ->where('stats.total_submissions', 4)
         ->where('stats.published', 2)
         ->where('stats.pending_review', 1)
-        ->where('stats.need_fix', 1)
-        ->where('stats.total_views', 38)
+        ->where('stats.rejected', 1)
     );
 });
 
-it('displays the user\'s questions with pagination', function () {
-    $user = User::factory()->create();
+// Dashboard Submissions Index Tests
+test('guest cannot access dashboard submissions index', function () {
+    $response = $this->get('/dashboard/submissions');
 
-    // Create 15 questions for the user
-    Question::factory()->count(15)->create(['user_id' => $user->id]);
+    $response->assertRedirect('/login');
+});
 
-    $response = $this->actingAs($user)->get('/dashboard');
+test('verified user can access dashboard submissions index', function () {
+    $user = User::factory()->create(['email_verified_at' => now()]);
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->component('dashboard/index')
-        ->has('questions.data', 10) // First page should have 10 items
-        ->where('questions.total', 15)
-        ->where('questions.per_page', 10)
-        ->where('questions.current_page', 1)
-        ->where('questions.last_page', 2)
+    $response = $this->actingAs($user)->get('/dashboard/submissions');
+
+    $response->assertStatus(200);
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('dashboard/submissions/index')
+        ->has('submissions')
     );
 });
 
-it('shows only the authenticated user\'s questions', function () {
-    $user = User::factory()->create();
+test('dashboard submissions only shows users own submissions', function () {
+    $user = User::factory()->create(['email_verified_at' => now()]);
     $otherUser = User::factory()->create();
 
-    // Create questions for the authenticated user
-    $userQuestion = Question::factory()->create(['user_id' => $user->id]);
+    $userSubmission = Submission::factory()->create(['user_id' => $user->id]);
+    $otherSubmission = Submission::factory()->create(['user_id' => $otherUser->id]);
 
-    // Create questions for another user
-    $otherQuestion = Question::factory()->create(['user_id' => $otherUser->id]);
+    $response = $this->actingAs($user)->get('/dashboard/submissions');
 
-    $response = $this->actingAs($user)->get('/dashboard');
-
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->component('dashboard/index')
-        ->where('questions.total', 1)
-        ->where('questions.data.0.id', $userQuestion->id)
+    $response->assertStatus(200);
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('dashboard/submissions/index')
+        ->has('submissions.data', 1)
+        ->where('submissions.data.0.id', $userSubmission->id)
     );
 });
 
-it('displays zero stats when user has no questions', function () {
-    $user = User::factory()->create();
+// Profile Update Tests
+test('guest cannot update profile', function () {
+    $response = $this->put('/dashboard/profile', [
+        'name' => 'Updated Name',
+    ]);
 
-    $response = $this->actingAs($user)->get('/dashboard');
+    $response->assertRedirect('/login');
+});
 
-    $response->assertSuccessful();
-    $response->assertInertia(fn ($page) => $page
-        ->component('dashboard/index')
-        ->where('stats.total_questions', 0)
-        ->where('stats.published', 0)
-        ->where('stats.pending_review', 0)
-        ->where('stats.need_fix', 0)
-        ->where('stats.total_views', 0)
-        ->where('questions.total', 0)
-    );
+test('verified user can update profile name', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'name' => 'Original Name',
+    ]);
+
+    $response = $this->actingAs($user)->put('/dashboard/profile', [
+        'name' => 'Updated Name',
+        'username' => $user->username,
+        'email' => $user->email,
+    ]);
+
+    $response->assertRedirect();
+    expect($user->fresh()->name)->toBe('Updated Name');
+});
+
+test('profile email change clears email verification', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'email' => 'old@example.com',
+    ]);
+
+    $response = $this->actingAs($user)->put('/dashboard/profile', [
+        'name' => $user->name,
+        'username' => $user->username,
+        'email' => 'new@example.com',
+    ]);
+
+    $response->assertRedirect();
+    $freshUser = $user->fresh();
+    expect($freshUser->email)->toBe('new@example.com');
+    expect($freshUser->email_verified_at)->toBeNull();
+});
+
+// Password Update Tests
+test('guest cannot update password', function () {
+    $response = $this->put('/dashboard/profile/password', [
+        'current_password' => 'password',
+        'password' => 'newpassword123',
+        'password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertRedirect('/login');
+});
+
+test('verified user can update password', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'password' => Hash::make('oldpassword'),
+    ]);
+
+    $response = $this->actingAs($user)->put('/dashboard/profile/password', [
+        'current_password' => 'oldpassword',
+        'password' => 'newpassword123',
+        'password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertRedirect();
+    expect(Hash::check('newpassword123', $user->fresh()->password))->toBeTrue();
+});
+
+test('password update requires correct current password', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'password' => Hash::make('oldpassword'),
+    ]);
+
+    $response = $this->actingAs($user)->put('/dashboard/profile/password', [
+        'current_password' => 'wrongpassword',
+        'password' => 'newpassword123',
+        'password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertSessionHasErrors('current_password');
+});
+
+test('password update requires confirmation', function () {
+    $user = User::factory()->create([
+        'email_verified_at' => now(),
+        'password' => Hash::make('oldpassword'),
+    ]);
+
+    $response = $this->actingAs($user)->put('/dashboard/profile/password', [
+        'current_password' => 'oldpassword',
+        'password' => 'newpassword123',
+        'password_confirmation' => 'differentpassword',
+    ]);
+
+    $response->assertSessionHasErrors('password');
 });

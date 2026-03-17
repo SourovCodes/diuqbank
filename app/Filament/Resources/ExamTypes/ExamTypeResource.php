@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ExamTypes;
 use App\Filament\Resources\ExamTypes\Pages\CreateExamType;
 use App\Filament\Resources\ExamTypes\Pages\EditExamType;
 use App\Filament\Resources\ExamTypes\Pages\ListExamTypes;
+use App\Filament\Resources\ExamTypes\RelationManagers\QuestionsRelationManager;
 use App\Filament\Resources\ExamTypes\Schemas\ExamTypeForm;
 use App\Filament\Resources\ExamTypes\Tables\ExamTypesTable;
 use App\Models\ExamType;
@@ -13,14 +14,15 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use UnitEnum;
 
 class ExamTypeResource extends Resource
 {
     protected static ?string $model = ExamType::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Academic';
 
     public static function form(Schema $schema): Schema
     {
@@ -35,7 +37,7 @@ class ExamTypeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            QuestionsRelationManager::class,
         ];
     }
 
@@ -46,25 +48,5 @@ class ExamTypeResource extends Resource
             'create' => CreateExamType::route('/create'),
             'edit' => EditExamType::route('/{record}/edit'),
         ];
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return [
-            'name',
-        ];
-    }
-
-    public static function getGlobalSearchResultDetails(Model $record): array
-    {
-        return [
-            'Requires section' => $record->requires_section ? 'Yes' : 'No',
-            'Questions' => (string) ($record->questions_count ?? 0),
-        ];
-    }
-
-    public static function getGlobalSearchEloquentQuery(): Builder
-    {
-        return parent::getGlobalSearchEloquentQuery()->withCount('questions');
     }
 }

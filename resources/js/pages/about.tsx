@@ -1,156 +1,163 @@
-import PageHeader from '@/components/page-header';
-import { Card, CardContent } from '@/components/ui/card';
-import MainLayout from '@/layouts/main-layout';
 import { Head } from '@inertiajs/react';
-import { BookOpen, GraduationCap, Upload, Users } from 'lucide-react';
+import { BookOpen, GraduationCap, Heart, Target, Users } from 'lucide-react';
+
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function About() {
     return (
-        <MainLayout>
+        <>
             <Head title="About Us" />
 
-            <div className="container mx-auto px-4 py-16">
-                <PageHeader
-                    title="About"
-                    gradientText="DIUQBank"
-                    description="A community-driven platform helping students excel in their exams through shared knowledge"
-                />
-
-                {/* Introduction section */}
-                <Card className="mb-10 overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                    <CardContent className="p-8">
-                        <div className="mb-4 flex items-center">
-                            <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600">
-                                <GraduationCap className="h-6 w-6 text-white" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">What We Do</h2>
-                        </div>
-
-                        <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                            <p>
-                                DIUQBank is a community-driven platform designed to help students at Daffodil International University prepare for
-                                their exams more effectively. We provide a centralized repository where students can access previous semester question
-                                papers, allowing them to understand exam patterns and practice thoroughly.
-                            </p>
-                            <p>
-                                Our platform thrives on collaboration. Students who have completed their exams contribute by uploading question
-                                papers, building a comprehensive resource that benefits the entire university community. Every contribution helps
-                                future students succeed in their academic journey.
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* How It Works section */}
-                <div className="mb-10 grid gap-8 md:grid-cols-2">
-                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                        <CardContent className="h-full p-8">
-                            <div className="mb-4 flex items-center">
-                                <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600">
-                                    <Upload className="h-5 w-5 text-white" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">For Contributors</h2>
-                            </div>
-
-                            <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                                <p>Students who have completed their exams can contribute to the platform by:</p>
-                                <ul className="list-disc space-y-2 pl-5">
-                                    <li>
-                                        <span className="font-medium">Signing in with university email:</span> Access the upload feature using your
-                                        official DIU email address.
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Uploading question papers:</span> Share question papers from your exams as PDF
-                                        files, properly categorized by department, course, semester, and exam type.
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Recognition for contribution:</span> Your name gets automatically watermarked on
-                                        the uploaded PDF, acknowledging your valuable contribution to the community.
-                                    </li>
-                                </ul>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                        <CardContent className="h-full p-8">
-                            <div className="mb-4 flex items-center">
-                                <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600">
-                                    <BookOpen className="h-5 w-5 text-white" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">For Students</h2>
-                            </div>
-
-                            <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                                <p>
-                                    Anyone can access the question bank without logging in, making it easy for all students to prepare for their
-                                    exams. The platform offers:
-                                </p>
-                                <ul className="list-disc space-y-2 pl-5">
-                                    <li>
-                                        <span className="font-medium">Free access:</span> Browse and download question papers without any registration
-                                        required.
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Smart filtering:</span> Easily find relevant questions by filtering by
-                                        department, semester, course, and exam type.
-                                    </li>
-                                    <li>
-                                        <span className="font-medium">Comprehensive coverage:</span> Access a growing collection of question papers
-                                        covering multiple semesters and courses.
-                                    </li>
-                                </ul>
-                            </div>
-                        </CardContent>
-                    </Card>
+            <div className="container mx-auto max-w-4xl px-4 py-16">
+                {/* Hero Section */}
+                <div className="mb-16 text-center">
+                    <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                        <BookOpen className="h-8 w-8" />
+                    </div>
+                    <h1 className="mb-4 text-4xl font-bold">About DIU Question Bank</h1>
+                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                        A student-driven initiative to help Daffodil International University students prepare better for their exams by providing
+                        access to past questions.
+                    </p>
                 </div>
 
-                {/* Our Mission section */}
-                <Card className="mb-10 overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                    <CardContent className="p-8">
-                        <div className="mb-4 flex items-center">
-                            <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600">
-                                <Users className="h-6 w-6 text-white" />
+                {/* Mission Section */}
+                <section className="mb-16">
+                    <div className="rounded-2xl border bg-card p-8">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                <Target className="h-6 w-6" />
                             </div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Our Mission</h2>
+                            <div>
+                                <h2 className="mb-3 text-2xl font-semibold">Our Mission</h2>
+                                <p className="text-muted-foreground">
+                                    We believe that every student deserves access to quality study materials. DIU Question Bank was created to bridge
+                                    the gap between students and past exam questions, making it easier for everyone to understand exam patterns,
+                                    practice effectively, and excel in their academics.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Values Section */}
+                <section className="mb-16">
+                    <h2 className="mb-8 text-center text-2xl font-semibold">What We Stand For</h2>
+                    <div className="grid gap-6 md:grid-cols-3">
+                        <Card>
+                            <CardHeader>
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                                    <Users className="h-6 w-6" />
+                                </div>
+                                <CardTitle>Community Driven</CardTitle>
+                                <CardDescription>
+                                    Built by students, for students. Our platform thrives on contributions from the DIU community.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400">
+                                    <GraduationCap className="h-6 w-6" />
+                                </div>
+                                <CardTitle>Academic Excellence</CardTitle>
+                                <CardDescription>
+                                    We aim to help students achieve their academic goals through better exam preparation resources.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                                    <Heart className="h-6 w-6" />
+                                </div>
+                                <CardTitle>Free & Open</CardTitle>
+                                <CardDescription>
+                                    Access to education resources should be free. We keep the platform open for all DIU students.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+                    </div>
+                </section>
+
+                {/* How It Works Section */}
+                <section className="mb-16">
+                    <h2 className="mb-8 text-center text-2xl font-semibold">How It Works</h2>
+                    <div className="space-y-6">
+                        <div className="flex gap-4">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                                1
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">Browse Questions</h3>
+                                <p className="text-muted-foreground">
+                                    Search and filter questions by department, course, semester, and exam type to find exactly what you need.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                            <p>
-                                Our mission is to create a supportive academic environment where knowledge is shared freely and students help each
-                                other succeed. By providing easy access to previous exam questions, we enable students to:
-                            </p>
-                            <ul className="list-disc space-y-2 pl-5">
-                                <li>Understand exam patterns and question formats</li>
-                                <li>Practice with real exam questions from previous semesters</li>
-                                <li>Identify important topics and focus areas</li>
-                                <li>Prepare more effectively for upcoming exams</li>
-                                <li>Build confidence through comprehensive preparation</li>
-                            </ul>
-                            <p>
-                                Together, we're building a culture of collaboration and mutual support that helps every student at Daffodil
-                                International University achieve their academic goals.
-                            </p>
+                        <div className="flex gap-4">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                                2
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">View & Download</h3>
+                                <p className="text-muted-foreground">
+                                    View question papers directly in your browser or download them for offline study sessions.
+                                </p>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                {/* Join Us section */}
-                <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                    <CardContent className="p-8">
-                        <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 dark:text-white">Be Part of the Community</h2>
-
-                        <div className="mx-auto max-w-2xl space-y-4 text-center text-slate-600 dark:text-slate-300">
-                            <p>
-                                Whether you're preparing for your next exam or have just completed one, you're a valuable part of our community.
-                                Access resources to help you study, and consider contributing your exam papers to help fellow students in their
-                                journey.
-                            </p>
-                            <p className="font-medium text-blue-600 dark:text-blue-400">Together, we make learning easier for everyone at DIU.</p>
+                        <div className="flex gap-4">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                                3
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">Contribute</h3>
+                                <p className="text-muted-foreground">
+                                    Have questions that aren&apos;t in our bank? Register and submit them to help fellow students.
+                                </p>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+
+                        <div className="flex gap-4">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                                4
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">Vote & Verify</h3>
+                                <p className="text-muted-foreground">
+                                    Upvote quality submissions and help the community identify the most accurate and helpful resources.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* CTA Section */}
+                <section className="rounded-2xl bg-muted/50 p-8 text-center">
+                    <h2 className="mb-4 text-2xl font-semibold">Join Our Community</h2>
+                    <p className="mb-6 text-muted-foreground">
+                        Whether you&apos;re looking for questions or want to contribute, we welcome you to be part of the DIU Question Bank community.
+                    </p>
+                    <div className="flex justify-center gap-4">
+                        <a
+                            href="/questions"
+                            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        >
+                            Browse Questions
+                        </a>
+                        <a
+                            href="/register"
+                            className="inline-flex h-10 items-center justify-center rounded-md border bg-background px-6 text-sm font-medium transition-colors hover:bg-accent"
+                        >
+                            Get Started
+                        </a>
+                    </div>
+                </section>
             </div>
-        </MainLayout>
+        </>
     );
 }

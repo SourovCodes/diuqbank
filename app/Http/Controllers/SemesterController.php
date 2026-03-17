@@ -13,15 +13,21 @@ class SemesterController extends Controller
 
     public function store(StoreSemesterRequest $request): JsonResponse
     {
-        $semester = Semester::create($request->validated());
+        $validated = $request->validated();
 
-        $this->optionsRepository->clearCache();
+        $semester = Semester::firstOrCreate(
+            ['name' => $validated['name']]
+        );
+
+        if ($semester->wasRecentlyCreated) {
+            $this->optionsRepository->clearCache();
+        }
 
         return response()->json([
             'semester' => [
                 'id' => $semester->id,
                 'name' => $semester->name,
             ],
-        ], 201);
+        ], $semester->wasRecentlyCreated ? 201 : 200);
     }
 }

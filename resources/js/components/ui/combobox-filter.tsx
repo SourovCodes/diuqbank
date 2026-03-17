@@ -1,13 +1,7 @@
-import { useState, useCallback, useRef } from "react";
 import { router } from "@inertiajs/react";
 
 import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -16,6 +10,12 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type ComboboxOption = {
   id: number;
@@ -98,8 +98,8 @@ export function ComboboxFilter({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 transition-all",
-            isActive && "ring-1 ring-blue-200 dark:ring-blue-900",
+            "w-full justify-between transition-all",
+            isActive && "ring-1 ring-ring",
             className
           )}
         >
@@ -111,7 +111,7 @@ export function ComboboxFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-[240px] p-0"
+        className="w-(--radix-popover-trigger-width) min-w-60 p-0"
         align="start"
         sideOffset={4}
       >
@@ -122,7 +122,7 @@ export function ComboboxFilter({
             autoFocus={false}
           />
           <CommandEmpty>No {label.toLowerCase()} found.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-auto">
+          <CommandGroup className="max-h-75 overflow-auto">
             <CommandItem
               key="all"
               value="all"

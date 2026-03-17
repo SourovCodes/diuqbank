@@ -1,102 +1,86 @@
-import { CustomPagination } from '@/components/ui/custom-pagination';
-import { QuestionCard } from '@/components/ui/question-card';
-import MainLayout from '@/layouts/main-layout';
-import contributorsRoutes from '@/routes/contributors';
-import type { PaginatedData, QuestionResource, SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { Eye, FileText, ThumbsUp } from 'lucide-react';
 
-type Contributor = {
-    id: number;
-    name: string;
-    username: string;
-    student_id?: string;
-    questions_count: number;
-    total_views: number;
-    avatar_url: string;
-};
+import { CustomPagination } from '@/components/custom-pagination';
+import { EmptyState } from '@/components/empty-state';
+import { SubmissionCard, type SubmissionWithQuestion } from '@/components/submission-card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDate, getInitials } from '@/lib/utils';
+import type { Contributor, PaginatedData } from '@/types';
 
-interface ContributorShowProps extends SharedData {
+interface ContributorShowProps {
     contributor: Contributor;
-    questions: PaginatedData<QuestionResource>;
+    submissions: PaginatedData<SubmissionWithQuestion>;
 }
 
-export default function ContributorShow({ contributor, questions }: ContributorShowProps) {
-    const { auth } = usePage<SharedData>().props;
-
+export default function ContributorShow({ contributor, submissions }: ContributorShowProps) {
     return (
-        <MainLayout>
-            <Head title={`${contributor.name} - Contributors`} />
+        <>
+            <Head title={contributor.name} />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-                {/* Back Button */}
-                <Link
-                    href={contributorsRoutes.index.url()}
-                    className="mb-6 inline-flex items-center text-sm text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
-                >
-                    <ArrowLeft className="mr-1.5 h-4 w-4" />
-                    Back to Contributors
-                </Link>
+            <div className="container mx-auto px-4 py-8">
+                {/* Profile Header */}
+                <div className="mb-8 rounded-xl border bg-card p-6 shadow-sm">
+                    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+                        <Avatar className="h-24 w-24 ring-4 ring-background">
+                            <AvatarImage src={contributor.avatar_url} alt={contributor.name} />
+                            <AvatarFallback className="bg-primary/10 text-2xl text-primary">{getInitials(contributor.name)}</AvatarFallback>
+                        </Avatar>
 
-                {/* Contributor Header */}
-                <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                    <div className="flex items-start gap-4">
-                        <img src={contributor.avatar_url} alt={contributor.name} className="h-16 w-16 flex-shrink-0 rounded-full object-cover" />
+                        <div className="flex-1 text-center sm:text-left">
+                            <h1 className="text-2xl font-bold">{contributor.name}</h1>
+                            <p className="text-muted-foreground">@{contributor.username}</p>
+                            <p className="mt-2 text-sm text-muted-foreground">Member since {formatDate(contributor.created_at)}</p>
+                        </div>
 
-                        <div className="min-w-0 flex-1">
-                            <h1 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">{contributor.name}</h1>
-
-                            <p className="mb-2 text-slate-600 dark:text-slate-400">@{contributor.username}</p>
-
-                            {contributor.student_id && (
-                                <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Student ID: {contributor.student_id}</p>
-                            )}
-
-                            <div className="flex flex-wrap gap-6">
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{contributor.questions_count}</div>
-                                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                                        {contributor.questions_count === 1 ? 'Question' : 'Questions'}
-                                    </div>
+                        <div className="flex gap-6 sm:gap-8">
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-2xl font-bold">
+                                    <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    {contributor.submissions_count}
                                 </div>
-
-                                <div>
-                                    <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                                        {contributor.total_views.toLocaleString()}
-                                    </div>
-                                    <div className="text-sm text-slate-600 dark:text-slate-400">Total Views</div>
+                                <p className="text-sm text-muted-foreground">Submissions</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-2xl font-bold">
+                                    <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                    {contributor.total_votes}
                                 </div>
+                                <p className="text-sm text-muted-foreground">Votes</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-2xl font-bold">
+                                    <Eye className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                                    {contributor.total_views}
+                                </div>
+                                <p className="text-sm text-muted-foreground">Views</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Questions Section */}
-                <div className="mb-6">
-                    <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">Questions by {contributor.name}</h2>
+                {/* Submissions Section */}
+                <div>
+                    <h2 className="mb-4 text-xl font-semibold">Submissions</h2>
 
-                    {questions.data.length === 0 ? (
-                        <div className="rounded-lg border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                            <FileText className="mx-auto mb-4 h-16 w-16 text-slate-300 dark:text-slate-600" />
-                            <h3 className="mb-2 text-lg font-medium text-slate-900 dark:text-white">No questions yet</h3>
-                            <p className="text-slate-600 dark:text-slate-400">This contributor hasn't uploaded any questions yet.</p>
-                        </div>
+                    {submissions.data.length === 0 ? (
+                        <EmptyState icon={FileText} title="No submissions yet" description="This contributor hasn't submitted any questions yet." />
                     ) : (
-                        <div className="mb-6 space-y-4">
-                            {questions.data.map((question) => (
-                                <QuestionCard key={question.id} question={question} currentUserId={auth?.user?.id} />
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {submissions.data.map((submission) => (
+                                <SubmissionCard key={submission.id} submission={submission} />
                             ))}
                         </div>
                     )}
 
                     {/* Pagination */}
-                    {questions.data.length > 0 && (
-                        <div className="mt-6">
-                            <CustomPagination currentPage={questions.current_page} totalPages={questions.last_page} />
+                    {submissions.data.length > 0 && submissions.meta.last_page > 1 && (
+                        <div className="mt-8">
+                            <CustomPagination currentPage={submissions.meta.current_page} totalPages={submissions.meta.last_page} />
                         </div>
                     )}
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

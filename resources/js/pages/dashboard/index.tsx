@@ -1,99 +1,84 @@
-import { Button } from '@/components/ui/button';
-import { CustomPagination } from '@/components/ui/custom-pagination';
-import { QuestionCard } from '@/components/ui/question-card';
-import { StatsCard } from '@/components/ui/stats-card';
-import MainLayout from '@/layouts/main-layout';
-import profileRoutes from '@/routes/profile';
-import questionsRoutes from '@/routes/questions';
-import type { DashboardStats, PaginatedData, QuestionResource, SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock, Eye, FileText, Plus, User, XCircle } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { CheckCircle, Clock, FileText, Plus, XCircle } from 'lucide-react';
 
-interface DashboardProps extends SharedData {
-    stats: DashboardStats;
-    questions: PaginatedData<QuestionResource>;
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DashboardLayout from '@/layouts/dashboard-layout';
+import { create } from '@/routes/dashboard/submissions';
+
+interface DashboardStats {
+    total_submissions: number;
+    published: number;
+    pending_review: number;
+    rejected: number;
 }
 
-export default function Dashboard({ stats, questions }: DashboardProps) {
-    const { auth } = usePage<SharedData>().props;
+interface Props {
+    stats: DashboardStats;
+}
 
+export default function Dashboard({ stats }: Props) {
     return (
-        <MainLayout>
+        <DashboardLayout>
             <Head title="Dashboard" />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-6">
+                {/* Page Header */}
+                <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Welcome back, {auth.user.name}</p>
+                        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                        <p className="text-muted-foreground">Welcome back! Here's an overview of your contributions.</p>
                     </div>
-
-                    <div className="flex gap-3">
-                        <Button
-                            asChild
-                            className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                        >
-                            <Link href={questionsRoutes.create.url()} prefetch>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Question
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" className="rounded-full border-slate-300 px-6 font-medium dark:border-slate-600">
-                            <Link href={profileRoutes.edit.url()} prefetch>
-                                <User className="mr-2 h-4 w-4" />
-                                Edit Profile
-                            </Link>
-                        </Button>
-                    </div>
+                    <Button asChild>
+                        <Link href={create.url()}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Submission
+                        </Link>
+                    </Button>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <StatsCard title="Total Questions" value={stats.total_questions} icon={FileText} iconColor="text-blue-600 dark:text-blue-400" />
-                    <StatsCard title="Published" value={stats.published} icon={CheckCircle2} iconColor="text-green-600 dark:text-green-400" />
-                    <StatsCard title="Pending Review" value={stats.pending_review} icon={Clock} iconColor="text-yellow-600 dark:text-yellow-400" />
-                    <StatsCard title="Need Fix" value={stats.need_fix} icon={XCircle} iconColor="text-red-600 dark:text-red-400" />
-                    <StatsCard title="Total Views" value={stats.total_views} icon={Eye} iconColor="text-purple-600 dark:text-purple-400" />
-                </div>
-
-                {/* Questions Section */}
-                <div>
-                    <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">Your Questions</h2>
-
-                    {questions.data.length === 0 ? (
-                        <div className="rounded-lg border border-slate-200 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                            <FileText className="mx-auto mb-4 h-16 w-16 text-slate-300 dark:text-slate-600" />
-                            <h3 className="mb-2 text-lg font-medium text-slate-900 dark:text-white">No questions yet</h3>
-                            <p className="mb-4 text-slate-600 dark:text-slate-400">Start contributing by adding your first question.</p>
-                            <Button
-                                asChild
-                                className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                            >
-                                <Link href={questionsRoutes.create.url()} prefetch>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add Your First Question
-                                </Link>
-                            </Button>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="mb-6 space-y-4">
-                                {questions.data.map((question) => (
-                                    <QuestionCard key={question.id} question={question} currentUserId={auth?.user?.id} />
-                                ))}
-                            </div>
-
-                            {/* Pagination */}
-                            {questions.last_page > 1 && (
-                                <div className="mt-6">
-                                    <CustomPagination currentPage={questions.current_page} totalPages={questions.last_page} />
-                                </div>
-                            )}
-                        </>
-                    )}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.total_submissions}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Published</CardTitle>
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.published}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                            <Clock className="h-4 w-4 text-yellow-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.pending_review}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                            <XCircle className="h-4 w-4 text-red-600" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.rejected}</div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
-        </MainLayout>
+        </DashboardLayout>
     );
 }
+
+Dashboard.layout = null;

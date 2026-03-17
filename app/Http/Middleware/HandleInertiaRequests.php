@@ -2,14 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\OnlineUsersService;
+use App\Http\Resources\AuthUserResource;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    public function __construct(protected OnlineUsersService $onlineUsersService) {}
-
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -38,23 +36,14 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user() ? [
-                    ...$request->user()->toArray(),
-                    'avatar' => $request->user()->avatar_url,
-                ] : null,
+                'user' => $request->user()
+                    ? (new AuthUserResource($request->user()))->resolve()
+                    : null,
             ],
-            'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
-                'info' => $request->session()->get('info'),
-                'warning' => $request->session()->get('warning'),
-            ],
-            'onlineUsersCount' => $this->onlineUsersService->getOnlineCount(),
         ];
     }
 }

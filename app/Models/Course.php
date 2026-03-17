@@ -12,30 +12,13 @@ class Course extends Model
     /** @use HasFactory<\Database\Factories\CourseFactory> */
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'department_id',
         'name',
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'department_id' => 'integer',
-        ];
-    }
-
-    /**
-     * Get the department that owns the course.
+     * @return BelongsTo<Department, $this>
      */
     public function department(): BelongsTo
     {
@@ -43,7 +26,7 @@ class Course extends Model
     }
 
     /**
-     * Get the questions for the course.
+     * @return HasMany<Question, $this>
      */
     public function questions(): HasMany
     {

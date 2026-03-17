@@ -1,282 +1,538 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import MainLayout from '@/layouts/main-layout';
-import contributorsRoutes from '@/routes/contributors';
-import questionsRoutes from '@/routes/questions';
-import type { QuestionDetailResource, SharedData } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, Book, Calendar, Clock, Download, Edit, Eye, FileText, Maximize, School, Trash2, XCircle } from 'lucide-react';
-import { useEffect } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Download,
+    Eye,
+    FileText,
+    Loader2,
+    Maximize2,
+    Minimize2,
+    School,
+    ThumbsDown,
+    ThumbsUp,
+    User,
+} from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface QuestionShowProps extends SharedData {
-    question: QuestionDetailResource;
+import { EmptyState } from '@/components/empty-state';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { login } from '@/routes';
+import { show as showContributor } from '@/routes/contributors';
+import { downvote, upvote, view as trackView } from '@/routes/submissions';
+import type { SharedData } from '@/types';
+import type { Question, Submission } from '@/types/question';
+
+interface QuestionShowProps {
+    question: Question;
+    submissions: Submission[];
 }
 
-export default function QuestionShow({ question, auth }: QuestionShowProps) {
-    // Track view after 3 seconds
+function getInitialSubmissionId(submissions: Submission[]): number | null {
+    if (submissions.length === 0) return null;
+
+    const hash = window.location.hash;
+    const match = hash.match(/^#submission=(\d+)$/);
+
+    if (match) {
+        const submissionId = parseInt(match[1], 10);
+        const isValid = submissions.some((s) => s.id === submissionId);
+        if (isValid) return submissionId;
+    }
+
+    return submissions[0]?.id ?? null;
+}
+
+function getInitials(name: string): string {
+    return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+}
+
+function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
+export default function QuestionShow({ question, submissions }: QuestionShowProps) {
+    const { auth } = usePage<SharedData>().props;
+    const [selectedId, setSelectedId] = useState<number | null>(() => getInitialSubmissionId(submissions));
+    const [voting, setVoting] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [viewCounts, setViewCounts] = useState<Record<number, number>>(() => {
+        // Initialize view counts from submissions
+        return submissions.reduce(
+            (acc, s) => {
+                acc[s.id] = s.views;
+                return acc;
+            },
+            {} as Record<number, number>,
+        );
+    });
+    const trackedViewsRef = useRef<Set<number>>(new Set());
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!containerRef.current) return;
+
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }, []);
+
     useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    const updateUrlWithSubmission = useCallback(
+        (submissionId: number | null) => {
+            if (submissionId === null) return;
+
+            const isFirstSubmission = submissions[0]?.id === submissionId;
+
+            if (isFirstSubmission) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            } else {
+                history.replaceState(null, '', `#submission=${submissionId}`);
+            }
+        },
+        [submissions],
+    );
+
+    const handleSelectSubmission = useCallback(
+        (submissionId: number) => {
+            setSelectedId(submissionId);
+            updateUrlWithSubmission(submissionId);
+        },
+        [updateUrlWithSubmission],
+    );
+
+    // Sync URL when submissions change (e.g., after voting reorder)
+    useEffect(() => {
+        if (selectedId !== null) {
+            const isValid = submissions.some((s) => s.id === selectedId);
+            if (!isValid && submissions.length > 0) {
+                handleSelectSubmission(submissions[0].id);
+            }
+        }
+    }, [submissions, selectedId, handleSelectSubmission]);
+
+    // Track view when a submission is selected
+    useEffect(() => {
+        if (selectedId === null) return;
+        if (trackedViewsRef.current.has(selectedId)) return;
+
+        // Delay view tracking by 5 seconds
         const timer = setTimeout(() => {
-            router.post(
-                questionsRoutes.view.url(question.id),
-                {},
-                {
-                    preserveScroll: true,
-                    preserveState: true,
-                    only: [], // Don't reload any props
+            // Mark as tracked immediately to prevent duplicate calls
+            trackedViewsRef.current.add(selectedId);
+
+            // Send view tracking request
+            fetch(trackView.url(selectedId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-            );
-        }, 3000); // 3 seconds
+            })
+                .then((res) => res.json())
+                .then((data: { success: boolean; views: number; already_viewed: boolean }) => {
+                    if (data.success) {
+                        setViewCounts((prev) => ({ ...prev, [selectedId]: data.views }));
+                    }
+                })
+                .catch(() => {
+                    // Silently fail - view tracking is not critical
+                });
+        }, 5000);
 
         return () => clearTimeout(timer);
-    }, [question.id]);
+    }, [selectedId]);
 
-    const isOwnQuestion = auth?.user?.id === question.user.id;
-    const isPublished = question.status === 'published';
+    const selectedSubmission = submissions.find((s) => s.id === selectedId) ?? submissions[0] ?? null;
+    const selectedIndex = submissions.findIndex((s) => s.id === selectedId);
 
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-            router.delete(questionsRoutes.destroy.url(question.id), {
-                onSuccess: () => {
-                    router.visit(questionsRoutes.index.url());
+    const handleVote = (type: 'upvote' | 'downvote') => {
+        if (!selectedSubmission) return;
+
+        if (!auth?.user) {
+            router.visit(login.url());
+            return;
+        }
+
+        if (voting) return;
+        setVoting(true);
+
+        const voteRoute = type === 'upvote' ? upvote : downvote;
+        router.post(
+            voteRoute.url(selectedSubmission.id),
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setVoting(false);
                 },
-            });
+            },
+        );
+    };
+
+    const goToPrevious = () => {
+        if (selectedIndex > 0) {
+            handleSelectSubmission(submissions[selectedIndex - 1].id);
         }
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    };
-
-    const formatFileSize = (bytes: number) => {
-        return (bytes / 1024 / 1024).toFixed(2);
-    };
-
-    const toggleFullscreen = () => {
-        const container = document.getElementById('viewerContainer');
-        if (!container) return;
-
-        if (!document.fullscreenElement) {
-            container.requestFullscreen();
-        } else {
-            document.exitFullscreen();
+    const goToNext = () => {
+        if (selectedIndex < submissions.length - 1) {
+            handleSelectSubmission(submissions[selectedIndex + 1].id);
         }
     };
 
     return (
-        <MainLayout>
-            <Head title={`${question.course.name} - Question`} />
+        <>
+            <Head title={question.course?.name ?? 'Question'} />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-                {/* Back Button */}
-                <div className="mb-6">
-                    <Link
-                        href={questionsRoutes.index.url()}
-                        className="inline-flex items-center gap-1 text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Questions
-                    </Link>
+            <div className="container mx-auto px-4 py-4 sm:py-6">
+                <div className="mb-4 space-y-3 sm:mb-6">
+                    <h1 className="text-xl font-semibold sm:text-2xl">{question.course?.name ?? 'Question'}</h1>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-2.5 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                            <School className="h-3.5 w-3.5" />
+                            {question.department?.name ?? 'N/A'}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-100 px-2.5 py-1 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                            {question.exam_type?.name ?? 'Unknown'}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-purple-100 px-2.5 py-1 text-sm text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {question.semester?.name ?? 'Unknown'}
+                        </span>
+                    </div>
                 </div>
 
-                {/* Question Header */}
-                <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                    <h1 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{question.course.name}</h1>
-
-                    <div className="mb-4 flex flex-wrap gap-2">
-                        <Badge className="bg-slate-100 px-3 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
-                            <School className="mr-1 h-3.5 w-3.5" />
-                            {question.department.short_name} - {question.department.name}
-                        </Badge>
-                        <Badge className="bg-blue-100 px-3 py-1 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                            <FileText className="mr-1 h-3.5 w-3.5" />
-                            {question.exam_type.name}
-                        </Badge>
-                        {question.section && (
-                            <Badge className="bg-emerald-100 px-3 py-1 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                {question.section}
-                            </Badge>
-                        )}
-                        <Badge className="bg-purple-100 px-3 py-1 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                            <Calendar className="mr-1 h-3.5 w-3.5" />
-                            {question.semester.name}
-                        </Badge>
-                        <Badge className="bg-green-100 px-3 py-1 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                            <Book className="mr-1 h-3.5 w-3.5" />
-                            {question.course.name}
-                        </Badge>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {isOwnQuestion && (
-                        <div className="flex flex-wrap gap-2">
-                            <Button asChild variant="outline" size="sm">
-                                <Link href={questionsRoutes.edit.url(question.id)} prefetch>
-                                    <Edit className="mr-1.5 h-4 w-4" />
-                                    Edit Question
-                                </Link>
-                            </Button>
-                            {!isPublished && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDelete}
-                                    className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/20 dark:hover:text-red-300"
-                                >
-                                    <Trash2 className="mr-1.5 h-4 w-4" />
-                                    Delete Question
-                                </Button>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Status Notice for Non-Published Questions */}
-                {isOwnQuestion && !isPublished && (
-                    <div className="mb-6">
-                        {question.status === 'pending_review' && (
-                            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-                                <div className="flex items-start gap-3">
-                                    <Clock className="h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Only you can see this question</h3>
-                                        <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                                            This question is pending review from a moderator. It will be visible to other users once it's approved and
-                                            published.
-                                        </p>
-                                    </div>
-                                </div>
+                {submissions.length === 0 ? (
+                    <EmptyState icon={FileText} title="No submissions yet" description="Be the first to submit a solution for this question." />
+                ) : (
+                    <>
+                        {submissions.length > 1 && (
+                            <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground sm:mb-4">
+                                <ChevronLeft className="h-4 w-4 shrink-0 text-primary" />
+                                <ChevronRight className="-ml-3 h-4 w-4 shrink-0 text-primary" />
+                                <span>
+                                    <span className="font-medium text-foreground">{submissions.length} submissions</span>
+                                    <span> — swipe or tap to switch</span>
+                                </span>
                             </div>
                         )}
-                        {question.status === 'need_fix' && (
-                            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
-                                <div className="flex items-start gap-3">
-                                    <XCircle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Only you can see this question</h3>
-                                        <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                                            This question needs fixing as requested by a moderator and is not visible to other users. You may edit and
-                                            resubmit it for review.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                    {/* PDF Viewer */}
-                    <div className="lg:col-span-8">
-                        <div className="mb-2 flex justify-end gap-2">
-                            {question.pdf_url && (
-                                <Button asChild variant="outline" size="sm" className="text-xs">
-                                    <a
-                                        href={question.pdf_url}
-                                        download={`(DIUQBank) ${question.course.name} (${question.department.short_name}), ${question.semester.name}, ${question.exam_type.name}.pdf`}
-                                    >
-                                        <Download className="mr-1 h-3.5 w-3.5" />
-                                        Download
-                                    </a>
-                                </Button>
-                            )}
-                            <Button variant="outline" size="sm" onClick={toggleFullscreen} className="text-xs">
-                                <Maximize className="mr-1 h-3.5 w-3.5" />
-                                Fullscreen
-                            </Button>
-                        </div>
-
-                        <div
-                            id="viewerContainer"
-                            className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800"
-                        >
-                            {question.pdf_url ? (
-                                <object
-                                    data={question.pdf_url}
-                                    type="application/pdf"
-                                    className="h-full min-h-[500px] w-full md:min-h-[700px]"
-                                    title={question.course.name}
-                                >
-                                    <iframe
-                                        src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(question.pdf_url)}`}
-                                        width="100%"
-                                        height="100%"
-                                        className="min-h-[500px] md:min-h-[700px]"
-                                        title={question.course.name}
-                                    />
-                                </object>
-                            ) : (
-                                <div className="p-6 text-sm text-slate-600 dark:text-slate-300">PDF is not available.</div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Sidebar */}
-                    <aside className="lg:col-span-4">
-                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                            <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Stats</h2>
-                            </div>
-
-                            <div className="space-y-4 p-6">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
-                                        <div className="text-[11px] tracking-wide text-slate-500 uppercase">Views</div>
-                                        <div className="mt-1 flex items-center gap-1 font-medium text-slate-800 dark:text-slate-200">
-                                            <Eye className="h-3.5 w-3.5" />
-                                            {question.view_count}
+                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                            <div className="min-w-0 space-y-3">
+                                <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
+                                    <div className="flex items-center justify-between border-b bg-muted/30">
+                                        <div className="flex min-w-0 flex-1 overflow-x-auto">
+                                            {submissions.map((submission, index) => (
+                                                <button
+                                                    key={submission.id}
+                                                    onClick={() => handleSelectSubmission(submission.id)}
+                                                    className={cn(
+                                                        'relative flex shrink-0 cursor-pointer items-center gap-2 border-r px-4 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                                                        selectedId === submission.id
+                                                            ? 'bg-background font-medium text-foreground shadow-sm'
+                                                            : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                                                    )}
+                                                >
+                                                    {selectedId === submission.id && (
+                                                        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />
+                                                    )}
+                                                    <span
+                                                        className={cn(
+                                                            'flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold',
+                                                            index === 0
+                                                                ? 'bg-primary/10 text-primary'
+                                                                : selectedId === submission.id
+                                                                  ? 'bg-muted text-foreground'
+                                                                  : 'bg-muted/50 text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        {index + 1}
+                                                    </span>
+                                                    {submission.section && (
+                                                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                                            {submission.section}
+                                                        </span>
+                                                    )}
+                                                    <span
+                                                        className={cn(
+                                                            'inline-flex items-center gap-1 text-xs tabular-nums',
+                                                            submission.vote_score > 0 && 'text-green-600 dark:text-green-400',
+                                                            submission.vote_score < 0 && 'text-red-600 dark:text-red-400',
+                                                            submission.vote_score === 0 && 'text-muted-foreground',
+                                                        )}
+                                                    >
+                                                        <ThumbsUp className="h-3 w-3" />
+                                                        {submission.vote_score}
+                                                    </span>
+                                                </button>
+                                            ))}
                                         </div>
-                                    </div>
-                                    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
-                                        <div className="text-[11px] tracking-wide text-slate-500 uppercase">File Size</div>
-                                        <div className="mt-1 font-medium text-slate-800 dark:text-slate-200">
-                                            {formatFileSize(question.pdf_size)} MB
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
-                                        <div className="text-[11px] tracking-wide text-slate-500 uppercase">Uploaded</div>
-                                        <div className="mt-1 flex items-center gap-1 font-medium text-slate-800 dark:text-slate-200">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            {formatDate(question.created_at)}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-                                    <div className="text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">Uploaded By</div>
-                                    <Link
-                                        href={contributorsRoutes.show.url({ user: question.user.username })}
-                                        className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-3 transition-all hover:border-blue-400 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
-                                    >
-                                        <img
-                                            src={question.user.avatar_url}
-                                            alt={question.user.name}
-                                            className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-                                        />
-
-                                        <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                                {question.user.name}
-                                            </div>
-                                            <div className="truncate text-xs text-slate-500 dark:text-slate-400">@{question.user.username}</div>
-                                            {question.user.student_id && (
-                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                                                    ID: {question.user.student_id}
-                                                </div>
+                                        <div className="flex shrink-0 items-center gap-1 px-3">
+                                            <button
+                                                type="button"
+                                                onClick={toggleFullscreen}
+                                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            >
+                                                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                                            </button>
+                                            {selectedSubmission?.pdf_url && (
+                                                <a
+                                                    href={selectedSubmission.pdf_url}
+                                                    download
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    aria-label="Download PDF"
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </a>
                                             )}
                                         </div>
+                                    </div>
 
-                                        <ArrowRight className="h-4 w-4 flex-shrink-0 text-slate-300 transition-colors group-hover:text-blue-500 dark:text-slate-600 dark:group-hover:text-blue-400" />
-                                    </Link>
+                                    <div className="flex items-center justify-between gap-3 border-b bg-background px-3 py-2">
+                                        {selectedSubmission?.user ? (
+                                            <Link
+                                                href={showContributor.url({ user: selectedSubmission.user.username })}
+                                                className="-ml-1 hidden items-center gap-2.5 rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50 sm:flex lg:hidden"
+                                            >
+                                                <Avatar size="sm">
+                                                    <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
+                                                    <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0">
+                                                    <p className="max-w-[220px] truncate text-sm font-medium text-foreground">
+                                                        {selectedSubmission.user.name}
+                                                    </p>
+                                                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <Eye className="h-3 w-3" />
+                                                        <span className="tabular-nums">
+                                                            {viewCounts[selectedSubmission.id] ?? selectedSubmission.views}
+                                                        </span>
+                                                        {selectedSubmission.created_at && (
+                                                            <span className="hidden sm:inline">• {formatDate(selectedSubmission.created_at)}</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ) : (
+                                            <div className="hidden items-center gap-2.5 sm:flex lg:hidden">
+                                                <Avatar size="sm">
+                                                    <AvatarFallback>
+                                                        <User className="h-3 w-3" />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-foreground">Anonymous</p>
+                                                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <Eye className="h-3 w-3" />
+                                                        <span className="tabular-nums">{viewCounts[selectedSubmission?.id ?? 0] ?? 0}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-1 lg:hidden">
+                                            <button
+                                                type="button"
+                                                onClick={goToPrevious}
+                                                disabled={selectedIndex === 0}
+                                                aria-label="Previous submission"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+                                            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary tabular-nums">
+                                                {selectedIndex + 1}/{submissions.length}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={goToNext}
+                                                disabled={selectedIndex === submissions.length - 1}
+                                                aria-label="Next submission"
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {selectedSubmission?.pdf_url ? (
+                                        <object
+                                            key={selectedSubmission.id}
+                                            data={selectedSubmission.pdf_url}
+                                            type="application/pdf"
+                                            className={cn('w-full', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-220px)] min-h-125')}
+                                            style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
+                                            title={question.course?.name ?? 'PDF Viewer'}
+                                        >
+                                            <iframe
+                                                src={`https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(selectedSubmission.pdf_url)}`}
+                                                className={cn('w-full border-0', isFullscreen ? 'h-full min-h-0' : 'h-[calc(100vh-220px)] min-h-125')}
+                                                style={isFullscreen ? { height: '100%', minHeight: 0 } : {}}
+                                                title={question.course?.name ?? 'PDF Viewer'}
+                                            />
+                                        </object>
+                                    ) : (
+                                        <div className="flex h-125 items-center justify-center">
+                                            <div className="text-center">
+                                                <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+                                                <p className="text-muted-foreground">No PDF available</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
+                            <aside className="order-2 space-y-4 lg:order-none lg:sticky lg:top-4">
+                                <div className="rounded-xl border bg-card p-4">
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Uploaded by</h3>
+                                    {selectedSubmission?.user ? (
+                                        <Link
+                                            href={showContributor.url({ user: selectedSubmission.user.username })}
+                                            className="-mx-2 flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                                        >
+                                            <Avatar>
+                                                <AvatarImage src={selectedSubmission.user.avatar_url} alt={selectedSubmission.user.name} />
+                                                <AvatarFallback>{getInitials(selectedSubmission.user.name)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="max-w-[200px] truncate font-medium text-foreground">
+                                                    {selectedSubmission.user.name}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">View profile →</p>
+                                            </div>
+                                        </Link>
+                                    ) : (
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarFallback>
+                                                    <User className="h-4 w-4" />
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-medium text-foreground">Anonymous</p>
+                                                <p className="text-sm text-muted-foreground">Unknown contributor</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-4">
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Rate this submission
+                                    </h3>
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleVote('upvote')}
+                                            disabled={voting}
+                                            className={cn(
+                                                'flex flex-col items-center gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-green-50 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-green-900/20',
+                                                selectedSubmission?.user_vote === 1 && 'bg-green-100 dark:bg-green-900/30',
+                                            )}
+                                        >
+                                            {voting ? (
+                                                <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+                                            ) : (
+                                                <ThumbsUp
+                                                    className={cn(
+                                                        'h-6 w-6',
+                                                        selectedSubmission?.user_vote === 1 ? 'text-green-600' : 'text-muted-foreground',
+                                                    )}
+                                                />
+                                            )}
+                                            <span className="text-xs text-muted-foreground">Upvote</span>
+                                        </button>
+                                        <div className="text-center">
+                                            <p
+                                                className={cn(
+                                                    'text-3xl font-bold tabular-nums',
+                                                    (selectedSubmission?.vote_score ?? 0) > 0 && 'text-green-600 dark:text-green-400',
+                                                    (selectedSubmission?.vote_score ?? 0) < 0 && 'text-red-600 dark:text-red-400',
+                                                    (selectedSubmission?.vote_score ?? 0) === 0 && 'text-muted-foreground',
+                                                )}
+                                            >
+                                                {selectedSubmission?.vote_score ?? 0}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">votes</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleVote('downvote')}
+                                            disabled={voting}
+                                            className={cn(
+                                                'flex flex-col items-center gap-1 rounded-lg px-4 py-3 transition-colors hover:bg-red-50 disabled:pointer-events-none disabled:opacity-50 dark:hover:bg-red-900/20',
+                                                selectedSubmission?.user_vote === -1 && 'bg-red-100 dark:bg-red-900/30',
+                                            )}
+                                        >
+                                            <ThumbsDown
+                                                className={cn(
+                                                    'h-6 w-6',
+                                                    selectedSubmission?.user_vote === -1 ? 'text-red-600' : 'text-muted-foreground',
+                                                )}
+                                            />
+                                            <span className="text-xs text-muted-foreground">Downvote</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-4">
+                                    <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Submission Info</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Views</span>
+                                            <span className="ml-auto font-medium tabular-nums">
+                                                {viewCounts[selectedSubmission?.id ?? 0] ?? selectedSubmission?.views ?? 0}
+                                            </span>
+                                        </div>
+                                        {selectedSubmission?.section && (
+                                            <div className="flex items-center gap-3 text-sm">
+                                                <School className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-muted-foreground">Section</span>
+                                                <span className="ml-auto font-medium">{selectedSubmission.section}</span>
+                                            </div>
+                                        )}
+                                        {selectedSubmission?.created_at && (
+                                            <div className="flex items-center gap-3 text-sm">
+                                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-muted-foreground">Uploaded</span>
+                                                <span className="ml-auto font-medium">{formatDate(selectedSubmission.created_at)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </aside>
                         </div>
-                    </aside>
-                </div>
+                    </>
+                )}
             </div>
-        </MainLayout>
+        </>
     );
 }
