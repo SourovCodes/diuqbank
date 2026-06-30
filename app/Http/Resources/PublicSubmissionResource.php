@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
@@ -19,25 +20,33 @@ class PublicSubmissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return array_merge($this->resource->toArray(), [
-            'pdf_url' => $this->pdf_url,
+        $question = $this->relationLoaded('question') ? $this->question : null;
+
+        return [
+            'id' => $this->id,
+            'views' => $this->views,
             'pdf_original_temporary_url' => $this->originalPdfTemporaryUrl(),
-            'vote_score' => (int) ($this->votes_sum_value ?? 0),
-            'user' => $this->whenLoaded('user', function (): array {
-                return array_merge($this->user->toArray(), [
-                    'avatar_url' => $this->user->avatar_url,
-                ]);
-            }),
-            'question' => $this->whenLoaded('question', function (): array {
-                return array_merge($this->question->toArray(), [
-                    'title' => $this->question->title,
-                    'department' => $this->question->relationLoaded('department') ? $this->question->department?->toArray() : null,
-                    'course' => $this->question->relationLoaded('course') ? $this->question->course?->toArray() : null,
-                    'semester' => $this->question->relationLoaded('semester') ? $this->question->semester?->toArray() : null,
-                    'exam_type' => $this->question->relationLoaded('examType') ? $this->question->examType?->toArray() : null,
-                ]);
-            }),
-        ]);
+            'user' => $this->whenLoaded('user', fn (): array => [
+                'name' => $this->user->name,
+                'username' => $this->user->username,
+                'student_id' => $this->user->student_id,
+                'email' => $this->user->email,
+                'avatar_url' => $this->originalAvatarUrl($this->user),
+            ]),
+            'department' => $question?->relationLoaded('department') && $question->department ? [
+                'short_name' => $question->department->short_name,
+                'name' => $question->department->name,
+            ] : null,
+            'course' => $question?->relationLoaded('course') && $question->course ? [
+                'name' => $question->course->name,
+            ] : null,
+            'semester' => $question?->relationLoaded('semester') && $question->semester ? [
+                'name' => $question->semester->name,
+            ] : null,
+            'exam_type' => $question?->relationLoaded('examType') && $question->examType ? [
+                'name' => $question->examType->name,
+            ] : null,
+        ];
     }
 
     private function originalPdfTemporaryUrl(): ?string
@@ -49,9 +58,15 @@ class PublicSubmissionResource extends JsonResource
         }
 
         try {
-            return $media->getTemporaryUrl(now()->addMinutes(5));
+            return $media->getTemporaryUrl(now()->addHour());
         } catch (Throwable $exception) {
             return $media->getFullUrl();
         }
+    }
+
+    private function originalAvatarUrl(User $user): string
+    {
+        return $user->getFirstMediaUrl('avatar')
+            ?: 'https://ui-avatars.com/api/?name='.urlencode($user->name);
     }
 }

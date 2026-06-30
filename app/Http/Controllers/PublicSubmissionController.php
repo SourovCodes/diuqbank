@@ -19,7 +19,6 @@ class PublicSubmissionController extends Controller
                 'question.semester',
                 'question.examType',
             ])
-            ->withSum('votes', 'value')
             ->latest()
             ->paginate(100)
             ->withQueryString();
