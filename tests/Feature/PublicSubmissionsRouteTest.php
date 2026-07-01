@@ -27,45 +27,32 @@ it('returns public submissions with full related metadata and original pdf tempo
     $response
         ->assertOk()
         ->assertJsonPath('data.0.id', $submission->id)
-        ->assertJsonPath('data.0.user.id', $user->id)
+        ->assertJsonPath('data.0.created_at', $submission->created_at->toISOString())
         ->assertJsonPath('data.0.user.email', $user->email)
         ->assertJsonPath('data.0.user.name', $user->name)
         ->assertJsonPath('data.0.user.username', $user->username)
-        ->assertJsonPath('data.0.question.id', $question->id)
-        ->assertJsonPath('data.0.question.department.id', $question->department_id)
-        ->assertJsonPath('data.0.question.course.id', $question->course_id)
-        ->assertJsonPath('data.0.question.semester.id', $question->semester_id)
-        ->assertJsonPath('data.0.question.exam_type.id', $question->exam_type_id)
+        ->assertJsonPath('data.0.user.student_id', $user->student_id)
+        ->assertJsonPath('data.0.department.short_name', $question->department->short_name)
+        ->assertJsonPath('data.0.course.name', $question->course->name)
+        ->assertJsonPath('data.0.semester.name', $question->semester->name)
+        ->assertJsonPath('data.0.exam_type.name', $question->examType->name)
         ->assertJsonStructure([
             'data' => [[
                 'id',
-                'question_id',
-                'user_id',
-                'section',
                 'views',
-                'pdf_url',
+                'created_at',
                 'pdf_original_temporary_url',
-                'vote_score',
                 'user' => [
-                    'id',
                     'name',
-                    'email',
                     'username',
+                    'student_id',
+                    'email',
                     'avatar_url',
                 ],
-                'question' => [
-                    'id',
-                    'department_id',
-                    'course_id',
-                    'semester_id',
-                    'exam_type_id',
-                    'status',
-                    'title',
-                    'department',
-                    'course',
-                    'semester',
-                    'exam_type',
-                ],
+                'department',
+                'course',
+                'semester',
+                'exam_type',
             ]],
         ]);
 

@@ -25,6 +25,7 @@ class PublicSubmissionResource extends JsonResource
         return [
             'id' => $this->id,
             'views' => $this->views,
+            'created_at' => $this->created_at?->toISOString(),
             'pdf_original_temporary_url' => $this->originalPdfTemporaryUrl(),
             'user' => $this->whenLoaded('user', fn (): array => [
                 'name' => $this->user->name,
