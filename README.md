@@ -1,4 +1,4 @@
-# DIU Question Bank
+# DIU Question Bank (DiuQBank)
 
 pnpm workspace monorepo for DIU Question Bank — a public archive of DIU exam
 question papers, deployed entirely on Cloudflare.
