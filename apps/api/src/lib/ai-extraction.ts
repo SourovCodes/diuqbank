@@ -128,7 +128,21 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   return btoa(binary);
 };
 
-const buildPrompt = (vocab: Vocab, extraContext: string | null): string => {
+/**
+ * How strict the acceptance gate is:
+ * - `auto`: the extraction feeds auto-publish, so a paper whose four core
+ *   fields can't all be determined is self-rejected.
+ * - `manual`: the extraction is a helping hand for a human reviewer, so only
+ *   document-level problems (not a real paper, illegible, several papers) are
+ *   flagged — missing fields are expected and simply stay null.
+ */
+export type ExtractionMode = "auto" | "manual";
+
+const buildPrompt = (
+  vocab: Vocab,
+  extraContext: string | null,
+  mode: ExtractionMode,
+): string => {
   const departmentList =
     vocab.departments.map((d) => `- ${d.name} (${d.shortName})`).join("\n") ||
     "(none yet)";
@@ -150,7 +164,14 @@ const buildPrompt = (vocab: Vocab, extraContext: string | null): string => {
     "2. The pages are legible enough to read the header / course information.",
     "3. It is a SINGLE exam paper (not several different papers concatenated). Multiple sets of the",
     "   same exam (e.g. a quiz printed as Set A and Set B) still count as one paper — accept those.",
-    "4. You can determine at least the department, course, semester, and exam type with reasonable confidence.",
+    ...(mode === "auto"
+      ? [
+          "4. You can determine at least the department, course, semester, and exam type with reasonable confidence.",
+        ]
+      : [
+          "A field you cannot determine is NOT a reason to reject: a human reviewer fills the gaps.",
+          "Even when rejecting, still extract every field you can — partial values are useful to the reviewer.",
+        ]),
     "",
     "## Matching rules",
     "Prefer the EXACT existing values below whenever the paper refers to the same thing — match spelling, casing,",
@@ -202,8 +223,9 @@ export const extractQuestionMetadata = async (args: {
   pdfBuffer: ArrayBuffer;
   vocab: Vocab;
   extraContext: string | null;
+  mode: ExtractionMode;
 }): Promise<AiExtraction> => {
-  const { env, pdfBuffer, vocab, extraContext } = args;
+  const { env, pdfBuffer, vocab, extraContext, mode } = args;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
@@ -218,7 +240,7 @@ export const extractQuestionMetadata = async (args: {
               data: arrayBufferToBase64(pdfBuffer),
             },
           },
-          { text: buildPrompt(vocab, extraContext) },
+          { text: buildPrompt(vocab, extraContext, mode) },
         ],
       },
     ],

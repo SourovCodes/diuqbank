@@ -102,6 +102,9 @@ export const runManualAiCheck = async (
     pdfBuffer: compressed,
     vocab,
     extraContext: null,
+    // Document-level gate only: missing fields never flag the upload here —
+    // filling gaps is exactly what the human reviewer is for.
+    mode: "manual",
   });
 
   await db

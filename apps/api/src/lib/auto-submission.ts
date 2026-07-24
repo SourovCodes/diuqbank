@@ -112,6 +112,7 @@ export const runAutoExtraction = async (
       pdfBuffer: compressed,
       vocab,
       extraContext: row.extraContext,
+      mode: "auto",
     });
 
     const update = snapshotFields(extraction);
