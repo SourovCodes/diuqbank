@@ -101,11 +101,14 @@ builtin, not the app's deploy script.
 - **Files:** R2 binding `BUCKET` for writes; objects are served publicly from
   the bucket's custom domain `https://r2.diuqbank.com/<key>` (see `fileUrlFor`
   in `src/lib/user-shape.ts`) — in production the Worker does not proxy files.
-  The base URL comes from `R2_PUBLIC_BASE`, listed in wrangler.jsonc's
-  `secrets.required` (not `vars` — a `vars` entry always wins over `.dev.vars`
-  for the same key, which would make it un-overridable locally) even though
-  it isn't actually confidential; never set it in production, since
-  `fileUrlFor`'s fallback (the real r2.diuqbank.com) is already correct there.
+  The base URL comes from `R2_PUBLIC_BASE`, which deliberately lives ONLY in
+  `.dev.vars`: not in `vars` (a `vars` entry always wins over `.dev.vars` for
+  the same key, which would make it un-overridable locally), and not in
+  wrangler.jsonc's `secrets.required` (wrangler refuses to deploy while a
+  required secret is unset, and this one must never be set in production —
+  `fileUrlFor`'s fallback, the real r2.diuqbank.com, is already correct
+  there). Since `wrangler types` therefore doesn't know about it, it's typed
+  as an optional `Env` field in `apps/api/src/env.d.ts`.
   Locally, `.dev.vars` points it at the Worker's own `/files/*` route
   (`src/routes/files.ts`), which streams straight from `wrangler dev`'s local
   simulated R2 bucket, since files uploaded locally don't exist at the real
