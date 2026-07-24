@@ -145,7 +145,7 @@ questionRoutes.get("/:id/submissions", (c) => {
         with: {
           user: { columns: { id: true, name: true, username: true, imageKey: true } },
         },
-        orderBy: desc(submissions.createdAt),
+        orderBy: [desc(submissions.viewCount), desc(submissions.createdAt)],
       });
 
       return {
