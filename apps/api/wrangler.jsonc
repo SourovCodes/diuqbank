@@ -161,7 +161,16 @@
       // Cloudflare API token (scope: Account → D1 → Edit — export initiates a
       // job, so Read is insufficient) the 6-hourly backup cron uses to call the
       // D1 export REST API. Local dev: `.dev.vars`.
-      "CF_D1_API_TOKEN"
+      "CF_D1_API_TOKEN",
+      // Not actually confidential — the base URL fileUrlFor (src/lib/
+      // user-shape.ts) prefixes onto stored object keys. It's declared here
+      // (rather than in `vars`, which always wins over `.dev.vars` for the
+      // same key) purely so `.dev.vars` can override it for local dev. Never
+      // set in production: fileUrlFor's fallback (the real r2.diuqbank.com)
+      // is correct there. Local dev: `.dev.vars` → this Worker's own
+      // `/files/*` route (src/routes/files.ts), which streams straight from
+      // wrangler dev's local simulated R2 bucket.
+      "R2_PUBLIC_BASE"
     ]
   }
 }

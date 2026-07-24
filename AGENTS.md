@@ -100,8 +100,21 @@ builtin, not the app's deploy script.
   `verify(t, secret, "HS256")`.
 - **Files:** R2 binding `BUCKET` for writes; objects are served publicly from
   the bucket's custom domain `https://r2.diuqbank.com/<key>` (see `fileUrlFor`
-  in `src/lib/user-shape.ts`) — the Worker does not proxy files. Uploads are
-  magic-byte validated.
+  in `src/lib/user-shape.ts`) — in production the Worker does not proxy files.
+  The base URL comes from `R2_PUBLIC_BASE`, listed in wrangler.jsonc's
+  `secrets.required` (not `vars` — a `vars` entry always wins over `.dev.vars`
+  for the same key, which would make it un-overridable locally) even though
+  it isn't actually confidential; never set it in production, since
+  `fileUrlFor`'s fallback (the real r2.diuqbank.com) is already correct there.
+  Locally, `.dev.vars` points it at the Worker's own `/files/*` route
+  (`src/routes/files.ts`), which streams straight from `wrangler dev`'s local
+  simulated R2 bucket, since files uploaded locally don't exist at the real
+  URL. That route is itself gated on `R2_PUBLIC_BASE` being set, so it 404s in
+  production — the no-proxy invariant is enforced in code, not just by nobody
+  linking to it. (Request-based tricks, like sniffing the Host header for
+  `localhost`, don't work here — `wrangler dev` rewrites the request's URL/Host
+  to the configured route, e.g. `api.diuqbank.com`, even when hit via
+  localhost.) Uploads are magic-byte validated.
 
 ## Production Safety
 

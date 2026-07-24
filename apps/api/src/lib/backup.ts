@@ -2,7 +2,7 @@ import { getDb } from "../db/client";
 import { autoSubmissions, manualSubmissions, submissions, users } from "../db/schema";
 import type { BackupArtifact, BackupMeta } from "../shared/types";
 import type { Bindings } from "../types";
-import { R2_PUBLIC_BASE, fileUrlFor } from "./user-shape";
+import { fileUrlFor, getR2PublicBase } from "./user-shape";
 
 // Fixed R2 keys of the backup artifacts in BACKUP_BUCKET. Fixed names → each run
 // overwrites the previous copy (a single rolling snapshot, not a history).
@@ -112,7 +112,7 @@ export const buildFileManifest = async (env: Bindings): Promise<FileManifest> =>
   const files = [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key));
   return {
     generatedAt: new Date().toISOString(),
-    baseUrl: R2_PUBLIC_BASE,
+    baseUrl: getR2PublicBase(),
     count: files.length,
     files,
   };

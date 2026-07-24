@@ -15,12 +15,26 @@ import auth from "./routes/auth";
 import autoSubmissions from "./routes/auto-submissions";
 import contributors from "./routes/contributors";
 import filterOptions from "./routes/filter-options";
+import files from "./routes/files";
 import manualSubmissions from "./routes/manual-submissions";
 import questions from "./routes/questions";
 import submissions from "./routes/submissions";
 import type { AppEnv, Bindings } from "./types";
+import { setR2PublicBase } from "./lib/user-shape";
 
 const app = new Hono<AppEnv>();
+
+// Sync the module-level R2 base used by fileUrlFor (src/lib/user-shape.ts)
+// with this env's R2_PUBLIC_BASE before any handler builds a response. Must
+// run first — every downstream handler that shapes a DTO relies on it.
+// R2_PUBLIC_BASE is unset in production (falls back to fileUrlFor's real
+// r2.diuqbank.com default); .dev.vars sets it locally to this Worker's own
+// /files/* route (see wrangler.jsonc's `secrets.required` for why it has to
+// live there rather than in `vars`, even though it isn't actually secret).
+app.use("*", async (c, next) => {
+  if (c.env.R2_PUBLIC_BASE) setR2PublicBase(c.env.R2_PUBLIC_BASE);
+  await next();
+});
 
 const allowedWebOrigins = (env: Bindings) =>
   env.WEB_ORIGINS.split(",")
@@ -50,17 +64,28 @@ app.use("*", logger());
 
 // Allow only this API and the configured web frontends to iframe API pages/files.
 // This must wrap secureHeaders so it can replace X-Frame-Options (which cannot
-// express an allowlist) with the modern CSP frame-ancestors directive.
+// express an allowlist) with the modern CSP frame-ancestors directive. It also
+// relaxes Cross-Origin-Resource-Policy for the local-dev-only /files/* route
+// (routes/files.ts) — secureHeaders sets CORP in its own post-next() phase,
+// which runs after that route's handler and would otherwise stomp its header,
+// blocking the local web dev server (a different origin/port) from loading
+// files as <img>/PDF resources. Registering this middleware *before*
+// secureHeaders means its own post-next() code runs *after* secureHeaders',
+// so its overrides win. Production never hits /files/*, so this is a no-op
+// there (see comment on secureHeaders below).
 app.use("*", async (c, next) => {
   await next();
   c.res.headers.delete("X-Frame-Options");
   c.res.headers.set("Content-Security-Policy", frameAncestorPolicy(c.env as Bindings));
+  if (c.req.path.startsWith("/files/")) {
+    c.res.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+  }
 });
 
 // Security headers. CSP is limited to frame-ancestors above so the Scalar /docs
 // page (which loads from jsdelivr) keeps working. Files are served from the R2
-// public domain (r2.diuqbank.com), not this Worker, so no CORP relaxation is
-// needed.
+// public domain (r2.diuqbank.com) in production, not this Worker, so CORP is
+// left strict here; the /files/* route relaxes it above for local dev.
 app.use("*", secureHeaders({ xFrameOptions: "DENY" }));
 
 // CORS locked to an env-configured allowlist (WEB_ORIGINS, comma-separated).
@@ -128,6 +153,7 @@ app.route("/filter-options", filterOptions);
 app.route("/auto-submissions", autoSubmissions);
 app.route("/manual-submissions", manualSubmissions);
 app.route("/admin", admin);
+app.route("/files", files);
 
 // ---------------------------------------------------------------------------
 // Error handling: HTTPException passthrough, then map common D1 constraint

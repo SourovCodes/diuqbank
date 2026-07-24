@@ -11,14 +11,22 @@ type UserRow = Pick<
 >;
 
 // Public custom domain of the production R2 bucket (diuqbank-files-prod).
-// Objects are served directly by Cloudflare — the API no longer proxies files.
-// Note: `wrangler dev` uploads land in the local simulated bucket, so files
-// created during local dev won't exist at this URL.
-export const R2_PUBLIC_BASE = "https://r2.diuqbank.com";
+// Objects are served directly by Cloudflare — the API doesn't proxy files in
+// production. `setR2PublicBase` lets local dev point this at the Worker's own
+// `/files/*` route instead (see index.ts + routes/files.ts), since files
+// uploaded to `wrangler dev`'s simulated local R2 don't exist at the real
+// r2.diuqbank.com URL.
+let r2PublicBase = "https://r2.diuqbank.com";
+
+export const setR2PublicBase = (base: string) => {
+  r2PublicBase = base;
+};
+
+export const getR2PublicBase = () => r2PublicBase;
 
 /** Build the public R2 URL for a stored object key. */
 export const fileUrlFor = (key: string | null): string | null =>
-  key ? `${R2_PUBLIC_BASE}/${key}` : null;
+  key ? `${r2PublicBase}/${key}` : null;
 
 /** Build the public R2 URL for a stored image key. */
 export const imageUrlFor = (imageKey: string | null): string | null =>
