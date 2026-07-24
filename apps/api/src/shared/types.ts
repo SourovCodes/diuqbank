@@ -228,6 +228,13 @@ export type AdminAutoSubmission = {
   createdAt: number
 }
 
+/**
+ * State of the advisory AI check on a manual submission: null = never started
+ * (pre-feature rows, legacy imports), `pending` = queued/running, `completed` =
+ * the ai* snapshot fields are filled, `failed` = see `aiError`.
+ */
+export type ManualAiStatus = 'pending' | 'completed' | 'failed'
+
 export type AdminManualSubmission = {
   id: number
   userId: number
@@ -243,6 +250,18 @@ export type AdminManualSubmission = {
   examTypeName: string | null
   section: string | null
   batch: string | null
+  // Advisory AI second opinion (independent extraction from the PDF, shown
+  // next to the uploader's values). Never gates approval.
+  aiStatus: ManualAiStatus | null
+  aiIsAcceptable: boolean | null
+  aiReasoning: string | null
+  aiDepartmentName: string | null
+  aiCourseName: string | null
+  aiSemesterName: string | null
+  aiExamTypeName: string | null
+  aiSection: string | null
+  aiBatch: string | null
+  aiError: string | null
   fileSize: number
   rejectedReason: string | null
   reviewedBy: number | null

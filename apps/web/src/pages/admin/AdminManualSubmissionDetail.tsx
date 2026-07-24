@@ -10,6 +10,7 @@ import {
   examTypesApi,
   getAdminManualSubmissions,
   rejectManualSubmission,
+  rerunManualSubmissionAiCheck,
   semestersApi,
   updateAdminManualSubmission,
 } from "../../api";
@@ -206,6 +207,8 @@ export default function AdminManualSubmissionDetailPage() {
             onChanged={invalidate}
           />
 
+          <AiCheckCard sub={sub} editable={canEdit} onChanged={invalidate} />
+
           <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Extras
@@ -393,6 +396,239 @@ export default function AdminManualSubmissionDetailPage() {
             invalidate();
           }}
         />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Advisory AI second opinion: an independent Gemini extraction of the PDF,
+ * compared field-by-field against the uploader's values. Purely assistive —
+ * approval is still gated only by taxonomy matching. Each differing AI value
+ * offers a one-click apply (writing it through the normal edit endpoint).
+ */
+function AiCheckCard({
+  sub,
+  editable,
+  onChanged,
+}: {
+  sub: AdminManualSubmissionDetail;
+  editable: boolean;
+  onChanged: () => void;
+}) {
+  const rerun = useMutation({
+    mutationFn: () => rerunManualSubmissionAiCheck(sub.id),
+    onSuccess: onChanged,
+  });
+  const apply = useMutation({
+    mutationFn: (payload: UpdateManualSubmission) =>
+      updateAdminManualSubmission(sub.id, payload),
+    onSuccess: onChanged,
+  });
+
+  // The edit endpoint only accepts the closed exam-type list, so the AI's
+  // value is applied via its canonical casing — or not at all.
+  const aiExamTypeCanonical =
+    ALLOWED_EXAM_TYPES.find(
+      (t) => t.toLowerCase() === (sub.aiExamTypeName ?? "").trim().toLowerCase(),
+    ) ?? null;
+
+  const same = (a: string | null, b: string | null) =>
+    (a ?? "").trim().toLowerCase() === (b ?? "").trim().toLowerCase();
+
+  const rows: {
+    label: string;
+    userValue: string | null;
+    aiValue: string | null;
+    patch: UpdateManualSubmission | null;
+    hint?: string;
+    optional?: boolean;
+  }[] = [
+    {
+      label: "Department",
+      userValue: sub.departmentName,
+      aiValue: sub.aiDepartmentName,
+      patch: sub.aiDepartmentName
+        ? { departmentName: sub.aiDepartmentName }
+        : null,
+    },
+    {
+      label: "Course",
+      userValue: sub.courseName,
+      aiValue: sub.aiCourseName,
+      patch: sub.aiCourseName ? { courseName: sub.aiCourseName } : null,
+    },
+    {
+      label: "Semester",
+      userValue: sub.semesterName,
+      aiValue: sub.aiSemesterName,
+      patch: sub.aiSemesterName ? { semesterName: sub.aiSemesterName } : null,
+    },
+    {
+      label: "Exam type",
+      userValue: sub.examTypeName,
+      aiValue: sub.aiExamTypeName,
+      patch: aiExamTypeCanonical ? { examTypeName: aiExamTypeCanonical } : null,
+      hint:
+        sub.aiExamTypeName && !aiExamTypeCanonical
+          ? "Not an allowed exam type — cannot be applied."
+          : undefined,
+    },
+    // Section/batch rows only when either side has a value.
+    {
+      label: "Section",
+      userValue: sub.section,
+      aiValue: sub.aiSection,
+      patch: sub.aiSection ? { section: sub.aiSection } : null,
+      optional: true,
+    },
+    {
+      label: "Batch",
+      userValue: sub.batch,
+      aiValue: sub.aiBatch,
+      patch: sub.aiBatch ? { batch: sub.aiBatch } : null,
+      optional: true,
+    },
+  ].filter((row) => !row.optional || row.userValue || row.aiValue);
+
+  const differing = rows.filter(
+    (row) => row.patch && !same(row.userValue, row.aiValue),
+  );
+  const applyAllPayload = differing.reduce<UpdateManualSubmission>(
+    (acc, row) => Object.assign(acc, row.patch),
+    {},
+  );
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          AI check
+        </h2>
+        {editable && sub.aiStatus !== "pending" && (
+          <button
+            type="button"
+            disabled={rerun.isPending}
+            onClick={() => rerun.mutate()}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-60 dark:text-blue-400"
+          >
+            {rerun.isPending
+              ? "Starting…"
+              : sub.aiStatus === null
+                ? "Run check"
+                : "Re-run"}
+          </button>
+        )}
+      </div>
+
+      {sub.aiStatus === null && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No AI check has been run for this upload yet.
+        </p>
+      )}
+      {sub.aiStatus === "pending" && (
+        <p className="animate-pulse text-sm text-gray-500 dark:text-gray-400">
+          Analyzing the PDF…
+        </p>
+      )}
+      {sub.aiStatus === "failed" && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          AI check failed{sub.aiError ? `: ${sub.aiError}` : "."}
+        </p>
+      )}
+
+      {sub.aiStatus === "completed" && (
+        <div className="space-y-3">
+          <div
+            className={`rounded-lg border p-2.5 text-xs ${
+              sub.aiIsAcceptable
+                ? "border-green-200 bg-green-50 text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-300"
+                : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+            }`}
+          >
+            <p className="font-semibold">
+              {sub.aiIsAcceptable
+                ? "Looks like a valid question paper"
+                : "AI flagged this upload"}
+            </p>
+            {sub.aiReasoning && <p className="mt-1 opacity-90">{sub.aiReasoning}</p>}
+          </div>
+
+          <div className="space-y-2.5">
+            {rows.map((row) => {
+              const matched = row.aiValue !== null && same(row.userValue, row.aiValue);
+              const canApply = editable && row.patch && !matched;
+              return (
+                <div key={row.label}>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {row.label}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate font-medium text-gray-900 dark:text-gray-100">
+                        {row.aiValue ?? "—"}
+                      </span>
+                      {matched ? (
+                        <span className="shrink-0 rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                          matches
+                        </span>
+                      ) : row.aiValue === null ? (
+                        <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                          not found
+                        </span>
+                      ) : (
+                        <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                          differs
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  {!matched && (canApply || row.hint) && (
+                    <div className="mt-1 text-right">
+                      {canApply && (
+                        <button
+                          type="button"
+                          disabled={apply.isPending}
+                          onClick={() => apply.mutate(row.patch!)}
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-60 dark:text-blue-400"
+                        >
+                          Use AI value
+                        </button>
+                      )}
+                      {row.hint && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {row.hint}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {editable && differing.length > 1 && (
+            <Button
+              variant="secondary"
+              className="w-full"
+              loading={apply.isPending}
+              onClick={() => apply.mutate(applyAllPayload)}
+            >
+              Apply all AI values
+            </Button>
+          )}
+        </div>
+      )}
+
+      {rerun.isError && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          {(rerun.error as Error).message}
+        </p>
+      )}
+      {apply.isError && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          {(apply.error as Error).message}
+        </p>
       )}
     </div>
   );

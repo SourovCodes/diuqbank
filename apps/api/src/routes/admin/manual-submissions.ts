@@ -13,6 +13,7 @@ import type {
   AdminManualSubmission,
   AdminManualSubmissionDetail,
 } from "../../shared/types";
+import { startManualAiCheck } from "../../lib/manual-ai";
 import {
   publishManualSubmission,
   resolveTaxonomyMatches,
@@ -80,6 +81,16 @@ const toAdminManualSubmission = (
   examTypeName: row.examTypeName,
   section: row.section,
   batch: row.batch,
+  aiStatus: row.aiStatus,
+  aiIsAcceptable: row.aiIsAcceptable,
+  aiReasoning: row.aiReasoning,
+  aiDepartmentName: row.aiDepartmentName,
+  aiCourseName: row.aiCourseName,
+  aiSemesterName: row.aiSemesterName,
+  aiExamTypeName: row.aiExamTypeName,
+  aiSection: row.aiSection,
+  aiBatch: row.aiBatch,
+  aiError: row.aiError,
   fileSize: row.fileSize,
   rejectedReason: row.rejectedReason,
   reviewedBy: row.reviewedBy,
@@ -209,6 +220,42 @@ route.patch(
     return c.json(detail);
   },
 );
+
+route.post("/:id/ai-check", async (c) => {
+  const id = parseId(c.req.param("id"));
+  if (id === null) {
+    throw new HTTPException(404, { message: "Manual submission not found" });
+  }
+
+  const db = getDb(c.env.DB);
+  const [existing] = await db
+    .select({
+      status: manualSubmissions.status,
+      aiStatus: manualSubmissions.aiStatus,
+    })
+    .from(manualSubmissions)
+    .where(eq(manualSubmissions.id, id))
+    .limit(1);
+  if (!existing) {
+    throw new HTTPException(404, { message: "Manual submission not found" });
+  }
+  if (existing.status === "published") {
+    throw new HTTPException(409, {
+      message: "Published manual submissions have nothing left to review",
+    });
+  }
+  if (existing.aiStatus === "pending") {
+    throw new HTTPException(409, { message: "An AI check is already running" });
+  }
+
+  await startManualAiCheck(c.env, id);
+
+  const detail = await loadManualSubmissionDetail(db, id);
+  if (!detail) {
+    throw new HTTPException(404, { message: "Manual submission not found" });
+  }
+  return c.json(detail);
+});
 
 route.post("/:id/approve", async (c) => {
   const id = parseId(c.req.param("id"));

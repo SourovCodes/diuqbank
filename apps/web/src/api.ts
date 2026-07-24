@@ -343,6 +343,11 @@ export const updateAdminManualSubmission = (
 ): Promise<AdminManualSubmissionDetail> =>
   patch(`/admin/manual-submissions/${id}`, body);
 
+export const rerunManualSubmissionAiCheck = (
+  id: number
+): Promise<AdminManualSubmissionDetail> =>
+  post(`/admin/manual-submissions/${id}/ai-check`);
+
 export const approveManualSubmission = (
   id: number
 ): Promise<AdminManualSubmissionDetail> =>

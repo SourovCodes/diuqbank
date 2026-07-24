@@ -6,12 +6,14 @@ export type Bindings = Env;
 /**
  * Messages on the two throttled queues, both drained by the same consumer
  * (src/queue.ts dispatches on `kind`): watermark jobs ride `PDF_QUEUE`
- * (bounds concurrent PDF Processor load), ai-submission jobs ride
- * `GEMINI_QUEUE` (max_concurrency 1 — Gemini calls are strictly serialized).
+ * (bounds concurrent PDF Processor load); ai-submission and manual-ai jobs
+ * ride `GEMINI_QUEUE` (max_concurrency 1 — Gemini calls are strictly
+ * serialized).
  */
 export type PdfQueueMessage =
   | { kind: "watermark"; submissionId: number }
-  | { kind: "ai-submission"; autoSubmissionId: number };
+  | { kind: "ai-submission"; autoSubmissionId: number }
+  | { kind: "manual-ai"; manualSubmissionId: number };
 
 /** Hono environment: bindings + context variables set by middleware. */
 export type AppEnv = {

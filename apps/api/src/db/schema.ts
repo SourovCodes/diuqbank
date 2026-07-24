@@ -233,6 +233,24 @@ export const manualSubmissions = sqliteTable(
     examTypeName: text("exam_type_name"),
     section: text("section"),
     batch: text("batch"),
+    // Advisory AI second opinion for the reviewer (never gates approval).
+    // Null aiStatus means the check was never started (pre-feature rows,
+    // legacy imports); the snapshot fields below are only set on 'completed'.
+    // No CHECK constraint: adding one would force a full table rebuild on a
+    // live production table, so the enum is app-enforced only.
+    aiStatus: text("ai_status", {
+      enum: ["pending", "completed", "failed"],
+    }),
+    aiIsAcceptable: integer("ai_is_acceptable", { mode: "boolean" }),
+    aiReasoning: text("ai_reasoning"),
+    aiDepartmentName: text("ai_department_name"),
+    aiCourseName: text("ai_course_name"),
+    aiSemesterName: text("ai_semester_name"),
+    aiExamTypeName: text("ai_exam_type_name"),
+    aiSection: text("ai_section"),
+    aiBatch: text("ai_batch"),
+    // Infra-failure detail for the 'failed' aiStatus.
+    aiError: text("ai_error"),
     // Review / linkage.
     rejectedReason: text("rejected_reason"),
     reviewedBy: integer("reviewed_by").references(() => users.id, {

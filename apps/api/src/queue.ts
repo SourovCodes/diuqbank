@@ -4,6 +4,7 @@ import { getDb } from "./db/client";
 import { submissions } from "./db/schema";
 import { markAutoFailed, runAutoExtraction } from "./lib/auto-submission";
 import { invalidateSubmissionEdit } from "./lib/cache";
+import { markManualAiFailed, runManualAiCheck } from "./lib/manual-ai";
 import { markWatermarkFailed, runWatermark } from "./lib/pdf-processor";
 import type { Bindings, PdfQueueMessage } from "./types";
 
@@ -16,8 +17,9 @@ const RETRY_DELAY_SECONDS = 10;
 /**
  * Shared consumer for both throttled queues: `PDF_QUEUE` (watermark; its
  * max_concurrency bounds concurrent PDF Processor load) and `GEMINI_QUEUE`
- * (ai-submission; max_concurrency 1 so Gemini calls never overlap). Messages
- * carry a `kind` discriminator, so no per-queue branching is needed here.
+ * (ai-submission + manual-ai; max_concurrency 1 so Gemini calls never
+ * overlap). Messages carry a `kind` discriminator, so no per-queue branching
+ * is needed here.
  */
 export const handleQueue = async (
   batch: MessageBatch<PdfQueueMessage>,
@@ -38,6 +40,8 @@ export const handleQueue = async (
         if (row?.user) {
           await invalidateSubmissionEdit(env, row.questionId, row.user.username);
         }
+      } else if (body.kind === "manual-ai") {
+        await runManualAiCheck(env, body.manualSubmissionId);
       } else {
         await runAutoExtraction(env, body.autoSubmissionId);
       }
@@ -51,6 +55,8 @@ export const handleQueue = async (
         // loop. (The dead-letter queue remains a backstop for unhandled cases.)
         if (body.kind === "watermark") {
           await markWatermarkFailed(env, body.submissionId, detail);
+        } else if (body.kind === "manual-ai") {
+          await markManualAiFailed(env, body.manualSubmissionId, detail);
         } else {
           await markAutoFailed(env, body.autoSubmissionId, detail);
         }

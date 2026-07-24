@@ -434,6 +434,21 @@ const adminManualSubmission = z.object({
   examTypeName: z.string().nullable(),
   section: z.string().nullable(),
   batch: z.string().nullable(),
+  aiStatus: z
+    .enum(["pending", "completed", "failed"])
+    .nullable()
+    .describe(
+      "Advisory AI check state: null = never started, `pending` = running, `completed` = the ai* fields are filled, `failed` = see `aiError`. Never gates approval.",
+    ),
+  aiIsAcceptable: z.boolean().nullable(),
+  aiReasoning: z.string().nullable(),
+  aiDepartmentName: z.string().nullable(),
+  aiCourseName: z.string().nullable(),
+  aiSemesterName: z.string().nullable(),
+  aiExamTypeName: z.string().nullable(),
+  aiSection: z.string().nullable(),
+  aiBatch: z.string().nullable(),
+  aiError: z.string().nullable(),
   fileSize: z.number().int().describe("Size of the uploaded PDF in bytes."),
   rejectedReason: z.string().nullable(),
   reviewedBy: z.number().int().nullable(),
@@ -1500,6 +1515,24 @@ const adminPaths = {
         "401": commonErrors["401"],
         "403": commonErrors["403"],
         "404": commonErrors["404"],
+      },
+    },
+  },
+  "/admin/manual-submissions/{id}/ai-check": {
+    post: {
+      tags: ["admin-manual-submissions"],
+      summary: "Run the AI check on a manual submission",
+      ...authFields(
+        "Admin",
+        "Queues an advisory AI extraction of the uploaded PDF (independent of the uploader's typed values) so the reviewer can compare the two. Resets any previous AI snapshot and sets `aiStatus` to `pending`; the result lands asynchronously — poll the detail endpoint. Never gates approval. New uploads queue this automatically; use this to (re)run it for older rows or after a failure.",
+      ),
+      parameters: [idPathParam("Manual submission")],
+      responses: {
+        "200": okJson("AI check queued", ref("AdminManualSubmissionDetail")),
+        "401": commonErrors["401"],
+        "403": commonErrors["403"],
+        "404": commonErrors["404"],
+        "409": errResp("Already published, or an AI check is already running"),
       },
     },
   },

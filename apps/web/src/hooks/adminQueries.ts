@@ -54,6 +54,9 @@ export function useAdminManualSubmission(id?: string) {
     queryKey: ["admin", "manual-submission", id],
     queryFn: () => getAdminManualSubmission(id as string),
     enabled: !!id,
+    // Poll while the advisory AI check is running so its result appears live.
+    refetchInterval: (query) =>
+      query.state.data?.aiStatus === "pending" ? 3000 : false,
   });
 }
 

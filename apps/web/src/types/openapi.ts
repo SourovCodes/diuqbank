@@ -4730,6 +4730,86 @@ export interface paths {
         };
         trace?: never;
     };
+    "/admin/manual-submissions/{id}/ai-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run the AI check on a manual submission
+         * @description **Access:** `Admin` — Requires a bearer token from an account with `role: "admin"`.
+         *
+         *     Queues an advisory AI extraction of the uploaded PDF (independent of the uploader's typed values) so the reviewer can compare the two. Resets any previous AI snapshot and sets `aiStatus` to `pending`; the result lands asynchronously — poll the detail endpoint. Never gates approval. New uploads queue this automatically; use this to (re)run it for older rows or after a failure.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Manual submission id. */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description AI check queued */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminManualSubmissionDetail"];
+                    };
+                };
+                /** @description Missing or invalid bearer token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Resource not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Already published, or an AI check is already running */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/manual-submissions/{id}/approve": {
         parameters: {
             query?: never;
@@ -6480,6 +6560,17 @@ export interface components {
             examTypeName: string | null;
             section: string | null;
             batch: string | null;
+            /** @description Advisory AI check state: null = never started, `pending` = running, `completed` = the ai* fields are filled, `failed` = see `aiError`. Never gates approval. */
+            aiStatus: ("pending" | "completed" | "failed") | null;
+            aiIsAcceptable: boolean | null;
+            aiReasoning: string | null;
+            aiDepartmentName: string | null;
+            aiCourseName: string | null;
+            aiSemesterName: string | null;
+            aiExamTypeName: string | null;
+            aiSection: string | null;
+            aiBatch: string | null;
+            aiError: string | null;
             /** @description Size of the uploaded PDF in bytes. */
             fileSize: number;
             rejectedReason: string | null;
@@ -6532,6 +6623,17 @@ export interface components {
             examTypeName: string | null;
             section: string | null;
             batch: string | null;
+            /** @description Advisory AI check state: null = never started, `pending` = running, `completed` = the ai* fields are filled, `failed` = see `aiError`. Never gates approval. */
+            aiStatus: ("pending" | "completed" | "failed") | null;
+            aiIsAcceptable: boolean | null;
+            aiReasoning: string | null;
+            aiDepartmentName: string | null;
+            aiCourseName: string | null;
+            aiSemesterName: string | null;
+            aiExamTypeName: string | null;
+            aiSection: string | null;
+            aiBatch: string | null;
+            aiError: string | null;
             /** @description Size of the uploaded PDF in bytes. */
             fileSize: number;
             rejectedReason: string | null;
@@ -6604,6 +6706,17 @@ export interface components {
                 examTypeName: string | null;
                 section: string | null;
                 batch: string | null;
+                /** @description Advisory AI check state: null = never started, `pending` = running, `completed` = the ai* fields are filled, `failed` = see `aiError`. Never gates approval. */
+                aiStatus: ("pending" | "completed" | "failed") | null;
+                aiIsAcceptable: boolean | null;
+                aiReasoning: string | null;
+                aiDepartmentName: string | null;
+                aiCourseName: string | null;
+                aiSemesterName: string | null;
+                aiExamTypeName: string | null;
+                aiSection: string | null;
+                aiBatch: string | null;
+                aiError: string | null;
                 /** @description Size of the uploaded PDF in bytes. */
                 fileSize: number;
                 rejectedReason: string | null;

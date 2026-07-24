@@ -9,6 +9,7 @@ import {
 } from "../db/schema";
 import { buildMeta } from "../shared/utils/pagination";
 import type { ManualSubmission } from "../shared/types";
+import { startManualAiCheck } from "../lib/manual-ai";
 import { deleteObject } from "../lib/manual-submission";
 import { parseId } from "../lib/parse-id";
 import { parsePdfFile, pdfUploadBodyLimit } from "../lib/pdf-upload";
@@ -103,6 +104,10 @@ route.post(
       await deleteObject(c.env.BUCKET, key);
       throw err;
     }
+
+    // Advisory AI second opinion for the reviewer; never blocks the upload
+    // (a failed enqueue just marks the check failed on the row).
+    await startManualAiCheck(c.env, created.id);
 
     return c.json(toManualSubmission(created), 201);
   },
