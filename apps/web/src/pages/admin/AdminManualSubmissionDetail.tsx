@@ -138,7 +138,10 @@ export default function AdminManualSubmissionDetailPage() {
     return <ErrorBox message="Submission not found — it may have been removed." />;
   }
 
-  const canReview = sub.status === "pending";
+  // Rejected rows stay reviewable: the API gates approve/reject on
+  // "published" alone, so a rejection can be reconsidered (approving
+  // clears the stored reason).
+  const canReview = sub.status !== "published";
   const canEdit = sub.status !== "published";
   const allMatched =
     sub.taxonomyMatches.departmentId !== null &&
@@ -298,7 +301,7 @@ export default function AdminManualSubmissionDetailPage() {
                 className="w-full"
                 onClick={() => setRejecting(true)}
               >
-                Reject…
+                {sub.status === "rejected" ? "Edit reason…" : "Reject…"}
               </Button>
               {approve.isError && (
                 <p className="text-xs text-red-600 dark:text-red-400">

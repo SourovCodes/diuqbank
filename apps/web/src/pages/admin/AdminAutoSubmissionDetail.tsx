@@ -138,8 +138,14 @@ export default function AdminAutoSubmissionDetail() {
     return <ErrorBox message="Submission not found — it may have been removed." />;
   }
 
-  const canReview = sub.status === "needs_review";
-  const canReprocess = sub.status === "needs_review" || sub.status === "failed";
+  // Rejected rows stay reviewable: the API gates approve/reject on
+  // "published" alone, and reprocessing accepts anything that is not
+  // already published or in flight, so a rejection can be reconsidered.
+  const canReview = sub.status === "needs_review" || sub.status === "rejected";
+  const canReprocess =
+    sub.status === "needs_review" ||
+    sub.status === "failed" ||
+    sub.status === "rejected";
   const canEdit = sub.status !== "published" && sub.status !== "processing";
 
   return (
@@ -322,7 +328,7 @@ export default function AdminAutoSubmissionDetail() {
                     className="w-full"
                     onClick={() => setRejecting(true)}
                   >
-                    Reject…
+                    {sub.status === "rejected" ? "Edit reason…" : "Reject…"}
                   </Button>
                 </>
               )}
