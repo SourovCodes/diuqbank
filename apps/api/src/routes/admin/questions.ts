@@ -1,12 +1,13 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, count, desc, eq, type SQL } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 
 import { getDb, type Db } from "../../db/client";
 import { questions, submissions } from "../../db/schema";
 import { invalidateQuestion, invalidateQuestionCreate } from "../../lib/cache";
 import { buildMeta } from "../../shared/utils/pagination";
 import { parseId } from "../../lib/parse-id";
+import { questionListWhere } from "../../lib/questions-query";
 import { buildQuestionTitle } from "../../shared/utils/question-title";
 import { validate } from "../../lib/validator";
 import {
@@ -61,18 +62,13 @@ const loadQuestion = async (db: Db, id: number) => {
   };
 };
 
-// Reuses the public list query: pageFields + 4 optional id filters.
+// Reuses the public list query: pageFields + `search` + 4 optional id filters,
+// and the same `WHERE` builder, so admin search behaves exactly like public.
 route.get("/", validate("query", questionsListQuery), async (c) => {
-  const { page, perPage, departmentId, courseId, semesterId, examTypeId } =
-    c.req.valid("query");
+  const { page, perPage } = c.req.valid("query");
   const db = getDb(c.env.DB);
 
-  const filters: SQL[] = [];
-  if (departmentId) filters.push(eq(questions.departmentId, departmentId));
-  if (courseId) filters.push(eq(questions.courseId, courseId));
-  if (semesterId) filters.push(eq(questions.semesterId, semesterId));
-  if (examTypeId) filters.push(eq(questions.examTypeId, examTypeId));
-  const where = filters.length ? and(...filters) : undefined;
+  const where = questionListWhere(db, c.req.valid("query"));
 
   const items = await db.query.questions.findMany({
     where,

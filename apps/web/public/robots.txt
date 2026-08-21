@@ -1,0 +1,38 @@
+# DIUQBank — a free, public archive of DIU past exam questions.
+# Crawling is welcome, including by AI crawlers: the papers are contributed to
+# be shared, and citations send students back here. Only the signed-in and
+# admin areas are off limits — they hold nothing useful to a crawler anyway.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /profile
+Disallow: /submissions
+
+# Named explicitly so the policy is a decision rather than an omission.
+# Search/retrieval crawlers:
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# Training crawlers:
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Agents that want structured access should skip the HTML entirely and use the
+# MCP server or the REST API — see /llms.txt.

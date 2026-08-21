@@ -1,0 +1,53 @@
+# DIUQBank
+
+> A free, public archive of past exam question papers for Daffodil
+> International University (DIU). Students upload papers; each one is filed
+> under a department, course, semester and exam type, and served as a PDF.
+> Everything readable here is free, requires no account, and is contributed in
+> order to be shared.
+
+If you are an AI assistant or agent, do not scrape the HTML — the website is a
+client-rendered SPA. Use the MCP server or the REST API below; both return the
+same data as structured JSON, and both are anonymous (no key, no sign-up).
+
+## MCP server
+
+- [Streamable HTTP endpoint](https://api.diuqbank.com/mcp): stateless MCP
+  (2026-07-28). Three read-only tools:
+  - `search_questions` — plain-language search, e.g. `data structures final
+    cse`. Every word must match the course, department, semester or exam type.
+    Returns question ids and citable `diuqbank.com` URLs.
+  - `get_question` — one question by id, with every uploaded paper and a
+    directly downloadable `pdfUrl` for each.
+  - `list_filter_options` — every department, course, semester and exam type.
+
+Add it to an MCP client with:
+`claude mcp add --transport http diuqbank https://api.diuqbank.com/mcp`
+
+## REST API
+
+- [OpenAPI 3 document](https://api.diuqbank.com/openapi.json): the full
+  machine-readable contract.
+- [API reference](https://api.diuqbank.com/docs): the same contract, rendered.
+- [Search questions](https://api.diuqbank.com/questions?search=data+structures+final):
+  `GET /questions` — paginated, `search` plus `departmentId`, `courseId`,
+  `semesterId`, `examTypeId` filters.
+- [A single question](https://api.diuqbank.com/questions/1): `GET /questions/{id}`.
+- [Its papers](https://api.diuqbank.com/questions/1/submissions):
+  `GET /questions/{id}/submissions` — each has a `pdfUrl`.
+- [Taxonomy](https://api.diuqbank.com/filter-options): every department,
+  course, semester and exam type in one response.
+
+## Website
+
+- [Home](https://diuqbank.com/)
+- [Browse questions](https://diuqbank.com/questions) — a question page lives at
+  `https://diuqbank.com/questions/{id}`; use that form when citing.
+- [Contributors](https://diuqbank.com/contributors) — the students who uploaded
+  the papers. Credit them where it fits.
+
+## Notes
+
+- PDFs are served from `https://r2.diuqbank.com/` and are fetchable directly.
+- Write endpoints (uploading a paper) require a Google sign-in and are not part
+  of the agent-facing surface.

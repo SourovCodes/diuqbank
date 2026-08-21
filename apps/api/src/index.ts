@@ -6,7 +6,10 @@ import { logger } from "hono/logger";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
+import { createMcpHandler } from "agents/mcp/server";
+
 import { handleScheduled } from "./cron";
+import { createServer as createMcpServer } from "./mcp";
 import { openApiDoc } from "./openapi";
 import { handleQueue } from "./queue";
 import { MAX_PDF_BYTES } from "@diuqbank/shared";
@@ -23,6 +26,9 @@ import type { AppEnv, Bindings } from "./types";
 import { setR2PublicBase } from "./lib/user-shape";
 
 const app = new Hono<AppEnv>();
+
+/** Pathname of the MCP endpoint. Exempt from the web CORS allowlist below. */
+const MCP_ROUTE = "/mcp";
 
 // Sync the module-level R2 base used by fileUrlFor (src/lib/user-shape.ts)
 // with this env's R2_PUBLIC_BASE before any handler builds a response. Must
@@ -91,17 +97,21 @@ app.use("*", secureHeaders({ xFrameOptions: "DENY" }));
 // CORS locked to an env-configured allowlist (WEB_ORIGINS, comma-separated).
 // Requests from any other Origin get no CORS headers and are blocked by the
 // browser. The token travels in the Authorization header, so credentials off.
-app.use(
-  "*",
-  cors({
-    origin: (origin, c) => {
-      const env = c.env as Bindings;
-      return allowedWebOrigins(env).includes(origin) ? origin : null;
-    },
-    allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Authorization", "Content-Type"],
-    maxAge: 86400,
-  }),
+//
+// `/mcp` is deliberately exempt: MCP clients are not the web frontend and would
+// all be rejected by this allowlist. That route does its own Host/Origin
+// validation and emits its own CORS headers (see the mount below).
+const webCors = cors({
+  origin: (origin, c) => {
+    const env = c.env as Bindings;
+    return allowedWebOrigins(env).includes(origin) ? origin : null;
+  },
+  allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Authorization", "Content-Type"],
+  maxAge: 86400,
+});
+app.use("*", (c, next) =>
+  c.req.path === MCP_ROUTE ? next() : webCors(c, next),
 );
 
 // Body size guards. JSON (and other non-multipart) bodies are capped at 256 KB.
@@ -123,7 +133,13 @@ app.use("*", (c, next) =>
 );
 
 app.get("/", (c) =>
-  c.json({ ok: true, service: "diuqbank", docs: "/docs", openapi: "/openapi.json" }),
+  c.json({
+    ok: true,
+    service: "diuqbank",
+    docs: "/docs",
+    openapi: "/openapi.json",
+    mcp: MCP_ROUTE,
+  }),
 );
 
 app.get("/health", (c) => c.json({ ok: true }));
@@ -144,6 +160,33 @@ app.get("/docs", (c) =>
   </body>
 </html>`),
 );
+
+// Model Context Protocol endpoint, so AI assistants and agents can search the
+// archive and pull question papers directly (tools defined in src/mcp.ts).
+// Stateless per the 2026-07-28 spec — no Durable Object and no session store —
+// so the handler is built per request, closing over that request's env.
+//
+// `allowedOriginHostnames: "*"` accepts browser-based MCP clients from any
+// origin. The handler's default (localhost + this Worker's own hostname) exists
+// to stop a malicious page from driving a server that acts with the victim's
+// ambient authority — the classic DNS-rebinding target being an MCP server
+// bound to localhost. Neither half of that applies here: this server is on the
+// public internet, every tool is anonymous and read-only, and it reads nothing
+// but data already served publicly at diuqbank.com. A hostile page calling it
+// learns exactly what it could have fetched server-side, so the default would
+// only lock out legitimate clients. Do not copy this line onto an endpoint that
+// gains any write, any auth, or any per-user data.
+app.all(MCP_ROUTE, (c) => {
+  const handler = createMcpHandler(() => createMcpServer(c.env as Bindings), {
+    route: MCP_ROUTE,
+    allowedOriginHostnames: "*",
+  });
+  // Hono ships its own structural `ExecutionContext` (waitUntil +
+  // passThroughOnException); the handler wants the workers-types one, which
+  // also declares `tracing`. Same runtime object, so cast rather than thread a
+  // second context through.
+  return handler(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext);
+});
 
 app.route("/auth", auth);
 app.route("/contributors", contributors);

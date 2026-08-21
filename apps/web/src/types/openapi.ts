@@ -573,7 +573,7 @@ export interface paths {
          * List questions
          * @description **Access:** `Public` — No authentication required.
          *
-         *     Questions with their lookup entities and submission count, newest first. Paginated and filterable by `departmentId`, `courseId`, `semesterId`, and `examTypeId`.
+         *     Questions with their lookup entities and submission count, newest first. Paginated, free-text searchable via `search`, and filterable by `departmentId`, `courseId`, `semesterId`, and `examTypeId`.
          */
         get: {
             parameters: {
@@ -582,6 +582,8 @@ export interface paths {
                     page?: number;
                     /** @description Items per page (max 100). */
                     perPage?: number;
+                    /** @description Free-text search. Every whitespace-separated token must match (case-insensitive substring) the course name, department name or short name, semester, or exam type — so `data structures final cse` narrows across all four. */
+                    search?: string;
                     /** @description Filter by departmentId. */
                     departmentId?: number;
                     /** @description Filter by courseId. */
@@ -3054,6 +3056,8 @@ export interface paths {
                     page?: number;
                     /** @description Items per page (max 100). */
                     perPage?: number;
+                    /** @description Free-text search. Every whitespace-separated token must match (case-insensitive substring) the course name, department name or short name, semester, or exam type — so `data structures final cse` narrows across all four. */
+                    search?: string;
                     /** @description Filter by departmentId. */
                     departmentId?: number;
                     /** @description Filter by courseId. */

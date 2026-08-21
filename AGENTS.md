@@ -94,6 +94,15 @@ builtin, not the app's deploy script.
   failures to clean client errors.
 - **Delete safety:** admin DELETE routes pre-count dependents and return `409`
   with a count rather than a misleading FK error.
+- **MCP:** `src/mcp.ts` exposes three read-only tools (`search_questions`,
+  `get_question`, `list_filter_options`) at `POST /mcp`, so AI assistants can
+  search the archive and pull paper PDFs. Stateless per the MCP 2026-07-28
+  spec (`createMcpHandler` from `agents/mcp/server`) — no Durable Object, no
+  new bindings. Its queries go through `src/lib/questions-query.ts`, the same
+  layer the HTTP routes use, so titles and file URLs cannot drift between the
+  two surfaces; add tools there rather than re-querying D1. `/mcp` is exempt
+  from the app-level `WEB_ORIGINS` CORS middleware and does its own Origin
+  handling (see the comment on the mount in `src/index.ts`).
 - **Auth:** Google OAuth only. `POST /auth/google` verifies the Google ID token,
   find-or-creates the user by email, and returns a 7-day HS256 JWT. `verify`
   from `hono/jwt` needs the algorithm as the third argument:

@@ -790,15 +790,25 @@ const pageParams = [
 ];
 
 // Optional question filters, matched to the ids returned by `/filter-options`.
-const questionFilterParams = (
-  ["departmentId", "courseId", "semesterId", "examTypeId"] as const
-).map((name) => ({
-  name,
-  in: "query",
-  required: false,
-  schema: { type: "integer", minimum: 1 },
-  description: `Filter by ${name}.`,
-}));
+const questionFilterParams = [
+  {
+    name: "search",
+    in: "query",
+    required: false,
+    schema: { type: "string", minLength: 1, maxLength: 150 },
+    description:
+      "Free-text search. Every whitespace-separated token must match (case-insensitive substring) the course name, department name or short name, semester, or exam type — so `data structures final cse` narrows across all four.",
+  },
+  ...(["departmentId", "courseId", "semesterId", "examTypeId"] as const).map(
+    (name) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: { type: "integer", minimum: 1 },
+      description: `Filter by ${name}.`,
+    }),
+  ),
+];
 
 // ---------------------------------------------------------------------------
 // Admin paths
@@ -2018,7 +2028,7 @@ export const buildOpenApiDoc = () => ({
         summary: "List questions",
         ...authFields(
           "Public",
-          "Questions with their lookup entities and submission count, newest first. Paginated and filterable by `departmentId`, `courseId`, `semesterId`, and `examTypeId`.",
+          "Questions with their lookup entities and submission count, newest first. Paginated, free-text searchable via `search`, and filterable by `departmentId`, `courseId`, `semesterId`, and `examTypeId`.",
         ),
         parameters: [...pageParams, ...questionFilterParams],
         responses: {
