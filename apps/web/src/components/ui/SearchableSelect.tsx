@@ -34,8 +34,11 @@ export function SearchableSelect({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selected = options.find((o) => o.value === value);
-  const filtered = query
-    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+  const needle = query.trim().toLowerCase();
+  const filtered = needle
+    ? options.filter((o) =>
+        `${o.label} ${o.keywords ?? ""}`.toLowerCase().includes(needle)
+      )
     : options;
   const listboxId = `${id}-listbox`;
   const valueId = `${id}-value`;

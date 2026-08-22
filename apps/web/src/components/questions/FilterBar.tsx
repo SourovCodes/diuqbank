@@ -48,7 +48,11 @@ export function FilterBar({
 
   const deptShort = new Map(departments.map((d) => [d.id, d.shortName]));
   const departmentOptions = withInvalidOption(
-    departments.map((d) => ({ value: String(d.id), label: d.name })),
+    departments.map((d) => ({
+      value: String(d.id),
+      label: d.name,
+      keywords: d.shortName,
+    })),
     filters.departmentId,
     "Invalid Department",
     optionsLoaded
@@ -59,6 +63,7 @@ export function FilterBar({
       label: filters.departmentId
         ? c.name
         : `${c.name} (${deptShort.get(c.departmentId) ?? "?"})`,
+      keywords: deptShort.get(c.departmentId) ?? "",
     })),
     filters.courseId,
     "Invalid Course",

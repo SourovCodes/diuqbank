@@ -377,6 +377,7 @@ function MergeModal({
 }) {
   const queryClient = useQueryClient();
   const [targetId, setTargetId] = useState("");
+  const deptNames = useDepartmentNames();
 
   // Load a large page to populate the merge-target picker.
   const { data } = useQuery({
@@ -384,9 +385,24 @@ function MergeModal({
     queryFn: () => config.api.list({ page: 1, perPage: 100 }),
   });
 
+  // Course names repeat across departments, so the picker has to say which
+  // department each candidate belongs to.
+  const deptShortOf = (r: TaxonomyRow) =>
+    config.scopedByDepartment && r.departmentId
+      ? deptNames.get(r.departmentId) ?? "?"
+      : undefined;
+  const withDept = (r: TaxonomyRow) => {
+    const short = deptShortOf(r);
+    return short ? `${r.name} (${short})` : r.name;
+  };
+
   const targetOptions: SelectOption[] = ((data?.data ?? []) as TaxonomyRow[])
     .filter((r) => r.id !== row.id)
-    .map((r) => ({ value: String(r.id), label: r.name }));
+    .map((r) => ({
+      value: String(r.id),
+      label: withDept(r),
+      keywords: deptShortOf(r),
+    }));
 
   const target = targetOptions.find((o) => o.value === targetId);
 
@@ -445,7 +461,7 @@ function MergeModal({
         <div>
           <span className={labelClass}>Remove</span>
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800 line-through decoration-red-400/60 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
-            {row.name}
+            {withDept(row)}
           </p>
         </div>
 
@@ -478,8 +494,8 @@ function MergeModal({
                 const lines = mergeImpactLines(preview, config.singular);
                 return lines.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Nothing references “{row.name}” — it will simply be
-                    removed.
+                    Nothing references “{withDept(row)}” — it will simply
+                    be removed.
                   </p>
                 ) : (
                   <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-200">

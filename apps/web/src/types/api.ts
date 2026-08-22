@@ -90,6 +90,8 @@ export type QuestionFilters = {
 export type SelectOption = {
   value: string;
   label: string;
+  /** Extra text the option matches on when searching (e.g. a short name). */
+  keywords?: string;
 };
 
 export type PaginationParams = {
