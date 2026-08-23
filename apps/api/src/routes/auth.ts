@@ -37,7 +37,10 @@ const generateOpaqueUsername = (): string => {
 };
 
 const MAX_USERNAME_ATTEMPTS = 5;
-const ALLOWED_EMAIL_DOMAIN = "diu.edu.bd";
+// Students are on the s. subdomain; staff and older accounts are on the bare
+// one. Neither is a suffix of the other, so both are matched explicitly.
+const ALLOWED_EMAIL_DOMAINS = ["diu.edu.bd", "s.diu.edu.bd"] as const;
+const allowedDomainList = ALLOWED_EMAIL_DOMAINS.map((d) => `@${d}`).join(" or ");
 
 auth.get("/config", (c) => c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID }));
 
@@ -63,9 +66,12 @@ auth.post(
 
   const email = claims.email.trim().toLowerCase();
   const isAdmin = email === c.env.ADMIN_EMAIL.trim().toLowerCase();
-  if (!isAdmin && !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
+  const domainAllowed = ALLOWED_EMAIL_DOMAINS.some((d) =>
+    email.endsWith(`@${d}`)
+  );
+  if (!isAdmin && !domainAllowed) {
     throw new HTTPException(403, {
-      message: `Only @${ALLOWED_EMAIL_DOMAIN} email addresses can sign in`,
+      message: `Only ${allowedDomainList} email addresses can sign in`,
     });
   }
 

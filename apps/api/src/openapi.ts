@@ -1892,7 +1892,9 @@ export const buildOpenApiDoc = () => ({
           "201": okJson("Authenticated — new user created", ref("AuthResponse")),
           "400": commonErrors["400"],
           "401": errResp("Invalid or expired Google ID token"),
-          "403": errResp("Only @diu.edu.bd email addresses can sign in"),
+          "403": errResp(
+            "Only @diu.edu.bd or @s.diu.edu.bd email addresses can sign in"
+          ),
           "429": errResp("Too many sign-in attempts from this IP"),
         },
       },

@@ -109,7 +109,7 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
-                /** @description Only @diu.edu.bd email addresses can sign in */
+                /** @description Only @diu.edu.bd or @s.diu.edu.bd email addresses can sign in */
                 403: {
                     headers: {
                         [name: string]: unknown;

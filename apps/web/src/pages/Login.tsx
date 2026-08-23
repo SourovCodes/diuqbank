@@ -7,17 +7,16 @@ import { useAuth } from "../auth";
 
 type LocationState = { from?: { pathname: string } };
 
-/** Matches the domain the API accepts in POST /auth/google. */
-const ALLOWED_EMAIL_DOMAIN = "diu.edu.bd";
-
 export default function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from?.pathname ?? "/profile";
-  // The account chooser is filtered to @diu.edu.bd so nobody picks a personal
-  // Gmail the API will only reject. ADMIN_EMAIL can sit outside that domain,
-  // so /login?all=1 lifts the filter for it.
+  // The account chooser is limited to Workspace accounts so nobody picks a
+  // personal Gmail the API will only reject. It can't name the two DIU
+  // domains — Google's `hd` takes one domain or "*" — so the server-side
+  // check stays the real gate. ADMIN_EMAIL is a consumer account, so
+  // /login?all=1 lifts the filter for it.
   const anyDomain = new URLSearchParams(location.search).get("all") === "1";
   const buttonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +42,7 @@ export default function Login() {
         google.accounts.id.initialize({
           client_id: config.googleClientId,
           // Client-side hint only — the API re-checks the domain on the token.
-          ...(anyDomain ? {} : { hosted_domain: ALLOWED_EMAIL_DOMAIN }),
+          ...(anyDomain ? {} : { hd: "*" }),
           callback: async ({ credential }) => {
             setBusy(true);
             setError(null);
@@ -83,8 +82,9 @@ export default function Login() {
           Sign in to DIUQBank
         </h1>
         <p className="mx-auto mt-3 max-w-[36ch] text-sm leading-6 text-gray-500 dark:text-gray-400">
-          Use your <span className="font-semibold">@diu.edu.bd</span> Google
-          account to contribute question papers.
+          Use your <span className="font-semibold">@diu.edu.bd</span> or{" "}
+          <span className="font-semibold">@s.diu.edu.bd</span> Google account to
+          contribute question papers.
         </p>
         {!anyDomain && (
           <p className="mx-auto mt-2 max-w-[36ch] text-xs leading-5 text-gray-400 dark:text-gray-500">
