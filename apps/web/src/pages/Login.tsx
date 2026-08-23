@@ -7,11 +7,18 @@ import { useAuth } from "../auth";
 
 type LocationState = { from?: { pathname: string } };
 
+/** Matches the domain the API accepts in POST /auth/google. */
+const ALLOWED_EMAIL_DOMAIN = "diu.edu.bd";
+
 export default function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from?.pathname ?? "/profile";
+  // The account chooser is filtered to @diu.edu.bd so nobody picks a personal
+  // Gmail the API will only reject. ADMIN_EMAIL can sit outside that domain,
+  // so /login?all=1 lifts the filter for it.
+  const anyDomain = new URLSearchParams(location.search).get("all") === "1";
   const buttonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,6 +42,8 @@ export default function Login() {
         if (cancelled || !buttonRef.current) return;
         google.accounts.id.initialize({
           client_id: config.googleClientId,
+          // Client-side hint only — the API re-checks the domain on the token.
+          ...(anyDomain ? {} : { hosted_domain: ALLOWED_EMAIL_DOMAIN }),
           callback: async ({ credential }) => {
             setBusy(true);
             setError(null);
@@ -60,7 +69,7 @@ export default function Login() {
     return () => {
       cancelled = true;
     };
-  }, [config?.googleClientId, user, from, login, navigate]);
+  }, [config?.googleClientId, anyDomain, user, from, login, navigate]);
 
   if (user) return <Navigate to={from} replace />;
 
@@ -77,6 +86,11 @@ export default function Login() {
           Use your <span className="font-semibold">@diu.edu.bd</span> Google
           account to contribute question papers.
         </p>
+        {!anyDomain && (
+          <p className="mx-auto mt-2 max-w-[36ch] text-xs leading-5 text-gray-400 dark:text-gray-500">
+            Personal Gmail accounts are hidden from the account picker.
+          </p>
+        )}
 
         <div className="mt-8 flex min-h-[44px] justify-center">
           {configError ? (

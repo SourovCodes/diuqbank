@@ -6,6 +6,8 @@ type GoogleIdentity = {
     id: {
       initialize: (config: {
         client_id: string;
+        /** Filters the account chooser to this G Suite domain (a hint only). */
+        hosted_domain?: string;
         callback: (response: CredentialResponse) => void;
       }) => void;
       renderButton: (
