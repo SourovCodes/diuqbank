@@ -1,5 +1,7 @@
 import { SUBMISSION_STATUSES } from "@qb/shared";
+import { sql } from "drizzle-orm";
 import {
+  check,
   foreignKey,
   index,
   integer,
@@ -48,16 +50,33 @@ export const questions = sqliteTable(
   ],
 );
 
-/** An uploaded PDF for a question. Only `published` submissions are public. */
+/**
+ * An uploaded PDF. Only `published` submissions are public.
+ *
+ * A submission is either linked to a question (`question_id`), or — when the uploader
+ * proposed a new department, course or semester — carries the proposed classification
+ * in the other columns until an admin creates the missing values and links a question.
+ * The CHECK constraint enforces exactly one of these shapes.
+ */
 export const submissions = sqliteTable(
   "submissions",
   {
     id: text()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    questionId: integer()
-      .notNull()
-      .references(() => questions.id),
+    questionId: integer().references(() => questions.id),
+
+    // Proposed classification (only while question_id is null). For each of
+    // department, course and semester: an existing id or a new name, never both.
+    departmentId: integer().references(() => departments.id),
+    customDepartmentName: text(),
+    customDepartmentShortName: text(),
+    courseId: integer().references(() => courses.id),
+    customCourseName: text(),
+    semesterId: integer().references(() => semesters.id),
+    customSemesterName: text(),
+    examTypeId: integer().references(() => examTypes.id),
+
     status: text({ enum: SUBMISSION_STATUSES })
       .notNull()
       .default("pending_review"),
@@ -68,6 +87,30 @@ export const submissions = sqliteTable(
     ...timestamps,
   },
   (t) => [
+    // A proposed existing course must belong to the proposed existing department.
+    foreignKey({
+      name: "submissions_course_department_fk",
+      columns: [t.courseId, t.departmentId],
+      foreignColumns: [courses.id, courses.departmentId],
+    }),
+    check(
+      "submissions_classification_check",
+      sql.raw(`(
+        question_id IS NOT NULL
+        AND department_id IS NULL AND custom_department_name IS NULL AND custom_department_short_name IS NULL
+        AND course_id IS NULL AND custom_course_name IS NULL
+        AND semester_id IS NULL AND custom_semester_name IS NULL
+        AND exam_type_id IS NULL
+      ) OR (
+        question_id IS NULL
+        AND exam_type_id IS NOT NULL
+        AND (department_id IS NULL) <> (custom_department_name IS NULL)
+        AND (course_id IS NULL) <> (custom_course_name IS NULL)
+        AND (semester_id IS NULL) <> (custom_semester_name IS NULL)
+        AND (custom_department_short_name IS NULL OR custom_department_name IS NOT NULL)
+        AND (course_id IS NULL OR department_id IS NOT NULL)
+      )`),
+    ),
     index("submissions_question_id_status_idx").on(t.questionId, t.status),
     index("submissions_uploader_id_idx").on(t.uploaderId),
   ],

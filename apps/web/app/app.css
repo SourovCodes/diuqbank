@@ -124,7 +124,7 @@
   }
 }
 
-/* Shared page container: every page, the header and the footer align to the same width. */
-@utility container-page {
-  @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+/* Tailwind's default `container` (max-width per breakpoint), centred with side padding. */
+@utility container {
+  @apply mx-auto px-4 sm:px-6;
 }

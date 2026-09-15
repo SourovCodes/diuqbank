@@ -120,3 +120,7 @@ export async function seedSubmission(
     .returning();
   return row!;
 }
+
+export function pdfFile(name = "paper.pdf") {
+  return new File(["%PDF-1.7\n%test\n"], name, { type: "application/pdf" });
+}

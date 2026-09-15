@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { paginatedSchema, paginationQuerySchema } from "./common";
-import {
-  questionSummarySchema,
-  submissionCountsSchema,
-  submissionStatusSchema,
-} from "./question";
+import { submissionCountsSchema, submissionStatusSchema } from "./question";
+import { submissionClassificationSchema } from "./submission";
 
 /**
  * A user who has submitted at least one paper. Only public profile fields are
@@ -23,7 +20,9 @@ export const contributorSubmissionSchema = z.object({
   status: submissionStatusSchema,
   fileSize: z.number().int(),
   createdAt: z.iso.datetime(),
-  question: questionSummarySchema,
+  /** Null while the submission proposes new values that aren't approved yet. */
+  questionId: z.number().int().nullable(),
+  classification: submissionClassificationSchema,
 });
 export type ContributorSubmission = z.infer<typeof contributorSubmissionSchema>;
 

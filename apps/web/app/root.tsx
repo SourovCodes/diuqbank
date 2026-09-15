@@ -49,9 +49,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <div className="flex min-h-dvh flex-col">
           <SiteHeader user={data?.user ?? null} />
-          <main className="container-page flex-1 py-8">{children}</main>
+          <main className="container flex-1 py-8">{children}</main>
           <footer className="border-t">
-            <div className="container-page flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div className="container flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <p>QuestionBank · Free past question papers</p>
               <nav className="flex gap-4">
                 <Link to="/questions" className="hover:text-foreground">

@@ -1,10 +1,4 @@
-import type {
-  CourseList,
-  DepartmentList,
-  ExamTypeList,
-  QuestionList,
-  SemesterList,
-} from "@qb/shared";
+import type { QuestionList } from "@qb/shared";
 import { SearchX } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
 import { EmptyState } from "~/components/empty-state";
@@ -13,7 +7,8 @@ import { QuestionCard } from "~/components/question-card";
 import { SearchableSelect } from "~/components/searchable-select";
 import { Pagination } from "~/components/pagination";
 import { Card } from "~/components/ui/card";
-import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
+import { apiFetch, readJson } from "~/lib/api.server";
+import { loadTaxonomy } from "~/lib/taxonomy.server";
 import {
   applyFilter,
   courseOptions,
@@ -41,14 +36,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     if (value) query.set(key, value);
   }
 
-  const [departments, courses, semesters, examTypes, questionsRes] =
-    await Promise.all([
-      apiGetJson<DepartmentList>(request, "/api/v1/departments"),
-      apiGetJson<CourseList>(request, "/api/v1/courses"),
-      apiGetJson<SemesterList>(request, "/api/v1/semesters"),
-      apiGetJson<ExamTypeList>(request, "/api/v1/exam-types"),
-      apiFetch(request, `/api/v1/questions?${query}`),
-    ]);
+  const [taxonomy, questionsRes] = await Promise.all([
+    loadTaxonomy(request),
+    apiFetch(request, `/api/v1/questions?${query}`),
+  ]);
 
   const invalid = questionsRes.status === 422;
   if (!questionsRes.ok && !invalid) {
@@ -58,14 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     ? { items: [], page: 1, pageSize: 20, total: 0 }
     : await readJson<QuestionList>(questionsRes);
 
-  return {
-    departments: departments.items,
-    courses: courses.items,
-    semesters: semesters.items,
-    examTypes: examTypes.items,
-    list,
-    invalid,
-  };
+  return { ...taxonomy, list, invalid };
 }
 
 export default function Questions({ loaderData }: Route.ComponentProps) {

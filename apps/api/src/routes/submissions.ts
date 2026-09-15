@@ -1,13 +1,55 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import {
+  createdSubmissionSchema,
+  refineSubmissionFields,
+  submissionFieldsSchema,
+} from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
-import { errorResponse } from "../lib/openapi";
+import { errorResponse, jsonResponse } from "../lib/openapi";
+import { requireAuth } from "../middleware/require-auth";
 import { getPublishedSubmissionFile } from "../services/questions";
+import { createSubmission } from "../services/submissions";
 import type { AppEnv } from "../types";
+
+const tags = ["Submissions"];
+
+const createSubmissionRoute = createRoute({
+  method: "post",
+  path: "/",
+  tags,
+  summary: "Contribute a question paper (requires sign-in)",
+  description:
+    "Department, course and semester can each be an existing id or a new name. " +
+    "Submissions with new names have no question until an admin approves the new values.",
+  middleware: [requireAuth] as const,
+  request: {
+    body: {
+      required: true,
+      content: {
+        "multipart/form-data": {
+          schema: submissionFieldsSchema
+            .extend({
+              file: z
+                .instanceof(File, { error: "Choose a PDF file" })
+                .openapi({ type: "string", format: "binary" }),
+            })
+            .superRefine(refineSubmissionFields),
+        },
+      },
+    },
+  },
+  responses: {
+    201: jsonResponse(createdSubmissionSchema, "Submitted for review"),
+    400: errorResponse("Invalid file"),
+    401: errorResponse("Not signed in"),
+    422: errorResponse("Invalid fields"),
+  },
+});
 
 const getSubmissionFileRoute = createRoute({
   method: "get",
   path: "/{id}/file",
-  tags: ["Submissions"],
+  tags,
   summary: "Download the PDF of a published submission",
   request: { params: z.object({ id: z.string().min(1) }) },
   responses: {
@@ -25,18 +67,28 @@ const getSubmissionFileRoute = createRoute({
 
 export const submissionRoutes = new OpenAPIHono<AppEnv>({
   defaultHook: validationHook,
-}).openapi(getSubmissionFileRoute, async (c) => {
-  const object = await getPublishedSubmissionFile(
-    c.var.db,
-    c.env.BUCKET,
-    c.req.valid("param").id,
-  );
-  if (!object) throw new AppError(404, "NOT_FOUND", "Submission not found");
+})
+  .openapi(createSubmissionRoute, async (c) => {
+    const { file, ...fields } = c.req.valid("form");
+    const created = await createSubmission(c.var.db, c.env.BUCKET, {
+      fields,
+      file,
+      uploaderId: c.var.session!.user.id,
+    });
+    return c.json(created, 201);
+  })
+  .openapi(getSubmissionFileRoute, async (c) => {
+    const object = await getPublishedSubmissionFile(
+      c.var.db,
+      c.env.BUCKET,
+      c.req.valid("param").id,
+    );
+    if (!object) throw new AppError(404, "NOT_FOUND", "Submission not found");
 
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
-  headers.set("etag", object.httpEtag);
-  headers.set("content-length", String(object.size));
-  headers.set("cache-control", "public, max-age=86400");
-  return new Response(object.body, { status: 200, headers });
-});
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+    headers.set("content-length", String(object.size));
+    headers.set("cache-control", "public, max-age=86400");
+    return new Response(object.body, { status: 200, headers });
+  });

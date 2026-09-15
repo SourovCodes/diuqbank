@@ -3,7 +3,7 @@ import type {
   ContributorList,
   ListContributorsQuery,
 } from "@qb/shared";
-import { asc, count, desc, eq, isNotNull } from "drizzle-orm";
+import { asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -14,11 +14,7 @@ import {
   submissions,
   user,
 } from "../db/schema";
-import {
-  countWhereStatus,
-  questionSummaryColumns,
-  submissionStatusOrder,
-} from "./common";
+import { countWhereStatus, submissionStatusOrder } from "./common";
 
 /** Per-status submission counts for every user who has uploaded something. */
 function uploaderCounts(db: Database) {
@@ -94,8 +90,8 @@ export async function getContributor(
     .limit(1);
   if (!contributor) return null;
 
-  // Drizzle only nests selected fields one level deep, so select the question columns
-  // at the top level and reshape below.
+  // A submission's classification comes from its question when linked, otherwise from
+  // its proposed values: existing ids are joined, new names are read from the row.
   const rows = await db
     .select({
       submission: {
@@ -103,25 +99,74 @@ export async function getContributor(
         status: submissions.status,
         fileSize: submissions.fileSize,
         createdAt: submissions.createdAt,
+        questionId: submissions.questionId,
       },
-      ...questionSummaryColumns,
+      department: {
+        id: departments.id,
+        name: departments.name,
+        shortName: departments.shortName,
+      },
+      course: { id: courses.id, name: courses.name },
+      semester: { id: semesters.id, name: semesters.name },
+      examType: { id: examTypes.id, name: examTypes.name },
+      customDepartmentName: submissions.customDepartmentName,
+      customDepartmentShortName: submissions.customDepartmentShortName,
+      customCourseName: submissions.customCourseName,
+      customSemesterName: submissions.customSemesterName,
     })
     .from(submissions)
-    .innerJoin(questions, eq(questions.id, submissions.questionId))
-    .innerJoin(departments, eq(departments.id, questions.departmentId))
-    .innerJoin(courses, eq(courses.id, questions.courseId))
-    .innerJoin(semesters, eq(semesters.id, questions.semesterId))
-    .innerJoin(examTypes, eq(examTypes.id, questions.examTypeId))
+    .leftJoin(questions, eq(questions.id, submissions.questionId))
+    .leftJoin(
+      departments,
+      eq(
+        departments.id,
+        sql`coalesce(${questions.departmentId}, ${submissions.departmentId})`,
+      ),
+    )
+    .leftJoin(
+      courses,
+      eq(
+        courses.id,
+        sql`coalesce(${questions.courseId}, ${submissions.courseId})`,
+      ),
+    )
+    .leftJoin(
+      semesters,
+      eq(
+        semesters.id,
+        sql`coalesce(${questions.semesterId}, ${submissions.semesterId})`,
+      ),
+    )
+    .leftJoin(
+      examTypes,
+      eq(
+        examTypes.id,
+        sql`coalesce(${questions.examTypeId}, ${submissions.examTypeId})`,
+      ),
+    )
     .where(eq(submissions.uploaderId, id))
     .orderBy(submissionStatusOrder, desc(submissions.createdAt));
 
   return {
     ...contributor,
     joinedAt: contributor.joinedAt.toISOString(),
-    submissions: rows.map(({ submission, ...question }) => ({
-      ...submission,
-      createdAt: submission.createdAt.toISOString(),
-      question,
+    submissions: rows.map((row) => ({
+      ...row.submission,
+      createdAt: row.submission.createdAt.toISOString(),
+      classification: {
+        department: row.department ?? {
+          id: null,
+          name: row.customDepartmentName ?? "",
+          shortName: row.customDepartmentShortName,
+        },
+        course: row.course ?? { id: null, name: row.customCourseName ?? "" },
+        semester: row.semester ?? {
+          id: null,
+          name: row.customSemesterName ?? "",
+        },
+        // Always present: required by the submissions CHECK constraint.
+        examType: row.examType!,
+      },
     })),
   };
 }

@@ -20,7 +20,7 @@ const NAV_ITEMS = [
 export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
-      <div className="container-page flex h-14 items-center gap-2 sm:gap-4">
+      <div className="container flex h-14 items-center gap-2 sm:gap-4">
         <Link
           to="/"
           className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"

@@ -1,0 +1,279 @@
+import type { Course, Department, ExamType, Semester } from "@qb/shared";
+import { MAX_SUBMISSION_FILE_BYTES } from "@qb/shared/constants";
+import { Info } from "lucide-react";
+import { useId, useState } from "react";
+import { Form } from "react-router";
+import { FormField, FormMessage } from "~/components/form";
+import { SearchableSelect } from "~/components/searchable-select";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { courseOptions, type SelectOption } from "~/lib/filters";
+import { formatBytes } from "~/lib/format";
+
+/** An existing value (by id) or a new name typed by the contributor. */
+export type Choice =
+  { kind: "existing"; id: string } | { kind: "new"; name: string } | null;
+
+const withArticle = (noun: string) =>
+  `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+
+type ChoiceFieldProps = {
+  label: string;
+  noun: string;
+  options: SelectOption[];
+  value: Choice;
+  onChange: (value: Choice) => void;
+  /** Form field for an existing value's id. */
+  idField: string;
+  /** Form field for a new name. Omit to only allow existing values. */
+  nameField?: string;
+  error?: string;
+  hint?: string;
+  children?: React.ReactNode;
+};
+
+function ChoiceField({
+  label,
+  noun,
+  options,
+  value,
+  onChange,
+  idField,
+  nameField,
+  error,
+  hint,
+  children,
+}: ChoiceFieldProps) {
+  return (
+    <div className="grid content-start gap-1.5">
+      <SearchableSelect
+        label={label}
+        placeholder={`Select ${withArticle(noun)}`}
+        searchPlaceholder={
+          nameField ? `Search or add ${noun}…` : `Search ${noun}s…`
+        }
+        emptyText={
+          nameField ? `Type a name to add a new ${noun}.` : `No ${noun} found.`
+        }
+        options={options}
+        value={value?.kind === "existing" ? value.id : null}
+        displayLabel={value?.kind === "new" ? `${value.name} (new)` : undefined}
+        clearable={false}
+        invalid={Boolean(error)}
+        onChange={(id) => onChange(id ? { kind: "existing", id } : null)}
+        onCreate={
+          nameField ? (name) => onChange({ kind: "new", name }) : undefined
+        }
+        createLabel={(name) => `Add “${name}” as a new ${noun}`}
+      />
+      {/* Only the chosen shape is submitted: an id, or a new name. */}
+      {value?.kind === "existing" && (
+        <input type="hidden" name={idField} value={value.id} />
+      )}
+      {value?.kind === "new" && nameField && (
+        <input type="hidden" name={nameField} value={value.name} />
+      )}
+      {error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : (
+        hint && <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+type ContributeFormProps = {
+  departments: Department[];
+  courses: Course[];
+  semesters: Semester[];
+  examTypes: ExamType[];
+  fieldErrors: Record<string, string>;
+  message?: string;
+  submitting: boolean;
+};
+
+export function ContributeForm({
+  departments,
+  courses,
+  semesters,
+  examTypes,
+  fieldErrors,
+  message,
+  submitting,
+}: ContributeFormProps) {
+  const [department, setDepartment] = useState<Choice>(null);
+  const [shortName, setShortName] = useState("");
+  const [course, setCourse] = useState<Choice>(null);
+  const [semester, setSemester] = useState<Choice>(null);
+  const [examType, setExamType] = useState<Choice>(null);
+  const shortNameId = useId();
+
+  const errorFor = (...fields: string[]) =>
+    fields.map((field) => fieldErrors[field]).find(Boolean);
+  const findCourse = (id: string) => courses.find((c) => String(c.id) === id);
+
+  const changeDepartment = (next: Choice) => {
+    setDepartment(next);
+    if (next?.kind !== "new") setShortName("");
+    // An existing course only fits its own department.
+    if (course?.kind === "existing") {
+      const current = findCourse(course.id);
+      if (
+        next?.kind !== "existing" ||
+        String(current?.departmentId) !== next.id
+      ) {
+        setCourse(null);
+      }
+    }
+  };
+
+  const changeCourse = (next: Choice) => {
+    setCourse(next);
+    // Picking an existing course first fills in its department.
+    if (next?.kind === "existing" && department === null) {
+      const picked = findCourse(next.id);
+      if (picked) {
+        setDepartment({ kind: "existing", id: String(picked.departmentId) });
+      }
+    }
+  };
+
+  // A new department can't contain existing courses.
+  const courseChoices =
+    department?.kind === "new"
+      ? []
+      : courseOptions(
+          courses,
+          departments,
+          department?.kind === "existing" ? department.id : null,
+        );
+
+  return (
+    <Form method="post" encType="multipart/form-data" className="max-w-3xl">
+      <Card className="gap-0 py-0">
+        <div className="grid gap-5 p-6 sm:grid-cols-2">
+          <ChoiceField
+            label="Department"
+            noun="department"
+            options={departments.map((d) => ({
+              value: String(d.id),
+              label: `${d.name} (${d.shortName})`,
+            }))}
+            value={department}
+            onChange={changeDepartment}
+            idField="departmentId"
+            nameField="customDepartmentName"
+            error={errorFor("departmentId", "customDepartmentName")}
+          >
+            {department?.kind === "new" && (
+              <div className="grid gap-1.5 pt-2">
+                <Label htmlFor={shortNameId}>
+                  Short name{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id={shortNameId}
+                  // Omitted from the form when empty.
+                  name={
+                    shortName.trim() ? "customDepartmentShortName" : undefined
+                  }
+                  value={shortName}
+                  onChange={(event) => setShortName(event.target.value)}
+                  placeholder="e.g. ME"
+                  maxLength={20}
+                  aria-invalid={
+                    fieldErrors.customDepartmentShortName ? true : undefined
+                  }
+                />
+                {fieldErrors.customDepartmentShortName && (
+                  <p className="text-sm text-destructive">
+                    {fieldErrors.customDepartmentShortName}
+                  </p>
+                )}
+              </div>
+            )}
+          </ChoiceField>
+
+          <ChoiceField
+            label="Course"
+            noun="course"
+            options={courseChoices}
+            value={course}
+            onChange={changeCourse}
+            idField="courseId"
+            nameField="customCourseName"
+            error={errorFor("courseId", "customCourseName")}
+            hint={
+              department?.kind === "new"
+                ? "Type the course name to add it to the new department."
+                : undefined
+            }
+          />
+
+          <ChoiceField
+            label="Semester"
+            noun="semester"
+            options={semesters.map((s) => ({
+              value: String(s.id),
+              label: s.name,
+            }))}
+            value={semester}
+            onChange={setSemester}
+            idField="semesterId"
+            nameField="customSemesterName"
+            error={errorFor("semesterId", "customSemesterName")}
+          />
+
+          <ChoiceField
+            label="Exam type"
+            noun="exam type"
+            options={examTypes.map((e) => ({
+              value: String(e.id),
+              label: e.name,
+            }))}
+            value={examType}
+            onChange={setExamType}
+            idField="examTypeId"
+            error={errorFor("examTypeId")}
+          />
+
+          <div className="grid gap-1.5 sm:col-span-2">
+            <FormField
+              label="PDF file"
+              name="file"
+              type="file"
+              accept="application/pdf,.pdf"
+              required
+              error={errorFor("file")}
+            />
+            <p className="text-xs text-muted-foreground">
+              PDF only, up to {formatBytes(MAX_SUBMISSION_FILE_BYTES)}.
+            </p>
+          </div>
+
+          {message && (
+            <div className="sm:col-span-2">
+              <FormMessage message={message} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-4 border-t bg-muted/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            Can’t find a department, course or semester? Type its name and
+            choose “Add”. New entries are reviewed by an admin.
+          </p>
+          <Button type="submit" disabled={submitting} className="shrink-0">
+            {submitting ? "Uploading…" : "Submit paper"}
+          </Button>
+        </div>
+      </Card>
+    </Form>
+  );
+}

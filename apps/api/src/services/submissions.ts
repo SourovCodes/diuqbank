@@ -1,0 +1,165 @@
+import {
+  MAX_SUBMISSION_FILE_BYTES,
+  type CreatedSubmission,
+  type SubmissionFields,
+} from "@qb/shared";
+import { and, eq } from "drizzle-orm";
+import type { Database } from "../db/client";
+import {
+  courses,
+  departments,
+  examTypes,
+  questions,
+  semesters,
+  submissions,
+} from "../db/schema";
+import { AppError } from "../lib/errors";
+
+const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
+
+async function assertIsPdf(file: File) {
+  if (file.size === 0 || file.size > MAX_SUBMISSION_FILE_BYTES) {
+    throw new AppError(
+      400,
+      "INVALID_FILE",
+      `The PDF must be smaller than ${MAX_SUBMISSION_FILE_BYTES / 1024 / 1024} MB`,
+    );
+  }
+  const header = new Uint8Array(
+    await file.slice(0, PDF_MAGIC_BYTES.length).arrayBuffer(),
+  );
+  if (!PDF_MAGIC_BYTES.every((byte, i) => header[i] === byte)) {
+    throw new AppError(400, "INVALID_FILE", "The file must be a PDF");
+  }
+}
+
+/**
+ * Checks that referenced ids exist and fit together. When every value is an existing
+ * one, finds or creates the matching question and returns its id; otherwise null.
+ */
+async function resolveQuestionId(
+  db: Database,
+  fields: SubmissionFields,
+): Promise<number | null> {
+  const [department, course, semester, examType] = await Promise.all([
+    fields.departmentId
+      ? db.query.departments.findFirst({
+          where: eq(departments.id, fields.departmentId),
+        })
+      : undefined,
+    fields.courseId
+      ? db.query.courses.findFirst({ where: eq(courses.id, fields.courseId) })
+      : undefined,
+    fields.semesterId
+      ? db.query.semesters.findFirst({
+          where: eq(semesters.id, fields.semesterId),
+        })
+      : undefined,
+    db.query.examTypes.findFirst({
+      where: eq(examTypes.id, fields.examTypeId),
+    }),
+  ]);
+
+  const issues: { path: string[]; message: string }[] = [];
+  if (fields.departmentId && !department) {
+    issues.push({ path: ["departmentId"], message: "Department not found" });
+  }
+  if (fields.courseId && !course) {
+    issues.push({ path: ["courseId"], message: "Course not found" });
+  } else if (course && department && course.departmentId !== department.id) {
+    issues.push({
+      path: ["courseId"],
+      message: "This course doesn't belong to the selected department",
+    });
+  }
+  if (fields.semesterId && !semester) {
+    issues.push({ path: ["semesterId"], message: "Semester not found" });
+  }
+  if (!examType) {
+    issues.push({ path: ["examTypeId"], message: "Exam type not found" });
+  }
+  if (issues.length > 0) {
+    throw new AppError(
+      422,
+      "VALIDATION_ERROR",
+      "Request validation failed",
+      issues,
+    );
+  }
+
+  if (!department || !course || !semester || !examType) return null;
+
+  const combination = and(
+    eq(questions.courseId, course.id),
+    eq(questions.semesterId, semester.id),
+    eq(questions.examTypeId, examType.id),
+  );
+  // Insert-or-ignore keeps concurrent uploads for the same combination safe.
+  await db
+    .insert(questions)
+    .values({
+      departmentId: department.id,
+      courseId: course.id,
+      semesterId: semester.id,
+      examTypeId: examType.id,
+    })
+    .onConflictDoNothing();
+  const question = await db.query.questions.findFirst({
+    columns: { id: true },
+    where: combination,
+  });
+  return question?.id ?? null;
+}
+
+export async function createSubmission(
+  db: Database,
+  bucket: R2Bucket,
+  params: { fields: SubmissionFields; file: File; uploaderId: string },
+): Promise<CreatedSubmission> {
+  const { fields, file } = params;
+  await assertIsPdf(file);
+  const questionId = await resolveQuestionId(db, fields);
+
+  const id = crypto.randomUUID();
+  const fileKey = `submissions/${id}.pdf`;
+  await bucket.put(fileKey, file, {
+    httpMetadata: { contentType: "application/pdf" },
+  });
+
+  // Either linked to a question, or carrying the proposed values for admin review.
+  const classification =
+    questionId !== null
+      ? { questionId }
+      : {
+          departmentId: fields.departmentId ?? null,
+          customDepartmentName: fields.customDepartmentName ?? null,
+          customDepartmentShortName: fields.customDepartmentShortName ?? null,
+          courseId: fields.courseId ?? null,
+          customCourseName: fields.customCourseName ?? null,
+          semesterId: fields.semesterId ?? null,
+          customSemesterName: fields.customSemesterName ?? null,
+          examTypeId: fields.examTypeId,
+        };
+
+  try {
+    const [row] = await db
+      .insert(submissions)
+      .values({
+        id,
+        fileKey,
+        fileSize: file.size,
+        uploaderId: params.uploaderId,
+        ...classification,
+      })
+      .returning({
+        id: submissions.id,
+        status: submissions.status,
+        questionId: submissions.questionId,
+      });
+    return row!;
+  } catch (err) {
+    // Don't leave an orphaned file behind if the insert fails.
+    await bucket.delete(fileKey);
+    throw err;
+  }
+}

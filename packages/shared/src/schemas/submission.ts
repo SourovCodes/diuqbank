@@ -1,0 +1,120 @@
+import { z } from "zod";
+import { submissionStatusSchema } from "./question";
+import { examTypeSchema, idQuerySchema } from "./taxonomy";
+
+const newName = z
+  .string()
+  .trim()
+  .min(2, "Must be at least 2 characters")
+  .max(100, "Must be at most 100 characters");
+
+/**
+ * Classification fields sent as multipart form data when contributing a paper.
+ * Department, course and semester are each either an existing id or a new name
+ * (reviewed by an admin); the exam type must be an existing one.
+ */
+export const submissionFieldsSchema = z.object({
+  departmentId: idQuerySchema.optional(),
+  customDepartmentName: newName.optional(),
+  customDepartmentShortName: z
+    .string()
+    .trim()
+    .min(2, "Must be at least 2 characters")
+    .max(20, "Must be at most 20 characters")
+    .optional(),
+  courseId: idQuerySchema.optional(),
+  customCourseName: newName.optional(),
+  semesterId: idQuerySchema.optional(),
+  customSemesterName: newName.optional(),
+  examTypeId: z.coerce
+    .number({ error: "Select an exam type" })
+    .int()
+    .positive("Select an exam type"),
+});
+export type SubmissionFields = z.infer<typeof submissionFieldsSchema>;
+
+const CHOICES = [
+  ["departmentId", "customDepartmentName", "department"],
+  ["courseId", "customCourseName", "course"],
+  ["semesterId", "customSemesterName", "semester"],
+] as const;
+
+type IssueSink = {
+  addIssue: (issue: {
+    code: "custom";
+    path: PropertyKey[];
+    message: string;
+  }) => void;
+};
+
+/** Cross-field rules. Kept separate so the API can apply them after adding `file`. */
+export function refineSubmissionFields(
+  value: SubmissionFields,
+  ctx: IssueSink,
+) {
+  for (const [idKey, nameKey, label] of CHOICES) {
+    const hasId = value[idKey] !== undefined;
+    const hasName = value[nameKey] !== undefined;
+    if (hasId === hasName) {
+      ctx.addIssue({
+        code: "custom",
+        path: [idKey],
+        message: hasId
+          ? `Choose an existing ${label} or add a new one, not both`
+          : `Select a ${label} or add a new one`,
+      });
+    }
+  }
+  if (
+    value.customDepartmentShortName !== undefined &&
+    value.customDepartmentName === undefined
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["customDepartmentShortName"],
+      message: "Only a new department needs a short name",
+    });
+  }
+  // Only when the department is genuinely new (not already flagged above as ambiguous).
+  if (
+    value.customDepartmentName !== undefined &&
+    value.departmentId === undefined &&
+    value.courseId !== undefined
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["courseId"],
+      message: "A new department can only have a new course",
+    });
+  }
+}
+
+export const createSubmissionInputSchema = submissionFieldsSchema.superRefine(
+  refineSubmissionFields,
+);
+
+export const createdSubmissionSchema = z.object({
+  id: z.string(),
+  status: submissionStatusSchema,
+  /** Null when the submission uses new values that an admin still has to create. */
+  questionId: z.number().int().nullable(),
+});
+export type CreatedSubmission = z.infer<typeof createdSubmissionSchema>;
+
+/**
+ * What a submission was filed under. An `id` of null means a new value proposed by
+ * the uploader that doesn't exist yet.
+ */
+export const submissionClassificationSchema = z.object({
+  department: z.object({
+    id: z.number().int().nullable(),
+    name: z.string(),
+    shortName: z.string().nullable(),
+  }),
+  course: z.object({ id: z.number().int().nullable(), name: z.string() }),
+  semester: z.object({ id: z.number().int().nullable(), name: z.string() }),
+  examType: examTypeSchema,
+});
+export type SubmissionClassification = z.infer<
+  typeof submissionClassificationSchema
+>;

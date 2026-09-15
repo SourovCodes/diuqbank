@@ -14,11 +14,15 @@ questions (id, department_id, course_id, semester_id, exam_type_id)
      │   · FK (course_id, department_id) → courses (id, department_id),
      │     so a question's department always matches its course's department
      │
-submissions (id, question_id, status, file_key, file_size, uploader_id)
+submissions (id, question_id?, status, file_key, file_size, uploader_id,
+             department_id? | custom_department_name (+ custom_department_short_name),
+             course_id? | custom_course_name, semester_id? | custom_semester_name, exam_type_id?)
          status: pending_review | published | rejected — only published PDFs are public
 ```
 
-PDFs live in R2 under `file_key`. Questions only appear publicly once they have at least one published submission.
+PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
+
+When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). If any value is new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
 
 ## Stack
 

@@ -7,7 +7,7 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 - `pnpm check` – run before considering work done (lint, format, typecheck, tests).
 - `pnpm --filter @qb/api test` / `pnpm --filter @qb/web test` – package tests.
 - `pnpm test:e2e` – Playwright; needs `pnpm db:migrate && pnpm db:seed` first (tests rely on `apps/api/seeds/dev.sql`).
-- After editing `apps/api/src/db/schema/*`: `pnpm db:generate` (never hand-edit generated migrations), then `pnpm db:migrate`.
+- After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns, as in `0001_submission_proposals.sql`.
 - After editing a `wrangler.jsonc`: `pnpm --filter <pkg> cf-typegen`.
 
 ## Conventions

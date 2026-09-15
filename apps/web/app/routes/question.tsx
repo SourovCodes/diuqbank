@@ -151,11 +151,11 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
 
         <aside className="order-1 lg:order-2">
           <div className="space-y-4 lg:sticky lg:top-20">
-            {selected && <UploaderCard submission={selected} />}
             <SubmissionList
               submissions={question.submissions}
               selectedId={selected?.id ?? null}
             />
+            {selected && <UploaderCard submission={selected} />}
           </div>
         </aside>
       </div>

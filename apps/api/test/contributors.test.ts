@@ -1,7 +1,9 @@
 import type { ContributorDetail, ContributorList } from "@qb/shared";
 import { describe, expect, it } from "vitest";
+import { submissions } from "../src/db/schema";
 import {
   api,
+  db,
   seedQuestion,
   seedSubmission,
   seedTaxonomy,
@@ -94,17 +96,59 @@ describe("GET /api/v1/contributors/:id", () => {
         status: "published",
         fileSize: published.fileSize,
         createdAt: published.createdAt.toISOString(),
-        question: {
-          id: midterm.id,
+        questionId: midterm.id,
+        classification: {
           department: t.cse,
           course: { id: t.algorithms.id, name: t.algorithms.name },
           semester: t.sem1,
           examType: t.midterm,
         },
       },
-      expect.objectContaining({ id: pending.id, status: "pending_review" }),
+      expect.objectContaining({
+        id: pending.id,
+        status: "pending_review",
+        questionId: final.id,
+      }),
     ]);
     expect(JSON.stringify(body)).not.toContain("@example.com");
+  });
+
+  it("shows proposed new values for submissions that have no question yet", async () => {
+    const { t } = await seedQuestions();
+    const contributor = await seedUser("Proposer");
+    const [proposal] = await db()
+      .insert(submissions)
+      .values({
+        fileKey: `submissions/${crypto.randomUUID()}.pdf`,
+        fileSize: 10,
+        uploaderId: contributor.id,
+        departmentId: t.cse.id,
+        customCourseName: "Compilers",
+        customSemesterName: "Summer Term",
+        examTypeId: t.final.id,
+      })
+      .returning();
+
+    const body = await (
+      await api(`/api/v1/contributors/${contributor.id}`)
+    ).json<ContributorDetail>();
+    expect(body.submissionCounts).toEqual({
+      published: 0,
+      pendingReview: 1,
+      rejected: 0,
+    });
+    expect(body.submissions).toEqual([
+      expect.objectContaining({
+        id: proposal!.id,
+        questionId: null,
+        classification: {
+          department: t.cse,
+          course: { id: null, name: "Compilers" },
+          semester: { id: null, name: "Summer Term" },
+          examType: t.final,
+        },
+      }),
+    ]);
   });
 
   it("404s for unknown users and users without submissions", async () => {

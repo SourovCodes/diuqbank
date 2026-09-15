@@ -71,3 +71,7 @@ INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_
   ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0, 'seed-user-2', 1773100800000, 1773100800000),
   ('seed-13', 1, 'pending_review', 'submissions/seed-13.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
   ('seed-14', 1, 'rejected', 'submissions/seed-14.pdf', 0, NULL, 1769904000000, 1769904000000);
+
+-- A pending submission proposing a new course and semester: no question until approved.
+INSERT INTO submissions (id, status, file_key, file_size, uploader_id, department_id, custom_course_name, custom_semester_name, exam_type_id, created_at, updated_at) VALUES
+  ('seed-15', 'pending_review', 'submissions/seed-15.pdf', 0, 'seed-user-3', 1, 'Operating Systems', 'Summer Term', 2, 1778544000000, 1778544000000);
