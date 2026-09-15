@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { paginatedSchema, paginationQuerySchema } from "./common";
-import { submissionCountsSchema, submissionStatusSchema } from "./question";
+import {
+  submissionCountsSchema,
+  submissionStatsSchema,
+  submissionStatusSchema,
+} from "./question";
 import { submissionClassificationSchema } from "./submission";
 
 /**
@@ -10,12 +14,13 @@ import { submissionClassificationSchema } from "./submission";
 export const contributorSchema = z.object({
   id: z.string(),
   name: z.string(),
+  image: z.string().nullable(),
   joinedAt: z.iso.datetime(),
   submissionCounts: submissionCountsSchema,
 });
 export type Contributor = z.infer<typeof contributorSchema>;
 
-export const contributorSubmissionSchema = z.object({
+export const contributorSubmissionSchema = submissionStatsSchema.extend({
   id: z.string(),
   status: submissionStatusSchema,
   fileSize: z.number().int(),

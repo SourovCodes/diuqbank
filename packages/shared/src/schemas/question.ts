@@ -13,14 +13,27 @@ export const submissionStatusSchema = z.enum(SUBMISSION_STATUSES);
 export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 
 /** Public identity of the user who uploaded a submission (never their email). */
-export const uploaderSchema = z.object({ id: z.string(), name: z.string() });
+export const uploaderSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** Profile image URL, or null to show initials. */
+  image: z.string().nullable(),
+});
 export type Uploader = z.infer<typeof uploaderSchema>;
+
+/** Engagement counters, maintained by the API (votes by database triggers). */
+export const submissionStatsSchema = z.object({
+  likeCount: z.number().int(),
+  dislikeCount: z.number().int(),
+  viewCount: z.number().int(),
+});
+export type SubmissionStats = z.infer<typeof submissionStatsSchema>;
 
 /**
  * Public submission metadata. Every status is listed so visitors can see that a paper
  * is already under review, but only `published` files can be downloaded.
  */
-export const submissionSchema = z.object({
+export const submissionSchema = submissionStatsSchema.extend({
   id: z.string(),
   status: submissionStatusSchema,
   fileSize: z.number().int(),
@@ -49,11 +62,16 @@ export type QuestionSummary = z.infer<typeof questionSummarySchema>;
 
 export const questionSchema = questionSummarySchema.extend({
   submissionCounts: submissionCountsSchema,
+  /** Question page views, counted separately from each paper's views. */
+  viewCount: z.number().int(),
 });
 export type Question = z.infer<typeof questionSchema>;
 
 export const questionDetailSchema = questionSchema.extend({
-  /** Published first (newest first), then pending review, then rejected. */
+  /**
+   * Published first, then pending review, then rejected. Within a status, ranked by
+   * score (likes − dislikes), then views, then newest.
+   */
   submissions: z.array(submissionSchema),
 });
 export type QuestionDetail = z.infer<typeof questionDetailSchema>;

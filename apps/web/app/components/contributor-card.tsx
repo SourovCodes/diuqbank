@@ -14,7 +14,7 @@ export function ContributorCard({ contributor }: { contributor: Contributor }) {
       prefetch="intent"
       className="group flex h-full items-center gap-4 rounded-xl border bg-card p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
     >
-      <ContributorAvatar name={contributor.name} />
+      <ContributorAvatar name={contributor.name} image={contributor.image} />
       <div className="min-w-0 flex-1 space-y-1">
         <h3 className="truncate font-medium group-hover:text-primary">
           {contributor.name}

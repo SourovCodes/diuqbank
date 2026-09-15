@@ -47,7 +47,13 @@ export default function ContributorPage({ loaderData }: Route.ComponentProps) {
         eyebrow="Contributor"
         title={contributor.name}
         description={`Joined ${formatMonth(contributor.joinedAt)}`}
-        actions={<ContributorAvatar name={contributor.name} size="lg" />}
+        actions={
+          <ContributorAvatar
+            name={contributor.name}
+            image={contributor.image}
+            size="lg"
+          />
+        }
       />
 
       <dl className="grid grid-cols-3 gap-3 sm:gap-4">

@@ -121,6 +121,30 @@ export async function seedSubmission(
   return row!;
 }
 
+/** Signs up a fresh user and also returns their id. */
+export async function signUpUser() {
+  const { email, cookie } = await signUp();
+  const res = await api("/api/auth/get-session", { headers: { cookie } });
+  const session = await res.json<{ user: { id: string } }>();
+  return { email, cookie, id: session.user.id };
+}
+
+/** Request init for a JSON body, optionally signed in. */
+export function jsonRequest(
+  method: string,
+  body: unknown,
+  cookie?: string,
+): RequestInit {
+  return {
+    method,
+    headers: {
+      "content-type": "application/json",
+      ...(cookie ? { cookie } : {}),
+    },
+    body: JSON.stringify(body),
+  };
+}
+
 export function pdfFile(name = "paper.pdf") {
   return new File(["%PDF-1.7\n%test\n"], name, { type: "application/pdf" });
 }

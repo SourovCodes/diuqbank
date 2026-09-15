@@ -2,6 +2,8 @@
 -- Applied by `pnpm db:seed` (seeds/seed-local.mjs), which also uploads the PDFs to local R2.
 -- Timestamps are Unix milliseconds.
 
+DELETE FROM submission_reports;
+DELETE FROM submission_votes;
 DELETE FROM submissions;
 DELETE FROM questions;
 DELETE FROM courses;
@@ -77,3 +79,28 @@ INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_
 -- A pending submission proposing a new course and semester: no question until approved.
 INSERT INTO submissions (id, status, file_key, file_size, uploader_id, department_id, custom_course_name, custom_semester_name, exam_type_id, created_at, updated_at) VALUES
   ('seed-15', 'pending_review', 'submissions/seed-15.pdf', 0, 'seed-user-3', 1, 'Operating Systems', 'Summer Term', 2, 1778544000000, 1778544000000);
+
+-- Votes; the triggers fill in like_count and dislike_count. Nobody votes on their own paper.
+-- Question 1: seed-01 scores +2 and stays ranked first, seed-02 scores 0.
+INSERT INTO submission_votes (submission_id, user_id, value) VALUES
+  ('seed-01', 'seed-user-2', 1),
+  ('seed-01', 'seed-user-3', 1),
+  ('seed-02', 'seed-user-1', 1),
+  ('seed-02', 'seed-user-3', -1),
+  ('seed-04', 'seed-user-1', 1),
+  ('seed-04', 'seed-user-2', 1),
+  ('seed-07', 'seed-user-1', 1),
+  ('seed-11', 'seed-user-2', -1);
+
+-- One open report, below the auto-hide threshold; the trigger counts it.
+INSERT INTO submission_reports (submission_id, reporter_id, reason, details) VALUES
+  ('seed-02', 'seed-user-3', 'unreadable', 'The second page is too blurry to read.');
+
+-- View counters (question page views and paper views are counted separately).
+UPDATE questions SET view_count = 40 + id * 23;
+UPDATE submissions SET view_count = CASE id
+  WHEN 'seed-01' THEN 184
+  WHEN 'seed-02' THEN 97
+  WHEN 'seed-04' THEN 152
+  ELSE 12 + length(file_key) END
+WHERE status = 'published';

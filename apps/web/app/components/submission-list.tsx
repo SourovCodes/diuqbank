@@ -1,17 +1,44 @@
 import type { Submission } from "@qb/shared";
-import { Check, Clock, FileText, XCircle } from "lucide-react";
+import {
+  Check,
+  Clock,
+  Eye,
+  FileText,
+  ThumbsDown,
+  ThumbsUp,
+  XCircle,
+} from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Card } from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
-import { formatBytes } from "~/lib/format";
+import { formatCount } from "~/lib/format";
 import { plural, STATUS_LABELS } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 type SubmissionListProps = {
+  /** Already ranked by the API: best-rated published papers first. */
   submissions: Submission[];
   selectedId: string | null;
 };
+
+function Stat({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof Eye;
+  value: number;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-0.5 tabular-nums">
+      <Icon className="size-3" aria-hidden />
+      {formatCount(value)}
+      <span className="sr-only"> {label}</span>
+    </span>
+  );
+}
 
 export function SubmissionList({
   submissions,
@@ -29,6 +56,7 @@ export function SubmissionList({
         <h2 className="text-sm font-semibold">Submissions</h2>
         <p className="text-xs text-muted-foreground">
           {plural(published.length, "published paper")}
+          {published.length > 1 && ", best rated first"}
           {pendingCount > 0 && ` · ${pendingCount} pending review`}
         </p>
       </div>
@@ -61,9 +89,23 @@ export function SubmissionList({
                     <span className="block font-medium">
                       Paper {paperNumbers.get(submission.id)}
                     </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {formatBytes(submission.fileSize)} · Added{" "}
-                      {formatDate(submission.createdAt)}
+                    <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                      <Stat
+                        icon={ThumbsUp}
+                        value={submission.likeCount}
+                        label="likes"
+                      />
+                      <Stat
+                        icon={ThumbsDown}
+                        value={submission.dislikeCount}
+                        label="dislikes"
+                      />
+                      <Stat
+                        icon={Eye}
+                        value={submission.viewCount}
+                        label="views"
+                      />
+                      <span>Added {formatDate(submission.createdAt)}</span>
                     </span>
                   </span>
                   {active && (

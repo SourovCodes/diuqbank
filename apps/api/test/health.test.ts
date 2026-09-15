@@ -28,6 +28,13 @@ describe("system routes", () => {
         "/api/v1/me/submissions",
         "/api/v1/me/submissions/{id}",
         "/api/v1/me/submissions/{id}/file",
+        "/api/v1/questions/{id}/views",
+        "/api/v1/submissions/{id}/views",
+        "/api/v1/submissions/{id}/vote",
+        "/api/v1/submissions/{id}/reports",
+        "/api/v1/me/questions/{id}/interactions",
+        "/api/v1/me/avatar",
+        "/api/v1/avatars/{id}",
       ]),
     );
   });

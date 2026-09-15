@@ -51,12 +51,14 @@ describe("GET /api/v1/contributors", () => {
       {
         id: top.id,
         name: "Top Contributor",
+        image: null,
         joinedAt: top.createdAt.toISOString(),
         submissionCounts: { published: 2, pendingReview: 0, rejected: 1 },
       },
       {
         id: newcomer.id,
         name: "Newcomer",
+        image: null,
         joinedAt: newcomer.createdAt.toISOString(),
         submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
       },
@@ -97,6 +99,9 @@ describe("GET /api/v1/contributors/:id", () => {
         fileSize: published.fileSize,
         createdAt: published.createdAt.toISOString(),
         questionId: midterm.id,
+        likeCount: 0,
+        dislikeCount: 0,
+        viewCount: 0,
         classification: {
           department: t.cse,
           course: { id: t.algorithms.id, name: t.algorithms.name },

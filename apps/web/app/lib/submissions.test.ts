@@ -7,6 +7,9 @@ const submission = (id: string, status: Submission["status"]): Submission => ({
   status,
   fileSize: 1000,
   createdAt: "2026-01-01T00:00:00.000Z",
+  likeCount: 0,
+  dislikeCount: 0,
+  viewCount: 0,
   uploader: null,
 });
 
@@ -18,7 +21,7 @@ const submissions = [
 ];
 
 describe("pickSubmission", () => {
-  it("defaults to the first published submission", () => {
+  it("defaults to the first (best ranked) published submission", () => {
     expect(pickSubmission(submissions, null)?.id).toBe("a");
   });
 

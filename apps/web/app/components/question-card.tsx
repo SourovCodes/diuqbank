@@ -1,7 +1,8 @@
 import type { Question } from "@qb/shared";
-import { ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, Eye, FileText } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
+import { formatViews } from "~/lib/format";
 import { plural } from "~/lib/submissions";
 
 export function QuestionCard({ question }: { question: Question }) {
@@ -23,7 +24,7 @@ export function QuestionCard({ question }: { question: Question }) {
           {question.department.shortName} · {question.semester.name} ·{" "}
           {question.examType.name}
         </p>
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <Badge variant="secondary">
             {published > 0 ? plural(published, "paper") : "No papers yet"}
           </Badge>
@@ -35,6 +36,10 @@ export function QuestionCard({ question }: { question: Question }) {
               {pendingReview} pending review
             </Badge>
           )}
+          <span className="inline-flex items-center gap-1 px-1 text-xs text-muted-foreground">
+            <Eye className="size-3" aria-hidden />
+            {formatViews(question.viewCount)}
+          </span>
         </div>
       </div>
       <ChevronRight

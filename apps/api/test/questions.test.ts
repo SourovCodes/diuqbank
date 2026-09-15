@@ -72,6 +72,7 @@ describe("GET /api/v1/questions", () => {
         semester: t.sem1,
         examType: t.midterm,
         submissionCounts: { published: 2, pendingReview: 0, rejected: 1 },
+        viewCount: 0,
       },
       expect.objectContaining({
         id: pendingOnly.id,
@@ -180,7 +181,10 @@ describe("GET /api/v1/questions/:id", () => {
       await api(`/api/v1/questions/${question.id}`)
     ).json<QuestionDetail>();
     expect(body.submissions.map((s) => [s.id, s.uploader])).toEqual([
-      [withUploader.id, { id: uploader.id, name: "Ayesha Rahman" }],
+      [
+        withUploader.id,
+        { id: uploader.id, name: "Ayesha Rahman", image: null },
+      ],
       [anonymous.id, null],
     ]);
     expect(JSON.stringify(body)).not.toContain("@example.com");

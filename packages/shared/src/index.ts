@@ -2,6 +2,7 @@ export * from "./constants";
 export * from "./schemas/account";
 export * from "./schemas/common";
 export * from "./schemas/contributor";
+export * from "./schemas/engagement";
 export * from "./schemas/question";
 export * from "./schemas/submission";
 export * from "./schemas/taxonomy";

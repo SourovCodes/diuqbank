@@ -28,6 +28,8 @@ export const questions = sqliteTable(
     examTypeId: integer()
       .notNull()
       .references(() => examTypes.id),
+    /** Question page views. Incremented directly, anyone can count a view. */
+    viewCount: integer().notNull().default(0),
     ...timestamps,
   },
   (t) => [
@@ -84,6 +86,15 @@ export const submissions = sqliteTable(
     fileKey: text().notNull().unique(),
     fileSize: integer().notNull(),
     uploaderId: text().references(() => user.id, { onDelete: "set null" }),
+
+    // Denormalised counters. Likes, dislikes and pending reports are maintained by
+    // triggers on submission_votes / submission_reports (migration 0003); never write
+    // them from application code.
+    likeCount: integer().notNull().default(0),
+    dislikeCount: integer().notNull().default(0),
+    pendingReportCount: integer().notNull().default(0),
+    /** Paper views. Incremented directly, anyone can count a view. */
+    viewCount: integer().notNull().default(0),
     ...timestamps,
   },
   (t) => [
