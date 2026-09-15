@@ -20,11 +20,11 @@ export function AuthCard({
   children,
 }: AuthCardProps) {
   return (
-    <div className="mx-auto w-full max-w-sm pt-4 sm:pt-12">
+    <div className="mx-auto w-full max-w-sm py-4 sm:py-12">
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">
-            <h1>{title}</h1>
+          <CardTitle>
+            <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>

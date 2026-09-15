@@ -3,8 +3,9 @@ import type {
   Question,
   QuestionDetail,
   QuestionList,
+  SubmissionStatus,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -15,25 +16,31 @@ import {
   submissions,
 } from "../db/schema";
 
-/** Subquery of published submission counts per question. */
-function publishedCounts(db: Database) {
+const countWhereStatus = (status: SubmissionStatus) =>
+  sql<number>`sum(case when ${submissions.status} = ${status} then 1 else 0 end)`;
+
+/** Subquery with per-status submission counts for each question that has submissions. */
+function submissionCounts(db: Database) {
   return db
     .select({
       questionId: submissions.questionId,
-      count: count().as("published_count"),
+      published: countWhereStatus("published").as("published_count"),
+      pendingReview: countWhereStatus("pending_review").as(
+        "pending_review_count",
+      ),
+      rejected: countWhereStatus("rejected").as("rejected_count"),
     })
     .from(submissions)
-    .where(eq(submissions.status, "published"))
     .groupBy(submissions.questionId)
-    .as("published");
+    .as("submission_counts");
 }
 
 /**
- * Questions joined with their lookup names. Inner-joining the published counts means
- * questions without any published submission are never exposed.
+ * Questions joined with their lookup names and submission counts. Inner-joining the
+ * counts means only questions with at least one submission (of any status) are listed.
  */
 function selectQuestions(db: Database) {
-  const published = publishedCounts(db);
+  const counts = submissionCounts(db);
   return db
     .select({
       id: questions.id,
@@ -45,10 +52,14 @@ function selectQuestions(db: Database) {
       course: { id: courses.id, name: courses.name },
       semester: { id: semesters.id, name: semesters.name },
       examType: { id: examTypes.id, name: examTypes.name },
-      publishedSubmissionCount: published.count,
+      submissionCounts: {
+        published: counts.published,
+        pendingReview: counts.pendingReview,
+        rejected: counts.rejected,
+      },
     })
     .from(questions)
-    .innerJoin(published, eq(published.questionId, questions.id))
+    .innerJoin(counts, eq(counts.questionId, questions.id))
     .innerJoin(departments, eq(departments.id, questions.departmentId))
     .innerJoin(courses, eq(courses.id, questions.courseId))
     .innerJoin(semesters, eq(semesters.id, questions.semesterId))
@@ -72,7 +83,7 @@ export async function listQuestions(
   query: ListQuestionsQuery,
 ): Promise<QuestionList> {
   const where = questionFilters(query);
-  const published = publishedCounts(db);
+  const counts = submissionCounts(db);
 
   const [items, totals] = await Promise.all([
     selectQuestions(db)
@@ -88,7 +99,7 @@ export async function listQuestions(
     db
       .select({ total: count() })
       .from(questions)
-      .innerJoin(published, eq(published.questionId, questions.id))
+      .innerJoin(counts, eq(counts.questionId, questions.id))
       .where(where),
   ]);
 
@@ -100,6 +111,8 @@ export async function listQuestions(
   };
 }
 
+const statusOrder = sql`case ${submissions.status} when 'published' then 0 when 'pending_review' then 1 else 2 end`;
+
 export async function getQuestion(
   db: Database,
   id: number,
@@ -109,17 +122,18 @@ export async function getQuestion(
     .limit(1);
   if (!question) return null;
 
+  // Metadata only: file keys never leave the API, and files are served separately
+  // (published submissions only).
   const rows = await db
     .select({
       id: submissions.id,
+      status: submissions.status,
       fileSize: submissions.fileSize,
       createdAt: submissions.createdAt,
     })
     .from(submissions)
-    .where(
-      and(eq(submissions.questionId, id), eq(submissions.status, "published")),
-    )
-    .orderBy(desc(submissions.createdAt));
+    .where(eq(submissions.questionId, id))
+    .orderBy(statusOrder, desc(submissions.createdAt));
 
   return {
     ...question,

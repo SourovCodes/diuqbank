@@ -1,12 +1,19 @@
 import { BookOpen, Upload } from "lucide-react";
-import { Form, Link } from "react-router";
+import { Form, Link, NavLink } from "react-router";
 import { Button, buttonVariants } from "~/components/ui/button";
 import type { SessionUser } from "~/lib/types";
+import { cn } from "~/lib/utils";
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    buttonVariants({ variant: "ghost", size: "sm" }),
+    isActive ? "bg-accent text-foreground" : "text-muted-foreground",
+  );
 
 export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
-    <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 sm:gap-4">
+    <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
+      <div className="container-page flex h-14 items-center gap-2 sm:gap-4">
         <Link
           to="/"
           className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
@@ -16,24 +23,22 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
           <span className="sr-only sm:not-sr-only">QuestionBank</span>
         </Link>
         <nav className="ml-auto flex items-center gap-1 sm:gap-2">
-          <Link
-            to="/questions"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
+          <NavLink to="/questions" className={navLinkClass}>
             Questions
-          </Link>
+          </NavLink>
           {/* Icon-only on phones so the header never overflows. */}
-          <Link
+          <NavLink
             to="/contribute"
             aria-label="Contribute"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
+            className={navLinkClass}
           >
             <Upload aria-hidden />
             <span className="hidden sm:inline">Contribute</span>
-          </Link>
+          </NavLink>
+          <span className="mx-1 hidden h-5 w-px bg-border sm:block" />
           {user ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
+              <span className="hidden text-sm text-muted-foreground md:inline">
                 {user.name}
               </span>
               <Form method="post" action="/logout">

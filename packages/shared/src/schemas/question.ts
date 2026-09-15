@@ -12,13 +12,24 @@ import {
 export const submissionStatusSchema = z.enum(SUBMISSION_STATUSES);
 export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 
-/** A submission as shown publicly (only `published` submissions are ever exposed). */
-export const publishedSubmissionSchema = z.object({
+/**
+ * Public submission metadata. Every status is listed so visitors can see that a paper
+ * is already under review, but only `published` files can be downloaded.
+ */
+export const submissionSchema = z.object({
   id: z.string(),
+  status: submissionStatusSchema,
   fileSize: z.number().int(),
   createdAt: z.iso.datetime(),
 });
-export type PublishedSubmission = z.infer<typeof publishedSubmissionSchema>;
+export type Submission = z.infer<typeof submissionSchema>;
+
+export const submissionCountsSchema = z.object({
+  published: z.number().int(),
+  pendingReview: z.number().int(),
+  rejected: z.number().int(),
+});
+export type SubmissionCounts = z.infer<typeof submissionCountsSchema>;
 
 /** A question is a unique department + course + semester + exam type combination. */
 export const questionSchema = z.object({
@@ -27,12 +38,13 @@ export const questionSchema = z.object({
   course: courseSchema.pick({ id: true, name: true }),
   semester: semesterSchema,
   examType: examTypeSchema,
-  publishedSubmissionCount: z.number().int(),
+  submissionCounts: submissionCountsSchema,
 });
 export type Question = z.infer<typeof questionSchema>;
 
 export const questionDetailSchema = questionSchema.extend({
-  submissions: z.array(publishedSubmissionSchema),
+  /** Published first (newest first), then pending review, then rejected. */
+  submissions: z.array(submissionSchema),
 });
 export type QuestionDetail = z.infer<typeof questionDetailSchema>;
 

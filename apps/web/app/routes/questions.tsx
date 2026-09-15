@@ -5,10 +5,14 @@ import type {
   QuestionList,
   SemesterList,
 } from "@qb/shared";
+import { SearchX } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
+import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
 import { QuestionCard } from "~/components/question-card";
 import { SearchableSelect } from "~/components/searchable-select";
 import { buttonVariants } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
 import {
   applyFilter,
@@ -16,6 +20,7 @@ import {
   FILTER_KEYS,
   type FilterKey,
 } from "~/lib/filters";
+import { plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/questions";
 
@@ -88,18 +93,16 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Browse questions</h1>
-        <p className="text-muted-foreground">
-          Combine any of the filters below to find question papers.
-        </p>
-      </header>
+    <div className="space-y-8">
+      <PageHeader
+        title="Browse questions"
+        description="Combine any of the filters below to find question papers."
+      />
 
-      <div
+      <Card
         role="search"
         aria-label="Filter questions"
-        className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <SearchableSelect
           label="Department"
@@ -146,22 +149,22 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
           value={searchParams.get("examTypeId")}
           onChange={(value) => setFilter("examTypeId", value)}
         />
-      </div>
+      </Card>
 
       <section
         aria-labelledby="results-heading"
         aria-busy={loading}
         className={cn("space-y-4 transition-opacity", loading && "opacity-60")}
       >
-        <div className="flex items-baseline justify-between">
-          <h2 id="results-heading" className="text-lg font-semibold">
-            {list.total} {list.total === 1 ? "question" : "questions"}
+        <div className="flex items-center justify-between">
+          <h2 id="results-heading" className="text-sm font-medium">
+            {plural(list.total, "question")}
           </h2>
           {hasFilters && (
             <Link
               to="/questions"
               preventScrollReset
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Clear filters
             </Link>
@@ -175,11 +178,19 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         )}
 
         {list.items.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
-            {hasFilters
-              ? "No questions match these filters."
-              : "No questions have been published yet."}
-          </div>
+          <EmptyState
+            icon={SearchX}
+            title={
+              hasFilters
+                ? "No questions match these filters"
+                : "No questions yet"
+            }
+            description={
+              hasFilters
+                ? "Try removing a filter or choosing a different combination."
+                : "Question papers will show up here once they are contributed."
+            }
+          />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {list.items.map((question) => (
@@ -193,7 +204,7 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         {totalPages > 1 && (
           <nav
             aria-label="Pagination"
-            className="flex items-center justify-center gap-3"
+            className="flex items-center justify-center gap-3 pt-2"
           >
             {list.page > 1 && (
               <Link

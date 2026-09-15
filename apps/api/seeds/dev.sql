@@ -59,4 +59,6 @@ INSERT INTO submissions (id, question_id, status, file_key, file_size) VALUES
   ('seed-09', 8, 'published', 'submissions/seed-09.pdf', 0),
   ('seed-10', 9, 'pending_review', 'submissions/seed-10.pdf', 0),
   ('seed-11', 10, 'published', 'submissions/seed-11.pdf', 0),
-  ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0);
+  ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0),
+  ('seed-13', 1, 'pending_review', 'submissions/seed-13.pdf', 0),
+  ('seed-14', 1, 'rejected', 'submissions/seed-14.pdf', 0);

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // These tests rely on the local seed data: `pnpm db:migrate && pnpm db:seed`.
+// Question 1 (Data Structures) has 2 published, 1 pending and 1 rejected submission.
 
 test("landing page leads to the questions page", async ({ page }) => {
   await page.goto("/");
@@ -51,14 +52,59 @@ test("course filter follows the selected department", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
   );
+});
+
+test("question page shows the PDF and lets you switch submissions", async ({
+  page,
+}) => {
+  await page.goto("/questions/1");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Data Structures",
+  );
+
+  // The first published paper is selected and rendered by the viewer.
+  await expect(page.getByRole("link", { name: /Paper 1/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await expect(
-    page.getByRole("link", { name: "Open PDF" }).first(),
+    page.getByTestId("pdf-viewer").locator("canvas").first(),
   ).toBeVisible();
+
+  await page.getByRole("link", { name: /Paper 2/ }).click();
+  await expect(page).toHaveURL(/submission=seed-/);
+  await expect(page.getByRole("link", { name: /Paper 2/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  await expect(
+    page.getByTestId("pdf-viewer").locator("canvas").first(),
+  ).toBeVisible();
+
+  // Unpublished submissions are listed but can't be opened.
+  await expect(page.getByText("Pending review", { exact: true })).toBeVisible();
+  await expect(page.getByText("Rejected", { exact: true })).toBeVisible();
+  const pendingFile = await page.request.get(
+    "/api/v1/submissions/seed-13/file",
+  );
+  expect(pendingFile.status()).toBe(404);
+});
+
+test("question with only pending submissions explains the review", async ({
+  page,
+}) => {
+  // Question 9 (Marketing Management) only has a pending submission.
+  await page.goto("/questions/9");
+  await expect(page.getByText("No published paper yet")).toBeVisible();
+  await expect(
+    page.getByText(/waiting for admin review/).first(),
+  ).toBeVisible();
+  await expect(page.getByTestId("pdf-viewer")).toHaveCount(0);
 });
 
 test("contribute page is a placeholder", async ({ page }) => {
   await page.goto("/contribute");
-  await expect(page.getByText("coming soon")).toBeVisible();
+  await expect(page.getByText("Uploads are coming soon")).toBeVisible();
 });
 
 test("a user can sign up and log out", async ({ page }) => {

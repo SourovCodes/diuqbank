@@ -1,6 +1,7 @@
 import { ArrowRight, Download, SlidersHorizontal, Users } from "lucide-react";
 import { Link } from "react-router";
 import { buttonVariants } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import type { Route } from "./+types/home";
 
 export const meta: Route.MetaFunction = () => [
@@ -21,9 +22,9 @@ const FEATURES = [
   },
   {
     icon: Download,
-    title: "Open or download",
+    title: "Read anywhere",
     description:
-      "Every question paper is a PDF you can read on any device or save for later.",
+      "View papers right in the browser on any device, or download the PDF for later.",
   },
   {
     icon: Users,
@@ -35,18 +36,18 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <div className="space-y-16 pb-8">
-      <section className="space-y-6 pt-6 text-center sm:pt-16">
+    <div className="space-y-16 py-4 sm:py-12">
+      <section className="mx-auto max-w-3xl space-y-6 text-center">
         <p className="mx-auto w-fit rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
           Free · Community-contributed
         </p>
-        <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-6xl">
+        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
           Past question papers,{" "}
           <span className="text-primary">all in one place</span>
         </h1>
         <p className="mx-auto max-w-xl text-lg text-pretty text-muted-foreground">
           Find previous exam questions by department, course, semester and exam
-          type — then open or download the PDF.
+          type, then read them right in your browser.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link to="/questions" className={buttonVariants({ size: "lg" })}>
@@ -64,13 +65,13 @@ export default function Home() {
 
       <section aria-label="Features" className="grid gap-4 sm:grid-cols-3">
         {FEATURES.map(({ icon: Icon, title, description }) => (
-          <div key={title} className="rounded-xl border bg-card p-5 shadow-xs">
-            <div className="mb-3 w-fit rounded-lg bg-primary/10 p-2 text-primary">
+          <Card key={title} className="gap-3 p-6">
+            <div className="w-fit rounded-lg bg-primary/10 p-2.5 text-primary">
               <Icon className="size-5" aria-hidden />
             </div>
             <h2 className="font-semibold">{title}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </Card>
         ))}
       </section>
     </div>

@@ -1,16 +1,24 @@
 import type { QuestionDetail } from "@qb/shared";
-import { ArrowLeft, Download, FileText } from "lucide-react";
-import { data, Link } from "react-router";
+import { Clock, Download, ExternalLink, FileX } from "lucide-react";
+import { lazy, Suspense } from "react";
+import {
+  data,
+  Link,
+  useSearchParams,
+  type ShouldRevalidateFunctionArgs,
+} from "react-router";
+import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
+import { SubmissionList } from "~/components/submission-list";
+import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
+import { Skeleton } from "~/components/ui/skeleton";
+import { useHydrated } from "~/hooks/use-hydrated";
 import { apiFetch, readJson } from "~/lib/api.server";
-import { formatBytes } from "~/lib/format";
+import { plural, pickSubmission, submissionFileUrl } from "~/lib/submissions";
 import type { Route } from "./+types/question";
 
-// Fixed time zone so server and client render the same string (no hydration mismatch).
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-});
+const PdfViewer = lazy(() => import("~/components/pdf-viewer.client"));
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const res = await apiFetch(
@@ -23,6 +31,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   if (!res.ok) throw data("Failed to load question", { status: 502 });
   return { question: await readJson<QuestionDetail>(res) };
+}
+
+// Switching submissions only changes `?submission=`, which the loader doesn't use.
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (formMethod || currentUrl.pathname !== nextUrl.pathname) {
+    return defaultShouldRevalidate;
+  }
+  const withoutSubmission = (url: URL) => {
+    const params = new URLSearchParams(url.search);
+    params.delete("submission");
+    return params.toString();
+  };
+  return withoutSubmission(currentUrl) !== withoutSubmission(nextUrl);
 }
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
@@ -39,93 +65,105 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   ];
 };
 
+function ViewerSkeleton() {
+  return (
+    <Skeleton className="h-[calc(75vh+2.75rem)] min-h-[30.75rem] rounded-xl" />
+  );
+}
+
 export default function QuestionPage({ loaderData }: Route.ComponentProps) {
   const { question } = loaderData;
+  const [searchParams] = useSearchParams();
+  const hydrated = useHydrated();
+  const selected = pickSubmission(
+    question.submissions,
+    searchParams.get("submission"),
+  );
+  const { pendingReview } = question.submissionCounts;
+  const fileUrl = selected ? submissionFileUrl(selected.id) : null;
 
   return (
-    <article className="mx-auto max-w-2xl space-y-6">
-      <Link
-        to="/questions"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        All questions
-      </Link>
-
-      <header className="space-y-2">
-        <p className="text-sm font-medium text-primary">
-          {question.department.name}
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight text-balance">
-          {question.course.name}
-        </h1>
-      </header>
-
-      <dl className="grid grid-cols-2 gap-4 rounded-xl border bg-card p-4 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="text-muted-foreground">Department</dt>
-          <dd className="font-medium">{question.department.shortName}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Semester</dt>
-          <dd className="font-medium">{question.semester.name}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Exam type</dt>
-          <dd className="font-medium">{question.examType.name}</dd>
-        </div>
-      </dl>
-
-      <section aria-labelledby="papers-heading" className="space-y-3">
-        <h2 id="papers-heading" className="text-lg font-semibold">
-          Question papers
-        </h2>
-        <ul className="divide-y rounded-xl border bg-card">
-          {question.submissions.map((submission, index) => {
-            const fileUrl = `/api/v1/submissions/${submission.id}/file`;
-            return (
-              <li
-                key={submission.id}
-                className="flex flex-wrap items-center gap-3 p-4"
+    <div className="space-y-6">
+      <PageHeader
+        back={{ to: "/questions", label: "All questions" }}
+        eyebrow={question.department.name}
+        title={question.course.name}
+        actions={
+          fileUrl && (
+            <>
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
-                <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                  <FileText className="size-5" aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Paper {index + 1}</p>
-                  <p className="text-sm text-muted-foreground">
-                    PDF · {formatBytes(submission.fileSize)} · Added{" "}
-                    <time dateTime={submission.createdAt}>
-                      {dateFormatter.format(new Date(submission.createdAt))}
-                    </time>
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className={buttonVariants({ size: "sm" })}
-                  >
-                    Open PDF
-                  </a>
-                  <a
-                    href={fileUrl}
-                    download
-                    aria-label={`Download paper ${index + 1}`}
-                    className={buttonVariants({
-                      variant: "outline",
-                      size: "sm",
-                    })}
-                  >
-                    <Download aria-hidden />
-                  </a>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-    </article>
+                <ExternalLink aria-hidden />
+                Open in new tab
+              </a>
+              <a
+                href={fileUrl}
+                download
+                className={buttonVariants({ size: "sm" })}
+              >
+                <Download aria-hidden />
+                Download
+              </a>
+            </>
+          )
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">{question.department.shortName}</Badge>
+          <Badge variant="secondary">{question.semester.name}</Badge>
+          <Badge variant="secondary">{question.examType.name}</Badge>
+        </div>
+      </PageHeader>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <section
+          aria-label="Question paper"
+          className="order-2 min-w-0 lg:order-1"
+        >
+          {!selected ? (
+            <EmptyState
+              className="min-h-[28rem] lg:h-[calc(75vh+2.75rem)]"
+              icon={pendingReview > 0 ? Clock : FileX}
+              title="No published paper yet"
+              description={
+                pendingReview > 0
+                  ? `${plural(pendingReview, "submission")} ${pendingReview === 1 ? "is" : "are"} waiting for admin review. The paper will appear here once approved.`
+                  : "Papers submitted for this question weren’t approved. You can contribute a new one."
+              }
+              action={
+                <Link
+                  to="/contribute"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  Contribute a paper
+                </Link>
+              }
+            />
+          ) : hydrated ? (
+            <Suspense fallback={<ViewerSkeleton />}>
+              <PdfViewer
+                key={selected.id}
+                url={submissionFileUrl(selected.id)}
+              />
+            </Suspense>
+          ) : (
+            <ViewerSkeleton />
+          )}
+        </section>
+
+        <aside className="order-1 lg:order-2">
+          <div className="lg:sticky lg:top-20">
+            <SubmissionList
+              submissions={question.submissions}
+              selectedId={selected?.id ?? null}
+            />
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }

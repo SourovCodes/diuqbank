@@ -30,10 +30,10 @@ describe("questions table constraints", () => {
 });
 
 describe("GET /api/v1/questions", () => {
-  it("lists only questions with published submissions, counting only published ones", async () => {
+  it("lists questions with any submission and counts each status", async () => {
     const t = await seedTaxonomy();
     const base = { departmentId: t.cse.id, courseId: t.algorithms.id };
-    const visible = await seedQuestion({
+    const published = await seedQuestion({
       ...base,
       semesterId: t.sem1.id,
       examTypeId: t.midterm.id,
@@ -47,26 +47,30 @@ describe("GET /api/v1/questions", () => {
       ...base,
       semesterId: t.sem1.id,
       examTypeId: t.final.id,
-    });
+    }); // no submissions → not listed
 
-    await seedSubmission(visible.id);
-    await seedSubmission(visible.id);
-    await seedSubmission(visible.id, { status: "rejected" });
+    await seedSubmission(published.id);
+    await seedSubmission(published.id);
+    await seedSubmission(published.id, { status: "rejected" });
     await seedSubmission(pendingOnly.id, { status: "pending_review" });
 
     const res = await api(`/api/v1/questions?courseId=${t.algorithms.id}`);
     expect(res.status).toBe(200);
     const body = await res.json<QuestionList>();
-    expect(body.total).toBe(1);
+    expect(body.total).toBe(2);
     expect(body.items).toEqual([
       {
-        id: visible.id,
+        id: published.id,
         department: t.cse,
         course: { id: t.algorithms.id, name: t.algorithms.name },
         semester: t.sem1,
         examType: t.midterm,
-        publishedSubmissionCount: 2,
+        submissionCounts: { published: 2, pendingReview: 0, rejected: 1 },
       },
+      expect.objectContaining({
+        id: pendingOnly.id,
+        submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
+      }),
     ]);
   });
 
@@ -113,13 +117,17 @@ describe("GET /api/v1/questions", () => {
 });
 
 describe("GET /api/v1/questions/:id", () => {
-  it("returns the question with only its published submissions, newest first", async () => {
+  it("lists every submission's status, published first, without exposing file keys", async () => {
     const t = await seedTaxonomy();
     const question = await seedQuestion({
       departmentId: t.cse.id,
       courseId: t.algorithms.id,
       semesterId: t.sem1.id,
       examTypeId: t.midterm.id,
+    });
+    const rejected = await seedSubmission(question.id, { status: "rejected" });
+    const pending = await seedSubmission(question.id, {
+      status: "pending_review",
     });
     const older = await seedSubmission(question.id, {
       createdAt: new Date("2024-01-01"),
@@ -127,16 +135,25 @@ describe("GET /api/v1/questions/:id", () => {
     const newer = await seedSubmission(question.id, {
       createdAt: new Date("2025-01-01"),
     });
-    await seedSubmission(question.id, { status: "pending_review" });
 
     const res = await api(`/api/v1/questions/${question.id}`);
     expect(res.status).toBe(200);
     const body = await res.json<QuestionDetail>();
-    expect(body.publishedSubmissionCount).toBe(2);
-    expect(body.submissions.map((s) => s.id)).toEqual([newer.id, older.id]);
+    expect(body.submissionCounts).toEqual({
+      published: 2,
+      pendingReview: 1,
+      rejected: 1,
+    });
+    expect(body.submissions.map((s) => [s.id, s.status])).toEqual([
+      [newer.id, "published"],
+      [older.id, "published"],
+      [pending.id, "pending_review"],
+      [rejected.id, "rejected"],
+    ]);
+    expect(JSON.stringify(body)).not.toContain("fileKey");
   });
 
-  it("404s for unknown questions and questions without published submissions", async () => {
+  it("shows a question whose only submissions are pending review", async () => {
     const t = await seedTaxonomy();
     const question = await seedQuestion({
       departmentId: t.cse.id,
@@ -145,6 +162,22 @@ describe("GET /api/v1/questions/:id", () => {
       examTypeId: t.midterm.id,
     });
     await seedSubmission(question.id, { status: "pending_review" });
+
+    const body = await (
+      await api(`/api/v1/questions/${question.id}`)
+    ).json<QuestionDetail>();
+    expect(body.submissions).toHaveLength(1);
+    expect(body.submissions[0]?.status).toBe("pending_review");
+  });
+
+  it("404s for unknown questions and questions without submissions", async () => {
+    const t = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
 
     expect((await api(`/api/v1/questions/${question.id}`)).status).toBe(404);
     expect((await api("/api/v1/questions/999999")).status).toBe(404);
@@ -177,14 +210,15 @@ describe("GET /api/v1/submissions/:id/file", () => {
     );
   });
 
-  it("does not serve unpublished submissions", async () => {
-    const submission = await seedSubmission(await questionId(), {
-      status: "pending_review",
-    });
-    await env.BUCKET.put(submission.fileKey, "%PDF-1.7 secret");
+  it.each(["pending_review", "rejected"] as const)(
+    "never serves %s files",
+    async (status) => {
+      const submission = await seedSubmission(await questionId(), { status });
+      await env.BUCKET.put(submission.fileKey, "%PDF-1.7 secret");
 
-    expect(
-      (await api(`/api/v1/submissions/${submission.id}/file`)).status,
-    ).toBe(404);
-  });
+      expect(
+        (await api(`/api/v1/submissions/${submission.id}/file`)).status,
+      ).toBe(404);
+    },
+  );
 });

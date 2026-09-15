@@ -1,4 +1,5 @@
 import "@fontsource-variable/inter";
+import { FileQuestion, TriangleAlert } from "lucide-react";
 import {
   isRouteErrorResponse,
   Link,
@@ -8,9 +9,11 @@ import {
   Scripts,
   ScrollRestoration,
   useRouteLoaderData,
+  type ShouldRevalidateFunctionArgs,
 } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { EmptyState } from "~/components/empty-state";
 import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
 import { getUser } from "~/lib/session.server";
@@ -21,6 +24,15 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   return { user: await getUser(request) };
+}
+
+// The session only changes through form actions (log in, sign up, log out), so
+// plain navigations don't need to re-fetch it.
+export function shouldRevalidate({
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  return formMethod ? defaultShouldRevalidate : false;
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -37,11 +49,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <div className="flex min-h-dvh flex-col">
           <SiteHeader user={data?.user ?? null} />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
-            {children}
-          </main>
-          <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-            QuestionBank · Free past question papers
+          <main className="container-page flex-1 py-8">{children}</main>
+          <footer className="border-t">
+            <div className="container-page flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <p>QuestionBank · Free past question papers</p>
+              <nav className="flex gap-4">
+                <Link to="/questions" className="hover:text-foreground">
+                  Questions
+                </Link>
+                <Link to="/contribute" className="hover:text-foreground">
+                  Contribute
+                </Link>
+              </nav>
+            </div>
           </footer>
         </div>
         <ScrollRestoration />
@@ -59,25 +79,33 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let title = "Something went wrong";
   let details = "An unexpected error occurred. Please try again.";
   let stack: string | undefined;
+  const notFound = isRouteErrorResponse(error) && error.status === 404;
 
   if (isRouteErrorResponse(error)) {
-    title = error.status === 404 ? "Page not found" : `Error ${error.status}`;
-    details =
-      error.status === 404
-        ? "We couldn't find what you were looking for."
-        : error.statusText || details;
+    title = notFound ? "Page not found" : `Error ${error.status}`;
+    details = notFound
+      ? "We couldn't find what you were looking for."
+      : error.statusText || details;
   } else if (import.meta.env.DEV && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-4 py-12 text-center">
-      <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-      <p className="text-muted-foreground">{details}</p>
-      <Link to="/" className={buttonVariants({ variant: "outline" })}>
-        Back to home
-      </Link>
+    <div className="space-y-6 py-8">
+      <EmptyState
+        icon={notFound ? FileQuestion : TriangleAlert}
+        title={title}
+        description={details}
+        action={
+          <Link
+            to="/"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Back to home
+          </Link>
+        }
+      />
       {stack && (
         <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-left text-xs">
           <code>{stack}</code>

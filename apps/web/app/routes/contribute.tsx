@@ -1,5 +1,7 @@
 import { Upload } from "lucide-react";
 import { Link } from "react-router";
+import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
 import { buttonVariants } from "~/components/ui/button";
 import type { Route } from "./+types/contribute";
 
@@ -11,17 +13,24 @@ export const meta: Route.MetaFunction = () => [
 // Placeholder until submission uploads are built.
 export default function Contribute() {
   return (
-    <div className="mx-auto max-w-xl space-y-4 py-12 text-center">
-      <div className="mx-auto w-fit rounded-full bg-primary/10 p-3 text-primary">
-        <Upload className="size-6" aria-hidden />
-      </div>
-      <h1 className="text-3xl font-bold tracking-tight">Contribute a paper</h1>
-      <p className="text-muted-foreground">
-        Uploading question papers is coming soon. Thanks for wanting to help!
-      </p>
-      <Link to="/questions" className={buttonVariants({ variant: "outline" })}>
-        Browse questions
-      </Link>
+    <div className="space-y-8">
+      <PageHeader
+        title="Contribute a paper"
+        description="Share question papers with other students. Every submission is reviewed before it is published."
+      />
+      <EmptyState
+        icon={Upload}
+        title="Uploads are coming soon"
+        description="Thanks for wanting to help! You’ll be able to upload question paper PDFs here shortly."
+        action={
+          <Link
+            to="/questions"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Browse questions
+          </Link>
+        }
+      />
     </div>
   );
 }

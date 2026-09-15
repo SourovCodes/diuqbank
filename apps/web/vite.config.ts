@@ -21,6 +21,7 @@ export default defineConfig({
       "cn",
       "lucide-react",
       "radix-ui",
+      "react-pdf",
     ],
   },
   server: {
