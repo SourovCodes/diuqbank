@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import type { CreatedSubmission, QuestionDetail } from "@qb/shared";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { submissions } from "../src/db/schema";
+import { questions, submissions } from "../src/db/schema";
 import {
   api,
   db,
@@ -173,6 +173,60 @@ describe("POST /api/v1/submissions", () => {
       departmentId: t.cse.id,
       customCourseName: "Compilers",
       semesterId: t.sem2.id,
+    });
+  });
+
+  it("uses existing values when new names match them, ignoring case", async () => {
+    const t = await seedTaxonomy();
+    const { cookie } = await signUp();
+    const created = await (
+      await upload(
+        {
+          customDepartmentName: t.cse.shortName.toLowerCase(),
+          customDepartmentShortName: "IGNORED",
+          customCourseName: t.algorithms.name.toUpperCase(),
+          customSemesterName: t.sem1.name.toLowerCase(),
+          examTypeId: t.midterm.id,
+        },
+        cookie,
+      )
+    ).json<CreatedSubmission>();
+
+    expect(created.questionId).toEqual(expect.any(Number));
+    const question = await db().query.questions.findFirst({
+      where: eq(questions.id, created.questionId!),
+    });
+    expect(question).toMatchObject({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+  });
+
+  it("only matches a course name within the chosen department", async () => {
+    const t = await seedTaxonomy();
+    const { cookie } = await signUp();
+    const created = await (
+      await upload(
+        {
+          departmentId: t.eee.id,
+          customCourseName: t.algorithms.name, // exists, but in CSE
+          semesterId: t.sem1.id,
+          examTypeId: t.midterm.id,
+        },
+        cookie,
+      )
+    ).json<CreatedSubmission>();
+    expect(created.questionId).toBeNull();
+
+    const row = await db().query.submissions.findFirst({
+      where: eq(submissions.id, created.id),
+    });
+    expect(row).toMatchObject({
+      departmentId: t.eee.id,
+      courseId: null,
+      customCourseName: t.algorithms.name,
     });
   });
 

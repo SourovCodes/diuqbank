@@ -22,7 +22,7 @@ submissions (id, question_id?, status, file_key, file_size, uploader_id,
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
 
-When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). If any value is new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
+When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
 
 ## Stack
 

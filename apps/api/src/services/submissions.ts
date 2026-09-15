@@ -3,7 +3,8 @@ import {
   type CreatedSubmission,
   type SubmissionFields,
 } from "@qb/shared";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -31,6 +32,64 @@ async function assertIsPdf(file: File) {
   if (!PDF_MAGIC_BYTES.every((byte, i) => header[i] === byte)) {
     throw new AppError(400, "INVALID_FILE", "The file must be a PDF");
   }
+}
+
+const nameMatches = (column: SQLiteColumn, name: string) =>
+  sql`lower(${column}) = lower(${name})`;
+
+/**
+ * Replaces new names that match an existing value (ignoring case) with that value, so
+ * typing "cse" or "data structures" files the paper under the existing entries.
+ * Departments match by name or short name; courses only within the chosen department.
+ */
+async function preferExistingValues(
+  db: Database,
+  input: SubmissionFields,
+): Promise<SubmissionFields> {
+  const fields = { ...input };
+
+  if (fields.customDepartmentName) {
+    const name = fields.customDepartmentName;
+    const match = await db.query.departments.findFirst({
+      columns: { id: true },
+      where: or(
+        nameMatches(departments.name, name),
+        nameMatches(departments.shortName, name),
+      ),
+    });
+    if (match) {
+      fields.departmentId = match.id;
+      delete fields.customDepartmentName;
+      delete fields.customDepartmentShortName;
+    }
+  }
+
+  if (fields.customCourseName && fields.departmentId) {
+    const match = await db.query.courses.findFirst({
+      columns: { id: true },
+      where: and(
+        eq(courses.departmentId, fields.departmentId),
+        nameMatches(courses.name, fields.customCourseName),
+      ),
+    });
+    if (match) {
+      fields.courseId = match.id;
+      delete fields.customCourseName;
+    }
+  }
+
+  if (fields.customSemesterName) {
+    const match = await db.query.semesters.findFirst({
+      columns: { id: true },
+      where: nameMatches(semesters.name, fields.customSemesterName),
+    });
+    if (match) {
+      fields.semesterId = match.id;
+      delete fields.customSemesterName;
+    }
+  }
+
+  return fields;
 }
 
 /**
@@ -116,8 +175,9 @@ export async function createSubmission(
   bucket: R2Bucket,
   params: { fields: SubmissionFields; file: File; uploaderId: string },
 ): Promise<CreatedSubmission> {
-  const { fields, file } = params;
+  const { file } = params;
   await assertIsPdf(file);
+  const fields = await preferExistingValues(db, params.fields);
   const questionId = await resolveQuestionId(db, fields);
 
   const id = crypto.randomUUID();

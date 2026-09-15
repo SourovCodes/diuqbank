@@ -9,6 +9,11 @@ import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  findCourseByName,
+  findDepartmentByName,
+  findSemesterByName,
+} from "~/lib/choices";
 import { courseOptions, type SelectOption } from "~/lib/filters";
 import { formatBytes } from "~/lib/format";
 
@@ -115,15 +120,23 @@ export function ContributeForm({
     fields.map((field) => fieldErrors[field]).find(Boolean);
   const findCourse = (id: string) => courses.find((c) => String(c.id) === id);
 
+  // A typed name that matches an existing value selects that value instead.
+  const existing = (match: { id: number } | undefined, fallback: Choice) =>
+    match ? ({ kind: "existing", id: String(match.id) } as const) : fallback;
+
   const changeDepartment = (next: Choice) => {
-    setDepartment(next);
-    if (next?.kind !== "new") setShortName("");
+    const choice =
+      next?.kind === "new"
+        ? existing(findDepartmentByName(departments, next.name), next)
+        : next;
+    setDepartment(choice);
+    if (choice?.kind !== "new") setShortName("");
     // An existing course only fits its own department.
     if (course?.kind === "existing") {
       const current = findCourse(course.id);
       if (
-        next?.kind !== "existing" ||
-        String(current?.departmentId) !== next.id
+        choice?.kind !== "existing" ||
+        String(current?.departmentId) !== choice.id
       ) {
         setCourse(null);
       }
@@ -131,15 +144,29 @@ export function ContributeForm({
   };
 
   const changeCourse = (next: Choice) => {
-    setCourse(next);
+    const choice =
+      next?.kind === "new" && department?.kind === "existing"
+        ? existing(
+            findCourseByName(courses, Number(department.id), next.name),
+            next,
+          )
+        : next;
+    setCourse(choice);
     // Picking an existing course first fills in its department.
-    if (next?.kind === "existing" && department === null) {
-      const picked = findCourse(next.id);
+    if (choice?.kind === "existing" && department === null) {
+      const picked = findCourse(choice.id);
       if (picked) {
         setDepartment({ kind: "existing", id: String(picked.departmentId) });
       }
     }
   };
+
+  const changeSemester = (next: Choice) =>
+    setSemester(
+      next?.kind === "new"
+        ? existing(findSemesterByName(semesters, next.name), next)
+        : next,
+    );
 
   // A new department can't contain existing courses.
   const courseChoices =
@@ -223,7 +250,7 @@ export function ContributeForm({
               label: s.name,
             }))}
             value={semester}
-            onChange={setSemester}
+            onChange={changeSemester}
             idField="semesterId"
             nameField="customSemesterName"
             error={errorFor("semesterId", "customSemesterName")}

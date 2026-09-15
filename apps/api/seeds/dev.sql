@@ -9,6 +9,8 @@ DELETE FROM departments;
 DELETE FROM semesters;
 DELETE FROM exam_types;
 DELETE FROM "user" WHERE id LIKE 'seed-user-%';
+-- Accounts created by e2e tests and local previews (sessions and accounts cascade).
+DELETE FROM "user" WHERE email LIKE '%@example.com';
 
 -- Sample contributors. They have no password, so they can't log in.
 INSERT INTO "user" (id, name, email, created_at, updated_at) VALUES
