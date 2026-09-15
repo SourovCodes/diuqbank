@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "questionbank-web",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  "services": [
+    {
+      // Zero-hop calls to the API worker. Locally this resolves to the `wrangler dev`
+      // session of apps/api via the dev registry, so run both (`pnpm dev` at the root).
+      "binding": "API",
+      "service": "questionbank-api",
+    },
+  ],
+}

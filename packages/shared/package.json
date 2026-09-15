@@ -1,0 +1,23 @@
+{
+  "name": "@qb/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Contracts (Zod schemas + types) shared by the API, web app and future mobile apps.",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./constants": "./src/constants.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

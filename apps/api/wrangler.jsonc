@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "questionbank-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // Required by Better Auth (AsyncLocalStorage) and node:crypto.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    // Public origin that serves /api/auth/* (the web worker proxies it in the browser).
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    // Comma-separated origins allowed to call auth endpoints.
+    "TRUSTED_ORIGINS": "http://localhost:5173",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "questionbank",
+      // Local-only placeholder. Replace with the real id from `wrangler d1 create` before deploying.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "questionbank-papers",
+    },
+  ],
+}
