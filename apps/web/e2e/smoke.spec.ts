@@ -17,14 +17,24 @@ async function openCombobox(page: Page, name: string) {
   }).toPass();
 }
 
+/**
+ * Clicks a link until the URL changes. A click that lands while the page is still
+ * hydrating can be dropped, so retry instead of asserting once.
+ */
+async function clickUntilUrl(page: Page, name: string, url: RegExp) {
+  await expect(async () => {
+    await page.getByRole("link", { name }).click();
+    await expect(page).toHaveURL(url, { timeout: 2_000 });
+  }).toPass();
+}
+
 test("landing page leads to the questions page", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Past question papers",
   );
 
-  await page.getByRole("link", { name: "Browse questions" }).click();
-  await expect(page).toHaveURL(/\/questions$/);
+  await clickUntilUrl(page, "Browse questions", /\/questions$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Browse questions",
   );
