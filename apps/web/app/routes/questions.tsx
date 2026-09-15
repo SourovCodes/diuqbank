@@ -11,7 +11,7 @@ import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
 import { QuestionCard } from "~/components/question-card";
 import { SearchableSelect } from "~/components/searchable-select";
-import { buttonVariants } from "~/components/ui/button";
+import { Pagination } from "~/components/pagination";
 import { Card } from "~/components/ui/card";
 import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
 import {
@@ -79,7 +79,6 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
 
   const departmentId = searchParams.get("departmentId");
   const hasFilters = FILTER_KEYS.some((key) => searchParams.has(key));
-  const totalPages = Math.max(1, Math.ceil(list.total / list.pageSize));
 
   const setFilter = (key: FilterKey, value: string | null) =>
     setSearchParams(applyFilter(searchParams, key, value, courses), {
@@ -201,32 +200,12 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
           </ul>
         )}
 
-        {totalPages > 1 && (
-          <nav
-            aria-label="Pagination"
-            className="flex items-center justify-center gap-3 pt-2"
-          >
-            {list.page > 1 && (
-              <Link
-                to={pageHref(list.page - 1)}
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                Previous
-              </Link>
-            )}
-            <span className="text-sm text-muted-foreground">
-              Page {list.page} of {totalPages}
-            </span>
-            {list.page < totalPages && (
-              <Link
-                to={pageHref(list.page + 1)}
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                Next
-              </Link>
-            )}
-          </nav>
-        )}
+        <Pagination
+          page={list.page}
+          pageSize={list.pageSize}
+          total={list.total}
+          hrefFor={pageHref}
+        />
       </section>
     </div>
   );

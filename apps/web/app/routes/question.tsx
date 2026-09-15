@@ -1,6 +1,5 @@
 import type { QuestionDetail } from "@qb/shared";
 import { Clock, Download, ExternalLink, FileX } from "lucide-react";
-import { lazy, Suspense } from "react";
 import {
   data,
   Link,
@@ -9,16 +8,14 @@ import {
 } from "react-router";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
+import { PdfViewer } from "~/components/pdf-viewer";
 import { SubmissionList } from "~/components/submission-list";
 import { Badge } from "~/components/ui/badge";
 import { buttonVariants } from "~/components/ui/button";
-import { Skeleton } from "~/components/ui/skeleton";
-import { useHydrated } from "~/hooks/use-hydrated";
+import { UploaderCard } from "~/components/uploader-card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { plural, pickSubmission, submissionFileUrl } from "~/lib/submissions";
 import type { Route } from "./+types/question";
-
-const PdfViewer = lazy(() => import("~/components/pdf-viewer.client"));
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const res = await apiFetch(
@@ -30,7 +27,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw data("Question not found", { status: 404 });
   }
   if (!res.ok) throw data("Failed to load question", { status: 502 });
-  return { question: await readJson<QuestionDetail>(res) };
+  return {
+    question: await readJson<QuestionDetail>(res),
+    // The Google Docs viewer fallback needs absolute file URLs.
+    origin: new URL(request.url).origin,
+  };
 }
 
 // Switching submissions only changes `?submission=`, which the loader doesn't use.
@@ -65,22 +66,16 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   ];
 };
 
-function ViewerSkeleton() {
-  return (
-    <Skeleton className="h-[calc(75vh+2.75rem)] min-h-[30.75rem] rounded-xl" />
-  );
-}
-
 export default function QuestionPage({ loaderData }: Route.ComponentProps) {
-  const { question } = loaderData;
+  const { question, origin } = loaderData;
   const [searchParams] = useSearchParams();
-  const hydrated = useHydrated();
   const selected = pickSubmission(
     question.submissions,
     searchParams.get("submission"),
   );
   const { pendingReview } = question.submissionCounts;
   const fileUrl = selected ? submissionFileUrl(selected.id) : null;
+  const title = `${question.course.name} — ${question.examType.name}, ${question.semester.name}`;
 
   return (
     <div className="space-y-6">
@@ -124,9 +119,17 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
           aria-label="Question paper"
           className="order-2 min-w-0 lg:order-1"
         >
-          {!selected ? (
+          {selected && fileUrl ? (
+            // Keyed so switching submissions reloads the embedded document.
+            <PdfViewer
+              key={selected.id}
+              src={fileUrl}
+              absoluteSrc={`${origin}${fileUrl}`}
+              title={title}
+            />
+          ) : (
             <EmptyState
-              className="min-h-[28rem] lg:h-[calc(75vh+2.75rem)]"
+              className="min-h-[32rem] lg:h-[80vh]"
               icon={pendingReview > 0 ? Clock : FileX}
               title="No published paper yet"
               description={
@@ -143,20 +146,12 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
                 </Link>
               }
             />
-          ) : hydrated ? (
-            <Suspense fallback={<ViewerSkeleton />}>
-              <PdfViewer
-                key={selected.id}
-                url={submissionFileUrl(selected.id)}
-              />
-            </Suspense>
-          ) : (
-            <ViewerSkeleton />
           )}
         </section>
 
         <aside className="order-1 lg:order-2">
-          <div className="lg:sticky lg:top-20">
+          <div className="space-y-4 lg:sticky lg:top-20">
+            {selected && <UploaderCard submission={selected} />}
             <SubmissionList
               submissions={question.submissions}
               selectedId={selected?.id ?? null}

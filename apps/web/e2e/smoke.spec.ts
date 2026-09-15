@@ -54,32 +54,43 @@ test("course filter follows the selected department", async ({ page }) => {
   );
 });
 
-test("question page shows the PDF and lets you switch submissions", async ({
+test("question page embeds the PDF, shows its uploader and switches submissions", async ({
   page,
 }) => {
+  // Keep tests offline: the Google Docs fallback is only checked by its URL.
+  await page.route("https://docs.google.com/**", (route) => route.abort());
   await page.goto("/questions/1");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
   );
 
-  // The first published paper is selected and rendered by the viewer.
+  // The newest published paper (seed-01, by Ayesha) is selected by default.
   await expect(page.getByRole("link", { name: /Paper 1/ })).toHaveAttribute(
     "aria-current",
     "true",
   );
-  await expect(
-    page.getByTestId("pdf-viewer").locator("canvas").first(),
-  ).toBeVisible();
+  const viewer = page.getByTestId("pdf-viewer");
+  await expect(viewer).toHaveAttribute(
+    "data",
+    /^\/api\/v1\/submissions\/seed-01\/file/,
+  );
+  await expect(page.getByTestId("pdf-viewer-fallback")).toHaveAttribute(
+    "src",
+    "https://docs.google.com/gview?embedded=true&url=" +
+      encodeURIComponent(
+        "http://localhost:5173/api/v1/submissions/seed-01/file",
+      ),
+  );
+  await expect(page.getByRole("link", { name: /Ayesha Rahman/ })).toBeVisible();
 
   await page.getByRole("link", { name: /Paper 2/ }).click();
-  await expect(page).toHaveURL(/submission=seed-/);
+  await expect(page).toHaveURL(/submission=seed-02/);
   await expect(page.getByRole("link", { name: /Paper 2/ })).toHaveAttribute(
     "aria-current",
     "true",
   );
-  await expect(
-    page.getByTestId("pdf-viewer").locator("canvas").first(),
-  ).toBeVisible();
+  await expect(viewer).toHaveAttribute("data", /seed-02/);
+  await expect(page.getByRole("link", { name: /Tanvir Hasan/ })).toBeVisible();
 
   // Unpublished submissions are listed but can't be opened.
   await expect(page.getByText("Pending review", { exact: true })).toBeVisible();
@@ -100,6 +111,28 @@ test("question with only pending submissions explains the review", async ({
     page.getByText(/waiting for admin review/).first(),
   ).toBeVisible();
   await expect(page.getByTestId("pdf-viewer")).toHaveCount(0);
+});
+
+test("contributors index leads to a contributor's submissions", async ({
+  page,
+}) => {
+  await page.goto("/contributors");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Contributors",
+  );
+  // Most published papers first.
+  await expect(page.locator("main li").first()).toContainText("Ayesha Rahman");
+
+  await page.getByRole("link", { name: /Nusrat Jahan/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Nusrat Jahan",
+  );
+  await expect(page.getByText("Pending review").first()).toBeVisible();
+
+  // Published submissions open the question with that paper selected.
+  await page.getByRole("link", { name: /Algorithms/ }).click();
+  await expect(page).toHaveURL(/\/questions\/3\?submission=seed-04$/);
+  await expect(page.getByRole("link", { name: /Nusrat Jahan/ })).toBeVisible();
 });
 
 test("contribute page is a placeholder", async ({ page }) => {

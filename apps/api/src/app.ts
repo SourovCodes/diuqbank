@@ -3,6 +3,7 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { secureHeaders } from "hono/secure-headers";
 import { handleError, handleNotFound, validationHook } from "./lib/errors";
 import { contextMiddleware } from "./middleware/context";
+import { contributorRoutes } from "./routes/contributors";
 import { healthRoutes } from "./routes/health";
 import { questionRoutes } from "./routes/questions";
 import { submissionRoutes } from "./routes/submissions";
@@ -22,7 +23,8 @@ export function createApp() {
     .route("/", healthRoutes)
     .route("/", taxonomyRoutes)
     .route("/questions", questionRoutes)
-    .route("/submissions", submissionRoutes);
+    .route("/submissions", submissionRoutes)
+    .route("/contributors", contributorRoutes);
   app.route("/api/v1", v1);
 
   app.doc31("/api/v1/openapi.json", {

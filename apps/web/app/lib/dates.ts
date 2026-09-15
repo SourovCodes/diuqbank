@@ -4,6 +4,17 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
   timeZone: "UTC",
 });
 
+const monthFormatter = new Intl.DateTimeFormat("en", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 export function formatDate(iso: string) {
   return dateFormatter.format(new Date(iso));
+}
+
+/** e.g. "September 2025" */
+export function formatMonth(iso: string) {
+  return monthFormatter.format(new Date(iso));
 }

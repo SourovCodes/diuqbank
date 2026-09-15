@@ -3,9 +3,8 @@ import type {
   Question,
   QuestionDetail,
   QuestionList,
-  SubmissionStatus,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -14,10 +13,13 @@ import {
   questions,
   semesters,
   submissions,
+  user,
 } from "../db/schema";
-
-const countWhereStatus = (status: SubmissionStatus) =>
-  sql<number>`sum(case when ${submissions.status} = ${status} then 1 else 0 end)`;
+import {
+  countWhereStatus,
+  questionSummaryColumns,
+  submissionStatusOrder,
+} from "./common";
 
 /** Subquery with per-status submission counts for each question that has submissions. */
 function submissionCounts(db: Database) {
@@ -43,15 +45,7 @@ function selectQuestions(db: Database) {
   const counts = submissionCounts(db);
   return db
     .select({
-      id: questions.id,
-      department: {
-        id: departments.id,
-        name: departments.name,
-        shortName: departments.shortName,
-      },
-      course: { id: courses.id, name: courses.name },
-      semester: { id: semesters.id, name: semesters.name },
-      examType: { id: examTypes.id, name: examTypes.name },
+      ...questionSummaryColumns,
       submissionCounts: {
         published: counts.published,
         pendingReview: counts.pendingReview,
@@ -111,8 +105,6 @@ export async function listQuestions(
   };
 }
 
-const statusOrder = sql`case ${submissions.status} when 'published' then 0 when 'pending_review' then 1 else 2 end`;
-
 export async function getQuestion(
   db: Database,
   id: number,
@@ -122,18 +114,20 @@ export async function getQuestion(
     .limit(1);
   if (!question) return null;
 
-  // Metadata only: file keys never leave the API, and files are served separately
-  // (published submissions only).
+  // Metadata only: file keys never leave the API, files are served separately
+  // (published submissions only), and uploaders expose just their public name.
   const rows = await db
     .select({
       id: submissions.id,
       status: submissions.status,
       fileSize: submissions.fileSize,
       createdAt: submissions.createdAt,
+      uploader: { id: user.id, name: user.name },
     })
     .from(submissions)
+    .leftJoin(user, eq(user.id, submissions.uploaderId))
     .where(eq(submissions.questionId, id))
-    .orderBy(statusOrder, desc(submissions.createdAt));
+    .orderBy(submissionStatusOrder, desc(submissions.createdAt));
 
   return {
     ...question,

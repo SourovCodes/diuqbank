@@ -1,7 +1,13 @@
 import { env } from "cloudflare:workers";
 import type { QuestionDetail, QuestionList } from "@qb/shared";
 import { describe, expect, it } from "vitest";
-import { api, seedQuestion, seedSubmission, seedTaxonomy } from "./helpers";
+import {
+  api,
+  seedQuestion,
+  seedSubmission,
+  seedTaxonomy,
+  seedUser,
+} from "./helpers";
 
 describe("questions table constraints", () => {
   it("rejects a question whose department differs from its course's department", async () => {
@@ -151,6 +157,33 @@ describe("GET /api/v1/questions/:id", () => {
       [rejected.id, "rejected"],
     ]);
     expect(JSON.stringify(body)).not.toContain("fileKey");
+  });
+
+  it("includes each submission's uploader by public name only", async () => {
+    const t = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    const uploader = await seedUser("Ayesha Rahman");
+    const withUploader = await seedSubmission(question.id, {
+      uploaderId: uploader.id,
+      createdAt: new Date("2025-01-01"),
+    });
+    const anonymous = await seedSubmission(question.id, {
+      createdAt: new Date("2024-01-01"),
+    });
+
+    const body = await (
+      await api(`/api/v1/questions/${question.id}`)
+    ).json<QuestionDetail>();
+    expect(body.submissions.map((s) => [s.id, s.uploader])).toEqual([
+      [withUploader.id, { id: uploader.id, name: "Ayesha Rahman" }],
+      [anonymous.id, null],
+    ]);
+    expect(JSON.stringify(body)).not.toContain("@example.com");
   });
 
   it("shows a question whose only submissions are pending review", async () => {

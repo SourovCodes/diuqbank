@@ -1,5 +1,6 @@
 -- Sample data for local development only. Re-running replaces all question data.
 -- Applied by `pnpm db:seed` (seeds/seed-local.mjs), which also uploads the PDFs to local R2.
+-- Timestamps are Unix milliseconds.
 
 DELETE FROM submissions;
 DELETE FROM questions;
@@ -7,6 +8,13 @@ DELETE FROM courses;
 DELETE FROM departments;
 DELETE FROM semesters;
 DELETE FROM exam_types;
+DELETE FROM "user" WHERE id LIKE 'seed-user-%';
+
+-- Sample contributors. They have no password, so they can't log in.
+INSERT INTO "user" (id, name, email, created_at, updated_at) VALUES
+  ('seed-user-1', 'Ayesha Rahman', 'ayesha@seed.local', 1756684800000, 1756684800000),
+  ('seed-user-2', 'Tanvir Hasan', 'tanvir@seed.local', 1760486400000, 1760486400000),
+  ('seed-user-3', 'Nusrat Jahan', 'nusrat@seed.local', 1768867200000, 1768867200000);
 
 INSERT INTO departments (id, name, short_name) VALUES
   (1, 'Computer Science and Engineering', 'CSE'),
@@ -47,18 +55,19 @@ INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) 
   (10, 2, 9, 2, 2);
 
 -- file_size is set by the seed script from the uploaded sample PDF.
-INSERT INTO submissions (id, question_id, status, file_key, file_size) VALUES
-  ('seed-01', 1, 'published', 'submissions/seed-01.pdf', 0),
-  ('seed-02', 1, 'published', 'submissions/seed-02.pdf', 0),
-  ('seed-03', 2, 'published', 'submissions/seed-03.pdf', 0),
-  ('seed-04', 3, 'published', 'submissions/seed-04.pdf', 0),
-  ('seed-05', 4, 'published', 'submissions/seed-05.pdf', 0),
-  ('seed-06', 5, 'published', 'submissions/seed-06.pdf', 0),
-  ('seed-07', 6, 'published', 'submissions/seed-07.pdf', 0),
-  ('seed-08', 7, 'published', 'submissions/seed-08.pdf', 0),
-  ('seed-09', 8, 'published', 'submissions/seed-09.pdf', 0),
-  ('seed-10', 9, 'pending_review', 'submissions/seed-10.pdf', 0),
-  ('seed-11', 10, 'published', 'submissions/seed-11.pdf', 0),
-  ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0),
-  ('seed-13', 1, 'pending_review', 'submissions/seed-13.pdf', 0),
-  ('seed-14', 1, 'rejected', 'submissions/seed-14.pdf', 0);
+-- seed-14 has no uploader, to show an unknown contributor.
+INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
+  ('seed-01', 1, 'published', 'submissions/seed-01.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
+  ('seed-02', 1, 'published', 'submissions/seed-02.pdf', 0, 'seed-user-2', 1762041600000, 1762041600000),
+  ('seed-03', 2, 'published', 'submissions/seed-03.pdf', 0, 'seed-user-1', 1769904000000, 1769904000000),
+  ('seed-04', 3, 'published', 'submissions/seed-04.pdf', 0, 'seed-user-3', 1776643200000, 1776643200000),
+  ('seed-05', 4, 'published', 'submissions/seed-05.pdf', 0, 'seed-user-1', 1765756800000, 1765756800000),
+  ('seed-06', 5, 'published', 'submissions/seed-06.pdf', 0, 'seed-user-2', 1769904000000, 1769904000000),
+  ('seed-07', 6, 'published', 'submissions/seed-07.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  ('seed-08', 7, 'published', 'submissions/seed-08.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
+  ('seed-09', 8, 'published', 'submissions/seed-09.pdf', 0, 'seed-user-2', 1765756800000, 1765756800000),
+  ('seed-10', 9, 'pending_review', 'submissions/seed-10.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  ('seed-11', 10, 'published', 'submissions/seed-11.pdf', 0, 'seed-user-1', 1776643200000, 1776643200000),
+  ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0, 'seed-user-2', 1773100800000, 1773100800000),
+  ('seed-13', 1, 'pending_review', 'submissions/seed-13.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  ('seed-14', 1, 'rejected', 'submissions/seed-14.pdf', 0, NULL, 1769904000000, 1769904000000);

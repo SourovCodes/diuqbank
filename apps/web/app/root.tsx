@@ -57,6 +57,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link to="/questions" className="hover:text-foreground">
                   Questions
                 </Link>
+                <Link to="/contributors" className="hover:text-foreground">
+                  Contributors
+                </Link>
                 <Link to="/contribute" className="hover:text-foreground">
                   Contribute
                 </Link>

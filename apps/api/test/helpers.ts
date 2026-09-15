@@ -9,9 +9,20 @@ import {
   submissions,
   type NewQuestionRow,
   type NewSubmissionRow,
+  user,
 } from "../src/db/schema";
 
 export const ORIGIN = "http://localhost:5173";
+
+/** Inserts a user directly (no password), for tests that only need an uploader. */
+export async function seedUser(name = "Test Contributor") {
+  const id = crypto.randomUUID();
+  const [row] = await createDb(env.DB)
+    .insert(user)
+    .values({ id, name, email: `${id}@example.com` })
+    .returning();
+  return row!;
+}
 
 export function api(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);

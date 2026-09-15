@@ -7,6 +7,7 @@ const submission = (id: string, status: Submission["status"]): Submission => ({
   status,
   fileSize: 1000,
   createdAt: "2026-01-01T00:00:00.000Z",
+  uploader: null,
 });
 
 const submissions = [

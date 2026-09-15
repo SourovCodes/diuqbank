@@ -22,6 +22,8 @@ describe("system routes", () => {
         "/api/v1/questions",
         "/api/v1/questions/{id}",
         "/api/v1/submissions/{id}/file",
+        "/api/v1/contributors",
+        "/api/v1/contributors/{id}",
       ]),
     );
   });
