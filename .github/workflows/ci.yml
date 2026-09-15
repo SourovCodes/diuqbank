@@ -44,6 +44,7 @@ jobs:
         run: |
           printf "BETTER_AUTH_SECRET=%s\n" "$(openssl rand -base64 32)" > apps/api/.dev.vars
           pnpm db:migrate
+          pnpm db:seed
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

@@ -1,2 +1,3 @@
 export * from "./auth";
-export * from "./papers";
+export * from "./questions";
+export * from "./taxonomy";

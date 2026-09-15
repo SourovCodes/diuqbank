@@ -6,7 +6,7 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 
 - `pnpm check` – run before considering work done (lint, format, typecheck, tests).
 - `pnpm --filter @qb/api test` / `pnpm --filter @qb/web test` – package tests.
-- `pnpm test:e2e` – Playwright; needs `pnpm db:migrate` first.
+- `pnpm test:e2e` – Playwright; needs `pnpm db:migrate && pnpm db:seed` first (tests rely on `apps/api/seeds/dev.sql`).
 - After editing `apps/api/src/db/schema/*`: `pnpm db:generate` (never hand-edit generated migrations), then `pnpm db:migrate`.
 - After editing a `wrangler.jsonc`: `pnpm --filter <pkg> cf-typegen`.
 

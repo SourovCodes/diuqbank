@@ -1,6 +1,24 @@
 # QuestionBank
 
-A public question-paper bank. Anyone can browse and download papers; signed-in contributors can upload PDFs, which are published after review.
+A public question-paper bank. Anyone can browse and download papers; signed-in contributors will be able to upload PDFs, which are published after review.
+
+## Data model
+
+```
+departments (id, name, short_name)      semesters (id, name)      exam_types (id, name)
+     │
+courses (id, name, department_id)
+     │
+questions (id, department_id, course_id, semester_id, exam_type_id)
+     │   · unique (course_id, semester_id, exam_type_id)
+     │   · FK (course_id, department_id) → courses (id, department_id),
+     │     so a question's department always matches its course's department
+     │
+submissions (id, question_id, status, file_key, file_size, uploader_id)
+         status: pending_review | published | rejected — only published PDFs are public
+```
+
+PDFs live in R2 under `file_key`. Questions only appear publicly once they have at least one published submission.
 
 ## Stack
 
@@ -59,6 +77,7 @@ Prerequisites: Node.js 22.22+ (see `.nvmrc`) and pnpm 11 (`corepack enable`).
 pnpm install
 cp apps/api/.dev.vars.example apps/api/.dev.vars   # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
 pnpm db:migrate                                    # create tables in the local D1 database
+pnpm db:seed                                       # sample departments, courses, questions + PDFs
 pnpm dev                                           # api on :8787, web on :5173
 ```
 
@@ -70,15 +89,16 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 
 ## Common commands
 
-| Command            | What it does                                                     |
-| ------------------ | ---------------------------------------------------------------- |
-| `pnpm dev`         | Run API and web workers locally                                  |
-| `pnpm check`       | Lint + format check + typecheck + unit/integration tests         |
-| `pnpm test`        | Unit and integration tests for every package                     |
-| `pnpm test:e2e`    | Playwright end-to-end tests (run `pnpm db:migrate` first)        |
-| `pnpm db:generate` | Generate a SQL migration after changing `apps/api/src/db/schema` |
-| `pnpm db:migrate`  | Apply pending migrations to the local D1 database                |
-| `pnpm format`      | Format the codebase with Prettier                                |
+| Command            | What it does                                                          |
+| ------------------ | --------------------------------------------------------------------- |
+| `pnpm dev`         | Run API and web workers locally                                       |
+| `pnpm check`       | Lint + format check + typecheck + unit/integration tests              |
+| `pnpm test`        | Unit and integration tests for every package                          |
+| `pnpm test:e2e`    | Playwright end-to-end tests (needs `pnpm db:migrate && pnpm db:seed`) |
+| `pnpm db:generate` | Generate a SQL migration after changing `apps/api/src/db/schema`      |
+| `pnpm db:migrate`  | Apply pending migrations to the local D1 database                     |
+| `pnpm db:seed`     | Reset local question data to the sample set (local only)              |
+| `pnpm format`      | Format the codebase with Prettier                                     |
 
 ## Testing strategy
 
@@ -92,5 +112,6 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - Create real resources (`wrangler d1 create`, `wrangler r2 bucket create`) and put the D1 id in `apps/api/wrangler.jsonc`.
 - Set `BETTER_AUTH_SECRET` with `wrangler secret put`, and update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain.
 - Add email verification and password reset (e.g. Cloudflare Email Service), rate limiting and Turnstile on auth forms.
-- Add a moderation flow (admin role) to approve/reject pending papers.
+- Build the contribute (submission upload) flow and a moderation flow (admin role) to publish/reject submissions.
+- Add admin management for departments, courses, semesters and exam types.
 - Add caching for public pages and PDFs, a sitemap, and staging/production environments.

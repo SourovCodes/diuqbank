@@ -33,7 +33,7 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["**/*.config.{js,ts}", "eslint.config.js"],
+    files: ["**/*.config.{js,ts}", "eslint.config.js", "apps/api/seeds/**"],
     languageOptions: { globals: globals.node },
   },
 ]);

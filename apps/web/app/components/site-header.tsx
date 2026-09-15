@@ -12,9 +12,16 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
           className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
         >
           <BookOpen className="size-5 text-primary" aria-hidden />
-          QuestionBank
+          {/* Icon-only on phones to leave room for the nav. */}
+          <span className="sr-only sm:not-sr-only">QuestionBank</span>
         </Link>
         <nav className="ml-auto flex items-center gap-1 sm:gap-2">
+          <Link
+            to="/questions"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            Questions
+          </Link>
           {/* Icon-only on phones so the header never overflows. */}
           <Link
             to="/contribute"

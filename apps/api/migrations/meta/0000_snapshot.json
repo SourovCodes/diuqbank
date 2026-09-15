@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4e25723d-623d-4973-8716-be20ab07fa6d",
+  "id": "cb2e850a-1208-4ae7-99b9-13cb74f5edf5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -358,8 +358,155 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "papers": {
-      "name": "papers",
+    "questions": {
+      "name": "questions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "semester_id": {
+          "name": "semester_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_type_id": {
+          "name": "exam_type_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "questions_department_id_idx": {
+          "name": "questions_department_id_idx",
+          "columns": [
+            "department_id"
+          ],
+          "isUnique": false
+        },
+        "questions_semester_id_idx": {
+          "name": "questions_semester_id_idx",
+          "columns": [
+            "semester_id"
+          ],
+          "isUnique": false
+        },
+        "questions_exam_type_id_idx": {
+          "name": "questions_exam_type_id_idx",
+          "columns": [
+            "exam_type_id"
+          ],
+          "isUnique": false
+        },
+        "questions_course_semester_exam_type_unique": {
+          "name": "questions_course_semester_exam_type_unique",
+          "columns": [
+            "course_id",
+            "semester_id",
+            "exam_type_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "questions_department_id_departments_id_fk": {
+          "name": "questions_department_id_departments_id_fk",
+          "tableFrom": "questions",
+          "tableTo": "departments",
+          "columnsFrom": [
+            "department_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "questions_semester_id_semesters_id_fk": {
+          "name": "questions_semester_id_semesters_id_fk",
+          "tableFrom": "questions",
+          "tableTo": "semesters",
+          "columnsFrom": [
+            "semester_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "questions_exam_type_id_exam_types_id_fk": {
+          "name": "questions_exam_type_id_exam_types_id_fk",
+          "tableFrom": "questions",
+          "tableTo": "exam_types",
+          "columnsFrom": [
+            "exam_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "questions_course_department_fk": {
+          "name": "questions_course_department_fk",
+          "tableFrom": "questions",
+          "tableTo": "courses",
+          "columnsFrom": [
+            "course_id",
+            "department_id"
+          ],
+          "columnsTo": [
+            "id",
+            "department_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "submissions": {
+      "name": "submissions",
       "columns": {
         "id": {
           "name": "id",
@@ -368,22 +515,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "subject": {
-          "name": "subject",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "year": {
-          "name": "year",
+        "question_id": {
+          "name": "question_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -395,7 +528,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'pending'"
+          "default": "'pending_review'"
         },
         "file_key": {
           "name": "file_key",
@@ -436,31 +569,23 @@
         }
       },
       "indexes": {
-        "papers_fileKey_unique": {
-          "name": "papers_fileKey_unique",
+        "submissions_fileKey_unique": {
+          "name": "submissions_fileKey_unique",
           "columns": [
             "file_key"
           ],
           "isUnique": true
         },
-        "papers_status_created_at_idx": {
-          "name": "papers_status_created_at_idx",
+        "submissions_question_id_status_idx": {
+          "name": "submissions_question_id_status_idx",
           "columns": [
-            "status",
-            "created_at"
+            "question_id",
+            "status"
           ],
           "isUnique": false
         },
-        "papers_subject_year_idx": {
-          "name": "papers_subject_year_idx",
-          "columns": [
-            "subject",
-            "year"
-          ],
-          "isUnique": false
-        },
-        "papers_uploader_id_idx": {
-          "name": "papers_uploader_id_idx",
+        "submissions_uploader_id_idx": {
+          "name": "submissions_uploader_id_idx",
           "columns": [
             "uploader_id"
           ],
@@ -468,9 +593,22 @@
         }
       },
       "foreignKeys": {
-        "papers_uploader_id_user_id_fk": {
-          "name": "papers_uploader_id_user_id_fk",
-          "tableFrom": "papers",
+        "submissions_question_id_questions_id_fk": {
+          "name": "submissions_question_id_questions_id_fk",
+          "tableFrom": "submissions",
+          "tableTo": "questions",
+          "columnsFrom": [
+            "question_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "submissions_uploader_id_user_id_fk": {
+          "name": "submissions_uploader_id_user_id_fk",
+          "tableFrom": "submissions",
           "tableTo": "user",
           "columnsFrom": [
             "uploader_id"
@@ -482,6 +620,178 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "courses": {
+      "name": "courses",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "courses_department_id_name_unique": {
+          "name": "courses_department_id_name_unique",
+          "columns": [
+            "department_id",
+            "name"
+          ],
+          "isUnique": true
+        },
+        "courses_id_department_id_unique": {
+          "name": "courses_id_department_id_unique",
+          "columns": [
+            "id",
+            "department_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "courses_department_id_departments_id_fk": {
+          "name": "courses_department_id_departments_id_fk",
+          "tableFrom": "courses",
+          "tableTo": "departments",
+          "columnsFrom": [
+            "department_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "departments": {
+      "name": "departments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "short_name": {
+          "name": "short_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "departments_name_unique": {
+          "name": "departments_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        },
+        "departments_shortName_unique": {
+          "name": "departments_shortName_unique",
+          "columns": [
+            "short_name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "exam_types": {
+      "name": "exam_types",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "exam_types_name_unique": {
+          "name": "exam_types_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "semesters": {
+      "name": "semesters",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "semesters_name_unique": {
+          "name": "semesters_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

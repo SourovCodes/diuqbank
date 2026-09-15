@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { data } from "react-router";
 
 /**
  * Calls the API worker over its service binding on behalf of the incoming request,
@@ -19,6 +20,16 @@ export function apiFetch(
 
 export async function readJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
+}
+
+/** GETs JSON from the API, turning any failure into a 502 error response. */
+export async function apiGetJson<T>(
+  request: Request,
+  path: string,
+): Promise<T> {
+  const res = await apiFetch(request, path);
+  if (!res.ok) throw data(`API request failed: ${path}`, { status: 502 });
+  return readJson<T>(res);
 }
 
 /** Copies Set-Cookie headers from an API response so they can be sent to the browser. */

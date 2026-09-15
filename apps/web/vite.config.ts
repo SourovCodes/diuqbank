@@ -12,6 +12,17 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  optimizeDeps: {
+    // Pre-bundle client deps at startup. Otherwise Vite discovers them on first page
+    // visit and force-reloads the page, which also breaks the first e2e run.
+    include: [
+      "class-variance-authority",
+      "cmdk",
+      "cn",
+      "lucide-react",
+      "radix-ui",
+    ],
+  },
   server: {
     // Must match BETTER_AUTH_URL / TRUSTED_ORIGINS in apps/api/wrangler.jsonc.
     port: 5173,

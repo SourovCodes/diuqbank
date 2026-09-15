@@ -1,0 +1,190 @@
+import { env } from "cloudflare:workers";
+import type { QuestionDetail, QuestionList } from "@qb/shared";
+import { describe, expect, it } from "vitest";
+import { api, seedQuestion, seedSubmission, seedTaxonomy } from "./helpers";
+
+describe("questions table constraints", () => {
+  it("rejects a question whose department differs from its course's department", async () => {
+    const { eee, algorithms, sem1, midterm } = await seedTaxonomy();
+    await expect(
+      seedQuestion({
+        departmentId: eee.id, // algorithms belongs to CSE
+        courseId: algorithms.id,
+        semesterId: sem1.id,
+        examTypeId: midterm.id,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects duplicate course + semester + exam type combinations", async () => {
+    const { cse, algorithms, sem1, midterm } = await seedTaxonomy();
+    const values = {
+      departmentId: cse.id,
+      courseId: algorithms.id,
+      semesterId: sem1.id,
+      examTypeId: midterm.id,
+    };
+    await seedQuestion(values);
+    await expect(seedQuestion(values)).rejects.toThrow();
+  });
+});
+
+describe("GET /api/v1/questions", () => {
+  it("lists only questions with published submissions, counting only published ones", async () => {
+    const t = await seedTaxonomy();
+    const base = { departmentId: t.cse.id, courseId: t.algorithms.id };
+    const visible = await seedQuestion({
+      ...base,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    const pendingOnly = await seedQuestion({
+      ...base,
+      semesterId: t.sem2.id,
+      examTypeId: t.final.id,
+    });
+    await seedQuestion({
+      ...base,
+      semesterId: t.sem1.id,
+      examTypeId: t.final.id,
+    });
+
+    await seedSubmission(visible.id);
+    await seedSubmission(visible.id);
+    await seedSubmission(visible.id, { status: "rejected" });
+    await seedSubmission(pendingOnly.id, { status: "pending_review" });
+
+    const res = await api(`/api/v1/questions?courseId=${t.algorithms.id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json<QuestionList>();
+    expect(body.total).toBe(1);
+    expect(body.items).toEqual([
+      {
+        id: visible.id,
+        department: t.cse,
+        course: { id: t.algorithms.id, name: t.algorithms.name },
+        semester: t.sem1,
+        examType: t.midterm,
+        publishedSubmissionCount: 2,
+      },
+    ]);
+  });
+
+  it("filters by department, semester and exam type", async () => {
+    const t = await seedTaxonomy();
+    const csQuestion = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    const eeQuestion = await seedQuestion({
+      departmentId: t.eee.id,
+      courseId: t.circuits.id,
+      semesterId: t.sem2.id,
+      examTypeId: t.final.id,
+    });
+    await seedSubmission(csQuestion.id);
+    await seedSubmission(eeQuestion.id);
+
+    const ids = async (query: string) =>
+      (
+        await (await api(`/api/v1/questions?${query}`)).json<QuestionList>()
+      ).items.map((q) => q.id);
+
+    expect(await ids(`departmentId=${t.eee.id}`)).toEqual([eeQuestion.id]);
+    expect(
+      await ids(
+        `departmentId=${t.cse.id}&semesterId=${t.sem1.id}&examTypeId=${t.midterm.id}`,
+      ),
+    ).toEqual([csQuestion.id]);
+    expect(
+      await ids(`departmentId=${t.cse.id}&courseId=${t.circuits.id}`),
+    ).toEqual([]);
+  });
+
+  it("rejects invalid filters", async () => {
+    const res = await api("/api/v1/questions?courseId=abc");
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({
+      error: { code: "VALIDATION_ERROR" },
+    });
+  });
+});
+
+describe("GET /api/v1/questions/:id", () => {
+  it("returns the question with only its published submissions, newest first", async () => {
+    const t = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    const older = await seedSubmission(question.id, {
+      createdAt: new Date("2024-01-01"),
+    });
+    const newer = await seedSubmission(question.id, {
+      createdAt: new Date("2025-01-01"),
+    });
+    await seedSubmission(question.id, { status: "pending_review" });
+
+    const res = await api(`/api/v1/questions/${question.id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json<QuestionDetail>();
+    expect(body.publishedSubmissionCount).toBe(2);
+    expect(body.submissions.map((s) => s.id)).toEqual([newer.id, older.id]);
+  });
+
+  it("404s for unknown questions and questions without published submissions", async () => {
+    const t = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    await seedSubmission(question.id, { status: "pending_review" });
+
+    expect((await api(`/api/v1/questions/${question.id}`)).status).toBe(404);
+    expect((await api("/api/v1/questions/999999")).status).toBe(404);
+  });
+});
+
+describe("GET /api/v1/submissions/:id/file", () => {
+  async function questionId() {
+    const t = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+    });
+    return question.id;
+  }
+
+  it("streams a published submission's PDF from R2", async () => {
+    const submission = await seedSubmission(await questionId());
+    await env.BUCKET.put(submission.fileKey, "%PDF-1.7 hello", {
+      httpMetadata: { contentType: "application/pdf" },
+    });
+
+    const res = await api(`/api/v1/submissions/${submission.id}/file`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+    expect(new TextDecoder().decode(await res.arrayBuffer())).toBe(
+      "%PDF-1.7 hello",
+    );
+  });
+
+  it("does not serve unpublished submissions", async () => {
+    const submission = await seedSubmission(await questionId(), {
+      status: "pending_review",
+    });
+    await env.BUCKET.put(submission.fileKey, "%PDF-1.7 secret");
+
+    expect(
+      (await api(`/api/v1/submissions/${submission.id}/file`)).status,
+    ).toBe(404);
+  });
+});

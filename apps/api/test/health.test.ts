@@ -15,8 +15,13 @@ describe("system routes", () => {
     expect(Object.keys(doc.paths)).toEqual(
       expect.arrayContaining([
         "/api/v1/health",
-        "/api/v1/papers",
-        "/api/v1/papers/{id}",
+        "/api/v1/departments",
+        "/api/v1/courses",
+        "/api/v1/semesters",
+        "/api/v1/exam-types",
+        "/api/v1/questions",
+        "/api/v1/questions/{id}",
+        "/api/v1/submissions/{id}/file",
       ]),
     );
   });

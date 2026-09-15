@@ -51,21 +51,66 @@ CREATE TABLE `verification` (
 );
 --> statement-breakpoint
 CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);--> statement-breakpoint
-CREATE TABLE `papers` (
+CREATE TABLE `questions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`department_id` integer NOT NULL,
+	`course_id` integer NOT NULL,
+	`semester_id` integer NOT NULL,
+	`exam_type_id` integer NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`department_id`) REFERENCES `departments`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`semester_id`) REFERENCES `semesters`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`exam_type_id`) REFERENCES `exam_types`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`course_id`,`department_id`) REFERENCES `courses`(`id`,`department_id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `questions_department_id_idx` ON `questions` (`department_id`);--> statement-breakpoint
+CREATE INDEX `questions_semester_id_idx` ON `questions` (`semester_id`);--> statement-breakpoint
+CREATE INDEX `questions_exam_type_id_idx` ON `questions` (`exam_type_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `questions_course_semester_exam_type_unique` ON `questions` (`course_id`,`semester_id`,`exam_type_id`);--> statement-breakpoint
+CREATE TABLE `submissions` (
 	`id` text PRIMARY KEY NOT NULL,
-	`title` text NOT NULL,
-	`subject` text NOT NULL,
-	`year` integer NOT NULL,
-	`status` text DEFAULT 'pending' NOT NULL,
+	`question_id` integer NOT NULL,
+	`status` text DEFAULT 'pending_review' NOT NULL,
 	`file_key` text NOT NULL,
 	`file_size` integer NOT NULL,
 	`uploader_id` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`uploader_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `papers_fileKey_unique` ON `papers` (`file_key`);--> statement-breakpoint
-CREATE INDEX `papers_status_created_at_idx` ON `papers` (`status`,`created_at`);--> statement-breakpoint
-CREATE INDEX `papers_subject_year_idx` ON `papers` (`subject`,`year`);--> statement-breakpoint
-CREATE INDEX `papers_uploader_id_idx` ON `papers` (`uploader_id`);
+CREATE UNIQUE INDEX `submissions_fileKey_unique` ON `submissions` (`file_key`);--> statement-breakpoint
+CREATE INDEX `submissions_question_id_status_idx` ON `submissions` (`question_id`,`status`);--> statement-breakpoint
+CREATE INDEX `submissions_uploader_id_idx` ON `submissions` (`uploader_id`);--> statement-breakpoint
+CREATE TABLE `courses` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`department_id` integer NOT NULL,
+	FOREIGN KEY (`department_id`) REFERENCES `departments`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `courses_department_id_name_unique` ON `courses` (`department_id`,`name`);--> statement-breakpoint
+CREATE UNIQUE INDEX `courses_id_department_id_unique` ON `courses` (`id`,`department_id`);--> statement-breakpoint
+CREATE TABLE `departments` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`short_name` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `departments_name_unique` ON `departments` (`name`);--> statement-breakpoint
+CREATE UNIQUE INDEX `departments_shortName_unique` ON `departments` (`short_name`);--> statement-breakpoint
+CREATE TABLE `exam_types` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `exam_types_name_unique` ON `exam_types` (`name`);--> statement-breakpoint
+CREATE TABLE `semesters` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `semesters_name_unique` ON `semesters` (`name`);

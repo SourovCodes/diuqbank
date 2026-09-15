@@ -76,7 +76,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
       <p className="text-muted-foreground">{details}</p>
       <Link to="/" className={buttonVariants({ variant: "outline" })}>
-        Back to all papers
+        Back to home
       </Link>
       {stack && (
         <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-left text-xs">
