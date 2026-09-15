@@ -1,24 +1,18 @@
+import { Download, ExternalLink, FileText } from "lucide-react";
+import { buttonVariants } from "~/components/ui/button";
+
 type PdfViewerProps = {
   /** Same-origin URL of the PDF, rendered by the browser's built-in viewer. */
   src: string;
-  /** Absolute URL of the same PDF, which Google's viewer fetches for the fallback. */
-  absoluteSrc: string;
   title: string;
 };
 
-const viewerClass = "block h-[80vh] min-h-[32rem] w-full";
-
 /**
  * Uses the browser's native PDF viewer via <object>. Browsers that can't display PDFs
- * inline (most mobile browsers) render the object's children instead, which embed
- * Google Docs Viewer.
- *
- * Google's viewer needs a publicly reachable URL, so the fallback can't load files
- * served from localhost during development.
+ * inline (most mobile browsers) render the object's children instead: links to open
+ * or download the file.
  */
-export function PdfViewer({ src, absoluteSrc, title }: PdfViewerProps) {
-  const googleViewerUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(absoluteSrc)}`;
-
+export function PdfViewer({ src, title }: PdfViewerProps) {
   return (
     <div className="overflow-hidden rounded-xl border bg-muted shadow-sm">
       <object
@@ -27,15 +21,38 @@ export function PdfViewer({ src, absoluteSrc, title }: PdfViewerProps) {
         type="application/pdf"
         title={title}
         aria-label={title}
-        className={viewerClass}
+        className="block h-[80vh] min-h-[32rem] w-full"
         data-testid="pdf-viewer"
       >
-        <iframe
-          src={googleViewerUrl}
-          title={title}
-          className={`${viewerClass} border-0 bg-card`}
+        <div
+          className="flex h-full flex-col items-center justify-center gap-4 bg-card p-6 text-center"
           data-testid="pdf-viewer-fallback"
-        />
+        >
+          <div className="rounded-full bg-primary/10 p-3 text-primary">
+            <FileText className="size-6" aria-hidden />
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium">This browser can’t show the PDF here</p>
+            <p className="text-sm text-muted-foreground">
+              Open it in a new tab or download it instead.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <ExternalLink aria-hidden />
+              Open in new tab
+            </a>
+            <a href={src} download className={buttonVariants({ size: "sm" })}>
+              <Download aria-hidden />
+              Download
+            </a>
+          </div>
+        </div>
       </object>
     </div>
   );

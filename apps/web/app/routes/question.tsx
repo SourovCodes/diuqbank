@@ -58,8 +58,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     question: await readJson<QuestionDetail>(res),
     interactions,
-    // The Google Docs viewer fallback needs absolute file URLs.
-    origin: new URL(request.url).origin,
   };
 }
 
@@ -184,7 +182,7 @@ function viewerFor(
 }
 
 export default function QuestionPage({ loaderData }: Route.ComponentProps) {
-  const { question, interactions, origin } = loaderData;
+  const { question, interactions } = loaderData;
   const [searchParams] = useSearchParams();
   const selected = pickSubmission(
     question.submissions,
@@ -255,21 +253,16 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
         >
           <ReportNotice questionId={question.id} />
           {selected && fileUrl ? (
-            <>
+            // One keyed wrapper (sibling keys must be unique): switching papers remounts
+            // the toolbar and reloads the embedded document.
+            <div key={selected.id} className="space-y-3">
               <PaperToolbar
-                key={selected.id}
                 submission={selected}
                 label={paperLabel}
                 viewer={viewerFor(selected, interactions)}
               />
-              {/* Keyed so switching submissions reloads the embedded document. */}
-              <PdfViewer
-                key={selected.id}
-                src={fileUrl}
-                absoluteSrc={`${origin}${fileUrl}`}
-                title={title}
-              />
-            </>
+              <PdfViewer src={fileUrl} title={title} />
+            </div>
           ) : (
             <EmptyState
               className="min-h-[32rem] lg:h-[80vh]"

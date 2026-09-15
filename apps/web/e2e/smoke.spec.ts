@@ -3,6 +3,29 @@ import { expect, test, type Page } from "@playwright/test";
 // These tests rely on the local seed data: `pnpm db:migrate && pnpm db:seed`.
 // Question 1 (Data Structures) has 2 published, 1 pending and 1 rejected submission.
 
+// Fail any test that logs a console error, such as React's duplicate key or hydration
+// warnings, which otherwise go unnoticed while every assertion still passes.
+const consoleErrors = new WeakMap<Page, string[]>();
+
+test.beforeEach(({ page }) => {
+  const errors: string[] = [];
+  consoleErrors.set(page, errors);
+  page.on("console", (message) => {
+    // Failed requests (such as expected 404s) aren't app bugs.
+    if (
+      message.type() === "error" &&
+      !message.text().startsWith("Failed to load resource")
+    ) {
+      errors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+});
+
+test.afterEach(({ page }) => {
+  expect(consoleErrors.get(page) ?? [], "console errors").toEqual([]);
+});
+
 /**
  * Opens a searchable select. Right after a full page load the click can land on the
  * server-rendered button before React has hydrated, so retry until it opens.
@@ -81,8 +104,6 @@ test("course filter follows the selected department", async ({ page }) => {
 test("question page embeds the PDF, shows its uploader and switches submissions", async ({
   page,
 }) => {
-  // Keep tests offline: the Google Docs fallback is only checked by its URL.
-  await page.route("https://docs.google.com/**", (route) => route.abort());
   await page.goto("/questions/1");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
@@ -98,13 +119,10 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
     "data",
     /^\/api\/v1\/submissions\/seed-01\/file/,
   );
-  await expect(page.getByTestId("pdf-viewer-fallback")).toHaveAttribute(
-    "src",
-    "https://docs.google.com/gview?embedded=true&url=" +
-      encodeURIComponent(
-        "http://localhost:5173/api/v1/submissions/seed-01/file",
-      ),
-  );
+  // Browsers without an inline PDF viewer get links to the same file instead.
+  await expect(
+    page.getByTestId("pdf-viewer-fallback").locator("a[download]"),
+  ).toHaveAttribute("href", "/api/v1/submissions/seed-01/file");
   await expect(page.getByRole("link", { name: /Ayesha Rahman/ })).toBeVisible();
 
   await page.getByRole("link", { name: /Paper 2/ }).click();
@@ -115,6 +133,17 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   );
   await expect(viewer).toHaveAttribute("data", /seed-02/);
   await expect(page.getByRole("link", { name: /Tanvir Hasan/ })).toBeVisible();
+
+  // Switching back and forth keeps exactly one toolbar and viewer on the page.
+  await page.getByRole("link", { name: /Paper 1/ }).click();
+  await expect(viewer).toHaveAttribute("data", /seed-01/);
+  await page.getByRole("link", { name: /Paper 2/ }).click();
+  await expect(viewer).toHaveAttribute("data", /seed-02/);
+  await expect(page.getByRole("link", { name: /^Log in to like/ })).toHaveCount(
+    1,
+  );
+  await expect(page.getByRole("link", { name: "Report" })).toHaveCount(1);
+  await expect(viewer).toHaveCount(1);
 
   // Unpublished submissions are listed but can't be opened.
   await expect(page.getByText("Pending review", { exact: true })).toBeVisible();
@@ -233,10 +262,26 @@ async function signUpAs(page: Page, name: string, redirectTo: string) {
   return email;
 }
 
+type ButtonLocator = ReturnType<Page["getByRole"]>;
+
 /** The count in a vote button's accessible name, e.g. "Like (3)" → 3. */
-async function voteCount(button: ReturnType<Page["getByRole"]>) {
+async function voteCount(button: ButtonLocator) {
   const label = (await button.getAttribute("aria-label")) ?? "";
   return Number(/\((\d+)\)/.exec(label)?.[1]);
+}
+
+/**
+ * Clicks a vote button and waits until the server has saved the vote. The counts update
+ * optimistically, so without waiting a reload could cancel the request.
+ */
+async function castVote(page: Page, button: ButtonLocator, questionId: number) {
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname.startsWith(`/questions/${questionId}`),
+  );
+  await button.click();
+  await saved;
 }
 
 test("a member can like, dislike and report a paper", async ({
@@ -254,12 +299,12 @@ test("a member can like, dislike and report a paper", async ({
   const likes = await voteCount(like);
   const dislikes = await voteCount(dislike);
 
-  await like.click();
+  await castVote(page, like, questionId);
   await expect(like).toHaveAttribute("aria-pressed", "true");
   await expect(like).toHaveAttribute("aria-label", `Like (${likes + 1})`);
 
   // Switching moves the vote; it is saved, so it survives a reload.
-  await dislike.click();
+  await castVote(page, dislike, questionId);
   await expect(dislike).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expect(dislike).toHaveAttribute("aria-pressed", "true");
@@ -270,7 +315,7 @@ test("a member can like, dislike and report a paper", async ({
   );
 
   // Pressing the active vote again clears it.
-  await dislike.click();
+  await castVote(page, dislike, questionId);
   await expect(dislike).toHaveAttribute("aria-pressed", "false");
   await expect(dislike).toHaveAttribute("aria-label", `Dislike (${dislikes})`);
 
