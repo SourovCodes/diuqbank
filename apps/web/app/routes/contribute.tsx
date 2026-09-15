@@ -1,5 +1,5 @@
 import type { ApiError, CreatedSubmission } from "@qb/shared";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Lightbulb } from "lucide-react";
 import { Link, useNavigation } from "react-router";
 import { ContributeForm } from "~/components/contribute-form";
 import { PageHeader } from "~/components/page-header";
@@ -46,6 +46,12 @@ export async function action({ request }: Route.ActionArgs) {
   };
 }
 
+const STEPS = [
+  "Choose the department, course, semester and exam type.",
+  "Upload the question paper as a PDF.",
+  "An admin reviews it, along with any new entries, before it is published.",
+];
+
 export default function Contribute({
   loaderData,
   actionData,
@@ -63,7 +69,7 @@ export default function Contribute({
       {actionData?.ok && (
         <div
           role="status"
-          className="flex max-w-3xl items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+          className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
         >
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
           <div className="space-y-1">
@@ -93,14 +99,36 @@ export default function Contribute({
         </div>
       )}
 
-      {/* Re-mount after each successful upload to reset the form. */}
-      <ContributeForm
-        key={actionData?.ok ? actionData.submission.id : "form"}
-        {...loaderData}
-        fieldErrors={failed?.fieldErrors ?? {}}
-        message={failed?.message}
-        submitting={submitting}
-      />
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
+        {/* Re-mount after each successful upload to reset the form. */}
+        <ContributeForm
+          key={actionData?.ok ? actionData.submission.id : "form"}
+          {...loaderData}
+          fieldErrors={failed?.fieldErrors ?? {}}
+          message={failed?.message}
+          submitting={submitting}
+        />
+        <aside className="space-y-4 rounded-xl border bg-muted/30 p-5 text-sm">
+          <h2 className="font-medium">How it works</h2>
+          <ol className="space-y-3">
+            {STEPS.map((step, index) => (
+              <li key={step} className="flex gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
+                  {index + 1}
+                </span>
+                <span className="pt-0.5 text-muted-foreground">{step}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="flex gap-2 border-t pt-4 text-muted-foreground">
+            <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              Can’t find a department, course or semester? Type its name and
+              choose “Add”.
+            </span>
+          </p>
+        </aside>
+      </div>
     </div>
   );
 }

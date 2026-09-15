@@ -22,6 +22,8 @@ submissions (id, question_id?, status, file_key, file_size, uploader_id,
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
 
+Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank.
+
 When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
 
 ## Stack
@@ -116,6 +118,7 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - Create real resources (`wrangler d1 create`, `wrangler r2 bucket create`) and put the D1 id in `apps/api/wrangler.jsonc`.
 - Set `BETTER_AUTH_SECRET` with `wrangler secret put`, and update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain.
 - Add email verification and password reset (e.g. Cloudflare Email Service), rate limiting and Turnstile on auth forms.
-- Build the contribute (submission upload) flow and a moderation flow (admin role) to publish/reject submissions.
+- Build a moderation flow (admin role) to publish/reject submissions and approve new departments, courses and semesters.
+- Add email change (with verification) and account deletion.
 - Add admin management for departments, courses, semesters and exam types.
 - Add caching for public pages and PDFs, a sitemap, and staging/production environments.

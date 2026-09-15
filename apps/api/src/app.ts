@@ -5,6 +5,7 @@ import { handleError, handleNotFound, validationHook } from "./lib/errors";
 import { contextMiddleware } from "./middleware/context";
 import { contributorRoutes } from "./routes/contributors";
 import { healthRoutes } from "./routes/health";
+import { meRoutes } from "./routes/me";
 import { questionRoutes } from "./routes/questions";
 import { submissionRoutes } from "./routes/submissions";
 import { taxonomyRoutes } from "./routes/taxonomy";
@@ -24,7 +25,8 @@ export function createApp() {
     .route("/", taxonomyRoutes)
     .route("/questions", questionRoutes)
     .route("/submissions", submissionRoutes)
-    .route("/contributors", contributorRoutes);
+    .route("/contributors", contributorRoutes)
+    .route("/me", meRoutes);
   app.route("/api/v1", v1);
 
   app.doc31("/api/v1/openapi.json", {

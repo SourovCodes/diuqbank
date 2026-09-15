@@ -40,10 +40,6 @@ type SearchableSelectProps = {
 const CLEAR_VALUE = "__all__";
 const CREATE_VALUE = "__create__";
 
-// Match on the visible label (passed as keywords), not the option id.
-const filterByLabel = (_value: string, search: string, keywords?: string[]) =>
-  keywords?.some((k) => k.toLowerCase().includes(search.toLowerCase())) ? 1 : 0;
-
 export function SearchableSelect({
   label,
   placeholder,
@@ -65,10 +61,16 @@ export function SearchableSelect({
   const triggerLabel = displayLabel ?? selected?.label;
 
   const name = search.trim();
+  const query = name.toLowerCase();
+  // Filtered here rather than by cmdk, which doesn't re-filter items that mount
+  // while typing (like the "Add" item) and would hide them.
+  const visibleOptions = query
+    ? options.filter((o) => o.label.toLowerCase().includes(query))
+    : options;
   const canCreate =
     onCreate !== undefined &&
     name.length >= 2 &&
-    !options.some((o) => o.label.toLowerCase() === name.toLowerCase());
+    !options.some((o) => o.label.toLowerCase() === query);
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
@@ -108,7 +110,7 @@ export function SearchableSelect({
           align="start"
           className="w-(--radix-popover-trigger-width) min-w-64 p-0"
         >
-          <Command filter={filterByLabel}>
+          <Command shouldFilter={false}>
             <CommandInput
               placeholder={searchPlaceholder}
               value={search}
@@ -117,10 +119,9 @@ export function SearchableSelect({
             <CommandList>
               <CommandEmpty>{emptyText}</CommandEmpty>
               <CommandGroup>
-                {clearable && (
+                {clearable && !query && (
                   <CommandItem
                     value={CLEAR_VALUE}
-                    keywords={[placeholder]}
                     onSelect={() => select(null)}
                   >
                     <Check
@@ -130,11 +131,10 @@ export function SearchableSelect({
                     {placeholder}
                   </CommandItem>
                 )}
-                {options.map((option) => (
+                {visibleOptions.map((option) => (
                   <CommandItem
                     key={option.value}
                     value={option.value}
-                    keywords={[option.label]}
                     onSelect={() => select(option.value)}
                   >
                     <Check
@@ -149,7 +149,6 @@ export function SearchableSelect({
                 {canCreate && (
                   <CommandItem
                     value={CREATE_VALUE}
-                    keywords={[name]}
                     onSelect={() => {
                       onCreate(name);
                       changeOpen(false);

@@ -10,6 +10,11 @@ export function submissionFileUrl(id: string) {
   return `/api/v1/submissions/${encodeURIComponent(id)}/file`;
 }
 
+/** The signed-in uploader's copy of their own PDF, available in any status. */
+export function ownSubmissionFileUrl(id: string) {
+  return `/api/v1/me/submissions/${encodeURIComponent(id)}/file`;
+}
+
 /**
  * The submission to show in the viewer: the requested one if it is published,
  * otherwise the first published one. Unpublished submissions are never viewable.

@@ -161,13 +161,27 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/contribute$/);
 
+  const courseName = `E2E Course ${suffix}`;
+  await uploadPaperWithNewCourse(page, courseName);
+
+  await page.getByRole("link", { name: "See your contributions" }).click();
+  await expect(page.getByText(courseName)).toBeVisible();
+  await expect(
+    page.getByText("Includes new entries awaiting approval"),
+  ).toBeVisible();
+});
+
+/** Fills in and submits the contribute form: CSE, a new course, 3rd Semester, Final. */
+async function uploadPaperWithNewCourse(page: Page, courseName: string) {
   await openCombobox(page, "Department");
   await page.getByPlaceholder("Search or add department…").fill("CSE");
   await page.getByRole("option", { name: /Computer Science/ }).click();
 
-  const courseName = `E2E Course ${suffix}`;
   await openCombobox(page, "Course");
-  await page.getByPlaceholder("Search or add course…").fill(courseName);
+  // Typed key by key: the "Add" option must appear while typing, not only on paste.
+  await page
+    .getByPlaceholder("Search or add course…")
+    .pressSequentially(courseName);
   await page
     .getByRole("option", { name: `Add “${courseName}” as a new course` })
     .click();
@@ -187,13 +201,13 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
   });
   await page.getByRole("button", { name: "Submit paper" }).click();
   await expect(page.getByRole("status")).toContainText("submitted for review");
+}
 
-  await page.getByRole("link", { name: "See your contributions" }).click();
-  await expect(page.getByText(courseName)).toBeVisible();
-  await expect(
-    page.getByText("Includes new entries awaiting approval"),
-  ).toBeVisible();
-});
+async function logOut(page: Page) {
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
+}
 
 test("a user can sign up and log out", async ({ page }) => {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
@@ -204,6 +218,78 @@ test("a user can sign up and log out", async ({ page }) => {
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await page.getByRole("button", { name: "Log out" }).click();
-  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
+  await logOut(page);
+});
+
+test("a contributor can manage their submissions and profile", async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const email = `e2e-${suffix}@example.com`;
+  await page.goto("/signup?redirectTo=%2Fcontribute");
+  await page.getByLabel("Name").fill("E2E Account");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/contribute$/);
+
+  const courseName = `E2E Withdrawn ${suffix}`;
+  await uploadPaperWithNewCourse(page, courseName);
+
+  // The account menu leads to the user's own submissions, including unpublished ones.
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "My submissions" }).click();
+  await expect(page).toHaveURL(/\/account\/submissions$/);
+  const row = page.locator("main li").filter({ hasText: courseName });
+  await expect(row).toContainText("Pending review");
+
+  // Uploaders can open their own pending PDF.
+  const preview = row.getByRole("link", { name: "Preview" });
+  const previewFile = await page.request.get(
+    (await preview.getAttribute("href"))!,
+  );
+  expect(previewFile.status()).toBe(200);
+
+  await row.getByRole("button", { name: "Withdraw" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Withdraw" })
+    .click();
+  await expect(page.getByText("No submissions yet")).toBeVisible();
+
+  // Rename.
+  await page.getByRole("link", { name: "Profile", exact: true }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Renamed Contributor");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Profile updated")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Renamed Contributor",
+  );
+
+  // Wrong current password, then a real change.
+  const newPassword = "another-horse-battery";
+  await page.getByLabel("Current password").fill("not-my-password");
+  await page.getByLabel("New password", { exact: true }).fill(newPassword);
+  await page.getByLabel("Confirm new password").fill(newPassword);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(
+    page.getByText("Your current password is incorrect."),
+  ).toBeVisible();
+
+  await page.getByLabel("Current password").fill("correct-horse-battery");
+  await page.getByLabel("New password", { exact: true }).fill(newPassword);
+  await page.getByLabel("Confirm new password").fill(newPassword);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed")).toBeVisible();
+
+  // The new password works.
+  await logOut(page);
+  await page.goto("/login?redirectTo=%2Faccount");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(newPassword);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Renamed Contributor",
+  );
 });

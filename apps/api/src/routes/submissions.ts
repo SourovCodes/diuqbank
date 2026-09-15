@@ -5,6 +5,7 @@ import {
   submissionFieldsSchema,
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
+import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { requireAuth } from "../middleware/require-auth";
 import { getPublishedSubmissionFile } from "../services/questions";
@@ -84,11 +85,5 @@ export const submissionRoutes = new OpenAPIHono<AppEnv>({
       c.req.valid("param").id,
     );
     if (!object) throw new AppError(404, "NOT_FOUND", "Submission not found");
-
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set("etag", object.httpEtag);
-    headers.set("content-length", String(object.size));
-    headers.set("cache-control", "public, max-age=86400");
-    return new Response(object.body, { status: 200, headers });
+    return objectResponse(object, "public, max-age=86400");
   });

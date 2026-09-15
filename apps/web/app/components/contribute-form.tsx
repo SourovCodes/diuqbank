@@ -1,9 +1,8 @@
 import type { Course, Department, ExamType, Semester } from "@qb/shared";
-import { MAX_SUBMISSION_FILE_BYTES } from "@qb/shared/constants";
-import { Info } from "lucide-react";
 import { useId, useState } from "react";
 import { Form } from "react-router";
-import { FormField, FormMessage } from "~/components/form";
+import { FormMessage } from "~/components/form";
+import { PdfFileInput } from "~/components/pdf-file-input";
 import { SearchableSelect } from "~/components/searchable-select";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
@@ -15,7 +14,6 @@ import {
   findSemesterByName,
 } from "~/lib/choices";
 import { courseOptions, type SelectOption } from "~/lib/filters";
-import { formatBytes } from "~/lib/format";
 
 /** An existing value (by id) or a new name typed by the contributor. */
 export type Choice =
@@ -179,9 +177,9 @@ export function ContributeForm({
         );
 
   return (
-    <Form method="post" encType="multipart/form-data" className="max-w-3xl">
+    <Form method="post" encType="multipart/form-data" className="min-w-0">
       <Card className="gap-0 py-0">
-        <div className="grid gap-5 p-6 sm:grid-cols-2">
+        <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-6">
           <ChoiceField
             label="Department"
             noun="department"
@@ -269,18 +267,12 @@ export function ContributeForm({
             error={errorFor("examTypeId")}
           />
 
-          <div className="grid gap-1.5 sm:col-span-2">
-            <FormField
+          <div className="sm:col-span-2">
+            <PdfFileInput
               label="PDF file"
               name="file"
-              type="file"
-              accept="application/pdf,.pdf"
-              required
               error={errorFor("file")}
             />
-            <p className="text-xs text-muted-foreground">
-              PDF only, up to {formatBytes(MAX_SUBMISSION_FILE_BYTES)}.
-            </p>
           </div>
 
           {message && (
@@ -290,13 +282,12 @@ export function ContributeForm({
           )}
         </div>
 
-        <div className="flex flex-col gap-4 border-t bg-muted/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-start gap-2 text-xs text-muted-foreground">
-            <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            Can’t find a department, course or semester? Type its name and
-            choose “Add”. New entries are reviewed by an admin.
-          </p>
-          <Button type="submit" disabled={submitting} className="shrink-0">
+        <div className="flex justify-end border-t bg-muted/30 px-4 py-4 sm:px-6">
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full sm:w-auto"
+          >
             {submitting ? "Uploading…" : "Submit paper"}
           </Button>
         </div>

@@ -1,6 +1,7 @@
 import type {
   ContributorDetail,
   ContributorList,
+  ContributorSubmission,
   ListContributorsQuery,
 } from "@qb/shared";
 import { asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
@@ -81,15 +82,14 @@ export async function listContributors(
   };
 }
 
-export async function getContributor(
+/**
+ * All submissions by one uploader, in every status: published first (newest first),
+ * then pending review, then rejected.
+ */
+export async function listUploaderSubmissions(
   db: Database,
-  id: string,
-): Promise<ContributorDetail | null> {
-  const [contributor] = await selectContributors(db)
-    .query.where(eq(user.id, id))
-    .limit(1);
-  if (!contributor) return null;
-
+  uploaderId: string,
+): Promise<ContributorSubmission[]> {
   // A submission's classification comes from its question when linked, otherwise from
   // its proposed values: existing ids are joined, new names are read from the row.
   const rows = await db
@@ -144,29 +144,41 @@ export async function getContributor(
         sql`coalesce(${questions.examTypeId}, ${submissions.examTypeId})`,
       ),
     )
-    .where(eq(submissions.uploaderId, id))
+    .where(eq(submissions.uploaderId, uploaderId))
     .orderBy(submissionStatusOrder, desc(submissions.createdAt));
+
+  return rows.map((row) => ({
+    ...row.submission,
+    createdAt: row.submission.createdAt.toISOString(),
+    classification: {
+      department: row.department ?? {
+        id: null,
+        name: row.customDepartmentName ?? "",
+        shortName: row.customDepartmentShortName,
+      },
+      course: row.course ?? { id: null, name: row.customCourseName ?? "" },
+      semester: row.semester ?? {
+        id: null,
+        name: row.customSemesterName ?? "",
+      },
+      // Always present: required by the submissions CHECK constraint.
+      examType: row.examType!,
+    },
+  }));
+}
+
+export async function getContributor(
+  db: Database,
+  id: string,
+): Promise<ContributorDetail | null> {
+  const [contributor] = await selectContributors(db)
+    .query.where(eq(user.id, id))
+    .limit(1);
+  if (!contributor) return null;
 
   return {
     ...contributor,
     joinedAt: contributor.joinedAt.toISOString(),
-    submissions: rows.map((row) => ({
-      ...row.submission,
-      createdAt: row.submission.createdAt.toISOString(),
-      classification: {
-        department: row.department ?? {
-          id: null,
-          name: row.customDepartmentName ?? "",
-          shortName: row.customDepartmentShortName,
-        },
-        course: row.course ?? { id: null, name: row.customCourseName ?? "" },
-        semester: row.semester ?? {
-          id: null,
-          name: row.customSemesterName ?? "",
-        },
-        // Always present: required by the submissions CHECK constraint.
-        examType: row.examType!,
-      },
-    })),
+    submissions: await listUploaderSubmissions(db, id),
   };
 }

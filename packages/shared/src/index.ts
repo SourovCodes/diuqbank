@@ -1,4 +1,5 @@
 export * from "./constants";
+export * from "./schemas/account";
 export * from "./schemas/common";
 export * from "./schemas/contributor";
 export * from "./schemas/question";
