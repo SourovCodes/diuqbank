@@ -60,7 +60,7 @@ function UserMenu({ user }: { user: SessionUser }) {
           className="rounded-full"
           aria-label="Account menu"
         >
-          <ContributorAvatar name={user.name} size="sm" />
+          <ContributorAvatar name={user.name} image={user.image} size="sm" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

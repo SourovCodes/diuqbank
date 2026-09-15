@@ -27,7 +27,7 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
         description={user.email}
         actions={
           <span className="hidden sm:block">
-            <ContributorAvatar name={user.name} size="lg" />
+            <ContributorAvatar name={user.name} image={user.image} size="lg" />
           </span>
         }
       />

@@ -3,7 +3,8 @@ import { ChevronRight, FileText } from "lucide-react";
 import { Link } from "react-router";
 import { StatusBadge } from "~/components/status-badge";
 import { formatDate } from "~/lib/dates";
-import { formatBytes } from "~/lib/format";
+import { formatBytes, formatViews } from "~/lib/format";
+import { plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 const ROW_CLASS =
@@ -38,6 +39,8 @@ export function SubmissionRow({ submission, actions }: SubmissionRowProps) {
         <p className="text-xs text-muted-foreground">
           Added {formatDate(submission.createdAt)} ·{" "}
           {formatBytes(submission.fileSize)}
+          {submission.status === "published" &&
+            ` · ${plural(submission.likeCount, "like")} · ${formatViews(submission.viewCount)}`}
           {proposesNewValues && " · Includes new entries awaiting approval"}
         </p>
       </div>

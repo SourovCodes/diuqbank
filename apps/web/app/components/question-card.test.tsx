@@ -17,6 +17,7 @@ const question: Question = {
   semester: { id: 2, name: "2nd Semester" },
   examType: { id: 1, name: "Midterm" },
   submissionCounts: { published: 2, pendingReview: 1, rejected: 0 },
+  viewCount: 1234,
 };
 
 function renderCard(q: Question) {
@@ -27,12 +28,13 @@ function renderCard(q: Question) {
   return screen.findByRole("link", { name: /Data Structures/ });
 }
 
-it("links to the question and summarises its submissions", async () => {
+it("links to the question and summarises its submissions and views", async () => {
   const link = await renderCard(question);
   expect(link.getAttribute("href")).toBe("/questions/7");
   expect(link.textContent).toContain("CSE · 2nd Semester · Midterm");
   expect(link.textContent).toContain("2 papers");
   expect(link.textContent).toContain("1 pending review");
+  expect(link.textContent).toContain("1.2K views");
 });
 
 it("shows when only pending submissions exist", async () => {

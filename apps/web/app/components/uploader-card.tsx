@@ -21,7 +21,7 @@ export function UploaderCard({ submission }: { submission: Submission }) {
           to={`/contributors/${encodeURIComponent(uploader.id)}`}
           className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/60"
         >
-          <ContributorAvatar name={uploader.name} />
+          <ContributorAvatar name={uploader.name} image={uploader.image} />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium group-hover:text-primary">
               {uploader.name}

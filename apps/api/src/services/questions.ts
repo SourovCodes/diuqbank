@@ -4,7 +4,7 @@ import type {
   QuestionDetail,
   QuestionList,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -46,6 +46,7 @@ function selectQuestions(db: Database) {
   return db
     .select({
       ...questionSummaryColumns,
+      viewCount: questions.viewCount,
       submissionCounts: {
         published: counts.published,
         pendingReview: counts.pendingReview,
@@ -115,19 +116,28 @@ export async function getQuestion(
   if (!question) return null;
 
   // Metadata only: file keys never leave the API, files are served separately
-  // (published submissions only), and uploaders expose just their public name.
+  // (published submissions only), and uploaders expose just their public profile.
   const rows = await db
     .select({
       id: submissions.id,
       status: submissions.status,
       fileSize: submissions.fileSize,
       createdAt: submissions.createdAt,
-      uploader: { id: user.id, name: user.name },
+      likeCount: submissions.likeCount,
+      dislikeCount: submissions.dislikeCount,
+      viewCount: submissions.viewCount,
+      uploader: { id: user.id, name: user.name, image: user.image },
     })
     .from(submissions)
     .leftJoin(user, eq(user.id, submissions.uploaderId))
     .where(eq(submissions.questionId, id))
-    .orderBy(submissionStatusOrder, desc(submissions.createdAt));
+    // Ranking within a status: score, then views, then newest.
+    .orderBy(
+      submissionStatusOrder,
+      desc(sql`${submissions.likeCount} - ${submissions.dislikeCount}`),
+      desc(submissions.viewCount),
+      desc(submissions.createdAt),
+    );
 
   return {
     ...question,

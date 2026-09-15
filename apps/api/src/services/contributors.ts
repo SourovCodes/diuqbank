@@ -41,6 +41,7 @@ function selectContributors(db: Database) {
     .select({
       id: user.id,
       name: user.name,
+      image: user.image,
       joinedAt: user.createdAt,
       submissionCounts: {
         published: counts.published,
@@ -100,6 +101,9 @@ export async function listUploaderSubmissions(
         fileSize: submissions.fileSize,
         createdAt: submissions.createdAt,
         questionId: submissions.questionId,
+        likeCount: submissions.likeCount,
+        dislikeCount: submissions.dislikeCount,
+        viewCount: submissions.viewCount,
       },
       department: {
         id: departments.id,

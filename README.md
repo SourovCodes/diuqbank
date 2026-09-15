@@ -9,7 +9,7 @@ departments (id, name, short_name)      semesters (id, name)      exam_types (id
      │
 courses (id, name, department_id)
      │
-questions (id, department_id, course_id, semester_id, exam_type_id)
+questions (id, department_id, course_id, semester_id, exam_type_id, view_count)
      │   · unique (course_id, semester_id, exam_type_id)
      │   · FK (course_id, department_id) → courses (id, department_id),
      │     so a question's department always matches its course's department
@@ -18,11 +18,21 @@ submissions (id, question_id?, status, file_key, file_size, uploader_id,
              department_id? | custom_department_name (+ custom_department_short_name),
              course_id? | custom_course_name, semester_id? | custom_semester_name, exam_type_id?)
          status: pending_review | published | rejected — only published PDFs are public
+         like_count, dislike_count, pending_report_count — maintained by triggers; view_count
+     │
+submission_votes (submission_id, user_id, value ±1)
+submission_reports (id, submission_id, reporter_id, reason, details, status: pending | resolved | dismissed)
 ```
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
 
-Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank.
+Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank. Profile images are uploaded to R2 (JPEG, PNG or WebP, max 2 MB) and served from `/api/v1/avatars/{id}`.
+
+Engagement on published papers:
+
+- **Views** — question pages and papers count their views separately (`POST …/views`, open to everyone, no deduplication yet).
+- **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0003_engagement_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
+- **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). The admin review screens are still to be built.
 
 When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
 
