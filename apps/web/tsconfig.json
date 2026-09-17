@@ -2,7 +2,8 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.cloudflare.json" }
+    { "path": "./tsconfig.cloudflare.json" },
+    { "path": "./tsconfig.e2e.json" }
   ],
   // Mirrors tsconfig.cloudflare.json; read by tooling such as the shadcn CLI.
   "compilerOptions": {

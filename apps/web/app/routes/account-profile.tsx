@@ -1,10 +1,11 @@
 import type { ApiError } from "@qb/shared";
-import { Check, Upload } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { data, Form, useNavigation } from "react-router";
+import { AvatarInput } from "~/components/avatar-input";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { FormField, FormMessage } from "~/components/form";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { apiFetch, readJson, setCookieHeaders } from "~/lib/api.server";
 import { requireUser } from "~/lib/session.server";
@@ -254,7 +255,8 @@ function AvatarCard({
       <div className="space-y-1 p-4 sm:px-6 sm:pt-6">
         <h2 className="font-semibold">Profile photo</h2>
         <p className="text-sm text-muted-foreground">
-          Shown next to your name. JPEG, PNG or WebP, up to 2 MB.
+          Shown next to your name. JPEG, PNG or WebP; you’ll crop it to a
+          square.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-4 px-4 pb-6 sm:px-6">
@@ -265,28 +267,13 @@ function AvatarCard({
           className="flex flex-wrap items-center gap-2"
         >
           <input type="hidden" name="intent" value="avatar" />
-          <label
-            className={buttonVariants({
-              variant: "outline",
-              size: "sm",
-              className:
-                "cursor-pointer has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
-            })}
-          >
-            <Upload aria-hidden />
-            {image ? "Change photo" : "Choose photo"}
-            <input
-              type="file"
-              name="file"
-              accept="image/jpeg,image/png,image/webp"
-              required
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                setPreview(file ? URL.createObjectURL(file) : null);
-              }}
-            />
-          </label>
+          <AvatarInput
+            name="file"
+            label={image ? "Change photo" : "Choose photo"}
+            onChange={(file) =>
+              setPreview(file ? URL.createObjectURL(file) : null)
+            }
+          />
           {preview && (
             <Button type="submit" size="sm" disabled={busy}>
               {busy ? "Saving…" : "Save photo"}
