@@ -26,7 +26,7 @@ submission_reports (id, submission_id, reporter_id, reason, details, status: pen
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
 
-Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank. Profile images are uploaded to R2 (JPEG, PNG or WebP, max 2 MB) and served from `/api/v1/avatars/{id}`.
+Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank. Profile images are cropped to a square in the browser (`AvatarInput`, react-easy-crop) and re-encoded as WebP at up to 512 px before upload, so the file that reaches the API is small; they are stored in R2 (JPEG, PNG or WebP, max 2 MB) and served from `/api/v1/avatars/{id}`.
 
 Engagement on published papers:
 

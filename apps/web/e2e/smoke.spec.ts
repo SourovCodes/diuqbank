@@ -337,30 +337,71 @@ test("visitors are asked to log in before voting", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?redirectTo=%2Fquestions%2F1/);
 });
 
-// A 1×1 PNG.
-const PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-  "base64",
-);
+/** A wide image drawn in the page, so the cropper has something to crop. */
+async function widePhoto(page: Page) {
+  const base64 = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 600;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("No canvas context");
+    context.fillStyle = "#0ea5e9";
+    context.fillRect(0, 0, 900, 600);
+    context.fillStyle = "#7c3aed";
+    context.fillRect(450, 0, 450, 600);
+    const dataUrl = canvas.toDataURL("image/png");
+    return dataUrl.slice(dataUrl.indexOf(",") + 1);
+  });
+  return {
+    name: "wide photo.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(base64, "base64"),
+  };
+}
 
-test("a user can set and remove a profile photo", async ({ page }) => {
+test("a user crops, sets and removes a profile photo", async ({ page }) => {
   await signUpAs(page, "E2E Photo", "/account");
   const headerImage = page
     .getByRole("button", { name: "Account menu" })
     .locator("img");
   await expect(headerImage).toHaveCount(0);
 
-  // The preview and "Save photo" need hydration, so retry picking the file.
+  const photo = await widePhoto(page);
+  const choose = page.getByLabel(/^(Choose|Change) photo$/);
+  const dialog = page.getByRole("dialog");
   const save = page.getByRole("button", { name: "Save photo" });
+
+  // Opening the cropper needs hydration, so retry picking the file.
   await expect(async () => {
-    await page
-      .getByLabel("Choose photo")
-      .setInputFiles({ name: "me.png", mimeType: "image/png", buffer: PNG });
-    await expect(save).toBeVisible({ timeout: 1_000 });
+    await choose.setInputFiles(photo);
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
   }).toPass();
+
+  // Cancelling the crop leaves nothing to save.
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(save).toHaveCount(0);
+
+  await choose.setInputFiles(photo);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Use photo" }).click();
+  await expect(dialog).toBeHidden();
   await save.click();
   await expect(page.getByText("Photo updated")).toBeVisible();
   await expect(headerImage).toHaveAttribute("src", /^\/api\/v1\/avatars\//);
+
+  // What was uploaded is the square crop, not the wide original.
+  const uploaded = await page.evaluate(async () => {
+    const image = document.querySelector<HTMLImageElement>(
+      'img[src^="/api/v1/avatars/"]',
+    );
+    if (!image) throw new Error("No avatar image");
+    const blob = await fetch(image.src).then((res) => res.blob());
+    const bitmap = await createImageBitmap(blob);
+    return { type: blob.type, width: bitmap.width, height: bitmap.height };
+  });
+  expect(uploaded.type).toBe("image/webp");
+  expect(uploaded.width).toBe(uploaded.height);
 
   await page.getByRole("button", { name: "Remove" }).click();
   await expect(page.getByText("Photo removed")).toBeVisible();
