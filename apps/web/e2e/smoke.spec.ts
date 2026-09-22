@@ -63,6 +63,33 @@ test("landing page leads to the questions page", async ({ page }) => {
   );
 });
 
+test("an unknown URL renders a styled 404 page", async ({ page }) => {
+  const response = await page.goto("/no-such-page");
+  expect(response?.status()).toBe(404);
+  await expect(page).toHaveTitle("Page not found — QuestionBank");
+  await expect(page.getByText("Page not found")).toBeVisible();
+
+  // The document must carry real CSS, or the page paints unstyled until hydration.
+  // The dev server builds its stylesheet from the matched routes, so before the
+  // catch-all route an unmatched path served an empty one.
+  const html = await (await page.request.get("/no-such-page")).text();
+  const hrefs = [
+    ...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g),
+  ].map((match) => match[1]!);
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) {
+    const css = await (await page.request.get(href)).text();
+    expect(css.length, href).toBeGreaterThan(0);
+  }
+
+  await clickUntilUrl(page, "Back to home", /\/$/);
+
+  // Routes that exist but can't find their record still go through the error boundary.
+  const missing = await page.goto("/questions/999999");
+  expect(missing?.status()).toBe(404);
+  await expect(page.getByText("Page not found")).toBeVisible();
+});
+
 test("course filter follows the selected department", async ({ page }) => {
   await page.goto("/questions");
 

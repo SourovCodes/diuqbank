@@ -14,4 +14,5 @@ export default [
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),
   route("logout", "routes/logout.tsx"),
+  route("*", "routes/not-found.tsx"),
 ] satisfies RouteConfig;
