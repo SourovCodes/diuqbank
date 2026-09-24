@@ -1,4 +1,8 @@
-import type { Submission, SubmissionStatus } from "@qb/shared";
+import type {
+  Submission,
+  SubmissionClassification,
+  SubmissionStatus,
+} from "@qb/shared";
 
 export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   published: "Published",
@@ -29,4 +33,22 @@ export function pickSubmission(
 
 export function plural(count: number, singular: string, pluralForm?: string) {
   return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
+}
+
+/** Whether a submission still proposes new catalog entries. */
+export function proposesNewEntries({
+  department,
+  course,
+  semester,
+}: SubmissionClassification) {
+  return department.id === null || course.id === null || semester.id === null;
+}
+
+/** e.g. "CSE · 2nd Semester · Final" */
+export function classificationLine({
+  department,
+  semester,
+  examType,
+}: SubmissionClassification) {
+  return `${department.shortName ?? department.name} · ${semester.name} · ${examType.name}`;
 }

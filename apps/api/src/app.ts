@@ -3,6 +3,7 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { secureHeaders } from "hono/secure-headers";
 import { handleError, handleNotFound, validationHook } from "./lib/errors";
 import { contextMiddleware } from "./middleware/context";
+import { adminRoutes } from "./routes/admin";
 import { avatarRoutes } from "./routes/avatars";
 import { contributorRoutes } from "./routes/contributors";
 import { engagementRoutes } from "./routes/engagement";
@@ -29,6 +30,7 @@ export function createApp() {
     .route("/submissions", submissionRoutes)
     .route("/contributors", contributorRoutes)
     .route("/me", meRoutes)
+    .route("/admin", adminRoutes)
     .route("/", engagementRoutes)
     .route("/", avatarRoutes);
   app.route("/api/v1", v1);

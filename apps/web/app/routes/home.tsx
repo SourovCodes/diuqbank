@@ -1,7 +1,19 @@
-import { ArrowRight, Download, SlidersHorizontal, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Download,
+  SlidersHorizontal,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Link } from "react-router";
-import { buttonVariants } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import type { Route } from "./+types/home";
 
 export const meta: Route.MetaFunction = () => [
@@ -37,40 +49,46 @@ const FEATURES = [
 export default function Home() {
   return (
     <div className="space-y-16 py-4 sm:py-12">
-      <section className="mx-auto max-w-3xl space-y-6 text-center">
-        <p className="mx-auto w-fit rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+      <section className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+        <Badge variant="secondary" className="rounded-full px-3 py-1">
+          <Sparkles />
           Free · Community-contributed
-        </p>
+        </Badge>
         <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Past question papers,{" "}
-          <span className="text-primary">all in one place</span>
+          Past question papers, all in one place
         </h1>
-        <p className="mx-auto max-w-xl text-lg text-pretty text-muted-foreground">
+        <p className="max-w-xl text-lg text-pretty text-muted-foreground">
           Find previous exam questions by department, course, semester and exam
           type, then read them right in your browser.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link to="/questions" className={buttonVariants({ size: "lg" })}>
-            Browse questions
-            <ArrowRight aria-hidden />
-          </Link>
-          <Link
-            to="/contribute"
-            className={buttonVariants({ size: "lg", variant: "outline" })}
-          >
-            Contribute a paper
-          </Link>
+          <Button size="lg" asChild>
+            <Link to="/questions">
+              Browse questions
+              <ArrowRight />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/contribute">Contribute a paper</Link>
+          </Button>
         </div>
       </section>
 
-      <section aria-label="Features" className="grid gap-4 sm:grid-cols-3">
+      <section
+        aria-label="Features"
+        className="grid gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs sm:grid-cols-3"
+      >
         {FEATURES.map(({ icon: Icon, title, description }) => (
-          <Card key={title} className="gap-3 p-6">
-            <div className="w-fit rounded-lg bg-primary/10 p-2.5 text-primary">
-              <Icon className="size-5" aria-hidden />
-            </div>
-            <h2 className="font-semibold">{title}</h2>
-            <p className="text-sm text-muted-foreground">{description}</p>
+          <Card key={title}>
+            <CardHeader>
+              <div className="mb-2 flex size-9 items-center justify-center rounded-lg border bg-background shadow-xs">
+                <Icon className="size-4" aria-hidden />
+              </div>
+              <CardTitle>
+                <h2>{title}</h2>
+              </CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </CardHeader>
           </Card>
         ))}
       </section>

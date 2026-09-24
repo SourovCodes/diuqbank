@@ -19,7 +19,8 @@
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "db:generate": "pnpm --filter @qb/api db:generate",
     "db:migrate": "pnpm --filter @qb/api db:migrate:local",
-    "db:seed": "pnpm --filter @qb/api db:seed:local"
+    "db:seed": "pnpm --filter @qb/api db:seed:local",
+    "make-admin": "pnpm --filter @qb/api make-admin"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

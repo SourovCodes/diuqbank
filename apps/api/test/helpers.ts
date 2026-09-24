@@ -1,4 +1,5 @@
 import { env, exports } from "cloudflare:workers";
+import { eq } from "drizzle-orm";
 import { createDb } from "../src/db/client";
 import {
   courses,
@@ -127,6 +128,13 @@ export async function signUpUser() {
   const res = await api("/api/auth/get-session", { headers: { cookie } });
   const session = await res.json<{ user: { id: string } }>();
   return { email, cookie, id: session.user.id };
+}
+
+/** Signs up a fresh user and makes them an admin. */
+export async function signUpAdmin() {
+  const admin = await signUpUser();
+  await db().update(user).set({ role: "admin" }).where(eq(user.id, admin.id));
+  return admin;
 }
 
 /** Request init for a JSON body, optionally signed in. */

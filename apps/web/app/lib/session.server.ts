@@ -1,4 +1,4 @@
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 import { apiFetch, readJson } from "./api.server";
 import type { SessionUser } from "./types";
 
@@ -28,5 +28,15 @@ export async function requireUser(request: Request): Promise<SessionUser> {
       `/login?redirectTo=${encodeURIComponent(pathname + search)}`,
     );
   }
+  return user;
+}
+
+/**
+ * The signed-in admin. Anyone else gets a plain 404, so the admin panel looks like
+ * any unknown page. The API enforces the role again on every call.
+ */
+export async function requireAdmin(request: Request): Promise<SessionUser> {
+  const user = await requireUser(request);
+  if (user.role !== "admin") throw data("Not found", { status: 404 });
   return user;
 }

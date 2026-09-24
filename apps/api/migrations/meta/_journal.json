@@ -29,6 +29,13 @@
       "when": 1789495259313,
       "tag": "0003_engagement_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790213575318,
+      "tag": "0004_user_roles",
+      "breakpoints": true
     }
   ]
 }

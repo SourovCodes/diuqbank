@@ -3,7 +3,14 @@ import {
   MAX_REPORT_DETAILS_LENGTH,
   REPORT_REASONS,
 } from "@qb/shared/constants";
-import { Eye, Flag, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  CircleAlert,
+  CircleCheck,
+  Eye,
+  Flag,
+  ThumbsDown,
+  ThumbsUp,
+} from "lucide-react";
 import { useId, useState } from "react";
 import { Link, useFetcher, useLocation } from "react-router";
 import { Button, buttonVariants } from "~/components/ui/button";
@@ -17,7 +24,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
 import {
   parseVoteValue,
   REPORT_FETCHER_KEY,
@@ -71,7 +80,7 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
   const voteError = fetcher.data?.ok === false ? fetcher.data.error : null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border bg-card px-2 py-1.5 shadow-sm sm:px-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border bg-card px-2 py-1.5 shadow-xs sm:px-3">
       <p className="flex min-w-0 items-center gap-3 px-1 text-sm">
         <span className="font-medium">{label}</span>
         <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -231,14 +240,13 @@ function ReportDialog({
                 </span>
               )}
             </Label>
-            <textarea
+            <Textarea
               id={detailsId}
               name="details"
               rows={3}
               maxLength={MAX_REPORT_DETAILS_LENGTH}
               required={reason === "other"}
               placeholder="Tell the admin what you noticed"
-              className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
           </div>
           <DialogFooter>
@@ -264,22 +272,22 @@ export function ReportNotice({ questionId }: { questionId: number }) {
 
   if (!result.ok) {
     return (
-      <p
-        role="alert"
-        className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-      >
-        {result.error}
-      </p>
+      <Alert variant="destructive">
+        <CircleAlert />
+        <AlertTitle>Couldn’t send the report</AlertTitle>
+        <AlertDescription>{result.error}</AlertDescription>
+      </Alert>
     );
   }
   return (
-    <p
-      role="status"
-      className="rounded-lg border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
-    >
-      Thanks for the report. An admin will review it.
-      {result.submissionHidden &&
-        " The paper is hidden until it has been reviewed."}
-    </p>
+    <Alert role="status">
+      <CircleCheck />
+      <AlertTitle>Thanks for the report</AlertTitle>
+      <AlertDescription>
+        An admin will review it.
+        {result.submissionHidden &&
+          " The paper is hidden until it has been reviewed."}
+      </AlertDescription>
+    </Alert>
   );
 }

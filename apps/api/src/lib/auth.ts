@@ -15,6 +15,18 @@ export function createAuth(env: Env, db: Database) {
       origin.trim(),
     ),
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
+    user: {
+      additionalFields: {
+        // Returned with the session. `input: false` keeps it out of sign-up and
+        // update-user, so only an admin (or `pnpm make-admin`) can change it.
+        role: {
+          type: "string",
+          required: false,
+          defaultValue: "user",
+          input: false,
+        },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,

@@ -18,3 +18,14 @@ export function formatDate(iso: string) {
 export function formatMonth(iso: string) {
   return monthFormatter.format(new Date(iso));
 }
+
+const dayFormatter = new Intl.DateTimeFormat("en", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+/** e.g. "Sep 24", for a date or an ISO timestamp. */
+export function formatDay(iso: string) {
+  return dayFormatter.format(new Date(iso));
+}

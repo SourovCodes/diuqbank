@@ -1,11 +1,20 @@
 import type { ContributorList } from "@qb/shared";
 import { Users } from "lucide-react";
-import { data } from "react-router";
-import { ContributorCard } from "~/components/contributor-card";
+import { data, Link, useNavigate } from "react-router";
+import { ContributorAvatar } from "~/components/contributor-avatar";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
-import { Pagination } from "~/components/pagination";
+import { TablePagination } from "~/components/table-pagination";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { apiFetch, readJson } from "~/lib/api.server";
+import { formatMonth } from "~/lib/dates";
 import { plural } from "~/lib/submissions";
 import type { Route } from "./+types/contributors";
 
@@ -37,9 +46,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Contributors({ loaderData }: Route.ComponentProps) {
   const { list } = loaderData;
+  const navigate = useNavigate();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Contributors"
         description="The students who share question papers with everyone."
@@ -57,19 +67,68 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
             description="People who upload question papers will be listed here."
           />
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {list.items.map((contributor) => (
-              <li key={contributor.id}>
-                <ContributorCard contributor={contributor} />
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead>Contributor</TableHead>
+                  <TableHead className="text-right">Published</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">
+                    Pending
+                  </TableHead>
+                  <TableHead className="hidden text-right md:table-cell">
+                    Joined
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.items.map((contributor) => {
+                  const href = `/contributors/${encodeURIComponent(contributor.id)}`;
+                  return (
+                    <TableRow
+                      key={contributor.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(href)}
+                    >
+                      <TableCell className="w-full max-w-0">
+                        <div className="flex items-center gap-3">
+                          <ContributorAvatar
+                            name={contributor.name}
+                            image={contributor.image}
+                            size="sm"
+                          />
+                          <Link
+                            to={href}
+                            prefetch="intent"
+                            className="truncate font-medium hover:underline"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            {contributor.name}
+                          </Link>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {contributor.submissionCounts.published}
+                      </TableCell>
+                      <TableCell className="hidden text-right text-muted-foreground tabular-nums sm:table-cell">
+                        {contributor.submissionCounts.pendingReview}
+                      </TableCell>
+                      <TableCell className="hidden text-right text-muted-foreground md:table-cell">
+                        {formatMonth(contributor.joinedAt)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
 
-        <Pagination
+        <TablePagination
           page={list.page}
           pageSize={list.pageSize}
           total={list.total}
+          noun="contributor"
           hrefFor={(page) => `/contributors?page=${page}`}
         />
       </section>

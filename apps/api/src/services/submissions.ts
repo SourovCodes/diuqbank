@@ -42,7 +42,7 @@ const nameMatches = (column: SQLiteColumn, name: string) =>
  * typing "cse" or "data structures" files the paper under the existing entries.
  * Departments match by name or short name; courses only within the chosen department.
  */
-async function preferExistingValues(
+export async function preferExistingValues(
   db: Database,
   input: SubmissionFields,
 ): Promise<SubmissionFields> {
@@ -96,7 +96,7 @@ async function preferExistingValues(
  * Checks that referenced ids exist and fit together. When every value is an existing
  * one, finds or creates the matching question and returns its id; otherwise null.
  */
-async function resolveQuestionId(
+export async function resolveQuestionId(
   db: Database,
   fields: SubmissionFields,
 ): Promise<number | null> {

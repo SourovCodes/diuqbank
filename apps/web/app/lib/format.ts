@@ -24,3 +24,19 @@ export function formatCount(count: number): string {
 export function formatViews(count: number): string {
   return `${formatCount(count)} ${count === 1 ? "view" : "views"}`;
 }
+
+/**
+ * A round axis maximum at or above `value`: 1, 2 or 5 times a power of ten
+ * (e.g. 3 → 5, 12 → 20, 0 → 1).
+ */
+export function niceCeiling(value: number): number {
+  if (value <= 1) return 1;
+  const power = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 5, 10].find((s) => s * power >= value)!;
+  return step * power;
+}
+
+/** Share of `part` in `total` as a whole percentage, 0 when there is no total. */
+export function percent(part: number, total: number): number {
+  return total === 0 ? 0 : Math.round((part / total) * 100);
+}

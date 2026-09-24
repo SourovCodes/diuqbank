@@ -4,32 +4,37 @@ import type {
   MySubmissionList,
   SubmissionStatus,
 } from "@qb/shared";
-import { ExternalLink, Eye, FileUp, Trash2, Upload } from "lucide-react";
+import {
+  EllipsisVertical,
+  ExternalLink,
+  Eye,
+  FileUp,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useState } from "react";
 import {
   data,
   Link,
-  useFetcher,
   useSearchParams,
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
+import { ConfirmAction, useFormAction } from "~/components/actions";
 import { EmptyState } from "~/components/empty-state";
-import { SubmissionRow } from "~/components/submission-row";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { publicUrl, SubmissionTable } from "~/components/submission-table";
+import { Button } from "~/components/ui/button";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { UrlTabs } from "~/components/url-tabs";
+import type { ActionResult } from "~/lib/action-result";
 import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
-import { ownSubmissionFileUrl, STATUS_LABELS } from "~/lib/submissions";
 import { requireUser } from "~/lib/session.server";
-import { cn } from "~/lib/utils";
+import { ownSubmissionFileUrl, STATUS_LABELS } from "~/lib/submissions";
 import type { Route } from "./+types/account-submissions";
 
 export const meta: Route.MetaFunction = () => [
@@ -54,13 +59,17 @@ export async function action({ request }: Route.ActionArgs) {
     `/api/v1/me/submissions/${encodeURIComponent(id)}`,
     { method: "DELETE" },
   );
-  if (res.status === 204) return { ok: true as const };
+  if (res.status === 204) {
+    return data<ActionResult>({ ok: true, intent: "withdraw" });
+  }
 
   const body = await readJson<ApiError>(res).catch(() => null);
-  return data(
+  return data<ActionResult>(
     {
-      ok: false as const,
+      ok: false,
+      intent: "withdraw",
       error: body?.error.message ?? "Could not withdraw this submission.",
+      fieldErrors: {},
     },
     { status: res.status },
   );
@@ -84,92 +93,77 @@ const FILTER_STATUSES: SubmissionStatus[] = [
   "rejected",
 ];
 
-function WithdrawButton({ submission }: { submission: ContributorSubmission }) {
-  const fetcher = useFetcher<typeof action>();
-  const [open, setOpen] = useState(false);
-  const busy = fetcher.state !== "idle";
-  const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
+/** View or preview the paper, and withdraw it while it isn't published. */
+function RowActions({
+  submission,
+  run,
+}: {
+  submission: ContributorSubmission;
+  run: ReturnType<typeof useFormAction>["run"];
+}) {
+  const [withdrawing, setWithdrawing] = useState(false);
+  const href = publicUrl(submission);
   const { course, semester, examType } = submission.classification;
 
   return (
     <>
-      {error && (
-        <p role="alert" className="mr-auto text-xs text-destructive">
-          {error}
-        </p>
-      )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="sm"
-            disabled={busy}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            size="icon"
+            className="size-8 text-muted-foreground data-[state=open]:bg-muted"
+            aria-label={`Actions for ${course.name}`}
           >
-            <Trash2 aria-hidden />
-            {busy ? "Withdrawing…" : "Withdraw"}
+            <EllipsisVertical />
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Withdraw this submission?</DialogTitle>
-            <DialogDescription>
-              {course.name} · {semester.name} · {examType.name}. The PDF is
-              deleted and can’t be recovered.
-            </DialogDescription>
-          </DialogHeader>
-          <fetcher.Form method="post" onSubmit={() => setOpen(false)}>
-            <input type="hidden" name="id" value={submission.id} />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" variant="destructive">
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          {href ? (
+            <DropdownMenuItem asChild>
+              <Link to={href}>
+                <Eye />
+                View
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            // A plain link: the PDF comes straight from the API, not a page route.
+            <DropdownMenuItem asChild>
+              <a
+                href={ownSubmissionFileUrl(submission.id)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink />
+                Preview
+              </a>
+            </DropdownMenuItem>
+          )}
+          {submission.status !== "published" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => setWithdrawing(true)}
+              >
+                <Trash2 />
                 Withdraw
-              </Button>
-            </DialogFooter>
-          </fetcher.Form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-function SubmissionActions({
-  submission,
-}: {
-  submission: ContributorSubmission;
-}) {
-  const outline = buttonVariants({ variant: "outline", size: "sm" });
-
-  if (submission.status === "published" && submission.questionId !== null) {
-    return (
-      <Link
-        to={`/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`}
-        className={outline}
-      >
-        <Eye aria-hidden />
-        View
-      </Link>
-    );
-  }
-  return (
-    <>
-      {/* A plain link: the PDF comes straight from the API, not a page route. */}
-      <a
-        href={ownSubmissionFileUrl(submission.id)}
-        target="_blank"
-        rel="noreferrer"
-        className={outline}
-      >
-        <ExternalLink aria-hidden />
-        Preview
-      </a>
-      {submission.status !== "published" && (
-        <WithdrawButton submission={submission} />
-      )}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmAction
+        open={withdrawing}
+        onOpenChange={setWithdrawing}
+        title="Withdraw this submission?"
+        description={`${course.name} · ${semester.name} · ${examType.name}. The PDF is deleted and can’t be recovered.`}
+        confirmLabel="Withdraw"
+        destructive
+        successMessage="Submission withdrawn"
+        fields={{ id: submission.id }}
+        run={run}
+      />
     </>
   );
 }
@@ -178,6 +172,8 @@ export default function AccountSubmissions({
   loaderData,
 }: Route.ComponentProps) {
   const { userId, submissions } = loaderData;
+  // Owned by the page: a withdrawn submission's row disappears.
+  const { run } = useFormAction();
   const [searchParams] = useSearchParams();
   const requested = searchParams.get("status");
   const status = FILTER_STATUSES.find((s) => s === requested) ?? null;
@@ -185,18 +181,19 @@ export default function AccountSubmissions({
     ? submissions.filter((s) => s.status === status)
     : submissions;
 
-  const filters = [
-    { status: null, label: "All", count: submissions.length },
+  const tabs = [
+    { value: "all", label: "All", search: "", count: submissions.length },
     ...FILTER_STATUSES.map((s) => ({
-      status: s,
+      value: s,
       label: STATUS_LABELS[s],
+      search: `?status=${s}`,
       count: submissions.filter((submission) => submission.status === s).length,
     })),
   ];
 
   return (
     <section aria-labelledby="my-submissions-heading" className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h2 id="my-submissions-heading" className="text-lg font-semibold">
             My submissions
@@ -208,17 +205,18 @@ export default function AccountSubmissions({
         </div>
         <div className="flex shrink-0 gap-2">
           {submissions.length > 0 && (
-            <Link
-              to={`/contributors/${encodeURIComponent(userId)}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Public profile
-            </Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/contributors/${encodeURIComponent(userId)}`}>
+                Public profile
+              </Link>
+            </Button>
           )}
-          <Link to="/contribute" className={buttonVariants({ size: "sm" })}>
-            <Upload aria-hidden />
-            Contribute
-          </Link>
+          <Button size="sm" asChild>
+            <Link to="/contribute">
+              <Upload />
+              Contribute
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -228,69 +226,30 @@ export default function AccountSubmissions({
           title="No submissions yet"
           description="Papers you upload show up here while they’re reviewed."
           action={
-            <Link
-              to="/contribute"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Contribute a paper
-            </Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/contribute">Contribute a paper</Link>
+            </Button>
           }
         />
       ) : (
-        <>
-          <nav
-            aria-label="Filter by status"
-            className="flex gap-1 overflow-x-auto border-b"
-          >
-            {filters.map((filter) => {
-              const active = filter.status === status;
-              return (
-                <Link
-                  key={filter.label}
-                  to={{
-                    search: filter.status ? `?status=${filter.status}` : "",
-                  }}
-                  replace
-                  preventScrollReset
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-                    active
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {filter.label}
-                  <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">
-                    {filter.count}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-
+        <UrlTabs label="Filter by status" tabs={tabs} value={status ?? "all"}>
           {visible.length === 0 ? (
             <EmptyState
               title={`No ${STATUS_LABELS[status!].toLowerCase()} submissions`}
             />
           ) : (
-            <ul className="grid gap-3">
-              {visible.map((submission) => (
-                <li key={submission.id}>
-                  <SubmissionRow
-                    submission={submission}
-                    actions={<SubmissionActions submission={submission} />}
-                  />
-                </li>
-              ))}
-            </ul>
+            <SubmissionTable
+              submissions={visible}
+              actions={(submission) => (
+                <RowActions submission={submission} run={run} />
+              )}
+            />
           )}
-
-          <p className="text-xs text-muted-foreground">
+          <p className="px-1 text-xs text-muted-foreground">
             Published papers can’t be withdrawn. Contact an admin if one needs
             to be removed.
           </p>
-        </>
+        </UrlTabs>
       )}
     </section>
   );

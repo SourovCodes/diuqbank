@@ -1,5 +1,5 @@
 import "@fontsource-variable/inter";
-import { FileQuestion, TriangleAlert } from "lucide-react";
+import { BookOpen, FileQuestion, TriangleAlert } from "lucide-react";
 import {
   isRouteErrorResponse,
   Link,
@@ -8,6 +8,8 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
+  useRouteError,
   useRouteLoaderData,
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
@@ -16,6 +18,7 @@ import "./app.css";
 import { EmptyState } from "~/components/empty-state";
 import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
+import { Toaster } from "~/components/ui/sonner";
 import { getUser } from "~/lib/session.server";
 
 export const links: Route.LinksFunction = () => [
@@ -35,8 +38,20 @@ export function shouldRevalidate({
   return formMethod ? defaultShouldRevalidate : false;
 }
 
+/** Set `handle = { ownShell: true }` on a route that brings its own shell (the admin panel). */
+export type RouteHandle = { ownShell?: boolean };
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root");
+  // An error that reaches the root (e.g. a non-admin opening /admin) gets the site
+  // chrome, even on a route that normally has its own shell.
+  const error = useRouteError();
+  const matches = useMatches();
+  const ownShell =
+    !error &&
+    matches.some(
+      (match) => (match.handle as RouteHandle | undefined)?.ownShell,
+    );
 
   return (
     <html lang="en">
@@ -47,26 +62,38 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
-        <div className="flex min-h-dvh flex-col">
-          <SiteHeader user={data?.user ?? null} />
-          <main className="container flex-1 py-8">{children}</main>
-          <footer className="border-t">
-            <div className="container flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-              <p>QuestionBank · Free past question papers</p>
-              <nav className="flex gap-4">
-                <Link to="/questions" className="hover:text-foreground">
-                  Questions
-                </Link>
-                <Link to="/contributors" className="hover:text-foreground">
-                  Contributors
-                </Link>
-                <Link to="/contribute" className="hover:text-foreground">
-                  Contribute
-                </Link>
-              </nav>
-            </div>
-          </footer>
-        </div>
+        {ownShell ? (
+          children
+        ) : (
+          <div className="flex min-h-dvh flex-col">
+            <SiteHeader user={data?.user ?? null} />
+            <main className="@container/main container flex-1 py-8">
+              {children}
+            </main>
+            <footer className="border-t">
+              <div className="container flex flex-col gap-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <BookOpen className="size-3.5" aria-hidden />
+                  </span>
+                  QuestionBank · Free past question papers
+                </p>
+                <nav aria-label="Footer" className="flex gap-4">
+                  <Link to="/questions" className="hover:text-foreground">
+                    Questions
+                  </Link>
+                  <Link to="/contributors" className="hover:text-foreground">
+                    Contributors
+                  </Link>
+                  <Link to="/contribute" className="hover:text-foreground">
+                    Contribute
+                  </Link>
+                </nav>
+              </div>
+            </footer>
+          </div>
+        )}
+        <Toaster position="top-center" />
         <ScrollRestoration />
         <Scripts />
       </body>

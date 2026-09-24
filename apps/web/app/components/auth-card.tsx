@@ -13,6 +13,7 @@ type AuthCardProps = {
   children: React.ReactNode;
 };
 
+/** Log in and sign up, laid out like shadcn's login block (the header carries the logo). */
 export function AuthCard({
   title,
   description,
@@ -20,17 +21,19 @@ export function AuthCard({
   children,
 }: AuthCardProps) {
   return (
-    <div className="mx-auto w-full max-w-sm py-4 sm:py-12">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-4 sm:py-12">
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>
-            <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+            <h1 className="text-xl">{title}</h1>
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent>{children}</CardContent>
+        <CardContent className="grid gap-6">
+          {children}
+          <p className="text-center text-sm text-muted-foreground">{footer}</p>
+        </CardContent>
       </Card>
-      <p className="mt-4 text-center text-sm text-muted-foreground">{footer}</p>
     </div>
   );
 }

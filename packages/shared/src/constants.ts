@@ -31,3 +31,6 @@ export const AVATAR_CONTENT_TYPES = [
   "image/webp",
 ] as const;
 export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+/** `admin` can moderate submissions and reports and manage the catalog and users. */
+export const USER_ROLES = ["user", "admin"] as const;

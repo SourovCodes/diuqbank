@@ -22,6 +22,8 @@ submissions (id, question_id?, status, file_key, file_size, uploader_id,
      │
 submission_votes (submission_id, user_id, value ±1)
 submission_reports (id, submission_id, reporter_id, reason, details, status: pending | resolved | dismissed)
+
+user (Better Auth) + role: user | admin
 ```
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
@@ -32,9 +34,21 @@ Engagement on published papers:
 
 - **Views** — question pages and papers count their views separately (`POST …/views`, open to everyone, no deduplication yet).
 - **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0003_engagement_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
-- **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). The admin review screens are still to be built.
+- **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). Admins resolve or dismiss reports in the admin panel; that doesn't publish a hidden paper again, which is a separate decision.
 
 When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
+
+## Admin panel
+
+Users with the `admin` role get an **Admin panel** entry in the account menu, leading to `/admin`. The panel has its own shell, built from shadcn's `dashboard-01` block: a collapsible sidebar, a top bar with breadcrumbs, cards, tabs, tables with row menus, and toasts for results (everyone else gets a 404 there, and the API answers 403 under `/api/v1/admin/*`):
+
+- **Dashboard** — queue sizes, uploads over the last 30 days, submissions by status, the newest pending papers and open reports.
+- **Submissions** — every paper by status. The review page shows the PDF (in any status) next to the decision (publish, reject, back to review, delete), its classification, uploader and reports. A paper that proposes new entries can't be published until an admin approves them: "Review entries" creates the new department, course or semester (or maps them to existing ones) and files the paper under its question. The same dialog corrects a paper filed under the wrong details.
+- **Reports** — open, resolved and dismissed reports with the paper they're about.
+- **Catalog** — add, rename and delete departments, courses, semesters and exam types. Entries in use can be renamed but not deleted; a course keeps its department because questions depend on it.
+- **Users** — search by name or email, and grant or remove admin rights. Admins can't change their own role, so there is always at least one.
+
+`role` is a Better Auth additional field with `input: false`, so sign-up and `update-user` can't set it. `pnpm db:seed` creates a local admin (`admin@seed.local` / `correct-horse-battery`). To promote an existing account, sign up first, then run `pnpm make-admin you@example.com` (add `--remote` for the deployed database).
 
 ## Stack
 
@@ -113,7 +127,8 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 | `pnpm test:e2e`    | Playwright end-to-end tests (needs `pnpm db:migrate && pnpm db:seed`) |
 | `pnpm db:generate` | Generate a SQL migration after changing `apps/api/src/db/schema`      |
 | `pnpm db:migrate`  | Apply pending migrations to the local D1 database                     |
-| `pnpm db:seed`     | Reset local question data to the sample set (local only)              |
+| `pnpm db:seed`     | Reset local question data to the sample set, with an admin login      |
+| `pnpm make-admin`  | Give an existing account the admin role (`<email> [--remote]`)        |
 | `pnpm format`      | Format the codebase with Prettier                                     |
 
 ## Testing strategy
@@ -128,7 +143,6 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - Create real resources (`wrangler d1 create`, `wrangler r2 bucket create`) and put the D1 id in `apps/api/wrangler.jsonc`.
 - Set `BETTER_AUTH_SECRET` with `wrangler secret put`, and update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain.
 - Add email verification and password reset (e.g. Cloudflare Email Service), rate limiting and Turnstile on auth forms.
-- Build a moderation flow (admin role) to publish/reject submissions and approve new departments, courses and semesters.
+- Promote the first admin with `pnpm make-admin <email> --remote` after signing up.
 - Add email change (with verification) and account deletion.
-- Add admin management for departments, courses, semesters and exam types.
 - Add caching for public pages and PDFs, a sitemap, and staging/production environments.

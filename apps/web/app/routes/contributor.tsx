@@ -2,8 +2,13 @@ import type { ContributorDetail } from "@qb/shared";
 import { data } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { PageHeader } from "~/components/page-header";
-import { SubmissionRow } from "~/components/submission-row";
-import { Card } from "~/components/ui/card";
+import { SubmissionTable } from "~/components/submission-table";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { formatMonth } from "~/lib/dates";
 import { plural } from "~/lib/submissions";
@@ -32,21 +37,27 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
 };
 
 const STATS = [
-  { key: "published", label: "Published" },
-  { key: "pendingReview", label: "Pending review" },
-  { key: "rejected", label: "Rejected" },
+  { key: "published", label: "Published", detail: "Papers anyone can read" },
+  {
+    key: "pendingReview",
+    label: "Pending review",
+    detail: "Waiting for an admin",
+  },
+  { key: "rejected", label: "Rejected", detail: "Not approved" },
 ] as const;
 
 export default function ContributorPage({ loaderData }: Route.ComponentProps) {
   const { contributor } = loaderData;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        back={{ to: "/contributors", label: "All contributors" }}
-        eyebrow="Contributor"
+        breadcrumbs={[
+          { label: "Contributors", to: "/contributors" },
+          { label: contributor.name },
+        ]}
         title={contributor.name}
-        description={`Joined ${formatMonth(contributor.joinedAt)}`}
+        description={`Contributor · joined ${formatMonth(contributor.joinedAt)}`}
         actions={
           <ContributorAvatar
             name={contributor.name}
@@ -56,30 +67,27 @@ export default function ContributorPage({ loaderData }: Route.ComponentProps) {
         }
       />
 
-      <dl className="grid grid-cols-3 gap-3 sm:gap-4">
-        {STATS.map(({ key, label }) => (
-          <Card key={key} className="gap-1 p-4 sm:p-5">
-            <dt className="text-xs text-muted-foreground sm:text-sm">
-              {label}
-            </dt>
-            <dd className="text-2xl font-semibold tabular-nums">
-              {contributor.submissionCounts[key]}
-            </dd>
+      <dl className="grid gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs sm:grid-cols-3">
+        {STATS.map(({ key, label, detail }) => (
+          <Card key={key}>
+            <CardHeader>
+              <CardDescription>
+                <dt>{label}</dt>
+              </CardDescription>
+              <CardTitle className="text-2xl font-semibold tabular-nums">
+                <dd>{contributor.submissionCounts[key]}</dd>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">{detail}</p>
+            </CardHeader>
           </Card>
         ))}
       </dl>
 
-      <section aria-labelledby="submissions-heading" className="space-y-4">
+      <section aria-labelledby="submissions-heading" className="space-y-3">
         <h2 id="submissions-heading" className="text-sm font-medium">
           {plural(contributor.submissions.length, "submission")}
         </h2>
-        <ul className="grid gap-3">
-          {contributor.submissions.map((submission) => (
-            <li key={submission.id}>
-              <SubmissionRow submission={submission} />
-            </li>
-          ))}
-        </ul>
+        <SubmissionTable submissions={contributor.submissions} />
       </section>
     </div>
   );
