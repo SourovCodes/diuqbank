@@ -1,11 +1,8 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router";
-import { Button } from "~/components/ui/button";
+import { Button, buttonVariants } from "~/components/ui/button";
+import { pageItems } from "~/lib/pagination";
+import { cn } from "~/lib/utils";
 
 type TablePaginationProps = {
   page: number;
@@ -16,37 +13,32 @@ type TablePaginationProps = {
   hrefFor: (page: number) => string;
 };
 
-function PageButton({
+function StepButton({
   to,
   label,
-  className,
   children,
 }: {
   to: string | null;
   label: string;
-  className?: string;
   children: React.ReactNode;
 }) {
   return to ? (
-    <Button variant="outline" size="icon-sm" asChild className={className}>
+    <Button variant="ghost" size="icon-sm" asChild>
       <Link to={to} aria-label={label} preventScrollReset>
         {children}
       </Link>
     </Button>
   ) : (
-    <Button
-      variant="outline"
-      size="icon-sm"
-      disabled
-      aria-label={label}
-      className={className}
-    >
+    <Button variant="ghost" size="icon-sm" disabled aria-label={label}>
       {children}
     </Button>
   );
 }
 
-/** Footer under a table: the row count, and first/previous/next/last page buttons. */
+/**
+ * Footer under a list or table: the item count, and numbered page links with
+ * previous/next, e.g. ‹ 1 … 4 5 6 … 82 ›. Links, so paging works without JS.
+ */
 export function TablePagination({
   page,
   pageSize,
@@ -59,44 +51,60 @@ export function TablePagination({
   const to = Math.min(total, page * pageSize);
 
   return (
-    <div className="flex items-center justify-between gap-4 px-1">
+    <div className="flex flex-col items-center gap-3 px-1 sm:flex-row sm:justify-between">
       <p className="text-sm text-muted-foreground">
         {total === 0
           ? `No ${noun}s`
           : `${from}–${to} of ${total} ${total === 1 ? noun : `${noun}s`}`}
       </p>
       {pages > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="mr-2 hidden text-sm font-medium sm:block">
-            Page {page} of {pages}
-          </span>
-          <PageButton
-            to={page > 1 ? hrefFor(1) : null}
-            label="First page"
-            className="hidden lg:inline-flex"
-          >
-            <ChevronsLeft />
-          </PageButton>
-          <PageButton
-            to={page > 1 ? hrefFor(page - 1) : null}
-            label="Previous page"
-          >
-            <ChevronLeft />
-          </PageButton>
-          <PageButton
-            to={page < pages ? hrefFor(page + 1) : null}
-            label="Next page"
-          >
-            <ChevronRight />
-          </PageButton>
-          <PageButton
-            to={page < pages ? hrefFor(pages) : null}
-            label="Last page"
-            className="hidden lg:inline-flex"
-          >
-            <ChevronsRight />
-          </PageButton>
-        </div>
+        <nav aria-label="Pagination">
+          <ul className="flex items-center gap-1">
+            <li>
+              <StepButton
+                to={page > 1 ? hrefFor(page - 1) : null}
+                label="Previous page"
+              >
+                <ChevronLeft />
+              </StepButton>
+            </li>
+            {pageItems(page, pages).map((item) =>
+              typeof item === "number" ? (
+                <li key={item}>
+                  <Link
+                    to={hrefFor(item)}
+                    preventScrollReset
+                    aria-label={`Page ${item}`}
+                    aria-current={item === page ? "page" : undefined}
+                    className={cn(
+                      buttonVariants({
+                        variant: item === page ? "outline" : "ghost",
+                        size: "sm",
+                      }),
+                      "min-w-8 px-2 tabular-nums",
+                    )}
+                  >
+                    {item}
+                  </Link>
+                </li>
+              ) : (
+                <li key={item} aria-hidden>
+                  <span className="flex size-8 items-center justify-center text-muted-foreground">
+                    <MoreHorizontal className="size-4" />
+                  </span>
+                </li>
+              ),
+            )}
+            <li>
+              <StepButton
+                to={page < pages ? hrefFor(page + 1) : null}
+                label="Next page"
+              >
+                <ChevronRight />
+              </StepButton>
+            </li>
+          </ul>
+        </nav>
       )}
     </div>
   );
