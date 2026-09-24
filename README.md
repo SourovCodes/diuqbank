@@ -40,7 +40,7 @@ When contributing, department, course and semester can each be an existing value
 
 ## Admin panel
 
-Users with the `admin` role get an **Admin panel** entry in the account menu, leading to `/admin` (everyone else gets a 404 there, and the API answers 403 under `/api/v1/admin/*`):
+Users with the `admin` role get an **Admin panel** entry in the account menu, leading to `/admin`. The panel has its own shell, built from shadcn's `dashboard-01` block: a collapsible sidebar, a top bar with breadcrumbs, cards, tabs, tables with row menus, and toasts for results (everyone else gets a 404 there, and the API answers 403 under `/api/v1/admin/*`):
 
 - **Dashboard** — queue sizes, uploads over the last 30 days, submissions by status, the newest pending papers and open reports.
 - **Submissions** — every paper by status. The review page shows the PDF (in any status) next to the decision (publish, reject, back to review, delete), its classification, uploader and reports. A paper that proposes new entries can't be published until an admin approves them: "Review entries" creates the new department, course or semester (or maps them to existing ones) and files the paper under its question. The same dialog corrects a paper filed under the wrong details.

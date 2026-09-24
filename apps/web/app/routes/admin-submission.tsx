@@ -5,37 +5,67 @@ import type {
 } from "@qb/shared";
 import { REPORT_HIDE_THRESHOLD } from "@qb/shared/constants";
 import {
-  CheckCircle2,
-  Clock,
+  CircleCheck,
+  CircleX,
+  EllipsisVertical,
+  ExternalLink,
   EyeOff,
-  Flag,
+  Globe,
   Pencil,
   RotateCcw,
   Sparkles,
   ThumbsDown,
   ThumbsUp,
   Trash2,
-  XCircle,
 } from "lucide-react";
+import { useState } from "react";
 import { Link, redirect } from "react-router";
-import { ActionButton, ActionDialog } from "~/components/admin/actions";
-import { SubmissionFlags } from "~/components/admin/submission-item";
+import {
+  ActionDialog,
+  ConfirmAction,
+  useAdminAction,
+} from "~/components/admin/actions";
+import { AdminPageHeader } from "~/components/admin/admin-header";
+import {
+  ReportStatusBadge,
+  SubmissionFlags,
+  SubmissionStatusBadge,
+} from "~/components/admin/badges";
+import { AdminRouteError } from "~/components/admin/route-error";
+import { UserAvatar } from "~/components/admin/user-avatar";
 import {
   ClassificationFields,
   defaultsFrom,
 } from "~/components/classification-fields";
-import { ContributorAvatar } from "~/components/contributor-avatar";
-import { PageHeader } from "~/components/page-header";
 import { PdfViewer } from "~/components/pdf-viewer";
-import { StatusBadge } from "~/components/status-badge";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Separator } from "~/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import {
   adminSubmissionFileUrl,
   classificationLine,
   proposesNewEntries,
-  REPORT_STATUS_LABELS,
 } from "~/lib/admin";
 import { adminGetJson, adminRequest, formObject } from "~/lib/admin.server";
 import { formatDate } from "~/lib/dates";
@@ -43,8 +73,15 @@ import { REPORT_REASON_LABELS } from "~/lib/engagement";
 import { formatBytes, formatCount } from "~/lib/format";
 import { STATUS_LABELS } from "~/lib/submissions";
 import { loadTaxonomy } from "~/lib/taxonomy.server";
-import { cn } from "~/lib/utils";
 import type { Route } from "./+types/admin-submission";
+
+type LoaderData = Awaited<ReturnType<typeof loader>>;
+
+export const handle = {
+  breadcrumb: (data: unknown) =>
+    (data as LoaderData | undefined)?.submission.classification.course.name ??
+    "Submission",
+};
 
 export const meta: Route.MetaFunction = ({ loaderData }) => [
   {
@@ -99,110 +136,123 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-const DECISIONS: {
-  status: SubmissionStatus;
-  label: string;
-  icon: typeof CheckCircle2;
-  variant: "default" | "outline" | "ghost";
-}[] = [
-  {
-    status: "published",
-    label: "Publish",
-    icon: CheckCircle2,
-    variant: "default",
-  },
-  { status: "rejected", label: "Reject", icon: XCircle, variant: "outline" },
-  {
-    status: "pending_review",
-    label: "Back to review",
-    icon: RotateCcw,
-    variant: "ghost",
-  },
-];
+export { AdminRouteError as ErrorBoundary };
 
-function Panel({
-  title,
-  action,
-  children,
-  className,
+const SUCCESS: Record<SubmissionStatus, string> = {
+  published: "Paper published",
+  rejected: "Paper rejected",
+  pending_review: "Moved back to review",
+};
+
+/** Publish / reject / back-to-review buttons, plus a menu with the rest. */
+function DecisionActions({
+  submission,
 }: {
-  title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
+  submission: AdminSubmissionDetail;
 }) {
-  return (
-    <Card className={cn("gap-4 p-5", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </Card>
-  );
-}
-
-function DecisionPanel({ submission }: { submission: AdminSubmissionDetail }) {
+  const [deleting, setDeleting] = useState(false);
   const needsClassification = submission.questionId === null;
+  const { status } = submission;
+  const { busy, pending, run } = useAdminAction();
+  const decide = (next: SubmissionStatus) => ({
+    disabled: busy,
+    onClick: () => run({ intent: "status", status: next }, SUCCESS[next]),
+  });
+  const deciding = pending?.get("status");
+
+  const publish = (
+    <Button
+      {...decide("published")}
+      size="sm"
+      disabled={busy || needsClassification}
+    >
+      <CircleCheck />
+      {deciding === "published" ? "Publishing…" : "Publish"}
+    </Button>
+  );
 
   return (
-    <Panel title="Decision" action={<StatusBadge status={submission.status} />}>
-      <div className="flex flex-wrap gap-2">
-        {DECISIONS.filter((d) => d.status !== submission.status).map(
-          ({ status, label, icon: Icon, variant }) => (
-            <ActionButton
-              key={status}
-              fields={{ intent: "status", status }}
-              variant={variant}
-              size="sm"
-              disabled={status === "published" && needsClassification}
-              pendingLabel={`${label}…`}
-              className={cn(
-                variant === "outline" &&
-                  "text-destructive hover:bg-destructive/10 hover:text-destructive",
-              )}
-            >
-              <Icon aria-hidden />
-              {label}
-            </ActionButton>
-          ),
-        )}
-      </div>
-      {needsClassification && (
-        <p className="text-xs text-muted-foreground">
-          Approve the new entries under Classification before publishing.
-        </p>
+    <>
+      {status !== "published" &&
+        (needsClassification ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* Disabled buttons don't fire pointer events; the span does. */}
+              <span tabIndex={0}>{publish}</span>
+            </TooltipTrigger>
+            <TooltipContent>Approve the new entries first</TooltipContent>
+          </Tooltip>
+        ) : (
+          publish
+        ))}
+      {status !== "rejected" && (
+        <Button {...decide("rejected")} size="sm" variant="outline">
+          <CircleX />
+          {deciding === "rejected" ? "Rejecting…" : "Reject"}
+        </Button>
       )}
-      <div className="border-t pt-4">
-        <ActionDialog
-          trigger={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+      {status !== "pending_review" && (
+        <Button {...decide("pending_review")} size="sm" variant="outline">
+          <RotateCcw />
+          Back to review
+        </Button>
+      )}
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon-sm" aria-label="More actions">
+            <EllipsisVertical />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild>
+            <a
+              href={adminSubmissionFileUrl(submission.id)}
+              target="_blank"
+              rel="noreferrer"
             >
-              <Trash2 aria-hidden />
-              Delete paper
-            </Button>
-          }
-          title="Delete this paper?"
-          description={`${submission.classification.course.name} · ${classificationLine(submission.classification)}. The PDF, its votes and its reports are deleted for good.`}
-          submitLabel="Delete"
-          pendingLabel="Deleting…"
-          destructive
-          fields={{ intent: "delete" }}
-        />
-      </div>
-    </Panel>
+              <ExternalLink />
+              Open PDF
+            </a>
+          </DropdownMenuItem>
+          {submission.questionId !== null && status === "published" && (
+            <DropdownMenuItem asChild>
+              <Link
+                to={`/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`}
+              >
+                <Globe />
+                Open the public page
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setDeleting(true)}
+          >
+            <Trash2 />
+            Delete paper
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmAction
+        open={deleting}
+        onOpenChange={setDeleting}
+        title="Delete this paper?"
+        description={`${submission.classification.course.name} · ${classificationLine(submission.classification)}. The PDF, its votes and its reports are deleted for good.`}
+        confirmLabel="Delete"
+        destructive
+        fields={{ intent: "delete" }}
+      />
+    </>
   );
 }
 
-function ClassificationPanel({
+function ClassificationCard({
   submission,
   taxonomy,
 }: {
   submission: AdminSubmissionDetail;
-  taxonomy: Awaited<ReturnType<typeof loadTaxonomy>>;
+  taxonomy: LoaderData["taxonomy"];
 }) {
   const { department, course, semester, examType } = submission.classification;
   const proposes = proposesNewEntries(submission.classification);
@@ -220,71 +270,62 @@ function ClassificationPanel({
   ];
 
   return (
-    <Panel
-      title="Classification"
-      action={
-        <ActionDialog
-          trigger={
-            <Button variant={proposes ? "default" : "outline"} size="sm">
-              {proposes ? <Sparkles aria-hidden /> : <Pencil aria-hidden />}
-              {proposes ? "Review entries" : "Edit"}
-            </Button>
-          }
-          title={proposes ? "Approve new entries" : "Edit classification"}
-          description={
-            proposes
-              ? "New names are added to the catalog when you save. Pick an existing entry instead if one already fits."
-              : "Move this paper to another department, course, semester or exam type."
-          }
-          submitLabel={proposes ? "Approve and save" : "Save"}
-          pendingLabel="Saving…"
-          fields={{ intent: "classify" }}
-          className="sm:max-w-2xl"
-        >
-          {(fieldErrors) => (
-            <div className="grid gap-5 sm:grid-cols-2">
-              <ClassificationFields
-                {...taxonomy}
-                fieldErrors={fieldErrors}
-                defaults={defaultsFrom(submission.classification)}
-                shortNameOptional={false}
-              />
+    <Card>
+      <CardHeader>
+        <CardTitle>Classification</CardTitle>
+        <CardAction>
+          <ActionDialog
+            trigger={
+              <Button variant={proposes ? "default" : "outline"} size="sm">
+                {proposes ? <Sparkles /> : <Pencil />}
+                {proposes ? "Review entries" : "Edit"}
+              </Button>
+            }
+            title={proposes ? "Approve new entries" : "Edit classification"}
+            description={
+              proposes
+                ? "New names are added to the catalog when you save. Pick an existing entry instead if one already fits."
+                : "Move this paper to another department, course, semester or exam type."
+            }
+            submitLabel={proposes ? "Approve and save" : "Save"}
+            pendingLabel="Saving…"
+            successMessage={
+              proposes ? "New entries approved" : "Classification saved"
+            }
+            fields={{ intent: "classify" }}
+            className="sm:max-w-2xl"
+          >
+            {(fieldErrors) => (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <ClassificationFields
+                  {...taxonomy}
+                  fieldErrors={fieldErrors}
+                  defaults={defaultsFrom(submission.classification)}
+                  shortNameOptional={false}
+                />
+              </div>
+            )}
+          </ActionDialog>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <dl className="grid gap-3 text-sm">
+          {rows.map(({ label, value, isNew }) => (
+            <div key={label} className="grid gap-0.5">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="flex items-center gap-2 font-medium">
+                <span className="min-w-0 break-words">{value}</span>
+                {isNew && <Badge variant="secondary">New</Badge>}
+              </dd>
             </div>
-          )}
-        </ActionDialog>
-      }
-    >
-      <dl className="grid gap-3 text-sm">
-        {rows.map(({ label, value, isNew }) => (
-          <div key={label} className="grid gap-0.5">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="flex items-center gap-2 font-medium">
-              <span className="min-w-0 break-words">{value}</span>
-              {isNew && (
-                <Badge
-                  variant="outline"
-                  className="border-primary/30 bg-primary/5 text-primary"
-                >
-                  New
-                </Badge>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      {submission.questionId !== null && submission.status === "published" && (
-        <Link
-          to={`/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`}
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          Open the public page
-        </Link>
-      )}
-    </Panel>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
   );
 }
 
-function DetailsPanel({ submission }: { submission: AdminSubmissionDetail }) {
+function DetailsCard({ submission }: { submission: AdminSubmissionDetail }) {
   const { uploader } = submission;
   const details = [
     { label: "Uploaded", value: formatDate(submission.createdAt) },
@@ -294,33 +335,39 @@ function DetailsPanel({ submission }: { submission: AdminSubmissionDetail }) {
   ];
 
   return (
-    <Panel title="Details">
-      {uploader ? (
-        <Link
-          to={`/contributors/${encodeURIComponent(uploader.id)}`}
-          className="-m-2 flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted"
-        >
-          <ContributorAvatar name={uploader.name} image={uploader.image} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{uploader.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {uploader.email}
-            </p>
-          </div>
-        </Link>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          The uploader deleted their account.
-        </p>
-      )}
-      <dl className="grid grid-cols-2 gap-3 text-sm">
-        {details.map(({ label, value }) => (
-          <div key={label} className="grid gap-0.5">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="font-medium">{value}</dd>
-          </div>
-        ))}
-        <div className="col-span-2 flex gap-4 text-muted-foreground">
+    <Card>
+      <CardHeader>
+        <CardTitle>Details</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {uploader ? (
+          <Link
+            to={`/contributors/${encodeURIComponent(uploader.id)}`}
+            className="-m-2 flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted"
+          >
+            <UserAvatar name={uploader.name} image={uploader.image} />
+            <div className="grid min-w-0 text-sm leading-tight">
+              <span className="truncate font-medium">{uploader.name}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {uploader.email}
+              </span>
+            </div>
+          </Link>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            The uploader deleted their account.
+          </p>
+        )}
+        <Separator />
+        <dl className="grid grid-cols-2 gap-3 text-sm">
+          {details.map(({ label, value }) => (
+            <div key={label} className="grid gap-0.5">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="font-medium">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="flex gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <ThumbsUp className="size-4" aria-hidden />
             <span className="sr-only">Likes</span>
@@ -332,123 +379,68 @@ function DetailsPanel({ submission }: { submission: AdminSubmissionDetail }) {
             {formatCount(submission.dislikeCount)}
           </span>
         </div>
-      </dl>
-    </Panel>
+      </CardContent>
+    </Card>
   );
 }
 
 function ReportItem({ report }: { report: AdminSubmissionReport }) {
-  const open = report.status === "pending";
+  const { busy, run } = useAdminAction();
+  const update = (status: string, message: string) => ({
+    size: "xs" as const,
+    disabled: busy,
+    onClick: () =>
+      run({ intent: "report", reportId: String(report.id), status }, message),
+  });
+
   return (
     <li className="grid gap-2 py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium">
           {REPORT_REASON_LABELS[report.reason]}
         </p>
-        <Badge
-          variant="outline"
-          className={cn(
-            open ? "text-red-700 dark:text-red-400" : "text-muted-foreground",
-          )}
-        >
-          {REPORT_STATUS_LABELS[report.status]}
-        </Badge>
+        <ReportStatusBadge status={report.status} />
       </div>
       {report.details && (
-        <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+        <p className="border-l-2 pl-3 text-sm text-muted-foreground">
           {report.details}
-        </blockquote>
+        </p>
       )}
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <ContributorAvatar
+      <p className="flex items-center gap-2 text-xs text-muted-foreground">
+        <UserAvatar
           name={report.reporter.name}
           image={report.reporter.image}
-          size="xs"
+          className="size-5"
         />
         <span className="truncate">{report.reporter.name}</span>
         <span aria-hidden>·</span>
         <span className="shrink-0">{formatDate(report.createdAt)}</span>
       </p>
       <div className="flex flex-wrap gap-2">
-        {open ? (
+        {report.status === "pending" ? (
           <>
-            <ActionButton
-              fields={{
-                intent: "report",
-                reportId: String(report.id),
-                status: "resolved",
-              }}
+            <Button
+              {...update("resolved", "Report resolved")}
               variant="outline"
-              size="xs"
             >
-              <CheckCircle2 aria-hidden />
+              <CircleCheck />
               Resolve
-            </ActionButton>
-            <ActionButton
-              fields={{
-                intent: "report",
-                reportId: String(report.id),
-                status: "dismissed",
-              }}
+            </Button>
+            <Button
+              {...update("dismissed", "Report dismissed")}
               variant="ghost"
-              size="xs"
             >
               Dismiss
-            </ActionButton>
+            </Button>
           </>
         ) : (
-          <ActionButton
-            fields={{
-              intent: "report",
-              reportId: String(report.id),
-              status: "pending",
-            }}
-            variant="ghost"
-            size="xs"
-          >
-            <RotateCcw aria-hidden />
+          <Button {...update("pending", "Report reopened")} variant="ghost">
+            <RotateCcw />
             Reopen
-          </ActionButton>
+          </Button>
         )}
       </div>
     </li>
-  );
-}
-
-function Callout({
-  icon: Icon,
-  tone,
-  title,
-  children,
-}: {
-  icon: typeof Sparkles;
-  tone: "primary" | "amber";
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-3 rounded-xl border p-4 text-sm",
-        tone === "primary"
-          ? "border-primary/30 bg-primary/5"
-          : "border-amber-500/40 bg-amber-500/5",
-      )}
-    >
-      <Icon
-        className={cn(
-          "mt-0.5 size-4 shrink-0",
-          tone === "primary"
-            ? "text-primary"
-            : "text-amber-700 dark:text-amber-400",
-        )}
-        aria-hidden
-      />
-      <div className="space-y-1">
-        <p className="font-medium">{title}</p>
-        <div className="text-muted-foreground">{children}</div>
-      </div>
-    </div>
   );
 }
 
@@ -469,73 +461,68 @@ export default function AdminSubmission({ loaderData }: Route.ComponentProps) {
   ].filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        back={{ to: "/admin/submissions", label: "Submissions" }}
-        eyebrow={classification.department.name}
+    <>
+      <AdminPageHeader
         title={classification.course.name}
-        description={classificationLine(classification)}
+        description={`${classification.department.name} · ${classificationLine(classification)}`}
+        actions={<DecisionActions submission={submission} />}
       >
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <StatusBadge status={submission.status} />
-          <SubmissionFlags submission={submission} />
+          <SubmissionStatusBadge status={submission.status} />
+          <SubmissionFlags {...submission} />
         </div>
-      </PageHeader>
+      </AdminPageHeader>
 
       {newEntries.length > 0 && (
-        <Callout
-          icon={Sparkles}
-          tone="primary"
-          title="This paper proposes new catalog entries"
-        >
-          The uploader added a new {newEntries.join(", ")}. Approve them, or
-          pick existing entries, before publishing.
-        </Callout>
+        <Alert>
+          <Sparkles />
+          <AlertTitle>This paper proposes new catalog entries</AlertTitle>
+          <AlertDescription>
+            The uploader added a new {newEntries.join(", ")}. Approve them, or
+            pick existing entries, before publishing.
+          </AlertDescription>
+        </Alert>
       )}
       {hiddenByReports && (
-        <Callout
-          icon={EyeOff}
-          tone="amber"
-          title={`Hidden after ${submission.pendingReportCount} reports`}
-        >
-          Resolve or dismiss the reports, then publish the paper again if it’s
-          fine.
-        </Callout>
+        <Alert>
+          <EyeOff />
+          <AlertTitle>
+            Hidden after {submission.pendingReportCount} reports
+          </AlertTitle>
+          <AlertDescription>
+            Resolve or dismiss the reports, then publish the paper again if it’s
+            fine.
+          </AlertDescription>
+        </Alert>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid items-start gap-4 @5xl/main:grid-cols-[minmax(0,1fr)_22rem]">
         <PdfViewer
           src={adminSubmissionFileUrl(submission.id)}
           title={`${classification.course.name} — ${STATUS_LABELS[submission.status]}`}
         />
-
-        <div className="grid gap-4 lg:sticky lg:top-20">
-          <DecisionPanel submission={submission} />
-          <ClassificationPanel submission={submission} taxonomy={taxonomy} />
+        <div className="grid gap-4">
+          <ClassificationCard submission={submission} taxonomy={taxonomy} />
           {submission.reports.length > 0 && (
-            <Panel
-              title="Reports"
-              action={
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {openReports.length > 0 ? (
-                    <Flag className="size-3.5" aria-hidden />
-                  ) : (
-                    <Clock className="size-3.5" aria-hidden />
-                  )}
-                  {openReports.length} open
-                </span>
-              }
-            >
-              <ul className="divide-y">
-                {submission.reports.map((report) => (
-                  <ReportItem key={report.id} report={report} />
-                ))}
-              </ul>
-            </Panel>
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports</CardTitle>
+                <CardDescription>
+                  {openReports.length} open of {submission.reports.length}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y">
+                  {submission.reports.map((report) => (
+                    <ReportItem key={report.id} report={report} />
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           )}
-          <DetailsPanel submission={submission} />
+          <DetailsCard submission={submission} />
         </div>
       </div>
-    </div>
+    </>
   );
 }

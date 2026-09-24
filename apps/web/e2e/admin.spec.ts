@@ -39,11 +39,9 @@ test("an admin approves a proposed course and publishes the paper", async ({
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dashboard");
 
-  // Through the sidebar, like an admin would.
-  await page
-    .getByRole("navigation", { name: /^Admin/ })
-    .getByRole("link", { name: /Submissions/ })
-    .click();
+  // The admin panel has its own shell, without the site header.
+  await expect(page.getByRole("link", { name: "Contribute" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Review submissions" }).click();
   await expect(page).toHaveURL(/\/admin\/submissions$/);
   await page.getByRole("link", { name: new RegExp(courseName) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(courseName);
@@ -69,17 +67,20 @@ test("an admin approves a proposed course and publishes the paper", async ({
   );
   await dialog.getByRole("button", { name: "Approve and save" }).click();
   await expect(dialog).toBeHidden();
+  await expect(page.getByText("New entries approved")).toBeVisible();
   await expect(
     page.getByText("This paper proposes new catalog entries"),
   ).toHaveCount(0);
 
   await publish.click();
+  await expect(page.getByText("Paper published")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Back to review" }),
   ).toBeVisible();
 
   // Now it's public, filed under the new course.
-  await page.getByRole("link", { name: "Open the public page" }).click();
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Open the public page" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(courseName);
   await expect(page.getByTestId("pdf-viewer")).toBeVisible();
 });
@@ -96,6 +97,7 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
   await dialog.getByLabel("Name").fill(name);
   await dialog.getByRole("button", { name: "Add" }).click();
   await expect(dialog).toBeHidden();
+  await expect(page.getByText("Semester added")).toBeVisible();
   const row = page.getByRole("row", { name: new RegExp(name) });
   await expect(row).toBeVisible();
 
@@ -106,7 +108,8 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
   await expect(dialog.getByRole("alert")).toContainText("already exists");
   await dialog.getByRole("button", { name: "Cancel" }).click();
 
-  await row.getByRole("button", { name: `Rename ${name}` }).click();
+  await row.getByRole("button", { name: `Actions for ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
   await dialog.getByLabel("Name").fill(`${name} renamed`);
   await dialog.getByRole("button", { name: "Save" }).click();
   const renamed = page.getByRole("row", {
@@ -114,14 +117,19 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
   });
   await expect(renamed).toBeVisible();
 
-  await renamed.getByRole("button", { name: `Delete ${name} renamed` }).click();
-  await dialog.getByRole("button", { name: "Delete" }).click();
+  await renamed
+    .getByRole("button", { name: `Actions for ${name} renamed` })
+    .click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Delete" })
+    .click();
   await expect(renamed).toHaveCount(0);
 
   // Semesters in use can't be deleted.
+  await page.getByRole("button", { name: "Actions for 1st Semester" }).click();
   await expect(
-    page
-      .getByRole("row", { name: /1st Semester/ })
-      .getByRole("button", { name: "Delete 1st Semester" }),
-  ).toBeDisabled();
+    page.getByRole("menuitem", { name: /can’t delete/ }),
+  ).toHaveAttribute("aria-disabled", "true");
 });

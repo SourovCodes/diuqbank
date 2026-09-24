@@ -173,22 +173,10 @@ function MobileMenu({ user }: { user: SessionUser | null }) {
   );
 }
 
-export function SiteHeader({
-  user,
-  fluid = false,
-}: {
-  user: SessionUser | null;
-  /** Span the full width, lining up with edge-to-edge layouts like the admin panel. */
-  fluid?: boolean;
-}) {
+export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
-      <div
-        className={cn(
-          "flex h-14 items-center gap-6",
-          fluid ? "px-4 sm:px-6 md:px-8" : "container",
-        )}
-      >
+      <div className="container flex h-14 items-center gap-6">
         <Brand />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map(({ to, label }) => (

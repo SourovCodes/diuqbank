@@ -1,20 +1,35 @@
-import type {
-  AdminCatalog,
-  AdminCourse,
-  AdminDepartment,
-  Department,
-} from "@qb/shared";
-import { FolderTree, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import type { AdminCatalog, Department } from "@qb/shared";
+import {
+  EllipsisVertical,
+  FolderTree,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
-import { ActionDialog } from "~/components/admin/actions";
-import { FilterTabs } from "~/components/admin/filter-tabs";
+import { ActionDialog, ConfirmAction } from "~/components/admin/actions";
+import { AdminPageHeader } from "~/components/admin/admin-header";
+import { AdminRouteError } from "~/components/admin/route-error";
+import { UrlTabs } from "~/components/admin/url-tabs";
 import { EmptyState } from "~/components/empty-state";
 import { FormField } from "~/components/form";
-import { PageHeader } from "~/components/page-header";
-import { SearchableSelect } from "~/components/searchable-select";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import {
   Table,
   TableBody,
@@ -26,6 +41,8 @@ import {
 import { adminGetJson, adminRequest, formObject } from "~/lib/admin.server";
 import { plural } from "~/lib/submissions";
 import type { Route } from "./+types/admin-catalog";
+
+export const handle = { breadcrumb: "Catalog" };
 
 export const meta: Route.MetaFunction = () => [
   { title: "Catalog — Admin — QuestionBank" },
@@ -55,8 +72,9 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const intent = String(form.get("intent"));
   const kind = form.get("kind");
-  if (!isKind(kind))
+  if (!isKind(kind)) {
     throw new Response("Unknown catalog kind", { status: 400 });
+  }
   const id = encodeURIComponent(String(form.get("id") ?? ""));
   const body = formObject(form, "intent", "kind", "id");
 
@@ -72,6 +90,8 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
+export { AdminRouteError as ErrorBoundary };
+
 type Row = {
   id: number;
   name: string;
@@ -82,34 +102,37 @@ type Row = {
   departmentId?: number;
 };
 
-/** Course picker for the "add course" form, submitted as `departmentId`. */
-function DepartmentPicker({
+const ALL = "all";
+
+/** Department select for the "add course" form, submitted as `departmentId`. */
+function DepartmentField({
   departments,
   defaultValue,
   error,
 }: {
   departments: Department[];
-  defaultValue: string | null;
+  defaultValue?: string;
   error?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
   return (
     <div className="grid gap-1.5">
-      <SearchableSelect
-        label="Department"
-        placeholder="Select a department"
-        searchPlaceholder="Search departments…"
-        emptyText="No department found."
-        options={departments.map((d) => ({
-          value: String(d.id),
-          label: `${d.name} (${d.shortName})`,
-        }))}
-        value={value}
-        onChange={setValue}
-        clearable={false}
-        invalid={Boolean(error)}
-      />
-      {value && <input type="hidden" name="departmentId" value={value} />}
+      <Label htmlFor="course-department">Department</Label>
+      <Select name="departmentId" defaultValue={defaultValue} required>
+        <SelectTrigger
+          id="course-department"
+          className="w-full"
+          aria-invalid={error ? true : undefined}
+        >
+          <SelectValue placeholder="Select a department" />
+        </SelectTrigger>
+        <SelectContent>
+          {departments.map((d) => (
+            <SelectItem key={d.id} value={String(d.id)}>
+              {d.name} ({d.shortName})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
@@ -153,26 +176,44 @@ function EntryFields({
   );
 }
 
-function inUse(row: Row) {
-  return row.questionCount + row.submissionCount + (row.courseCount ?? 0) > 0;
-}
-
 function RowActions({ kind, row }: { kind: Kind; row: Row }) {
   const { noun } = KINDS[kind];
-  const blocked = inUse(row);
+  const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  const inUse =
+    row.questionCount + row.submissionCount + (row.courseCount ?? 0) > 0;
+  const onOpenChange = (open: boolean) => !open && setDialog(null);
 
   return (
-    <div className="flex justify-end gap-1">
-      <ActionDialog
-        trigger={
+    <>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon-sm"
-            aria-label={`Rename ${row.name}`}
+            size="icon"
+            className="size-8 text-muted-foreground data-[state=open]:bg-muted"
+            aria-label={`Actions for ${row.name}`}
           >
-            <Pencil aria-hidden />
+            <EllipsisVertical />
           </Button>
-        }
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onSelect={() => setDialog("rename")}>
+            <Pencil />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={inUse}
+            onSelect={() => setDialog("delete")}
+          >
+            <Trash2 />
+            {inUse ? "In use, can’t delete" : "Delete"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ActionDialog
+        open={dialog === "rename"}
+        onOpenChange={onOpenChange}
         title={`Rename ${noun}`}
         description={
           row.questionCount > 0
@@ -181,33 +222,24 @@ function RowActions({ kind, row }: { kind: Kind; row: Row }) {
         }
         submitLabel="Save"
         pendingLabel="Saving…"
+        successMessage={`Renamed “${row.name}”`}
         fields={{ intent: "update", kind, id: String(row.id) }}
       >
         {(fieldErrors) => (
           <EntryFields kind={kind} row={row} fieldErrors={fieldErrors} />
         )}
       </ActionDialog>
-      <ActionDialog
-        trigger={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Delete ${row.name}`}
-            disabled={blocked}
-            title={blocked ? `In use, so it can’t be deleted` : undefined}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 aria-hidden />
-          </Button>
-        }
+      <ConfirmAction
+        open={dialog === "delete"}
+        onOpenChange={onOpenChange}
         title={`Delete ${noun}?`}
         description={`“${row.name}” is removed from the catalog. This can’t be undone.`}
-        submitLabel="Delete"
-        pendingLabel="Deleting…"
+        confirmLabel="Delete"
         destructive
+        successMessage={`Deleted “${row.name}”`}
         fields={{ intent: "delete", kind, id: String(row.id) }}
       />
-    </div>
+    </>
   );
 }
 
@@ -219,7 +251,7 @@ function Count({ value }: { value: number }) {
   );
 }
 
-/** Search, add and the table for one kind of entry. Keyed by kind, so filters reset. */
+/** Toolbar and table for one kind of entry. Keyed by kind, so filters reset. */
 function CatalogSection({
   catalog,
   kind,
@@ -228,13 +260,10 @@ function CatalogSection({
   kind: Kind;
 }) {
   const [query, setQuery] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+  const [department, setDepartment] = useState(ALL);
   const { label, noun } = KINDS[kind];
-
-  const departmentsById = new Map(
-    catalog.departments.map((d) => [d.id, d] as const),
-  );
-  const rowsByKind: Record<Kind, Row[]> = {
+  const departmentsById = new Map(catalog.departments.map((d) => [d.id, d]));
+  const allRows: Record<Kind, Row[]> = {
     departments: catalog.departments,
     courses: catalog.courses,
     semesters: catalog.semesters,
@@ -242,67 +271,68 @@ function CatalogSection({
   };
 
   const needle = query.trim().toLowerCase();
-  const rows = rowsByKind[kind].filter(
+  const rows = allRows[kind].filter(
     (row) =>
       (!needle ||
         row.name.toLowerCase().includes(needle) ||
         row.shortName?.toLowerCase().includes(needle)) &&
       (kind !== "courses" ||
-        departmentFilter === null ||
-        String(row.departmentId) === departmentFilter),
+        department === ALL ||
+        String(row.departmentId) === department),
   );
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-end">
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
+    <div className="grid gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative sm:w-72">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={`Search ${label.toLowerCase()}…`}
             aria-label={`Search ${label.toLowerCase()}`}
-            className="pl-9"
+            className="h-8 pl-8"
           />
         </div>
         {kind === "courses" && (
-          <div className="sm:w-64">
-            <SearchableSelect
-              label="Department"
-              placeholder="All departments"
-              searchPlaceholder="Search departments…"
-              emptyText="No department found."
-              options={catalog.departments.map((d) => ({
-                value: String(d.id),
-                label: `${d.name} (${d.shortName})`,
-              }))}
-              value={departmentFilter}
-              onChange={setDepartmentFilter}
-            />
-          </div>
+          <Select value={department} onValueChange={setDepartment}>
+            <SelectTrigger
+              size="sm"
+              className="sm:w-56"
+              aria-label="Department"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All departments</SelectItem>
+              {catalog.departments.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
         <ActionDialog
           trigger={
-            <Button>
-              <Plus aria-hidden />
+            <Button size="sm" className="sm:ml-auto">
+              <Plus />
               Add {noun}
             </Button>
           }
           title={`Add ${noun}`}
           submitLabel="Add"
           pendingLabel="Adding…"
+          successMessage={`${noun[0]!.toUpperCase()}${noun.slice(1)} added`}
           fields={{ intent: "create", kind }}
         >
           {(fieldErrors) => (
             <>
               {kind === "courses" && (
-                <DepartmentPicker
+                <DepartmentField
                   departments={catalog.departments}
-                  defaultValue={departmentFilter}
+                  defaultValue={department === ALL ? undefined : department}
                   error={fieldErrors.departmentId}
                 />
               )}
@@ -316,71 +346,74 @@ function CatalogSection({
         <EmptyState
           icon={FolderTree}
           title={
-            needle || departmentFilter
+            needle || department !== ALL
               ? `No matching ${label.toLowerCase()}`
               : `No ${label.toLowerCase()} yet`
           }
-          className="m-4"
         />
       ) : (
-        <Table>
-          <TableHeader className="bg-muted/40">
-            <TableRow>
-              <TableHead className="pl-4">Name</TableHead>
-              {kind === "departments" && <TableHead>Short name</TableHead>}
-              {kind === "courses" && <TableHead>Department</TableHead>}
-              {kind === "departments" && (
-                <TableHead className="text-right">Courses</TableHead>
-              )}
-              <TableHead className="text-right">Questions</TableHead>
-              <TableHead
-                className="text-right"
-                title="Pending submissions that propose this entry"
-              >
-                Proposals
-              </TableHead>
-              <TableHead className="pr-4 text-right">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="max-w-72 truncate pl-4 font-medium">
-                  {row.name}
-                </TableCell>
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted">
+              <TableRow>
+                <TableHead>Name</TableHead>
+                {kind === "departments" && <TableHead>Short name</TableHead>}
+                {kind === "courses" && <TableHead>Department</TableHead>}
                 {kind === "departments" && (
-                  <TableCell className="text-muted-foreground">
-                    {(row as AdminDepartment).shortName}
-                  </TableCell>
+                  <TableHead className="text-right">Courses</TableHead>
                 )}
-                {kind === "courses" && (
-                  <TableCell className="text-muted-foreground">
-                    {departmentsById.get((row as AdminCourse).departmentId)
-                      ?.shortName ?? "—"}
-                  </TableCell>
-                )}
-                {kind === "departments" && (
-                  <TableCell className="text-right tabular-nums">
-                    <Count value={row.courseCount ?? 0} />
-                  </TableCell>
-                )}
-                <TableCell className="text-right tabular-nums">
-                  <Count value={row.questionCount} />
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  <Count value={row.submissionCount} />
-                </TableCell>
-                <TableCell className="pr-4">
-                  <RowActions kind={kind} row={row} />
-                </TableCell>
+                <TableHead className="text-right">Questions</TableHead>
+                <TableHead
+                  className="hidden text-right @xl/main:table-cell"
+                  title="Pending submissions that propose this entry"
+                >
+                  Proposals
+                </TableHead>
+                <TableHead className="w-10">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="max-w-72 truncate font-medium">
+                    {row.name}
+                  </TableCell>
+                  {kind === "departments" && (
+                    <TableCell className="text-muted-foreground">
+                      {row.shortName}
+                    </TableCell>
+                  )}
+                  {kind === "courses" && (
+                    <TableCell className="text-muted-foreground">
+                      {departmentsById.get(row.departmentId!)?.shortName ?? "—"}
+                    </TableCell>
+                  )}
+                  {kind === "departments" && (
+                    <TableCell className="text-right tabular-nums">
+                      <Count value={row.courseCount ?? 0} />
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right tabular-nums">
+                    <Count value={row.questionCount} />
+                  </TableCell>
+                  <TableCell className="hidden text-right tabular-nums @xl/main:table-cell">
+                    <Count value={row.submissionCount} />
+                  </TableCell>
+                  <TableCell>
+                    <RowActions kind={kind} row={row} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
-    </Card>
+      <p className="px-1 text-sm text-muted-foreground">
+        {rows.length} of {plural(allRows[kind].length, noun)}
+      </p>
+    </div>
   );
 }
 
@@ -393,21 +426,21 @@ export default function AdminCatalogPage({ loaderData }: Route.ComponentProps) {
     "exam-types": catalog.examTypes.length,
   };
   const tabs = (Object.keys(KINDS) as Kind[]).map((k) => ({
-    search: k === "departments" ? "" : `?tab=${k}`,
+    value: k,
     label: KINDS[k].label,
+    search: k === "departments" ? "" : `?tab=${k}`,
     count: counts[k],
-    active: k === kind,
   }));
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Manage"
+    <>
+      <AdminPageHeader
         title="Catalog"
         description="The departments, courses, semesters and exam types papers are filed under. Entries in use can be renamed but not deleted."
       />
-      <FilterTabs label="Catalog sections" tabs={tabs} />
-      <CatalogSection key={kind} catalog={catalog} kind={kind} />
-    </div>
+      <UrlTabs label="Catalog sections" tabs={tabs} value={kind}>
+        <CatalogSection key={kind} catalog={catalog} kind={kind} />
+      </UrlTabs>
+    </>
   );
 }

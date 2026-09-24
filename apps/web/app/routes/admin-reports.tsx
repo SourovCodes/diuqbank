@@ -1,23 +1,43 @@
 import type { AdminReport, AdminReportList, ReportStatus } from "@qb/shared";
 import { REPORT_HIDE_THRESHOLD, REPORT_STATUSES } from "@qb/shared/constants";
 import {
-  ArrowRight,
-  CheckCircle2,
+  CircleCheck,
+  CircleDashed,
+  EllipsisVertical,
+  Eye,
   EyeOff,
   Flag,
   RotateCcw,
 } from "lucide-react";
-import { Link } from "react-router";
-import { ActionButton } from "~/components/admin/actions";
-import { FilterTabs } from "~/components/admin/filter-tabs";
-import { ContributorAvatar } from "~/components/contributor-avatar";
+import { Link, useNavigate } from "react-router";
+import { useAdminAction } from "~/components/admin/actions";
+import { AdminPageHeader } from "~/components/admin/admin-header";
+import {
+  ReportStatusBadge,
+  SubmissionStatusBadge,
+} from "~/components/admin/badges";
+import { AdminRouteError } from "~/components/admin/route-error";
+import { TablePagination } from "~/components/admin/table-pagination";
+import { UrlTabs } from "~/components/admin/url-tabs";
+import { UserAvatar } from "~/components/admin/user-avatar";
 import { EmptyState } from "~/components/empty-state";
-import { PageHeader } from "~/components/page-header";
-import { Pagination } from "~/components/pagination";
-import { StatusBadge } from "~/components/status-badge";
 import { Badge } from "~/components/ui/badge";
-import { buttonVariants } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import {
   adminSubmissionUrl,
   classificationLine,
@@ -26,9 +46,9 @@ import {
 import { adminGetJson, adminRequest } from "~/lib/admin.server";
 import { formatDate } from "~/lib/dates";
 import { REPORT_REASON_LABELS } from "~/lib/engagement";
-import { plural } from "~/lib/submissions";
-import { cn } from "~/lib/utils";
 import type { Route } from "./+types/admin-reports";
+
+export const handle = { breadcrumb: "Reports" };
 
 export const meta: Route.MetaFunction = () => [
   { title: "Reports — Admin — QuestionBank" },
@@ -71,150 +91,90 @@ export async function action({ request }: Route.ActionArgs) {
   );
 }
 
-function ReportCard({ report }: { report: AdminReport }) {
-  const { submission } = report;
-  const open = report.status === "pending";
-  const hidden =
-    submission.status === "pending_review" &&
-    submission.pendingReportCount >= REPORT_HIDE_THRESHOLD;
-  const id = String(report.id);
+export { AdminRouteError as ErrorBoundary };
+
+const SUCCESS: Record<ReportStatus, string> = {
+  resolved: "Report resolved",
+  dismissed: "Report dismissed",
+  pending: "Report reopened",
+};
+
+function RowActions({
+  report,
+  run,
+}: {
+  report: AdminReport;
+  run: ReturnType<typeof useAdminAction>["run"];
+}) {
+  const update = (status: ReportStatus) =>
+    run({ reportId: String(report.id), status }, SUCCESS[status]);
 
   return (
-    <Card className="gap-4 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span
-            className={cn(
-              "rounded-lg p-2",
-              open
-                ? "bg-red-500/10 text-red-700 dark:text-red-400"
-                : "bg-muted text-muted-foreground",
-            )}
-          >
-            <Flag className="size-4" aria-hidden />
-          </span>
-          <div className="min-w-0 space-y-1">
-            <h2 className="font-medium">
-              {REPORT_REASON_LABELS[report.reason]}
-            </h2>
-            <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-              <ContributorAvatar
-                name={report.reporter.name}
-                image={report.reporter.image}
-                size="xs"
-              />
-              <span>{report.reporter.name}</span>
-              <span aria-hidden>·</span>
-              <span>{report.reporter.email}</span>
-              <span aria-hidden>·</span>
-              <span>{formatDate(report.createdAt)}</span>
-            </p>
-          </div>
-        </div>
-        <Badge
-          variant="outline"
-          className={cn(!open && "text-muted-foreground")}
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground data-[state=open]:bg-muted"
+          aria-label={`Actions for report ${report.id}`}
+          onClick={(event) => event.stopPropagation()}
         >
-          {REPORT_STATUS_LABELS[report.status]}
-        </Badge>
-      </div>
-
-      {report.details && (
-        <blockquote className="rounded-lg border-l-2 bg-muted/40 px-4 py-2.5 text-sm">
-          {report.details}
-        </blockquote>
-      )}
-
-      <Link
-        to={adminSubmissionUrl(submission.id)}
-        prefetch="intent"
-        className="group flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:border-primary/40 hover:bg-muted/40"
+          <EllipsisVertical />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-44"
+        onClick={(event) => event.stopPropagation()}
       >
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium group-hover:text-primary">
-            {submission.classification.course.name}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {classificationLine(submission.classification)} ·{" "}
-            {plural(submission.pendingReportCount, "open report")}
-          </p>
-        </div>
-        {hidden && (
-          <Badge
-            variant="outline"
-            className="text-amber-700 dark:text-amber-400"
-          >
-            <EyeOff aria-hidden />
-            Hidden
-          </Badge>
-        )}
-        <StatusBadge status={submission.status} />
-        <ArrowRight
-          className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary"
-          aria-hidden
-        />
-      </Link>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {open ? (
+        <DropdownMenuItem asChild>
+          <Link to={adminSubmissionUrl(report.submission.id)}>
+            <Eye />
+            Review paper
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {report.status === "pending" ? (
           <>
-            <ActionButton
-              fields={{ reportId: id, status: "resolved" }}
-              size="sm"
-              pendingLabel="Resolving…"
-            >
-              <CheckCircle2 aria-hidden />
+            <DropdownMenuItem onSelect={() => update("resolved")}>
+              <CircleCheck />
               Resolve
-            </ActionButton>
-            <ActionButton
-              fields={{ reportId: id, status: "dismissed" }}
-              size="sm"
-              variant="outline"
-              pendingLabel="Dismissing…"
-            >
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => update("dismissed")}>
+              <CircleDashed />
               Dismiss
-            </ActionButton>
+            </DropdownMenuItem>
           </>
         ) : (
-          <ActionButton
-            fields={{ reportId: id, status: "pending" }}
-            size="sm"
-            variant="ghost"
-          >
-            <RotateCcw aria-hidden />
+          <DropdownMenuItem onSelect={() => update("pending")}>
+            <RotateCcw />
             Reopen
-          </ActionButton>
+          </DropdownMenuItem>
         )}
-        <Link
-          to={adminSubmissionUrl(submission.id)}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "ml-auto",
-          )}
-        >
-          Review paper
-        </Link>
-      </div>
-    </Card>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 export default function AdminReports({ loaderData }: Route.ComponentProps) {
   const { list, status } = loaderData;
   const { counts } = list;
+  const navigate = useNavigate();
+  // Owned by the page: a resolved report leaves the open list, row and all.
+  const { run } = useAdminAction();
 
   const tabs = [
     ...REPORT_STATUSES.map((s) => ({
-      search: s === "pending" ? "" : `?status=${s}`,
+      value: s,
       label: REPORT_STATUS_LABELS[s],
+      search: s === "pending" ? "" : `?status=${s}`,
       count: counts[s],
-      active: status === s,
     })),
     {
-      search: "?status=all",
+      value: "all",
       label: "All",
+      search: "?status=all",
       count: counts.pending + counts.resolved + counts.dismissed,
-      active: status === "all",
     },
   ];
 
@@ -226,41 +186,118 @@ export default function AdminReports({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Moderation"
+    <>
+      <AdminPageHeader
         title="Reports"
-        description={`Problems readers flagged on published papers. A paper is hidden once it has ${REPORT_HIDE_THRESHOLD} open reports; resolving a report doesn’t publish it again.`}
+        description={`Problems readers flagged on published papers. A paper is hidden at ${REPORT_HIDE_THRESHOLD} open reports; resolving reports doesn’t publish it again.`}
       />
-
-      <FilterTabs label="Filter by status" tabs={tabs} />
-
-      {list.items.length === 0 ? (
-        <EmptyState
-          icon={Flag}
-          title={status === "pending" ? "No open reports" : "No reports here"}
-          description={
-            status === "pending"
-              ? "When readers report a problem with a paper, it shows up here."
-              : undefined
-          }
+      <UrlTabs label="Filter by status" tabs={tabs} value={status}>
+        {list.items.length === 0 ? (
+          <EmptyState
+            icon={Flag}
+            title={status === "pending" ? "No open reports" : "No reports here"}
+            description={
+              status === "pending"
+                ? "When readers report a problem with a paper, it shows up here."
+                : undefined
+            }
+          />
+        ) : (
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead>Report</TableHead>
+                  <TableHead className="hidden @3xl/main:table-cell">
+                    Paper
+                  </TableHead>
+                  <TableHead className="hidden @5xl/main:table-cell">
+                    Reporter
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.items.map((report) => {
+                  const { submission } = report;
+                  const hidden =
+                    submission.status === "pending_review" &&
+                    submission.pendingReportCount >= REPORT_HIDE_THRESHOLD;
+                  return (
+                    <TableRow
+                      key={report.id}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        navigate(adminSubmissionUrl(submission.id))
+                      }
+                    >
+                      <TableCell className="w-full max-w-0">
+                        <p className="truncate font-medium">
+                          {REPORT_REASON_LABELS[report.reason]}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {report.details ?? formatDate(report.createdAt)}
+                        </p>
+                      </TableCell>
+                      <TableCell className="hidden max-w-64 @3xl/main:table-cell">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">
+                            {submission.classification.course.name}
+                          </span>
+                          {hidden ? (
+                            <Badge variant="outline" className="px-1.5">
+                              <EyeOff />
+                              Hidden
+                            </Badge>
+                          ) : (
+                            <SubmissionStatusBadge status={submission.status} />
+                          )}
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {classificationLine(submission.classification)}
+                        </p>
+                      </TableCell>
+                      <TableCell className="hidden @5xl/main:table-cell">
+                        <div className="flex min-w-40 items-center gap-2">
+                          <UserAvatar
+                            name={report.reporter.name}
+                            image={report.reporter.image}
+                            className="size-6"
+                          />
+                          <div className="grid leading-tight">
+                            <span className="max-w-40 truncate">
+                              {report.reporter.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(report.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <ReportStatusBadge status={report.status} />
+                      </TableCell>
+                      <TableCell>
+                        <RowActions report={report} run={run} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        <TablePagination
+          page={list.page}
+          pageSize={list.pageSize}
+          total={list.total}
+          noun="report"
+          hrefFor={hrefFor}
         />
-      ) : (
-        <ul className="grid gap-4">
-          {list.items.map((report) => (
-            <li key={report.id}>
-              <ReportCard report={report} />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <Pagination
-        page={list.page}
-        pageSize={list.pageSize}
-        total={list.total}
-        hrefFor={hrefFor}
-      />
-    </div>
+      </UrlTabs>
+    </>
   );
 }
