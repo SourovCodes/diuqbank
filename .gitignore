@@ -9,6 +9,8 @@ build/
 # Cloudflare / Wrangler
 .wrangler/
 worker-configuration.d.ts
+# Download cache of scripts/import-legacy.mjs
+.legacy-import/
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
