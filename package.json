@@ -20,6 +20,7 @@
     "db:generate": "pnpm --filter @qb/api db:generate",
     "db:migrate": "pnpm --filter @qb/api db:migrate:local",
     "db:seed": "pnpm --filter @qb/api db:seed:local",
+    "import-legacy": "pnpm --filter @qb/api import-legacy",
     "make-admin": "pnpm --filter @qb/api make-admin"
   },
   "devDependencies": {
