@@ -92,6 +92,36 @@ describe("POST /api/v1/submissions", () => {
     expect(detail.submissions[0]?.uploader?.name).toBe("Test User");
   });
 
+  it("stores an optional section and batch, treating blank fields as not given", async () => {
+    const t = await seedTaxonomy();
+    const { cookie } = await signUp();
+    const fields = {
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.final.id,
+    };
+
+    const withDetails = await (
+      await upload({ ...fields, section: " 5A ", batch: "61" }, cookie)
+    ).json<CreatedSubmission>();
+    const blank = await (
+      await upload({ ...fields, section: "", batch: "  " }, cookie)
+    ).json<CreatedSubmission>();
+
+    const detail = await (
+      await api(`/api/v1/questions/${withDetails.questionId}`)
+    ).json<QuestionDetail>();
+    const byId = (id: string) => detail.submissions.find((s) => s.id === id);
+    expect(byId(withDetails.id)).toMatchObject({ section: "5A", batch: "61" });
+    expect(byId(blank.id)).toMatchObject({ section: null, batch: null });
+
+    await expectFieldError(
+      await upload({ ...fields, section: "x".repeat(11) }, cookie),
+      "section",
+    );
+  });
+
   it("reuses a question that already exists", async () => {
     const t = await seedTaxonomy();
     const { cookie } = await signUp();

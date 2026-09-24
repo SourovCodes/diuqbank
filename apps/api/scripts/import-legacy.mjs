@@ -162,6 +162,14 @@ const sq = (value) =>
     : `'${String(value).replaceAll("'", "''")}'`;
 const ms = (epochSeconds) => (epochSeconds ? epochSeconds * 1000 : Date.now());
 const norm = (name) => name?.trim().toLowerCase();
+/**
+ * A section or batch. The app allows 10 characters; longer legacy values are mostly
+ * lists like "A, B, C, D, E" that don't tell papers apart, so they are dropped.
+ */
+const detail = (value) => {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length <= 10 ? trimmed : null;
+};
 
 // Name-based lookups, so taxonomy that already exists here is reused rather than duplicated.
 const deptExpr = (d) =>
@@ -234,14 +242,15 @@ const existingSubmissions = new Set(
 const warnings = [];
 
 /** Legacy submissions and pending uploads that are new, with their target id and key. */
-const newPapers = [
+const allPapers = [
   ...submissions.map((s) => ({
     ...s,
     kind: "published",
     newId: `legacy-${s.id}`,
   })),
   ...pendingUploads.map((s) => ({ ...s, newId: `legacy-${s.kind}-${s.id}` })),
-]
+];
+const newPapers = allPapers
   .filter((s) => !existingSubmissions.has(s.newId))
   .filter((s) => {
     if (s.pdfUrl) return true;
@@ -437,6 +446,8 @@ for (const p of newPapers) {
     file_size: p.fileSize,
     uploader_id: email ? userExpr(email) : "NULL",
     view_count: p.kind === "published" ? p.viewCount : (p.legacyViews ?? 0),
+    section: sq(detail(p.section)),
+    batch: sq(detail(p.batch)),
     created_at: created,
     updated_at: created,
   };
@@ -460,6 +471,17 @@ for (const p of newPapers) {
   imported.push(p.newId);
   statements.push(
     `INSERT OR IGNORE INTO submissions (${Object.keys(columns).join(", ")}) VALUES (${Object.values(columns).join(", ")});`,
+  );
+}
+
+// Backfills section and batch on papers imported before those columns existed,
+// without overwriting values an admin has set since.
+for (const p of allPapers) {
+  if (!existingSubmissions.has(p.newId)) continue;
+  const [section, batch] = [detail(p.section), detail(p.batch)];
+  if (!section && !batch) continue;
+  statements.push(
+    `UPDATE submissions SET section = ${sq(section)}, batch = ${sq(batch)} WHERE id = ${sq(p.newId)} AND section IS NULL AND batch IS NULL;`,
   );
 }
 

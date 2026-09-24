@@ -209,6 +209,8 @@ export async function createSubmission(
         fileKey,
         fileSize: file.size,
         uploaderId: params.uploaderId,
+        section: fields.section ?? null,
+        batch: fields.batch ?? null,
         ...classification,
       })
       .returning({

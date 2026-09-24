@@ -80,13 +80,21 @@ export default function Login({ actionData }: Route.ComponentProps) {
           autoComplete="email"
           required
         />
-        <FormField
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
+        <div className="grid gap-1.5">
+          <FormField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+          <Link
+            to="/forgot-password"
+            className="justify-self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <FormMessage message={actionData?.error} />
         <Button type="submit" disabled={submitting}>
           {submitting ? "Signing in…" : "Log in"}

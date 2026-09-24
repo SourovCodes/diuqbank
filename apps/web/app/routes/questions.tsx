@@ -1,12 +1,23 @@
 import type { QuestionList } from "@qb/shared";
-import { SearchX, X } from "lucide-react";
+import { SearchX, SlidersHorizontal, X } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
 import { QuestionCards } from "~/components/question-cards";
 import { SearchableSelect } from "~/components/searchable-select";
 import { TablePagination } from "~/components/table-pagination";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "~/components/ui/sheet";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { loadTaxonomy } from "~/lib/taxonomy.server";
 import {
@@ -69,6 +80,59 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
       preventScrollReset: true,
     });
 
+  const activeFilters = FILTER_KEYS.filter((key) =>
+    searchParams.has(key),
+  ).length;
+  const filterFields = (
+    <>
+      <SearchableSelect
+        label="Department"
+        placeholder="All departments"
+        searchPlaceholder="Search departments…"
+        emptyText="No department found."
+        options={departments.map((d) => ({
+          value: String(d.id),
+          label: `${d.name} (${d.shortName})`,
+        }))}
+        value={departmentId}
+        onChange={(value) => setFilter("departmentId", value)}
+      />
+      <SearchableSelect
+        label="Course"
+        placeholder="All courses"
+        searchPlaceholder="Search courses…"
+        emptyText="No course found."
+        options={courseOptions(courses, departments, departmentId)}
+        value={searchParams.get("courseId")}
+        onChange={(value) => setFilter("courseId", value)}
+      />
+      <SearchableSelect
+        label="Semester"
+        placeholder="All semesters"
+        searchPlaceholder="Search semesters…"
+        emptyText="No semester found."
+        options={semesters.map((s) => ({
+          value: String(s.id),
+          label: s.name,
+        }))}
+        value={searchParams.get("semesterId")}
+        onChange={(value) => setFilter("semesterId", value)}
+      />
+      <SearchableSelect
+        label="Exam type"
+        placeholder="All exam types"
+        searchPlaceholder="Search exam types…"
+        emptyText="No exam type found."
+        options={examTypes.map((e) => ({
+          value: String(e.id),
+          label: e.name,
+        }))}
+        value={searchParams.get("examTypeId")}
+        onChange={(value) => setFilter("examTypeId", value)}
+      />
+    </>
+  );
+
   const pageHref = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", String(page));
@@ -82,57 +146,62 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         description="Combine any of the filters below to find question papers."
       />
 
+      {/* Inline from `sm` up; on phones the four pickers would push the results
+          below the fold, so they live in a sheet behind one button. */}
       <div
         role="search"
         aria-label="Filter questions"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-4"
       >
-        <SearchableSelect
-          label="Department"
-          placeholder="All departments"
-          searchPlaceholder="Search departments…"
-          emptyText="No department found."
-          options={departments.map((d) => ({
-            value: String(d.id),
-            label: `${d.name} (${d.shortName})`,
-          }))}
-          value={departmentId}
-          onChange={(value) => setFilter("departmentId", value)}
-        />
-        <SearchableSelect
-          label="Course"
-          placeholder="All courses"
-          searchPlaceholder="Search courses…"
-          emptyText="No course found."
-          options={courseOptions(courses, departments, departmentId)}
-          value={searchParams.get("courseId")}
-          onChange={(value) => setFilter("courseId", value)}
-        />
-        <SearchableSelect
-          label="Semester"
-          placeholder="All semesters"
-          searchPlaceholder="Search semesters…"
-          emptyText="No semester found."
-          options={semesters.map((s) => ({
-            value: String(s.id),
-            label: s.name,
-          }))}
-          value={searchParams.get("semesterId")}
-          onChange={(value) => setFilter("semesterId", value)}
-        />
-        <SearchableSelect
-          label="Exam type"
-          placeholder="All exam types"
-          searchPlaceholder="Search exam types…"
-          emptyText="No exam type found."
-          options={examTypes.map((e) => ({
-            value: String(e.id),
-            label: e.name,
-          }))}
-          value={searchParams.get("examTypeId")}
-          onChange={(value) => setFilter("examTypeId", value)}
-        />
+        {filterFields}
       </div>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between sm:hidden"
+          >
+            <span className="flex items-center gap-2">
+              <SlidersHorizontal aria-hidden />
+              Filters
+            </span>
+            {activeFilters > 0 && (
+              <Badge variant="secondary">{activeFilters} active</Badge>
+            )}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="max-h-[85svh] rounded-t-xl">
+          <SheetHeader>
+            <SheetTitle>Filter questions</SheetTitle>
+            <SheetDescription>
+              Pick a course and exam type to compare semesters.
+            </SheetDescription>
+          </SheetHeader>
+          <div
+            role="search"
+            aria-label="Filter questions"
+            className="grid gap-4 overflow-y-auto px-4"
+          >
+            {filterFields}
+          </div>
+          <SheetFooter className="flex-row">
+            {hasFilters && (
+              <Button variant="outline" className="flex-1" asChild>
+                <Link to="/questions" preventScrollReset>
+                  Clear
+                </Link>
+              </Button>
+            )}
+            <SheetClose asChild>
+              <Button className="flex-1" disabled={loading}>
+                {loading
+                  ? "Loading…"
+                  : `Show ${plural(list.total, "question")}`}
+              </Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <section
         aria-labelledby="results-heading"

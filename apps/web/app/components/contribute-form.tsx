@@ -2,6 +2,7 @@ import type { Course, Department, ExamType, Semester } from "@qb/shared";
 import { Form } from "react-router";
 import { ClassificationFields } from "~/components/classification-fields";
 import { FormMessage } from "~/components/form";
+import { PaperDetailsFields } from "~/components/paper-details-fields";
 import { PdfFileInput } from "~/components/pdf-file-input";
 import { Button } from "~/components/ui/button";
 import { Card, CardFooter } from "~/components/ui/card";
@@ -36,6 +37,7 @@ export function ContributeForm({
             examTypes={examTypes}
             fieldErrors={fieldErrors}
           />
+          <PaperDetailsFields fieldErrors={fieldErrors} />
 
           <div className="sm:col-span-2">
             <PdfFileInput

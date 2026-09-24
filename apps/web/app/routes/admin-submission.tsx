@@ -37,6 +37,7 @@ import {
   ClassificationFields,
   defaultsFrom,
 } from "~/components/classification-fields";
+import { PaperDetailsFields } from "~/components/paper-details-fields";
 import { PdfViewer } from "~/components/pdf-viewer";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
@@ -267,6 +268,8 @@ function ClassificationCard({
     { label: "Course", value: course.name, isNew: course.id === null },
     { label: "Semester", value: semester.name, isNew: semester.id === null },
     { label: "Exam type", value: examType.name, isNew: false },
+    { label: "Section", value: submission.section ?? "—", isNew: false },
+    { label: "Batch", value: submission.batch ?? "—", isNew: false },
   ];
 
   return (
@@ -285,7 +288,7 @@ function ClassificationCard({
             description={
               proposes
                 ? "New names are added to the catalog when you save. Pick an existing entry instead if one already fits."
-                : "Move this paper to another department, course, semester or exam type."
+                : "Move this paper to another department, course, semester or exam type, or fix its section and batch."
             }
             submitLabel={proposes ? "Approve and save" : "Save"}
             pendingLabel="Saving…"
@@ -302,6 +305,10 @@ function ClassificationCard({
                   fieldErrors={fieldErrors}
                   defaults={defaultsFrom(submission.classification)}
                   shortNameOptional={false}
+                />
+                <PaperDetailsFields
+                  fieldErrors={fieldErrors}
+                  defaults={submission}
                 />
               </div>
             )}

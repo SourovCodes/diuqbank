@@ -4,46 +4,46 @@ import type {
   ContributorSubmission,
   ListContributorsQuery,
 } from "@qb/shared";
-import { asc, count, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { submissions, user } from "../db/schema";
-import { countWhereStatus, submissionStatusOrder } from "./common";
+import { submissionStatusOrder } from "./common";
 import {
   selectSubmissionRows,
   toContributorSubmission,
 } from "./submission-rows";
 
-/** Per-status submission counts for every user who has uploaded something. */
-function uploaderCounts(db: Database) {
+/**
+ * Published papers per uploader. Pending and rejected uploads are private to the
+ * uploader and admins, so they are neither counted nor listed publicly.
+ */
+function publishedCounts(db: Database) {
   return db
     .select({
       uploaderId: submissions.uploaderId,
-      published: countWhereStatus("published").as("published_count"),
-      pendingReview: countWhereStatus("pending_review").as(
-        "pending_review_count",
-      ),
-      rejected: countWhereStatus("rejected").as("rejected_count"),
+      published: count().as("published_count"),
     })
     .from(submissions)
-    .where(isNotNull(submissions.uploaderId))
+    .where(
+      and(
+        isNotNull(submissions.uploaderId),
+        eq(submissions.status, "published"),
+      ),
+    )
     .groupBy(submissions.uploaderId)
-    .as("uploader_counts");
+    .as("published_counts");
 }
 
-/** Users joined with their counts, so only users with submissions are included. */
+/** Users joined with their counts, so only users with published papers are included. */
 function selectContributors(db: Database) {
-  const counts = uploaderCounts(db);
+  const counts = publishedCounts(db);
   const query = db
     .select({
       id: user.id,
       name: user.name,
       image: user.image,
       joinedAt: user.createdAt,
-      submissionCounts: {
-        published: counts.published,
-        pendingReview: counts.pendingReview,
-        rejected: counts.rejected,
-      },
+      publishedCount: counts.published,
     })
     .from(user)
     .innerJoin(counts, eq(counts.uploaderId, user.id));
@@ -55,7 +55,7 @@ export async function listContributors(
   query: ListContributorsQuery,
 ): Promise<ContributorList> {
   const { counts, query: contributors } = selectContributors(db);
-  const totalCounts = uploaderCounts(db);
+  const totalCounts = publishedCounts(db);
 
   const [rows, totals] = await Promise.all([
     contributors
@@ -81,7 +81,7 @@ export async function listContributors(
 
 /**
  * All submissions by one uploader, in every status: published first (newest first),
- * then pending review, then rejected.
+ * then pending review, then rejected. For the uploader's own account page.
  */
 export async function listUploaderSubmissions(
   db: Database,
@@ -102,9 +102,14 @@ export async function getContributor(
     .limit(1);
   if (!contributor) return null;
 
+  const rows = await selectSubmissionRows(db)
+    .where(
+      and(eq(submissions.uploaderId, id), eq(submissions.status, "published")),
+    )
+    .orderBy(desc(submissions.createdAt));
   return {
     ...contributor,
     joinedAt: contributor.joinedAt.toISOString(),
-    submissions: await listUploaderSubmissions(db, id),
+    submissions: rows.map(toContributorSubmission),
   };
 }

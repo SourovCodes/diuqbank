@@ -35,6 +35,8 @@ export function selectSubmissionRows(db: Database) {
         likeCount: submissions.likeCount,
         dislikeCount: submissions.dislikeCount,
         viewCount: submissions.viewCount,
+        section: submissions.section,
+        batch: submissions.batch,
         pendingReportCount: submissions.pendingReportCount,
       },
       department: {

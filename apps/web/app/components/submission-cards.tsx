@@ -1,16 +1,14 @@
 import type { ContributorSubmission } from "@qb/shared";
-import { CalendarDays, Eye, Sparkles, ThumbsUp } from "lucide-react";
+import { CalendarDays, Eye, ThumbsUp } from "lucide-react";
 import { Link } from "react-router";
 import {
   CARD_GRID,
   LINK_CARD,
   STRETCHED_LINK,
 } from "~/components/question-cards";
-import { StatusBadge } from "~/components/status-badge";
 import { Badge } from "~/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -18,10 +16,11 @@ import {
 } from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { proposesNewEntries, publicUrl } from "~/lib/submissions";
+import { paperDetails, publicUrl } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 function SubmissionCard({ submission }: { submission: ContributorSubmission }) {
+  const details = paperDetails(submission);
   const href = publicUrl(submission);
   const { department, course, semester, examType } = submission.classification;
 
@@ -36,9 +35,6 @@ function SubmissionCard({ submission }: { submission: ContributorSubmission }) {
             {examType.name}
           </Badge>
         </div>
-        <CardAction>
-          <StatusBadge status={submission.status} />
-        </CardAction>
         <CardTitle className="text-base leading-snug">
           {href ? (
             <Link to={href} prefetch="intent" className={STRETCHED_LINK}>
@@ -51,13 +47,8 @@ function SubmissionCard({ submission }: { submission: ContributorSubmission }) {
         <CardDescription className="flex items-center gap-1.5">
           <CalendarDays className="size-3.5" aria-hidden />
           {semester.name}
+          {details && ` · ${details}`}
         </CardDescription>
-        {proposesNewEntries(submission.classification) && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Sparkles className="size-3" aria-hidden />
-            Includes new entries awaiting approval
-          </p>
-        )}
       </CardHeader>
       <CardFooter className="mt-auto justify-between gap-3 border-t text-sm text-muted-foreground [.border-t]:pt-4">
         <span>Added {formatDate(submission.createdAt)}</span>
@@ -80,7 +71,7 @@ function SubmissionCard({ submission }: { submission: ContributorSubmission }) {
   );
 }
 
-/** A contributor's submissions as cards; published ones open their question. */
+/** A contributor's published papers as cards; each opens its question. */
 export function SubmissionCards({
   submissions,
 }: {

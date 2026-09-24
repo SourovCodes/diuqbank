@@ -22,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const user = await requireUser(request);
+  await requireUser(request);
   // Forward the multipart body as-is; the API validates it.
   const res = await apiFetch(request, "/api/v1/submissions", {
     method: "POST",
@@ -33,7 +33,6 @@ export async function action({ request }: Route.ActionArgs) {
     return {
       ok: true as const,
       submission: await readJson<CreatedSubmission>(res),
-      contributorId: user.id,
     };
   }
   const body = await readJson<ApiError>(res).catch(() => null);
@@ -86,7 +85,8 @@ export default function Contribute({
               )}{" "}
               ·{" "}
               <Link
-                to={`/contributors/${encodeURIComponent(actionData.contributorId)}`}
+                // The public profile only lists published papers; this one is pending.
+                to="/account/submissions"
                 className="underline underline-offset-4"
               >
                 See your contributions

@@ -4,7 +4,7 @@ import type {
   QuestionDetail,
   QuestionList,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -18,6 +18,7 @@ import {
 import {
   countWhereStatus,
   questionSummaryColumns,
+  semesterRecency,
   submissionStatusOrder,
 } from "./common";
 
@@ -41,8 +42,7 @@ function submissionCounts(db: Database) {
  * Questions joined with their lookup names and submission counts. Inner-joining the
  * counts means only questions with at least one submission (of any status) are listed.
  */
-function selectQuestions(db: Database) {
-  const counts = submissionCounts(db);
+function selectQuestions(db: Database, counts = submissionCounts(db)) {
   return db
     .select({
       ...questionSummaryColumns,
@@ -73,29 +73,35 @@ function questionFilters(query: ListQuestionsQuery) {
   return and(...filters);
 }
 
+/**
+ * Questions with at least one published paper; ones whose papers are all still under
+ * review (or rejected) have nothing to read yet. Grouped by course and exam type with
+ * the newest semester first, since students compare one exam across semesters.
+ */
 export async function listQuestions(
   db: Database,
   query: ListQuestionsQuery,
 ): Promise<QuestionList> {
   const where = questionFilters(query);
-  const counts = submissionCounts(db);
+  const itemCounts = submissionCounts(db);
+  const totalCounts = submissionCounts(db);
 
   const [items, totals] = await Promise.all([
-    selectQuestions(db)
-      .where(where)
+    selectQuestions(db, itemCounts)
+      .where(and(where, gt(itemCounts.published, 0)))
       .orderBy(
         asc(departments.shortName),
         asc(courses.name),
-        asc(semesters.id),
         asc(examTypes.name),
+        ...semesterRecency,
       )
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
     db
       .select({ total: count() })
       .from(questions)
-      .innerJoin(counts, eq(counts.questionId, questions.id))
-      .where(where),
+      .innerJoin(totalCounts, eq(totalCounts.questionId, questions.id))
+      .where(and(where, gt(totalCounts.published, 0))),
   ]);
 
   return {
@@ -126,6 +132,8 @@ export async function getQuestion(
       likeCount: submissions.likeCount,
       dislikeCount: submissions.dislikeCount,
       viewCount: submissions.viewCount,
+      section: submissions.section,
+      batch: submissions.batch,
       uploader: { id: user.id, name: user.name, image: user.image },
     })
     .from(submissions)

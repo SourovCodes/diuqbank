@@ -11,6 +11,7 @@ import {
 } from "~/components/ui/card";
 import { formatCount } from "~/lib/format";
 import { plural } from "~/lib/submissions";
+import { cn } from "~/lib/utils";
 
 /** Card-grid layout shared by the public lists. */
 export const CARD_GRID = "grid gap-4 sm:grid-cols-2 xl:grid-cols-3";
@@ -27,8 +28,9 @@ function QuestionCard({ question }: { question: Question }) {
   const { published, pendingReview } = question.submissionCounts;
 
   return (
-    <Card className={LINK_CARD}>
-      <CardHeader className="gap-3">
+    // Tighter on phones, where a full-size card fits barely three to a screen.
+    <Card className={cn(LINK_CARD, "gap-3 py-4 sm:gap-4 sm:py-6")}>
+      <CardHeader className="gap-2 px-4 sm:gap-3 sm:px-6">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="secondary" title={question.department.name}>
             {question.department.shortName}
@@ -51,7 +53,7 @@ function QuestionCard({ question }: { question: Question }) {
           {question.semester.name}
         </CardDescription>
       </CardHeader>
-      <CardFooter className="mt-auto justify-between gap-3 border-t pt-4 text-sm text-muted-foreground [.border-t]:pt-4">
+      <CardFooter className="mt-auto justify-between gap-3 border-t px-4 pt-3 text-sm text-muted-foreground sm:px-6 sm:pt-4 [.border-t]:pt-3 sm:[.border-t]:pt-4">
         <span className="flex items-center gap-1.5">
           <FileText className="size-4" aria-hidden />
           <span className={published > 0 ? "font-medium text-foreground" : ""}>

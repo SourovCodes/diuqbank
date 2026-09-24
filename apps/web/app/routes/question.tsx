@@ -3,6 +3,7 @@ import type {
   CreatedReport,
   QuestionDetail,
   QuestionInteractions,
+  QuestionList,
   Submission,
 } from "@qb/shared";
 import { Clock, Download, ExternalLink, Eye, FileX } from "lucide-react";
@@ -13,6 +14,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 import { EmptyState } from "~/components/empty-state";
+import { OtherSemesters } from "~/components/other-semesters";
 import { PageHeader } from "~/components/page-header";
 import {
   PaperToolbar,
@@ -20,7 +22,7 @@ import {
   type PaperViewer,
 } from "~/components/paper-toolbar";
 import { PdfViewer } from "~/components/pdf-viewer";
-import { SubmissionList } from "~/components/submission-list";
+import { PaperSwitcher, SubmissionList } from "~/components/submission-list";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { UploaderCard } from "~/components/uploader-card";
@@ -32,7 +34,12 @@ import {
 } from "~/lib/engagement";
 import { formatViews } from "~/lib/format";
 import { hasSessionCookie, requireUser } from "~/lib/session.server";
-import { plural, pickSubmission, submissionFileUrl } from "~/lib/submissions";
+import {
+  paperDetails,
+  plural,
+  pickSubmission,
+  submissionFileUrl,
+} from "~/lib/submissions";
 import type { Route } from "./+types/question";
 
 /** The signed-in visitor's votes and reports. Skipped for anonymous visitors. */
@@ -55,10 +62,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw data("Question not found", { status: 404 });
   }
   if (!res.ok) throw data("Failed to load question", { status: 502 });
+  const question = await readJson<QuestionDetail>(res);
   return {
-    question: await readJson<QuestionDetail>(res),
+    question,
     interactions,
+    otherSemesters: await loadOtherSemesters(request, question),
   };
+}
+
+/** The same course and exam type in other semesters (newest first); optional. */
+async function loadOtherSemesters(request: Request, question: QuestionDetail) {
+  const query = new URLSearchParams({
+    courseId: String(question.course.id),
+    examTypeId: String(question.examType.id),
+    pageSize: "100",
+  });
+  const res = await apiFetch(request, `/api/v1/questions?${query}`);
+  if (!res.ok) return [];
+  const list = await readJson<QuestionList>(res);
+  return list.items.filter((other) => other.id !== question.id);
 }
 
 const jsonInit = (method: string, body: unknown): RequestInit => ({
@@ -182,7 +204,7 @@ function viewerFor(
 }
 
 export default function QuestionPage({ loaderData }: Route.ComponentProps) {
-  const { question, interactions } = loaderData;
+  const { question, interactions, otherSemesters } = loaderData;
   const [searchParams] = useSearchParams();
   const selected = pickSubmission(
     question.submissions,
@@ -194,8 +216,9 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
   const published = question.submissions.filter(
     (s) => s.status === "published",
   );
+  const details = selected ? paperDetails(selected) : null;
   const paperLabel = selected
-    ? `Paper ${published.findIndex((s) => s.id === selected.id) + 1}`
+    ? `Paper ${published.findIndex((s) => s.id === selected.id) + 1}${details ? ` · ${details}` : ""}`
     : "";
 
   useCountView(`/api/v1/questions/${question.id}/views`);
@@ -244,11 +267,13 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
         </div>
       </PageHeader>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <section
-          aria-label="Question paper"
-          className="order-2 min-w-0 space-y-3 lg:order-1"
-        >
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        {/* The paper comes first on small screens too; the lists follow it. */}
+        <section aria-label="Question paper" className="min-w-0 space-y-3">
+          <PaperSwitcher
+            submissions={question.submissions}
+            selectedId={selected?.id ?? null}
+          />
           <ReportNotice questionId={question.id} />
           {selected && fileUrl ? (
             // One keyed wrapper (sibling keys must be unique): switching papers remounts
@@ -278,9 +303,14 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
               }
             />
           )}
+          <OtherSemesters
+            course={question.course.name}
+            examType={question.examType.name}
+            questions={otherSemesters}
+          />
         </section>
 
-        <aside className="order-1 lg:order-2">
+        <aside>
           <div className="space-y-4 lg:sticky lg:top-20">
             <SubmissionList
               submissions={question.submissions}

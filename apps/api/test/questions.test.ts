@@ -1,8 +1,10 @@
 import { env } from "cloudflare:workers";
 import type { QuestionDetail, QuestionList } from "@qb/shared";
 import { describe, expect, it } from "vitest";
+import { semesters } from "../src/db/schema";
 import {
   api,
+  db,
   seedQuestion,
   seedSubmission,
   seedTaxonomy,
@@ -36,7 +38,7 @@ describe("questions table constraints", () => {
 });
 
 describe("GET /api/v1/questions", () => {
-  it("lists questions with any submission and counts each status", async () => {
+  it("lists only questions with a published paper and counts each status", async () => {
     const t = await seedTaxonomy();
     const base = { departmentId: t.cse.id, courseId: t.algorithms.id };
     const published = await seedQuestion({
@@ -54,6 +56,7 @@ describe("GET /api/v1/questions", () => {
       semesterId: t.sem1.id,
       examTypeId: t.final.id,
     }); // no submissions → not listed
+    // pendingOnly has nothing to read yet → not listed either
 
     await seedSubmission(published.id);
     await seedSubmission(published.id);
@@ -63,7 +66,7 @@ describe("GET /api/v1/questions", () => {
     const res = await api(`/api/v1/questions?courseId=${t.algorithms.id}`);
     expect(res.status).toBe(200);
     const body = await res.json<QuestionList>();
-    expect(body.total).toBe(2);
+    expect(body.total).toBe(1);
     expect(body.items).toEqual([
       {
         id: published.id,
@@ -74,10 +77,45 @@ describe("GET /api/v1/questions", () => {
         submissionCounts: { published: 2, pendingReview: 0, rejected: 1 },
         viewCount: 0,
       },
-      expect.objectContaining({
-        id: pendingOnly.id,
-        submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
-      }),
+    ]);
+  });
+
+  it("groups a course's exam across semesters, newest semester first", async () => {
+    const t = await seedTaxonomy();
+    const tag = crypto.randomUUID().slice(0, 8);
+    // Inserted out of order; ids alone would give the wrong order.
+    const semesterRows = await db()
+      .insert(semesters)
+      .values(
+        ["Fall 23", "Spring 25", "Summer 24", "Fall 24"].map((name) => ({
+          name: `${tag} ${name}`,
+        })),
+      )
+      .returning();
+    const byName = (name: string) =>
+      semesterRows.find((s) => s.name === `${tag} ${name}`)!;
+    for (const examType of [t.final, t.midterm]) {
+      for (const semester of semesterRows) {
+        const question = await seedQuestion({
+          departmentId: t.cse.id,
+          courseId: t.algorithms.id,
+          semesterId: semester.id,
+          examTypeId: examType.id,
+        });
+        await seedSubmission(question.id);
+      }
+    }
+
+    const body = await (
+      await api(`/api/v1/questions?courseId=${t.algorithms.id}&pageSize=100`)
+    ).json<QuestionList>();
+    const order = ["Spring 25", "Fall 24", "Summer 24", "Fall 23"].map(
+      (name) => byName(name).id,
+    );
+    // Exam types sort by name: "Final …" before "Midterm …".
+    expect(body.items.map((q) => [q.examType.id, q.semester.id])).toEqual([
+      ...order.map((id) => [t.final.id, id]),
+      ...order.map((id) => [t.midterm.id, id]),
     ]);
   });
 

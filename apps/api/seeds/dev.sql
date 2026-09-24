@@ -80,6 +80,14 @@ INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_
 INSERT INTO submissions (id, status, file_key, file_size, uploader_id, department_id, custom_course_name, custom_semester_name, exam_type_id, created_at, updated_at) VALUES
   ('seed-15', 'pending_review', 'submissions/seed-15.pdf', 0, 'seed-user-3', 1, 'Operating Systems', 'Summer Term', 2, 1778544000000, 1778544000000);
 
+-- The Data Structures midterm from another semester, for the question page's
+-- "Other semesters", and a section and batch on one paper.
+INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) VALUES
+  (11, 1, 1, 1, 1);
+INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
+  ('seed-16', 11, 'published', 'submissions/seed-16.pdf', 0, 'seed-user-3', 1760000000000, 1760000000000);
+UPDATE submissions SET section = 'A', batch = '61' WHERE id = 'seed-01';
+
 -- Votes; the triggers fill in like_count and dislike_count. Nobody votes on their own paper.
 -- Question 1: seed-01 scores +2 and stays ranked first, seed-02 scores 0.
 INSERT INTO submission_votes (submission_id, user_id, value) VALUES

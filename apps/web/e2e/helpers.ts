@@ -45,6 +45,29 @@ export async function openCombobox(page: Page, name: string) {
 }
 
 /**
+ * Opens the questions page's filters: inline on wide screens, behind a "Filters"
+ * button in a sheet on phones.
+ */
+export async function openQuestionFilters(page: Page) {
+  const button = page.getByRole("button", { name: /^Filters/ });
+  if (!(await button.isVisible())) return;
+  const sheet = page.getByRole("dialog", { name: "Filter questions" });
+  await expect(async () => {
+    await button.click();
+    await expect(sheet).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+}
+
+/** Closes the filter sheet on phones with its "Show N questions" button. */
+export async function closeQuestionFilters(page: Page) {
+  const sheet = page.getByRole("dialog", { name: "Filter questions" });
+  if (await sheet.isVisible()) {
+    await sheet.getByRole("button", { name: /^Show \d+ question/ }).click();
+    await expect(sheet).toBeHidden();
+  }
+}
+
+/**
  * Clicks a link until the URL changes. A click that lands while the page is still
  * hydrating can be dropped, so retry instead of asserting once.
  */

@@ -334,6 +334,32 @@ describe("PUT /api/v1/admin/submissions/{id}/classification", () => {
     });
   });
 
+  it("sets the section and batch, clearing ones left out", async () => {
+    const question = await seedAnyQuestion("sem1", "final");
+    const submission = await seedSubmission(question.id);
+    const fields = {
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.final.id,
+    };
+
+    const set = await classify(submission.id, {
+      ...fields,
+      section: "5A",
+      batch: "61",
+    });
+    expect(await set.json<AdminSubmission>()).toMatchObject({
+      section: "5A",
+      batch: "61",
+    });
+    const cleared = await classify(submission.id, fields);
+    expect(await cleared.json<AdminSubmission>()).toMatchObject({
+      section: null,
+      batch: null,
+    });
+  });
+
   it("creates a new department with its short name", async () => {
     const proposal = await seedProposal();
     const tag = crypto.randomUUID().slice(0, 6);

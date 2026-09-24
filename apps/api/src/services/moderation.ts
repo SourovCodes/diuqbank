@@ -221,8 +221,8 @@ async function createMissingValues(
 }
 
 /**
- * Files a submission under a department, course, semester and exam type, creating
- * any new names first. Approves a proposal as submitted, or corrects a paper that
+ * Files a submission under a department, course, semester and exam type (and sets its
+ * section and batch), creating any new names first. Approves a proposal as submitted, or corrects a paper that
  * was filed under the wrong details. The status is left as it is.
  */
 export async function classifySubmission(
@@ -243,6 +243,9 @@ export async function classifySubmission(
     .update(submissions)
     .set({
       questionId,
+      // Part of the edit form, so a blank field clears the value.
+      section: fields.section ?? null,
+      batch: fields.batch ?? null,
       departmentId: null,
       customDepartmentName: null,
       customDepartmentShortName: null,

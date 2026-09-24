@@ -32,6 +32,21 @@ export function pickSubmission(
   return published.find((s) => s.id === requestedId) ?? published[0] ?? null;
 }
 
+/** e.g. "Section 5A · Batch 61", or null when the uploader gave neither. */
+export function paperDetails({
+  section,
+  batch,
+}: {
+  section: string | null;
+  batch: string | null;
+}) {
+  const parts = [
+    section && `Section ${section}`,
+    batch && `Batch ${batch}`,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 export function plural(count: number, singular: string, pluralForm?: string) {
   return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
 }
