@@ -3,7 +3,7 @@ import { SearchX, X } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
-import { QuestionTable } from "~/components/question-table";
+import { QuestionCards } from "~/components/question-cards";
 import { SearchableSelect } from "~/components/searchable-select";
 import { TablePagination } from "~/components/table-pagination";
 import { Button } from "~/components/ui/button";
@@ -174,7 +174,7 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
             }
           />
         ) : (
-          <QuestionTable questions={list.items} />
+          <QuestionCards questions={list.items} />
         )}
 
         <TablePagination

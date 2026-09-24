@@ -12,14 +12,11 @@ import {
 } from "~/components/ui/table";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { classificationLine, proposesNewEntries } from "~/lib/submissions";
-
-/** Where a submission can be opened publicly, or null while it isn't published. */
-export function publicUrl(submission: ContributorSubmission) {
-  return submission.status === "published" && submission.questionId !== null
-    ? `/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`
-    : null;
-}
+import {
+  classificationLine,
+  proposesNewEntries,
+  publicUrl,
+} from "~/lib/submissions";
 
 type SubmissionTableProps = {
   submissions: ContributorSubmission[];

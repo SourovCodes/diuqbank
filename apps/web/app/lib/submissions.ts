@@ -1,4 +1,5 @@
 import type {
+  ContributorSubmission,
   Submission,
   SubmissionClassification,
   SubmissionStatus,
@@ -51,4 +52,11 @@ export function classificationLine({
   examType,
 }: SubmissionClassification) {
   return `${department.shortName ?? department.name} · ${semester.name} · ${examType.name}`;
+}
+
+/** Where a submission can be opened publicly, or null while it isn't published. */
+export function publicUrl(submission: ContributorSubmission) {
+  return submission.status === "published" && submission.questionId !== null
+    ? `/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`
+    : null;
 }

@@ -21,7 +21,7 @@ import {
 } from "react-router";
 import { ConfirmAction, useFormAction } from "~/components/actions";
 import { EmptyState } from "~/components/empty-state";
-import { publicUrl, SubmissionTable } from "~/components/submission-table";
+import { SubmissionTable } from "~/components/submission-table";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +34,11 @@ import { UrlTabs } from "~/components/url-tabs";
 import type { ActionResult } from "~/lib/action-result";
 import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
 import { requireUser } from "~/lib/session.server";
-import { ownSubmissionFileUrl, STATUS_LABELS } from "~/lib/submissions";
+import {
+  ownSubmissionFileUrl,
+  publicUrl,
+  STATUS_LABELS,
+} from "~/lib/submissions";
 import type { Route } from "./+types/account-submissions";
 
 export const meta: Route.MetaFunction = () => [

@@ -163,8 +163,12 @@ test("contributors index leads to a contributor's submissions", async ({
     "Contributors",
   );
   // Most published papers first.
-  // Row 0 is the table header.
-  await expect(page.getByRole("row").nth(1)).toContainText("Ayesha Rahman");
+  await expect(
+    page
+      .getByRole("list", { name: "Contributors" })
+      .getByRole("listitem")
+      .first(),
+  ).toContainText("Ayesha Rahman");
 
   await page.getByRole("link", { name: /Nusrat Jahan/ }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
