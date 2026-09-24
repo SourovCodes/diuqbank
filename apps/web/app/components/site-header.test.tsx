@@ -31,3 +31,20 @@ it("shows the account menu instead when signed in", async () => {
   expect(screen.queryByRole("link", { name: "Log in" })).toBeNull();
   expect(screen.getByRole("link", { name: /Contribute/ })).toBeTruthy();
 });
+
+it("links admins to the admin panel from the account menu", async () => {
+  renderHeader({
+    id: "u2",
+    name: "Admin",
+    email: "admin@example.com",
+    role: "admin",
+  });
+  const menu = await screen.findByRole("button", { name: "Account menu" });
+  // Radix opens menus on pointerdown, not click.
+  menu.dispatchEvent(
+    new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+  );
+  expect(
+    await screen.findByRole("menuitem", { name: "Admin panel" }),
+  ).toBeTruthy();
+});

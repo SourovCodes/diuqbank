@@ -1,5 +1,6 @@
 // Tables required by Better Auth. Keep in sync with its core schema when upgrading
 // (compare against `npx auth@latest generate` output).
+import { USER_ROLES } from "@qb/shared";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -19,6 +20,8 @@ export const user = sqliteTable("user", {
   email: text().notNull().unique(),
   emailVerified: integer({ mode: "boolean" }).notNull().default(false),
   image: text(),
+  /** Declared as an additional field in `lib/auth.ts`; users can't set it themselves. */
+  role: text({ enum: USER_ROLES }).notNull().default("user"),
   ...timestamps,
 });
 

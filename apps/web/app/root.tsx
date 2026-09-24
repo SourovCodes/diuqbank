@@ -8,6 +8,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
   useRouteLoaderData,
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
@@ -35,8 +36,14 @@ export function shouldRevalidate({
   return formMethod ? defaultShouldRevalidate : false;
 }
 
+/** Set `handle = { fullBleed: true }` on a route to lay it out edge to edge, without the footer. */
+export type RouteHandle = { fullBleed?: boolean };
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root");
+  const fullBleed = useMatches().some(
+    (match) => (match.handle as RouteHandle | undefined)?.fullBleed,
+  );
 
   return (
     <html lang="en">
@@ -48,9 +55,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <div className="flex min-h-dvh flex-col">
-          <SiteHeader user={data?.user ?? null} />
-          <main className="container flex-1 py-8">{children}</main>
-          <footer className="border-t">
+          <SiteHeader user={data?.user ?? null} fluid={fullBleed} />
+          <main
+            className={
+              fullBleed ? "flex flex-1 flex-col" : "container flex-1 py-8"
+            }
+          >
+            {children}
+          </main>
+          <footer className={fullBleed ? "hidden" : "border-t"}>
             <div className="container flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <p>QuestionBank · Free past question papers</p>
               <nav className="flex gap-4">

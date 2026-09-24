@@ -3,6 +3,7 @@ import { initials } from "~/lib/names";
 import { cn } from "~/lib/utils";
 
 const SIZES = {
+  xs: "size-5 text-[9px]",
   sm: "size-8 text-xs",
   md: "size-10 text-sm",
   lg: "size-14 text-lg",

@@ -4,18 +4,14 @@ import type {
   ContributorSubmission,
   ListContributorsQuery,
 } from "@qb/shared";
-import { asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { asc, count, desc, eq, isNotNull } from "drizzle-orm";
 import type { Database } from "../db/client";
-import {
-  courses,
-  departments,
-  examTypes,
-  questions,
-  semesters,
-  submissions,
-  user,
-} from "../db/schema";
+import { submissions, user } from "../db/schema";
 import { countWhereStatus, submissionStatusOrder } from "./common";
+import {
+  selectSubmissionRows,
+  toContributorSubmission,
+} from "./submission-rows";
 
 /** Per-status submission counts for every user who has uploaded something. */
 function uploaderCounts(db: Database) {
@@ -91,84 +87,10 @@ export async function listUploaderSubmissions(
   db: Database,
   uploaderId: string,
 ): Promise<ContributorSubmission[]> {
-  // A submission's classification comes from its question when linked, otherwise from
-  // its proposed values: existing ids are joined, new names are read from the row.
-  const rows = await db
-    .select({
-      submission: {
-        id: submissions.id,
-        status: submissions.status,
-        fileSize: submissions.fileSize,
-        createdAt: submissions.createdAt,
-        questionId: submissions.questionId,
-        likeCount: submissions.likeCount,
-        dislikeCount: submissions.dislikeCount,
-        viewCount: submissions.viewCount,
-      },
-      department: {
-        id: departments.id,
-        name: departments.name,
-        shortName: departments.shortName,
-      },
-      course: { id: courses.id, name: courses.name },
-      semester: { id: semesters.id, name: semesters.name },
-      examType: { id: examTypes.id, name: examTypes.name },
-      customDepartmentName: submissions.customDepartmentName,
-      customDepartmentShortName: submissions.customDepartmentShortName,
-      customCourseName: submissions.customCourseName,
-      customSemesterName: submissions.customSemesterName,
-    })
-    .from(submissions)
-    .leftJoin(questions, eq(questions.id, submissions.questionId))
-    .leftJoin(
-      departments,
-      eq(
-        departments.id,
-        sql`coalesce(${questions.departmentId}, ${submissions.departmentId})`,
-      ),
-    )
-    .leftJoin(
-      courses,
-      eq(
-        courses.id,
-        sql`coalesce(${questions.courseId}, ${submissions.courseId})`,
-      ),
-    )
-    .leftJoin(
-      semesters,
-      eq(
-        semesters.id,
-        sql`coalesce(${questions.semesterId}, ${submissions.semesterId})`,
-      ),
-    )
-    .leftJoin(
-      examTypes,
-      eq(
-        examTypes.id,
-        sql`coalesce(${questions.examTypeId}, ${submissions.examTypeId})`,
-      ),
-    )
+  const rows = await selectSubmissionRows(db)
     .where(eq(submissions.uploaderId, uploaderId))
     .orderBy(submissionStatusOrder, desc(submissions.createdAt));
-
-  return rows.map((row) => ({
-    ...row.submission,
-    createdAt: row.submission.createdAt.toISOString(),
-    classification: {
-      department: row.department ?? {
-        id: null,
-        name: row.customDepartmentName ?? "",
-        shortName: row.customDepartmentShortName,
-      },
-      course: row.course ?? { id: null, name: row.customCourseName ?? "" },
-      semester: row.semester ?? {
-        id: null,
-        name: row.customSemesterName ?? "",
-      },
-      // Always present: required by the submissions CHECK constraint.
-      examType: row.examType!,
-    },
-  }));
+  return rows.map(toContributorSubmission);
 }
 
 export async function getContributor(

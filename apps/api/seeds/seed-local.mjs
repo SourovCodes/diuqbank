@@ -3,6 +3,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { hashPassword } from "better-auth/crypto";
 
 const apiDir = path.join(import.meta.dirname, "..");
 const sqlFile = path.join(import.meta.dirname, "dev.sql");
@@ -47,4 +48,20 @@ wrangler([
   `UPDATE submissions SET file_size = ${size} WHERE id LIKE 'seed-%'`,
 ]);
 
+// An admin who can log in, for the admin panel. Hashed here because Better Auth
+// stores a salted scrypt hash that plain SQL can't produce.
+const ADMIN_EMAIL = "admin@seed.local";
+const ADMIN_PASSWORD = "correct-horse-battery";
+const hash = await hashPassword(ADMIN_PASSWORD);
+wrangler([
+  "d1",
+  "execute",
+  "DB",
+  "--local",
+  "--command",
+  `INSERT INTO "user" (id, name, email, email_verified, role) VALUES ('seed-user-admin', 'Admin', '${ADMIN_EMAIL}', 1, 'admin');
+   INSERT INTO account (id, account_id, provider_id, user_id, password) VALUES ('seed-account-admin', 'seed-user-admin', 'credential', 'seed-user-admin', '${hash}');`,
+]);
+
 console.log(`Seeded local D1 and uploaded ${keys.size} sample PDFs to R2.`);
+console.log(`Admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);

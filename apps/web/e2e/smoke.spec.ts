@@ -1,55 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
+import {
+  clickUntilUrl,
+  failOnConsoleErrors,
+  logOut,
+  openCombobox,
+  signUpAs,
+  uploadPaperWithNewCourse,
+} from "./helpers";
 
 // These tests rely on the local seed data: `pnpm db:migrate && pnpm db:seed`.
 // Question 1 (Data Structures) has 2 published, 1 pending and 1 rejected submission.
 
-// Fail any test that logs a console error, such as React's duplicate key or hydration
-// warnings, which otherwise go unnoticed while every assertion still passes.
-const consoleErrors = new WeakMap<Page, string[]>();
-
-test.beforeEach(({ page }) => {
-  const errors: string[] = [];
-  consoleErrors.set(page, errors);
-  page.on("console", (message) => {
-    // Failed requests (such as expected 404s) aren't app bugs.
-    if (
-      message.type() === "error" &&
-      !message.text().startsWith("Failed to load resource")
-    ) {
-      errors.push(message.text());
-    }
-  });
-  page.on("pageerror", (error) => errors.push(error.message));
-});
-
-test.afterEach(({ page }) => {
-  expect(consoleErrors.get(page) ?? [], "console errors").toEqual([]);
-});
-
-/**
- * Opens a searchable select. Right after a full page load the click can land on the
- * server-rendered button before React has hydrated, so retry until it opens.
- */
-async function openCombobox(page: Page, name: string) {
-  const combobox = page.getByRole("combobox", { name });
-  await expect(async () => {
-    await combobox.click();
-    await expect(combobox).toHaveAttribute("aria-expanded", "true", {
-      timeout: 1_000,
-    });
-  }).toPass();
-}
-
-/**
- * Clicks a link until the URL changes. A click that lands while the page is still
- * hydrating can be dropped, so retry instead of asserting once.
- */
-async function clickUntilUrl(page: Page, name: string, url: RegExp) {
-  await expect(async () => {
-    await page.getByRole("link", { name }).click();
-    await expect(page).toHaveURL(url, { timeout: 2_000 });
-  }).toPass();
-}
+failOnConsoleErrors();
 
 test("landing page leads to the questions page", async ({ page }) => {
   await page.goto("/");
@@ -236,58 +198,6 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
     page.getByText("Includes new entries awaiting approval"),
   ).toBeVisible();
 });
-
-/** Fills in and submits the contribute form: CSE, a new course, 3rd Semester, Final. */
-async function uploadPaperWithNewCourse(page: Page, courseName: string) {
-  await openCombobox(page, "Department");
-  await page.getByPlaceholder("Search or add department…").fill("CSE");
-  await page.getByRole("option", { name: /Computer Science/ }).click();
-
-  await openCombobox(page, "Course");
-  // Typed key by key: the "Add" option must appear while typing, not only on paste.
-  await page
-    .getByPlaceholder("Search or add course…")
-    .pressSequentially(courseName);
-  await page
-    .getByRole("option", { name: `Add “${courseName}” as a new course` })
-    .click();
-  await expect(page.getByRole("combobox", { name: "Course" })).toContainText(
-    `${courseName} (new)`,
-  );
-
-  await openCombobox(page, "Semester");
-  await page.getByRole("option", { name: "3rd Semester" }).click();
-  await openCombobox(page, "Exam type");
-  await page.getByRole("option", { name: "Final" }).click();
-
-  await page.getByLabel("PDF file").setInputFiles({
-    name: "paper.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.7\n%e2e upload\n"),
-  });
-  await page.getByRole("button", { name: "Submit paper" }).click();
-  await expect(page.getByRole("status")).toContainText("submitted for review");
-}
-
-async function logOut(page: Page) {
-  await page.getByRole("button", { name: "Account menu" }).click();
-  await page.getByRole("menuitem", { name: "Log out" }).click();
-  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
-}
-
-/** Signs up a fresh account and waits to land on `redirectTo`. */
-async function signUpAs(page: Page, name: string, redirectTo: string) {
-  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-  await page.goto(`/signup?redirectTo=${encodeURIComponent(redirectTo)}`);
-  await page.getByLabel("Name").fill(name);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`${redirectTo.replace(/[?]/g, "\\?")}$`),
-  );
-  return email;
-}
 
 type ButtonLocator = ReturnType<Page["getByRole"]>;
 

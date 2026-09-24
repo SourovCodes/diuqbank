@@ -4,6 +4,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  ShieldCheck,
   Upload,
 } from "lucide-react";
 import { Link, NavLink, useSubmit } from "react-router";
@@ -69,6 +70,17 @@ function UserMenu({ user }: { user: SessionUser }) {
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {user.role === "admin" && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/admin">
+                <ShieldCheck aria-hidden />
+                Admin panel
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem asChild>
           <Link to="/account/submissions">
             <FileText aria-hidden />
@@ -95,7 +107,11 @@ function UserMenu({ user }: { user: SessionUser }) {
 
 /** Below `md` the page links live in a slide-over menu. */
 function MobileMenu({ user }: { user: SessionUser | null }) {
-  const links = [...NAV_ITEMS, { to: "/contribute", label: "Contribute" }];
+  const links = [
+    ...NAV_ITEMS,
+    { to: "/contribute", label: "Contribute" },
+    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin panel" }] : []),
+  ];
 
   return (
     <Sheet>
@@ -157,10 +173,22 @@ function MobileMenu({ user }: { user: SessionUser | null }) {
   );
 }
 
-export function SiteHeader({ user }: { user: SessionUser | null }) {
+export function SiteHeader({
+  user,
+  fluid = false,
+}: {
+  user: SessionUser | null;
+  /** Span the full width, lining up with edge-to-edge layouts like the admin panel. */
+  fluid?: boolean;
+}) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
-      <div className="container flex h-14 items-center gap-6">
+      <div
+        className={cn(
+          "flex h-14 items-center gap-6",
+          fluid ? "px-4 sm:px-6 md:px-8" : "container",
+        )}
+      >
         <Brand />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map(({ to, label }) => (
