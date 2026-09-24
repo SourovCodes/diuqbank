@@ -1,12 +1,12 @@
 import type { QuestionList } from "@qb/shared";
-import { SearchX } from "lucide-react";
+import { SearchX, X } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
-import { QuestionCard } from "~/components/question-card";
+import { QuestionTable } from "~/components/question-table";
 import { SearchableSelect } from "~/components/searchable-select";
-import { Pagination } from "~/components/pagination";
-import { Card } from "~/components/ui/card";
+import { TablePagination } from "~/components/table-pagination";
+import { Button } from "~/components/ui/button";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { loadTaxonomy } from "~/lib/taxonomy.server";
 import {
@@ -82,10 +82,10 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         description="Combine any of the filters below to find question papers."
       />
 
-      <Card
+      <div
         role="search"
         aria-label="Filter questions"
-        className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <SearchableSelect
           label="Department"
@@ -132,7 +132,7 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
           value={searchParams.get("examTypeId")}
           onChange={(value) => setFilter("examTypeId", value)}
         />
-      </Card>
+      </div>
 
       <section
         aria-labelledby="results-heading"
@@ -144,13 +144,12 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
             {plural(list.total, "question")}
           </h2>
           {hasFilters && (
-            <Link
-              to="/questions"
-              preventScrollReset
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Clear filters
-            </Link>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/questions" preventScrollReset>
+                <X />
+                Clear filters
+              </Link>
+            </Button>
           )}
         </div>
 
@@ -175,19 +174,14 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
             }
           />
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {list.items.map((question) => (
-              <li key={question.id}>
-                <QuestionCard question={question} />
-              </li>
-            ))}
-          </ul>
+          <QuestionTable questions={list.items} />
         )}
 
-        <Pagination
+        <TablePagination
           page={list.page}
           pageSize={list.pageSize}
           total={list.total}
+          noun="question"
           hrefFor={pageHref}
         />
       </section>

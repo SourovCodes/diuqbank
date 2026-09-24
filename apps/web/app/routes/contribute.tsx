@@ -2,6 +2,8 @@ import type { ApiError, CreatedSubmission } from "@qb/shared";
 import { CheckCircle2, Lightbulb } from "lucide-react";
 import { Link, useNavigation } from "react-router";
 import { ContributeForm } from "~/components/contribute-form";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { PageHeader } from "~/components/page-header";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { fieldErrorsFrom } from "~/lib/api-errors";
@@ -60,22 +62,17 @@ export default function Contribute({
   const failed = actionData && !actionData.ok ? actionData : null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Contribute a paper"
         description="Upload a question paper PDF and tell us where it belongs. Every submission is reviewed before it is published."
       />
 
       {actionData?.ok && (
-        <div
-          role="status"
-          className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
-        >
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <div className="space-y-1">
-            <p className="font-medium">
-              Thanks! Your paper was submitted for review.
-            </p>
+        <Alert role="status">
+          <CheckCircle2 />
+          <AlertTitle>Thanks! Your paper was submitted for review.</AlertTitle>
+          <AlertDescription>
             <p>
               {actionData.submission.questionId !== null ? (
                 <Link
@@ -95,8 +92,8 @@ export default function Contribute({
                 See your contributions
               </Link>
             </p>
-          </div>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
@@ -108,26 +105,32 @@ export default function Contribute({
           message={failed?.message}
           submitting={submitting}
         />
-        <aside className="space-y-4 rounded-xl border bg-muted/30 p-5 text-sm">
-          <h2 className="font-medium">How it works</h2>
-          <ol className="space-y-3">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex gap-3">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
-                  {index + 1}
-                </span>
-                <span className="pt-0.5 text-muted-foreground">{step}</span>
-              </li>
-            ))}
-          </ol>
-          <p className="flex gap-2 border-t pt-4 text-muted-foreground">
-            <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
-            <span>
-              Can’t find a department, course or semester? Type its name and
-              choose “Add”.
-            </span>
-          </p>
-        </aside>
+        <Card className="gap-4 bg-muted/30 shadow-none">
+          <CardHeader>
+            <CardTitle>
+              <h2>How it works</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 text-sm">
+            <ol className="space-y-3">
+              {STEPS.map((step, index) => (
+                <li key={step} className="flex gap-3">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
+                    {index + 1}
+                  </span>
+                  <span className="pt-0.5 text-muted-foreground">{step}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="flex gap-2 border-t pt-4 text-muted-foreground">
+              <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>
+                Can’t find a department, course or semester? Type its name and
+                choose “Add”.
+              </span>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

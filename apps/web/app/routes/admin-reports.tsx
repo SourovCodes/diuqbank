@@ -10,15 +10,15 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { useAdminAction } from "~/components/admin/actions";
+import { useFormAction } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import {
   ReportStatusBadge,
   SubmissionStatusBadge,
 } from "~/components/admin/badges";
 import { AdminRouteError } from "~/components/admin/route-error";
-import { TablePagination } from "~/components/admin/table-pagination";
-import { UrlTabs } from "~/components/admin/url-tabs";
+import { TablePagination } from "~/components/table-pagination";
+import { UrlTabs } from "~/components/url-tabs";
 import { UserAvatar } from "~/components/admin/user-avatar";
 import { EmptyState } from "~/components/empty-state";
 import { Badge } from "~/components/ui/badge";
@@ -104,7 +104,7 @@ function RowActions({
   run,
 }: {
   report: AdminReport;
-  run: ReturnType<typeof useAdminAction>["run"];
+  run: ReturnType<typeof useFormAction>["run"];
 }) {
   const update = (status: ReportStatus) =>
     run({ reportId: String(report.id), status }, SUCCESS[status]);
@@ -161,7 +161,7 @@ export default function AdminReports({ loaderData }: Route.ComponentProps) {
   const { counts } = list;
   const navigate = useNavigate();
   // Owned by the page: a resolved report leaves the open list, row and all.
-  const { run } = useAdminAction();
+  const { run } = useFormAction();
 
   const tabs = [
     ...REPORT_STATUSES.map((s) => ({

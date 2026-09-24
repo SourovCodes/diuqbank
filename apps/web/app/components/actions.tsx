@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import type { AdminActionResult } from "~/lib/admin.server";
+import type { ActionResult } from "~/lib/action-result";
 import { cn } from "~/lib/utils";
 
 function HiddenFields({ fields }: { fields: Record<string, string> }) {
@@ -38,14 +38,14 @@ function HiddenFields({ fields }: { fields: Record<string, string> }) {
  * message when it didn't (unless the form shows errors itself).
  */
 function useResultToast(
-  fetcher: FetcherWithComponents<AdminActionResult>,
+  fetcher: FetcherWithComponents<ActionResult>,
   success: string | undefined,
   { errors = true } = {},
 ) {
   const { data, state } = fetcher;
   // The result arrives while loaders revalidate; toast once that's done, and only
   // once per result.
-  const shown = useRef<AdminActionResult | undefined>(undefined);
+  const shown = useRef<ActionResult | undefined>(undefined);
   useEffect(() => {
     if (state !== "idle" || !data || shown.current === data) return;
     shown.current = data;
@@ -110,7 +110,7 @@ export function ActionDialog({
   className,
   children,
 }: ActionDialogProps) {
-  const fetcher = useFetcher<AdminActionResult>();
+  const fetcher = useFetcher<ActionResult>();
   const [open, setOpen] = useOpenState(openProp, onOpenChange);
   const [submitted, setSubmitted] = useState(false);
   const busy = fetcher.state !== "idle";
@@ -170,6 +170,12 @@ type ConfirmActionProps = Controlled & {
   successMessage?: string;
   fields: Record<string, string>;
   action?: string;
+  /**
+   * Posts through a runner from `useFormAction` instead of this dialog's own
+   * fetcher. Pass it when the confirmed action removes the component (e.g. a
+   * table row), which would otherwise take the result toast with it.
+   */
+  run?: ReturnType<typeof useFormAction>["run"];
 };
 
 /** An alert dialog asking to confirm one action; errors come back as a toast. */
@@ -184,16 +190,29 @@ export function ConfirmAction({
   successMessage,
   fields,
   action,
+  run,
 }: ConfirmActionProps) {
-  const fetcher = useFetcher<AdminActionResult>();
+  const fetcher = useFetcher<ActionResult>();
   const [open, setOpen] = useOpenState(openProp, onOpenChange);
   useResultToast(fetcher, successMessage);
+  const onSubmit = run
+    ? (event: React.FormEvent) => {
+        event.preventDefault();
+        run(fields, successMessage, action);
+        setOpen(false);
+      }
+    : undefined;
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
-        <fetcher.Form method="post" action={action} className="grid gap-4">
+        <fetcher.Form
+          method="post"
+          action={action}
+          onSubmit={onSubmit}
+          className="grid gap-4"
+        >
           <HiddenFields fields={fields} />
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -221,8 +240,8 @@ export function ConfirmAction({
  * outcome. Call it in a component that stays mounted after the action: the button
  * itself often disappears once the action succeeds.
  */
-export function useAdminAction(action?: string) {
-  const fetcher = useFetcher<AdminActionResult>();
+export function useFormAction(action?: string) {
+  const fetcher = useFetcher<ActionResult>();
   const [message, setMessage] = useState<string>();
   useResultToast(fetcher, message);
   return {

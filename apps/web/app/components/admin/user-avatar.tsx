@@ -1,8 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { initials } from "~/lib/names";
-import { cn } from "~/lib/utils";
+import { ContributorAvatar } from "~/components/contributor-avatar";
 
-/** A user's photo, or their initials. */
+/** A user's photo or initials, sized by `className` (default 32px). */
 export function UserAvatar({
   name,
   image,
@@ -13,9 +11,11 @@ export function UserAvatar({
   className?: string;
 }) {
   return (
-    <Avatar className={cn("size-8", className)}>
-      {image && <AvatarImage src={image} alt="" />}
-      <AvatarFallback className="text-xs">{initials(name)}</AvatarFallback>
-    </Avatar>
+    <ContributorAvatar
+      name={name}
+      image={image}
+      size="sm"
+      className={className}
+    />
   );
 }

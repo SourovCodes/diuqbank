@@ -163,7 +163,8 @@ test("contributors index leads to a contributor's submissions", async ({
     "Contributors",
   );
   // Most published papers first.
-  await expect(page.locator("main li").first()).toContainText("Ayesha Rahman");
+  // Row 0 is the table header.
+  await expect(page.getByRole("row").nth(1)).toContainText("Ayesha Rahman");
 
   await page.getByRole("link", { name: /Nusrat Jahan/ }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -376,21 +377,31 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "My submissions" }).click();
   await expect(page).toHaveURL(/\/account\/submissions$/);
-  const row = page.locator("main li").filter({ hasText: courseName });
+  const row = page.getByRole("row").filter({ hasText: courseName });
   await expect(row).toContainText("Pending review");
 
   // Uploaders can open their own pending PDF.
-  const preview = row.getByRole("link", { name: "Preview" });
+  const actions = row.getByRole("button", {
+    name: `Actions for ${courseName}`,
+  });
+  await expect(async () => {
+    await actions.click();
+    await expect(page.getByRole("menuitem", { name: "Preview" })).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass();
+  const preview = page.getByRole("menuitem", { name: "Preview" });
   const previewFile = await page.request.get(
     (await preview.getAttribute("href"))!,
   );
   expect(previewFile.status()).toBe(200);
 
-  await row.getByRole("button", { name: "Withdraw" }).click();
+  await page.getByRole("menuitem", { name: "Withdraw" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Withdraw" })
     .click();
+  await expect(page.getByText("Submission withdrawn")).toBeVisible();
   await expect(page.getByText("No submissions yet")).toBeVisible();
 
   // Rename.

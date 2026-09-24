@@ -8,10 +8,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { ActionDialog, ConfirmAction } from "~/components/admin/actions";
+import {
+  ActionDialog,
+  ConfirmAction,
+  useFormAction,
+} from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import { AdminRouteError } from "~/components/admin/route-error";
-import { UrlTabs } from "~/components/admin/url-tabs";
+import { UrlTabs } from "~/components/url-tabs";
 import { EmptyState } from "~/components/empty-state";
 import { FormField } from "~/components/form";
 import { Button } from "~/components/ui/button";
@@ -176,7 +180,15 @@ function EntryFields({
   );
 }
 
-function RowActions({ kind, row }: { kind: Kind; row: Row }) {
+function RowActions({
+  kind,
+  row,
+  run,
+}: {
+  kind: Kind;
+  row: Row;
+  run: ReturnType<typeof useFormAction>["run"];
+}) {
   const { noun } = KINDS[kind];
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const inUse =
@@ -238,6 +250,7 @@ function RowActions({ kind, row }: { kind: Kind; row: Row }) {
         destructive
         successMessage={`Deleted “${row.name}”`}
         fields={{ intent: "delete", kind, id: String(row.id) }}
+        run={run}
       />
     </>
   );
@@ -259,6 +272,8 @@ function CatalogSection({
   catalog: AdminCatalog;
   kind: Kind;
 }) {
+  // Owned by the section: a deleted entry's row disappears.
+  const { run } = useFormAction();
   const [query, setQuery] = useState("");
   const [department, setDepartment] = useState(ALL);
   const { label, noun } = KINDS[kind];
@@ -402,7 +417,7 @@ function CatalogSection({
                     <Count value={row.submissionCount} />
                   </TableCell>
                   <TableCell>
-                    <RowActions kind={kind} row={row} />
+                    <RowActions kind={kind} row={row} run={run} />
                   </TableCell>
                 </TableRow>
               ))}

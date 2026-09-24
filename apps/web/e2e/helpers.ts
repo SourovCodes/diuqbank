@@ -88,8 +88,13 @@ export async function uploadPaperWithNewCourse(page: Page, courseName: string) {
 }
 
 export async function logOut(page: Page) {
-  await page.getByRole("button", { name: "Account menu" }).click();
-  await page.getByRole("menuitem", { name: "Log out" }).click();
+  // Right after a navigation the click can land before the menu has hydrated.
+  const logOutItem = page.getByRole("menuitem", { name: "Log out" });
+  await expect(async () => {
+    await page.getByRole("button", { name: "Account menu" }).click();
+    await expect(logOutItem).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await logOutItem.click();
   await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
 }
 

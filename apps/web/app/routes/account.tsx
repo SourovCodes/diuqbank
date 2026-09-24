@@ -3,6 +3,8 @@ import { NavLink, Outlet } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { PageHeader } from "~/components/page-header";
 import { requireUser } from "~/lib/session.server";
+import { buttonVariants } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/account";
 
@@ -20,9 +22,9 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
   const { user } = loaderData;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Your account"
+        breadcrumbs={[{ label: "Account" }]}
         title={user.name}
         description={user.email}
         actions={
@@ -31,6 +33,8 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
           </span>
         }
       />
+
+      <Separator />
 
       <div className="grid gap-6 md:grid-cols-[12rem_minmax(0,1fr)] md:gap-10">
         <nav
@@ -44,10 +48,11 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground",
+                  buttonVariants({ variant: "ghost" }),
+                  "shrink-0 justify-start",
                   isActive
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground",
+                    ? "bg-muted hover:bg-muted"
+                    : "text-muted-foreground hover:bg-transparent hover:underline",
                 )
               }
             >

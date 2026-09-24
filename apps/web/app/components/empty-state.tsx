@@ -1,4 +1,12 @@
 import type { LucideIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 import { cn } from "~/lib/utils";
 
 type EmptyStateProps = {
@@ -9,6 +17,7 @@ type EmptyStateProps = {
   className?: string;
 };
 
+/** shadcn's Empty, in a dashed frame so it reads as a placeholder for a list. */
 export function EmptyState({
   icon: Icon,
   title,
@@ -17,26 +26,17 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed px-6 py-12 text-center",
-        className,
-      )}
-    >
-      {Icon && (
-        <div className="rounded-full bg-muted p-3 text-muted-foreground">
-          <Icon className="size-5" aria-hidden />
-        </div>
-      )}
-      <div className="space-y-1">
-        <p className="font-medium">{title}</p>
-        {description && (
-          <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-            {description}
-          </p>
+    <Empty className={cn("border border-dashed", className)}>
+      <EmptyHeader>
+        {Icon && (
+          <EmptyMedia variant="icon">
+            <Icon />
+          </EmptyMedia>
         )}
-      </div>
-      {action}
-    </div>
+        <EmptyTitle>{title}</EmptyTitle>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
+    </Empty>
   );
 }

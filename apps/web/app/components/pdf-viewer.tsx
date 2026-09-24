@@ -14,7 +14,7 @@ type PdfViewerProps = {
  */
 export function PdfViewer({ src, title }: PdfViewerProps) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-muted shadow-sm">
+    <div className="overflow-hidden rounded-lg border bg-muted shadow-xs">
       <object
         // Open parameters honoured by most native viewers: no sidebar, fit to width.
         data={`${src}#navpanes=0&view=FitH`}

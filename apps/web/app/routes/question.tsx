@@ -22,7 +22,7 @@ import {
 import { PdfViewer } from "~/components/pdf-viewer";
 import { SubmissionList } from "~/components/submission-list";
 import { Badge } from "~/components/ui/badge";
-import { buttonVariants } from "~/components/ui/button";
+import { Button } from "~/components/ui/button";
 import { UploaderCard } from "~/components/uploader-card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import {
@@ -208,37 +208,35 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ to: "/questions", label: "All questions" }}
-        eyebrow={question.department.name}
+        breadcrumbs={[
+          { label: "Questions", to: "/questions" },
+          { label: question.course.name },
+        ]}
         title={question.course.name}
+        description={question.department.name}
         actions={
           fileUrl && (
             <>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ExternalLink aria-hidden />
-                Open in new tab
-              </a>
-              <a
-                href={fileUrl}
-                download
-                className={buttonVariants({ size: "sm" })}
-              >
-                <Download aria-hidden />
-                Download
-              </a>
+              <Button variant="outline" size="sm" asChild>
+                <a href={fileUrl} target="_blank" rel="noopener">
+                  <ExternalLink aria-hidden />
+                  Open in new tab
+                </a>
+              </Button>
+              <Button size="sm" asChild>
+                <a href={fileUrl} download>
+                  <Download aria-hidden />
+                  Download
+                </a>
+              </Button>
             </>
           )
         }
       >
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{question.department.shortName}</Badge>
-          <Badge variant="secondary">{question.semester.name}</Badge>
-          <Badge variant="secondary">{question.examType.name}</Badge>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Badge variant="outline">{question.department.shortName}</Badge>
+          <Badge variant="outline">{question.semester.name}</Badge>
+          <Badge variant="outline">{question.examType.name}</Badge>
           <Badge variant="outline" className="text-muted-foreground">
             <Eye aria-hidden />
             {formatViews(question.viewCount)}
@@ -246,7 +244,7 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
         </div>
       </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section
           aria-label="Question paper"
           className="order-2 min-w-0 space-y-3 lg:order-1"
@@ -274,12 +272,9 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
                   : "Papers submitted for this question weren’t approved. You can contribute a new one."
               }
               action={
-                <Link
-                  to="/contribute"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  Contribute a paper
-                </Link>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/contribute">Contribute a paper</Link>
+                </Button>
               }
             />
           )}

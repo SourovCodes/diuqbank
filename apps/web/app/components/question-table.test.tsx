@@ -1,8 +1,8 @@
 import type { Question } from "@qb/shared";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { afterEach, expect, it } from "vitest";
-import { QuestionCard } from "./question-card";
+import { QuestionTable } from "./question-table";
 
 afterEach(cleanup);
 
@@ -20,27 +20,28 @@ const question: Question = {
   viewCount: 1234,
 };
 
-function renderCard(q: Question) {
+async function renderRow(q: Question) {
   const Stub = createRoutesStub([
-    { path: "/", Component: () => <QuestionCard question={q} /> },
+    { path: "/", Component: () => <QuestionTable questions={[q]} /> },
   ]);
   render(<Stub initialEntries={["/"]} />);
-  return screen.findByRole("link", { name: /Data Structures/ });
+  const link = await screen.findByRole("link", { name: "Data Structures" });
+  return { link, row: link.closest("tr")! };
 }
 
 it("links to the question and summarises its submissions and views", async () => {
-  const link = await renderCard(question);
+  const { link, row } = await renderRow(question);
   expect(link.getAttribute("href")).toBe("/questions/7");
-  expect(link.textContent).toContain("CSE · 2nd Semester · Midterm");
-  expect(link.textContent).toContain("2 papers");
-  expect(link.textContent).toContain("1 pending review");
-  expect(link.textContent).toContain("1.2K views");
+  expect(row.textContent).toContain("CSE · 2nd Semester · Midterm");
+  expect(row.textContent).toContain("2 papers");
+  expect(within(row).getByTitle("1 waiting for review")).toBeTruthy();
+  expect(row.textContent).toContain("1.2K");
 });
 
 it("shows when only pending submissions exist", async () => {
-  const link = await renderCard({
+  const { row } = await renderRow({
     ...question,
     submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
   });
-  expect(link.textContent).toContain("No papers yet");
+  expect(row.textContent).toContain("None yet");
 });

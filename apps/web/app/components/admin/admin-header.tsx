@@ -82,32 +82,5 @@ export function AdminHeader() {
   );
 }
 
-/** Title, description and actions at the top of an admin page. */
-export function AdminPageHeader({
-  title,
-  description,
-  actions,
-  children,
-}: {
-  title: string;
-  description?: React.ReactNode;
-  actions?: React.ReactNode;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
-        {children}
-      </div>
-      {actions && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {actions}
-        </div>
-      )}
-    </div>
-  );
-}
+/** Admin pages use the site's page header; breadcrumbs live in the top bar. */
+export { PageHeader as AdminPageHeader } from "~/components/page-header";

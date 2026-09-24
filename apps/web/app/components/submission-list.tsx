@@ -1,19 +1,16 @@
 import type { Submission } from "@qb/shared";
-import {
-  Check,
-  Clock,
-  Eye,
-  FileText,
-  ThumbsDown,
-  ThumbsUp,
-  XCircle,
-} from "lucide-react";
+import { Check, Eye, FileText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Link } from "react-router";
-import { Badge } from "~/components/ui/badge";
-import { Card } from "~/components/ui/card";
+import { StatusBadge } from "~/components/status-badge";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { plural, STATUS_LABELS } from "~/lib/submissions";
+import { plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 type SubmissionListProps = {
@@ -51,17 +48,19 @@ export function SubmissionList({
   ).length;
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <div className="border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Submissions</h2>
-        <p className="text-xs text-muted-foreground">
+    <Card className="gap-4 pb-2">
+      <CardHeader>
+        <CardTitle>
+          <h2>Submissions</h2>
+        </CardTitle>
+        <CardDescription>
           {plural(published.length, "published paper")}
           {published.length > 1 && ", best rated first"}
           {pendingCount > 0 && ` · ${pendingCount} pending review`}
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <ul className="divide-y">
+      <ul className="grid gap-1 px-2">
         {submissions.map((submission) => {
           if (submission.status === "published") {
             const active = submission.id === selectedId;
@@ -74,15 +73,12 @@ export function SubmissionList({
                   preventScrollReset
                   aria-current={active ? "true" : undefined}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-accent/60 focus-visible:bg-accent focus-visible:outline-none",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
                     active && "bg-accent",
                   )}
                 >
                   <FileText
-                    className={cn(
-                      "size-4 shrink-0",
-                      active ? "text-primary" : "text-muted-foreground",
-                    )}
+                    className="size-4 shrink-0 text-muted-foreground"
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1">
@@ -108,53 +104,32 @@ export function SubmissionList({
                       <span>Added {formatDate(submission.createdAt)}</span>
                     </span>
                   </span>
-                  {active && (
-                    <Check className="size-4 text-primary" aria-hidden />
-                  )}
+                  {active && <Check className="size-4" aria-hidden />}
                 </Link>
               </li>
             );
           }
 
-          const pending = submission.status === "pending_review";
-          const Icon = pending ? Clock : XCircle;
           return (
             <li
               key={submission.id}
-              className="flex items-center gap-3 px-4 py-3 text-sm"
+              className="flex items-center gap-3 px-3 py-2 text-sm"
             >
-              <Icon
-                className={cn(
-                  "size-4 shrink-0",
-                  pending ? "text-amber-600" : "text-destructive",
-                )}
+              <FileText
+                className="size-4 shrink-0 text-muted-foreground/50"
                 aria-hidden
               />
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium text-muted-foreground">
-                  Submitted {formatDate(submission.createdAt)}
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  {pending ? "Waiting for admin review" : "Not approved"}
-                </span>
+              <span className="min-w-0 flex-1 text-xs text-muted-foreground">
+                Submitted {formatDate(submission.createdAt)}
               </span>
-              <Badge
-                variant="outline"
-                className={cn(
-                  pending
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-destructive",
-                )}
-              >
-                {STATUS_LABELS[submission.status]}
-              </Badge>
+              <StatusBadge status={submission.status} />
             </li>
           );
         })}
       </ul>
 
       {pendingCount > 0 && (
-        <p className="border-t bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+        <p className="border-t px-6 pt-3 pb-2 text-xs text-muted-foreground">
           Papers under review become viewable once an admin approves them.
         </p>
       )}

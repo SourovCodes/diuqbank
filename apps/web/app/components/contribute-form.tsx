@@ -4,7 +4,7 @@ import { ClassificationFields } from "~/components/classification-fields";
 import { FormMessage } from "~/components/form";
 import { PdfFileInput } from "~/components/pdf-file-input";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Card, CardFooter } from "~/components/ui/card";
 
 type ContributeFormProps = {
   departments: Department[];
@@ -52,7 +52,7 @@ export function ContributeForm({
           )}
         </div>
 
-        <div className="flex justify-end border-t bg-muted/30 px-4 py-4 sm:px-6">
+        <CardFooter className="justify-end border-t py-4">
           <Button
             type="submit"
             disabled={submitting}
@@ -60,7 +60,7 @@ export function ContributeForm({
           >
             {submitting ? "Uploading…" : "Submit paper"}
           </Button>
-        </div>
+        </CardFooter>
       </Card>
     </Form>
   );

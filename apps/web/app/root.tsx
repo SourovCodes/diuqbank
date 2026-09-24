@@ -1,5 +1,5 @@
 import "@fontsource-variable/inter";
-import { FileQuestion, TriangleAlert } from "lucide-react";
+import { BookOpen, FileQuestion, TriangleAlert } from "lucide-react";
 import {
   isRouteErrorResponse,
   Link,
@@ -67,11 +67,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ) : (
           <div className="flex min-h-dvh flex-col">
             <SiteHeader user={data?.user ?? null} />
-            <main className="container flex-1 py-8">{children}</main>
+            <main className="@container/main container flex-1 py-8">
+              {children}
+            </main>
             <footer className="border-t">
-              <div className="container flex flex-col gap-2 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                <p>QuestionBank · Free past question papers</p>
-                <nav className="flex gap-4">
+              <div className="container flex flex-col gap-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <BookOpen className="size-3.5" aria-hidden />
+                  </span>
+                  QuestionBank · Free past question papers
+                </p>
+                <nav aria-label="Footer" className="flex gap-4">
                   <Link to="/questions" className="hover:text-foreground">
                     Questions
                   </Link>

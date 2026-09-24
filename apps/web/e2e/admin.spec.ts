@@ -125,6 +125,7 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
     .getByRole("alertdialog")
     .getByRole("button", { name: "Delete" })
     .click();
+  await expect(page.getByText(`Deleted “${name} renamed”`)).toBeVisible();
   await expect(renamed).toHaveCount(0);
 
   // Semesters in use can't be deleted.

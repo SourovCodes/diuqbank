@@ -61,7 +61,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
           Already have an account?{" "}
           <Link
             to={`/login?${searchParams}`}
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="text-foreground underline underline-offset-4"
           >
             Log in
           </Link>

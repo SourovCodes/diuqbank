@@ -41,7 +41,7 @@ function Brand() {
       to="/"
       className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
     >
-      <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
         <BookOpen className="size-4" aria-hidden />
       </span>
       QuestionBank
@@ -64,10 +64,22 @@ function UserMenu({ user }: { user: SessionUser }) {
           <ContributorAvatar name={user.name} image={user.image} size="sm" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-medium">{user.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+      <DropdownMenuContent align="end" className="w-60 rounded-lg">
+        <DropdownMenuLabel className="p-0 font-normal">
+          <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+            <ContributorAvatar
+              name={user.name}
+              image={user.image}
+              size="sm"
+              className="rounded-lg"
+            />
+            <div className="grid flex-1 leading-tight">
+              <span className="truncate font-medium">{user.name}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
+            </div>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {user.role === "admin" && (
@@ -185,10 +197,8 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
               to={to}
               className={({ isActive }) =>
                 cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:text-foreground",
-                  isActive
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground",
+                  "px-3 py-1.5 text-sm font-medium transition-colors hover:text-foreground",
+                  isActive ? "text-foreground" : "text-muted-foreground",
                 )
               }
             >

@@ -23,8 +23,8 @@ import { Link, redirect } from "react-router";
 import {
   ActionDialog,
   ConfirmAction,
-  useAdminAction,
-} from "~/components/admin/actions";
+  useFormAction,
+} from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import {
   ReportStatusBadge,
@@ -153,7 +153,7 @@ function DecisionActions({
   const [deleting, setDeleting] = useState(false);
   const needsClassification = submission.questionId === null;
   const { status } = submission;
-  const { busy, pending, run } = useAdminAction();
+  const { busy, pending, run } = useFormAction();
   const decide = (next: SubmissionStatus) => ({
     disabled: busy,
     onClick: () => run({ intent: "status", status: next }, SUCCESS[next]),
@@ -385,7 +385,7 @@ function DetailsCard({ submission }: { submission: AdminSubmissionDetail }) {
 }
 
 function ReportItem({ report }: { report: AdminSubmissionReport }) {
-  const { busy, run } = useAdminAction();
+  const { busy, run } = useFormAction();
   const update = (status: string, message: string) => ({
     size: "xs" as const,
     disabled: busy,

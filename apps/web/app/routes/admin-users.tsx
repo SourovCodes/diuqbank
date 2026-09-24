@@ -9,11 +9,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Form, Link, useRouteLoaderData } from "react-router";
-import { ConfirmAction } from "~/components/admin/actions";
+import { ConfirmAction } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import { AdminRouteError } from "~/components/admin/route-error";
-import { TablePagination } from "~/components/admin/table-pagination";
-import { UrlTabs } from "~/components/admin/url-tabs";
+import { TablePagination } from "~/components/table-pagination";
+import { UrlTabs } from "~/components/url-tabs";
 import { UserAvatar } from "~/components/admin/user-avatar";
 import { EmptyState } from "~/components/empty-state";
 import { Badge } from "~/components/ui/badge";

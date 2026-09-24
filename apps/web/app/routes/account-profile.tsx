@@ -6,7 +6,16 @@ import { AvatarInput } from "~/components/avatar-input";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { FormField, FormMessage } from "~/components/form";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
 import { apiFetch, readJson, setCookieHeaders } from "~/lib/api.server";
 import { requireUser } from "~/lib/session.server";
 import type { Route } from "./+types/account-profile";
@@ -194,24 +203,29 @@ function SettingsCard({
   const headingId = useId();
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <Form method="post" ref={formRef} aria-labelledby={headingId}>
+    <Card>
+      <Form
+        method="post"
+        ref={formRef}
+        aria-labelledby={headingId}
+        className="grid gap-6"
+      >
         <input type="hidden" name="intent" value={intent} />
-        <div className="space-y-1 p-4 sm:px-6 sm:pt-6">
-          <h2 id={headingId} className="font-semibold">
-            {title}
-          </h2>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <div className="grid max-w-md gap-4 px-4 pb-6 sm:px-6">
+        <CardHeader>
+          <CardTitle>
+            <h2 id={headingId}>{title}</h2>
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid max-w-md gap-4">
           {children}
           <FormMessage message={result?.error} />
-        </div>
-        <div className="flex items-center justify-end gap-3 border-t bg-muted/30 px-4 py-3 sm:px-6">
+        </CardContent>
+        <CardFooter className="justify-end gap-3 border-t">
           {result?.success && !submitting && (
             <p
               role="status"
-              className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground"
             >
               <Check className="size-4" aria-hidden />
               {result.success}
@@ -220,7 +234,7 @@ function SettingsCard({
           <Button type="submit" size="sm" disabled={submitting}>
             {submitting ? "Saving…" : submitLabel}
           </Button>
-        </div>
+        </CardFooter>
       </Form>
     </Card>
   );
@@ -251,15 +265,17 @@ function AvatarCard({
   );
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <div className="space-y-1 p-4 sm:px-6 sm:pt-6">
-        <h2 className="font-semibold">Profile photo</h2>
-        <p className="text-sm text-muted-foreground">
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>Profile photo</h2>
+        </CardTitle>
+        <CardDescription>
           Shown next to your name. JPEG, PNG or WebP; you’ll crop it to a
           square.
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-4 px-4 pb-6 sm:px-6">
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-center gap-4">
         <ContributorAvatar name={name} image={preview ?? image} size="xl" />
         <Form
           method="post"
@@ -294,9 +310,9 @@ function AvatarCard({
             </Button>
           </Form>
         )}
-      </div>
+      </CardContent>
       {(result?.error || (result?.success && !busy)) && (
-        <div className="border-t bg-muted/30 px-4 py-3 sm:px-6">
+        <CardFooter className="border-t">
           {result.error ? (
             <p role="alert" className="text-sm text-destructive">
               {result.error}
@@ -304,13 +320,13 @@ function AvatarCard({
           ) : (
             <p
               role="status"
-              className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground"
             >
               <Check className="size-4" aria-hidden />
               {result.success}
             </p>
           )}
-        </div>
+        </CardFooter>
       )}
     </Card>
   );
@@ -407,16 +423,10 @@ export default function AccountProfile({
           error={password?.fieldErrors?.confirmPassword}
         />
         <div className="flex items-center gap-2">
-          <input
-            id={revokeId}
-            type="checkbox"
-            name="revokeOtherSessions"
-            defaultChecked
-            className="size-4 accent-primary"
-          />
-          <label htmlFor={revokeId} className="text-sm">
+          <Checkbox id={revokeId} name="revokeOtherSessions" defaultChecked />
+          <Label htmlFor={revokeId} className="font-normal">
             Sign out of all other devices
-          </label>
+          </Label>
         </div>
       </SettingsCard>
     </div>

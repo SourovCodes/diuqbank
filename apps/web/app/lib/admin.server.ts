@@ -1,17 +1,11 @@
 import type { ApiError } from "@qb/shared";
 import { data, redirect } from "react-router";
 import { apiFetch, readJson } from "./api.server";
+import type { ActionResult } from "./action-result";
 import { fieldErrorsFrom } from "./api-errors";
 
 /** What an admin form action returns to its fetcher. */
-export type AdminActionResult =
-  | { ok: true; intent: string }
-  | {
-      ok: false;
-      intent: string;
-      error: string;
-      fieldErrors: Record<string, string>;
-    };
+export type AdminActionResult = ActionResult;
 
 /**
  * Calls an admin API endpoint (`/api/v1/admin{path}`) on behalf of the signed-in admin

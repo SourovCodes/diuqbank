@@ -13,15 +13,15 @@ import {
   Inbox,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { useAdminAction } from "~/components/admin/actions";
+import { useFormAction } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import {
   SubmissionFlags,
   SubmissionStatusBadge,
 } from "~/components/admin/badges";
 import { AdminRouteError } from "~/components/admin/route-error";
-import { TablePagination } from "~/components/admin/table-pagination";
-import { UrlTabs } from "~/components/admin/url-tabs";
+import { TablePagination } from "~/components/table-pagination";
+import { UrlTabs } from "~/components/url-tabs";
 import { UserAvatar } from "~/components/admin/user-avatar";
 import { EmptyState } from "~/components/empty-state";
 import { Button } from "~/components/ui/button";
@@ -84,7 +84,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export { AdminRouteError as ErrorBoundary };
 
-type Run = ReturnType<typeof useAdminAction>["run"];
+type Run = ReturnType<typeof useFormAction>["run"];
 
 /** Review, open the PDF, and quick decisions, posted to the review page's action. */
 function RowActions({
@@ -163,7 +163,7 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
   const { counts } = list;
   const navigate = useNavigate();
   // Owned by the page: a published paper leaves the pending list, row and all.
-  const { run } = useAdminAction();
+  const { run } = useFormAction();
 
   const tabs = [
     {
