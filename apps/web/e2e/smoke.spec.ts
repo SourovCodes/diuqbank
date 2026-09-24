@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   clickUntilUrl,
+  closeQuestionFilters,
   failOnConsoleErrors,
   logOut,
   openCombobox,
+  openQuestionFilters,
   signUpAs,
   uploadPaperWithNewCourse,
 } from "./helpers";
@@ -54,6 +56,7 @@ test("an unknown URL renders a styled 404 page", async ({ page }) => {
 
 test("course filter follows the selected department", async ({ page }) => {
   await page.goto("/questions");
+  await openQuestionFilters(page);
 
   // No department: every course, suffixed with its department's short name.
   await openCombobox(page, "Course");
@@ -80,6 +83,7 @@ test("course filter follows the selected department", async ({ page }) => {
     .getByRole("option", { name: "Data Structures", exact: true })
     .click();
   await expect(page).toHaveURL(/courseId=1/);
+  await closeQuestionFilters(page);
 
   await page
     .getByRole("link", { name: /Data Structures/ })
@@ -90,6 +94,13 @@ test("course filter follows the selected department", async ({ page }) => {
   );
 });
 
+/** A paper switch: the list's link, or on phones the chip row's, which comes first. */
+const paperLink = (page: Page, n: number) =>
+  page
+    .getByRole("link", { name: new RegExp(`^Paper ${n}(?!\\d)`) })
+    .filter({ visible: true })
+    .first();
+
 test("question page embeds the PDF, shows its uploader and switches submissions", async ({
   page,
 }) => {
@@ -99,10 +110,7 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   );
 
   // The newest published paper (seed-01, by Ayesha) is selected by default.
-  await expect(page.getByRole("link", { name: /Paper 1/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  await expect(paperLink(page, 1)).toHaveAttribute("aria-current", "true");
   const viewer = page.getByTestId("pdf-viewer");
   await expect(viewer).toHaveAttribute(
     "data",
@@ -113,20 +121,19 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
     page.getByTestId("pdf-viewer-fallback").locator("a[download]"),
   ).toHaveAttribute("href", "/api/v1/submissions/seed-01/file");
   await expect(page.getByRole("link", { name: /Ayesha Rahman/ })).toBeVisible();
+  // The optional section and batch tell papers apart.
+  await expect(paperLink(page, 1)).toContainText("Section A · Batch 61");
 
-  await page.getByRole("link", { name: /Paper 2/ }).click();
+  await paperLink(page, 2).click();
   await expect(page).toHaveURL(/submission=seed-02/);
-  await expect(page.getByRole("link", { name: /Paper 2/ })).toHaveAttribute(
-    "aria-current",
-    "true",
-  );
+  await expect(paperLink(page, 2)).toHaveAttribute("aria-current", "true");
   await expect(viewer).toHaveAttribute("data", /seed-02/);
   await expect(page.getByRole("link", { name: /Tanvir Hasan/ })).toBeVisible();
 
   // Switching back and forth keeps exactly one toolbar and viewer on the page.
-  await page.getByRole("link", { name: /Paper 1/ }).click();
+  await paperLink(page, 1).click();
   await expect(viewer).toHaveAttribute("data", /seed-01/);
-  await page.getByRole("link", { name: /Paper 2/ }).click();
+  await paperLink(page, 2).click();
   await expect(viewer).toHaveAttribute("data", /seed-02/);
   await expect(page.getByRole("link", { name: /^Log in to like/ })).toHaveCount(
     1,
@@ -155,6 +162,31 @@ test("question with only pending submissions explains the review", async ({
   await expect(page.getByTestId("pdf-viewer")).toHaveCount(0);
 });
 
+test("a question links to the same exam from other semesters", async ({
+  page,
+}) => {
+  // Questions 1 and 11: the Data Structures midterm, 2nd and 1st semester.
+  await page.goto("/questions/1");
+  const others = page.getByRole("heading", { name: "Other semesters" });
+  await others.scrollIntoViewIfNeeded();
+  await clickUntilUrl(page, "1st Semester", /\/questions\/11$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Data Structures",
+  );
+  await expect(page.getByText("1st Semester").first()).toBeVisible();
+});
+
+test("forgot password explains how to get a new one", async ({ page }) => {
+  await page.goto("/login");
+  await clickUntilUrl(page, "Forgot password?", /\/forgot-password$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Forgot your password?",
+  );
+  await expect(
+    page.getByRole("link", { name: "Email for a new password" }),
+  ).toHaveAttribute("href", /^mailto:sourov2305101004@diu\.edu\.bd\?/);
+});
+
 test("contributors index leads to a contributor's submissions", async ({
   page,
 }) => {
@@ -174,7 +206,8 @@ test("contributors index leads to a contributor's submissions", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Nusrat Jahan",
   );
-  await expect(page.getByText("Pending review").first()).toBeVisible();
+  // Only published papers are public; pending uploads stay private.
+  await expect(page.getByText("Pending review")).toHaveCount(0);
 
   // Published submissions open the question with that paper selected.
   await page.getByRole("link", { name: /Algorithms/ }).click();

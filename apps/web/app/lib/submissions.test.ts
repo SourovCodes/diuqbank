@@ -1,6 +1,6 @@
 import type { Submission } from "@qb/shared";
 import { describe, expect, it } from "vitest";
-import { pickSubmission, plural } from "./submissions";
+import { paperDetails, pickSubmission, plural } from "./submissions";
 
 const submission = (id: string, status: Submission["status"]): Submission => ({
   id,
@@ -10,6 +10,8 @@ const submission = (id: string, status: Submission["status"]): Submission => ({
   likeCount: 0,
   dislikeCount: 0,
   viewCount: 0,
+  section: null,
+  batch: null,
   uploader: null,
 });
 
@@ -45,5 +47,15 @@ describe("plural", () => {
   it("pluralises by count", () => {
     expect(plural(1, "paper")).toBe("1 paper");
     expect(plural(2, "paper")).toBe("2 papers");
+  });
+});
+
+describe("paperDetails", () => {
+  it.each([
+    [{ section: "5A", batch: "61" }, "Section 5A · Batch 61"],
+    [{ section: null, batch: "61" }, "Batch 61"],
+    [{ section: null, batch: null }, null],
+  ])("%j → %s", (value, expected) => {
+    expect(paperDetails(value)).toBe(expected);
   });
 });

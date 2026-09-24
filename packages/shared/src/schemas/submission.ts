@@ -2,6 +2,14 @@ import { z } from "zod";
 import { submissionStatusSchema } from "./question";
 import { examTypeSchema, idQuerySchema } from "./taxonomy";
 
+/** An optional short label; blank form fields count as not given. */
+const optionalDetail = z
+  .string()
+  .trim()
+  .max(10, "Must be at most 10 characters")
+  .optional()
+  .transform((value) => value || undefined);
+
 const newName = z
   .string()
   .trim()
@@ -30,6 +38,9 @@ export const submissionFieldsSchema = z.object({
     .number({ error: "Select an exam type" })
     .int()
     .positive("Select an exam type"),
+  /** Optional, tells papers of the same question apart. */
+  section: optionalDetail,
+  batch: optionalDetail,
 });
 export type SubmissionFields = z.infer<typeof submissionFieldsSchema>;
 

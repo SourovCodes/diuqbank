@@ -27,7 +27,7 @@ async function seedQuestions() {
 }
 
 describe("GET /api/v1/contributors", () => {
-  it("lists only users with submissions, most published first, with per-status counts", async () => {
+  it("lists only users with published papers, most published first", async () => {
     const { midterm, final } = await seedQuestions();
     const newcomer = await seedUser("Newcomer");
     const top = await seedUser("Top Contributor");
@@ -47,20 +47,14 @@ describe("GET /api/v1/contributors", () => {
     const ours = body.items.filter((c) =>
       [top.id, newcomer.id, lurker.id].includes(c.id),
     );
+    // The newcomer's only upload is still pending, which isn't public.
     expect(ours).toEqual([
       {
         id: top.id,
         name: "Top Contributor",
         image: null,
         joinedAt: top.createdAt.toISOString(),
-        submissionCounts: { published: 2, pendingReview: 0, rejected: 1 },
-      },
-      {
-        id: newcomer.id,
-        name: "Newcomer",
-        image: null,
-        joinedAt: newcomer.createdAt.toISOString(),
-        submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
+        publishedCount: 2,
       },
     ]);
     expect(JSON.stringify(body)).not.toContain("@example.com");
@@ -72,10 +66,10 @@ describe("GET /api/v1/contributors", () => {
 });
 
 describe("GET /api/v1/contributors/:id", () => {
-  it("returns the contributor's submissions with their questions, published first", async () => {
+  it("returns only the contributor's published papers, with their questions", async () => {
     const { t, midterm, final } = await seedQuestions();
     const contributor = await seedUser("Busy Contributor");
-    const pending = await seedSubmission(final.id, {
+    await seedSubmission(final.id, {
       uploaderId: contributor.id,
       status: "pending_review",
     });
@@ -90,7 +84,7 @@ describe("GET /api/v1/contributors/:id", () => {
     expect(body).toMatchObject({
       id: contributor.id,
       name: "Busy Contributor",
-      submissionCounts: { published: 1, pendingReview: 1, rejected: 0 },
+      publishedCount: 1,
     });
     expect(body.submissions).toEqual([
       {
@@ -102,6 +96,8 @@ describe("GET /api/v1/contributors/:id", () => {
         likeCount: 0,
         dislikeCount: 0,
         viewCount: 0,
+        section: null,
+        batch: null,
         classification: {
           department: t.cse,
           course: { id: t.algorithms.id, name: t.algorithms.name },
@@ -109,19 +105,18 @@ describe("GET /api/v1/contributors/:id", () => {
           examType: t.midterm,
         },
       },
-      expect.objectContaining({
-        id: pending.id,
-        status: "pending_review",
-        questionId: final.id,
-      }),
     ]);
     expect(JSON.stringify(body)).not.toContain("@example.com");
   });
 
-  it("shows proposed new values for submissions that have no question yet", async () => {
-    const { t } = await seedQuestions();
+  it("404s for users whose papers are all still under review or rejected", async () => {
+    const { t, final } = await seedQuestions();
     const contributor = await seedUser("Proposer");
-    const [proposal] = await db()
+    await seedSubmission(final.id, {
+      uploaderId: contributor.id,
+      status: "rejected",
+    });
+    await db()
       .insert(submissions)
       .values({
         fileKey: `submissions/${crypto.randomUUID()}.pdf`,
@@ -131,29 +126,11 @@ describe("GET /api/v1/contributors/:id", () => {
         customCourseName: "Compilers",
         customSemesterName: "Summer Term",
         examTypeId: t.final.id,
-      })
-      .returning();
+      });
 
-    const body = await (
-      await api(`/api/v1/contributors/${contributor.id}`)
-    ).json<ContributorDetail>();
-    expect(body.submissionCounts).toEqual({
-      published: 0,
-      pendingReview: 1,
-      rejected: 0,
-    });
-    expect(body.submissions).toEqual([
-      expect.objectContaining({
-        id: proposal!.id,
-        questionId: null,
-        classification: {
-          department: t.cse,
-          course: { id: null, name: "Compilers" },
-          semester: { id: null, name: "Summer Term" },
-          examType: t.final,
-        },
-      }),
-    ]);
+    expect((await api(`/api/v1/contributors/${contributor.id}`)).status).toBe(
+      404,
+    );
   });
 
   it("404s for unknown users and users without submissions", async () => {

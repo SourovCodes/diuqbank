@@ -1,5 +1,5 @@
 import type { SubmissionStatus } from "@qb/shared";
-import { sql } from "drizzle-orm";
+import { asc, desc, sql } from "drizzle-orm";
 import {
   courses,
   departments,
@@ -15,6 +15,19 @@ export const countWhereStatus = (status: SubmissionStatus) =>
 
 /** Sort order for submission lists: published, then pending review, then rejected. */
 export const submissionStatusOrder = sql`case ${submissions.status} when 'published' then 0 when 'pending_review' then 1 else 2 end`;
+
+/**
+ * Newest semester first. Names ending in a year ("Spring 24", "Fall 2023") sort by
+ * year, then term in calendar order (Spring, Summer, Fall); other names ("1st
+ * Semester") come after them, by name. Spread into `orderBy`.
+ */
+export const semesterRecency = [
+  desc(sql`cast(substr(trim(${semesters.name}), -2) as integer)`),
+  desc(
+    sql`case when ${semesters.name} like '%Fall%' then 3 when ${semesters.name} like '%Summer%' then 2 when ${semesters.name} like '%Spring%' then 1 else 0 end`,
+  ),
+  asc(semesters.name),
+];
 
 /**
  * Columns for a question summary. Requires questions to be joined with departments,

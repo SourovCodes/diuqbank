@@ -3,12 +3,6 @@ import { data } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { PageHeader } from "~/components/page-header";
 import { SubmissionCards } from "~/components/submission-cards";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { formatMonth } from "~/lib/dates";
 import { plural } from "~/lib/submissions";
@@ -26,25 +20,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {
   if (!loaderData) return [{ title: "Contributor not found — QuestionBank" }];
-  const { name, submissionCounts } = loaderData.contributor;
+  const { name, publishedCount } = loaderData.contributor;
   return [
     { title: `${name} — Contributor — QuestionBank` },
     {
       name: "description",
-      content: `${name} has shared ${plural(submissionCounts.published, "question paper")} on QuestionBank.`,
+      content: `${name} has shared ${plural(publishedCount, "question paper")} on QuestionBank.`,
     },
   ];
 };
-
-const STATS = [
-  { key: "published", label: "Published", detail: "Papers anyone can read" },
-  {
-    key: "pendingReview",
-    label: "Pending review",
-    detail: "Waiting for an admin",
-  },
-  { key: "rejected", label: "Rejected", detail: "Not approved" },
-] as const;
 
 export default function ContributorPage({ loaderData }: Route.ComponentProps) {
   const { contributor } = loaderData;
@@ -57,7 +41,7 @@ export default function ContributorPage({ loaderData }: Route.ComponentProps) {
           { label: contributor.name },
         ]}
         title={contributor.name}
-        description={`Contributor · joined ${formatMonth(contributor.joinedAt)}`}
+        description={`${plural(contributor.publishedCount, "published paper")} · joined ${formatMonth(contributor.joinedAt)}`}
         actions={
           <ContributorAvatar
             name={contributor.name}
@@ -67,25 +51,9 @@ export default function ContributorPage({ loaderData }: Route.ComponentProps) {
         }
       />
 
-      <dl className="grid gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs sm:grid-cols-3">
-        {STATS.map(({ key, label, detail }) => (
-          <Card key={key}>
-            <CardHeader>
-              <CardDescription>
-                <dt>{label}</dt>
-              </CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums">
-                <dd>{contributor.submissionCounts[key]}</dd>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">{detail}</p>
-            </CardHeader>
-          </Card>
-        ))}
-      </dl>
-
       <section aria-labelledby="submissions-heading" className="space-y-3">
         <h2 id="submissions-heading" className="text-sm font-medium">
-          {plural(contributor.submissions.length, "submission")}
+          Papers
         </h2>
         <SubmissionCards submissions={contributor.submissions} />
       </section>

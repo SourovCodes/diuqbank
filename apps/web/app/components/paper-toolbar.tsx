@@ -82,8 +82,10 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border bg-card px-2 py-1.5 shadow-xs sm:px-3">
       <p className="flex min-w-0 items-center gap-3 px-1 text-sm">
-        <span className="font-medium">{label}</span>
-        <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <span className="truncate font-medium" title={label}>
+          {label}
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
           <Eye className="size-4" aria-hidden />
           {formatViews(submission.viewCount)}
         </span>

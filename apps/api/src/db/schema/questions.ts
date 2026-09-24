@@ -79,6 +79,10 @@ export const submissions = sqliteTable(
     customSemesterName: text(),
     examTypeId: integer().references(() => examTypes.id),
 
+    /** Optional details that tell papers of the same question apart, e.g. "5A", "61". */
+    section: text(),
+    batch: text(),
+
     status: text({ enum: SUBMISSION_STATUSES })
       .notNull()
       .default("pending_review"),

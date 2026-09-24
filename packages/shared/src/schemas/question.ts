@@ -38,6 +38,8 @@ export const submissionSchema = submissionStatsSchema.extend({
   status: submissionStatusSchema,
   fileSize: z.number().int(),
   createdAt: z.iso.datetime(),
+  section: z.string().nullable(),
+  batch: z.string().nullable(),
   /** Null when the uploader's account no longer exists. */
   uploader: uploaderSchema.nullable(),
 });

@@ -13,7 +13,6 @@ import {
 import {
   Card,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
@@ -48,15 +47,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { list: await readJson<ContributorList>(res) };
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="grid gap-0.5">
-      <span className="text-xl font-semibold tabular-nums">{value}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
 export default function Contributors({ loaderData }: Route.ComponentProps) {
   const { list } = loaderData;
 
@@ -81,7 +71,6 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
         ) : (
           <ul aria-label="Contributors" className={CARD_GRID}>
             {list.items.map((contributor) => {
-              const { published, pendingReview } = contributor.submissionCounts;
               return (
                 <li key={contributor.id} className="grid">
                   <Card className={LINK_CARD}>
@@ -102,14 +91,14 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
                           </Link>
                         </CardTitle>
                         <CardDescription>
-                          Joined {formatMonth(contributor.joinedAt)}
+                          <span className="font-medium text-foreground">
+                            {plural(contributor.publishedCount, "paper")}
+                          </span>
+                          {" · "}
+                          joined {formatMonth(contributor.joinedAt)}
                         </CardDescription>
                       </div>
                     </CardHeader>
-                    <CardFooter className="mt-auto grid grid-cols-2 border-t [.border-t]:pt-4">
-                      <Stat label="Published" value={published} />
-                      <Stat label="Pending review" value={pendingReview} />
-                    </CardFooter>
                   </Card>
                 </li>
               );

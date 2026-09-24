@@ -24,6 +24,7 @@ const countWhere = (table: string, column: string, parent: string) =>
       `(select count(*) from "${table}" where "${table}"."${column}" = "${parent}"."id")`,
     )
     .mapWith(Number);
+import { semesterRecency } from "./common";
 
 function selectDepartments(db: Database) {
   return db
@@ -86,7 +87,7 @@ export async function getCatalog(db: Database): Promise<AdminCatalog> {
     await Promise.all([
       selectDepartments(db).orderBy(asc(departments.name)),
       selectCourses(db).orderBy(asc(courses.name)),
-      selectSemesters(db).orderBy(asc(semesters.id)),
+      selectSemesters(db).orderBy(...semesterRecency),
       selectExamTypes(db).orderBy(asc(examTypes.name)),
     ]);
   return {

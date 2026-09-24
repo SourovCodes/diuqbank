@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { plural } from "~/lib/submissions";
+import { paperDetails, plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 type SubmissionListProps = {
@@ -60,7 +60,7 @@ export function SubmissionList({
         </CardDescription>
       </CardHeader>
 
-      <ul className="grid gap-1 px-2">
+      <ul className="grid grid-cols-1 gap-1 px-2">
         {submissions.map((submission) => {
           if (submission.status === "published") {
             const active = submission.id === selectedId;
@@ -82,8 +82,16 @@ export function SubmissionList({
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">
-                      Paper {paperNumbers.get(submission.id)}
+                    <span className="block truncate">
+                      <span className="font-medium">
+                        Paper {paperNumbers.get(submission.id)}
+                      </span>
+                      {paperDetails(submission) && (
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {paperDetails(submission)}
+                        </span>
+                      )}
                     </span>
                     <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                       <Stat
@@ -134,5 +142,57 @@ export function SubmissionList({
         </p>
       )}
     </Card>
+  );
+}
+
+/**
+ * The published papers as a row of chips, for small screens where the full list sits
+ * below the viewer. Links, like the list, so switching works without JS.
+ */
+export function PaperSwitcher({
+  submissions,
+  selectedId,
+}: SubmissionListProps) {
+  const published = submissions.filter((s) => s.status === "published");
+  if (published.length < 2) return null;
+
+  return (
+    <nav aria-label="Papers" className="-mx-4 overflow-x-auto px-4 lg:hidden">
+      <ul className="flex w-max gap-2 pb-1">
+        {published.map((submission, index) => {
+          const active = submission.id === selectedId;
+          const details = paperDetails(submission);
+          return (
+            <li key={submission.id}>
+              <Link
+                to={`?submission=${encodeURIComponent(submission.id)}`}
+                replace
+                preventScrollReset
+                aria-current={active ? "true" : undefined}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-accent",
+                  active &&
+                    "border-primary bg-primary text-primary-foreground hover:bg-primary",
+                )}
+              >
+                <span className="font-medium">Paper {index + 1}</span>
+                {details && (
+                  <span
+                    className={cn(
+                      "max-w-48 truncate",
+                      active
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {details}
+                  </span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
