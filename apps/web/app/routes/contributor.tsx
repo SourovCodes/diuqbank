@@ -2,7 +2,7 @@ import type { ContributorDetail } from "@qb/shared";
 import { data } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { PageHeader } from "~/components/page-header";
-import { SubmissionTable } from "~/components/submission-table";
+import { SubmissionCards } from "~/components/submission-cards";
 import {
   Card,
   CardDescription,
@@ -87,7 +87,7 @@ export default function ContributorPage({ loaderData }: Route.ComponentProps) {
         <h2 id="submissions-heading" className="text-sm font-medium">
           {plural(contributor.submissions.length, "submission")}
         </h2>
-        <SubmissionTable submissions={contributor.submissions} />
+        <SubmissionCards submissions={contributor.submissions} />
       </section>
     </div>
   );

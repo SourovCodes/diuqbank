@@ -2,7 +2,7 @@ import type { Question } from "@qb/shared";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { afterEach, expect, it } from "vitest";
-import { QuestionTable } from "./question-table";
+import { QuestionCards } from "./question-cards";
 
 afterEach(cleanup);
 
@@ -20,28 +20,28 @@ const question: Question = {
   viewCount: 1234,
 };
 
-async function renderRow(q: Question) {
+async function renderCard(q: Question) {
   const Stub = createRoutesStub([
-    { path: "/", Component: () => <QuestionTable questions={[q]} /> },
+    { path: "/", Component: () => <QuestionCards questions={[q]} /> },
   ]);
   render(<Stub initialEntries={["/"]} />);
   const link = await screen.findByRole("link", { name: "Data Structures" });
-  return { link, row: link.closest("tr")! };
+  return { link, card: link.closest("li")! };
 }
 
 it("links to the question and summarises its submissions and views", async () => {
-  const { link, row } = await renderRow(question);
+  const { link, card } = await renderCard(question);
   expect(link.getAttribute("href")).toBe("/questions/7");
-  expect(row.textContent).toContain("CSE · 2nd Semester · Midterm");
-  expect(row.textContent).toContain("2 papers");
-  expect(within(row).getByTitle("1 waiting for review")).toBeTruthy();
-  expect(row.textContent).toContain("1.2K");
+  for (const text of ["CSE", "Midterm", "2nd Semester", "2 papers", "1.2K"]) {
+    expect(card.textContent).toContain(text);
+  }
+  expect(within(card).getByTitle("1 waiting for review")).toBeTruthy();
 });
 
 it("shows when only pending submissions exist", async () => {
-  const { row } = await renderRow({
+  const { card } = await renderCard({
     ...question,
     submissionCounts: { published: 0, pendingReview: 1, rejected: 0 },
   });
-  expect(row.textContent).toContain("None yet");
+  expect(card.textContent).toContain("No papers yet");
 });

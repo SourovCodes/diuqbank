@@ -1,18 +1,22 @@
 import type { ContributorList } from "@qb/shared";
 import { Users } from "lucide-react";
-import { data, Link, useNavigate } from "react-router";
+import { data, Link } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
 import { TablePagination } from "~/components/table-pagination";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+  CARD_GRID,
+  LINK_CARD,
+  STRETCHED_LINK,
+} from "~/components/question-cards";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { formatMonth } from "~/lib/dates";
 import { plural } from "~/lib/submissions";
@@ -44,9 +48,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { list: await readJson<ContributorList>(res) };
 }
 
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="grid gap-0.5">
+      <span className="text-xl font-semibold tabular-nums">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
 export default function Contributors({ loaderData }: Route.ComponentProps) {
   const { list } = loaderData;
-  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -67,61 +79,42 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
             description="People who upload question papers will be listed here."
           />
         ) : (
-          <div className="overflow-hidden rounded-lg border">
-            <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead>Contributor</TableHead>
-                  <TableHead className="text-right">Published</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">
-                    Pending
-                  </TableHead>
-                  <TableHead className="hidden text-right md:table-cell">
-                    Joined
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.items.map((contributor) => {
-                  const href = `/contributors/${encodeURIComponent(contributor.id)}`;
-                  return (
-                    <TableRow
-                      key={contributor.id}
-                      className="cursor-pointer"
-                      onClick={() => navigate(href)}
-                    >
-                      <TableCell className="w-full max-w-0">
-                        <div className="flex items-center gap-3">
-                          <ContributorAvatar
-                            name={contributor.name}
-                            image={contributor.image}
-                            size="sm"
-                          />
+          <ul aria-label="Contributors" className={CARD_GRID}>
+            {list.items.map((contributor) => {
+              const { published, pendingReview } = contributor.submissionCounts;
+              return (
+                <li key={contributor.id} className="grid">
+                  <Card className={LINK_CARD}>
+                    <CardHeader className="flex items-center gap-4">
+                      <ContributorAvatar
+                        name={contributor.name}
+                        image={contributor.image}
+                        size="lg"
+                      />
+                      <div className="grid min-w-0 gap-1.5">
+                        <CardTitle className="truncate text-base leading-snug">
                           <Link
-                            to={href}
+                            to={`/contributors/${encodeURIComponent(contributor.id)}`}
                             prefetch="intent"
-                            className="truncate font-medium hover:underline"
-                            onClick={(event) => event.stopPropagation()}
+                            className={STRETCHED_LINK}
                           >
                             {contributor.name}
                           </Link>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {contributor.submissionCounts.published}
-                      </TableCell>
-                      <TableCell className="hidden text-right text-muted-foreground tabular-nums sm:table-cell">
-                        {contributor.submissionCounts.pendingReview}
-                      </TableCell>
-                      <TableCell className="hidden text-right text-muted-foreground md:table-cell">
-                        {formatMonth(contributor.joinedAt)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        </CardTitle>
+                        <CardDescription>
+                          Joined {formatMonth(contributor.joinedAt)}
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardFooter className="mt-auto grid grid-cols-2 border-t [.border-t]:pt-4">
+                      <Stat label="Published" value={published} />
+                      <Stat label="Pending review" value={pendingReview} />
+                    </CardFooter>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
         )}
 
         <TablePagination
