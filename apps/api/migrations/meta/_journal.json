@@ -43,6 +43,13 @@
       "when": 1790278730053,
       "tag": "0005_submission_section_batch",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790433577446,
+      "tag": "0006_submission_analyses",
+      "breakpoints": true
     }
   ]
 }

@@ -158,6 +158,7 @@ function EntryFields({
         label="Name"
         name="name"
         defaultValue={row?.name}
+        placeholder={kind === "semesters" ? "e.g. Fall 25" : undefined}
         required
         minLength={2}
         maxLength={100}

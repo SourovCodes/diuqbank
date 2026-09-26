@@ -15,6 +15,7 @@ import {
   submissions,
 } from "../db/schema";
 import { AppError } from "../lib/errors";
+import { enqueueAnalysis, type AnalysisJob } from "./analysis";
 
 const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
 
@@ -173,6 +174,7 @@ export async function resolveQuestionId(
 export async function createSubmission(
   db: Database,
   bucket: R2Bucket,
+  queue: Queue<AnalysisJob>,
   params: { fields: SubmissionFields; file: File; uploaderId: string },
 ): Promise<CreatedSubmission> {
   const { file } = params;
@@ -201,6 +203,7 @@ export async function createSubmission(
           examTypeId: fields.examTypeId,
         };
 
+  let created: CreatedSubmission;
   try {
     const [row] = await db
       .insert(submissions)
@@ -218,10 +221,13 @@ export async function createSubmission(
         status: submissions.status,
         questionId: submissions.questionId,
       });
-    return row!;
+    created = row!;
   } catch (err) {
     // Don't leave an orphaned file behind if the insert fails.
     await bucket.delete(fileKey);
     throw err;
   }
+  // AI checks for the admin review; runs in the background.
+  await enqueueAnalysis(db, queue, id);
+  return created;
 }

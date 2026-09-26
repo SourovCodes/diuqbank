@@ -1,9 +1,11 @@
 import type {
   AdminSubmission,
+  AnalysisSummary,
   ContributorSubmission,
   SubmissionClassification,
 } from "@qb/shared";
-import { eq, sql } from "drizzle-orm";
+import { count, eq, sql, type SQL } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -11,9 +13,84 @@ import {
   examTypes,
   questions,
   semesters,
+  submissionAnalyses as analyses,
   submissions,
   user,
 } from "../db/schema";
+import { analysisFlag } from "./analysis";
+
+/**
+ * True when the AI read a value (name not null) that isn't the submission's: neither
+ * the same catalog entry nor the same name, ignoring case.
+ */
+function aiDiffers(
+  aiId: SQLiteColumn,
+  aiName: SQLiteColumn,
+  id: SQLiteColumn,
+  name: SQL | SQLiteColumn,
+) {
+  return sql`(${aiName} is not null and not coalesce(${aiId} = ${id} or lower(${aiName}) = lower(${name}), 0))`;
+}
+
+/**
+ * Whether a completed analysis disagrees with the submission's department, course,
+ * semester or exam type. Requires the joins of `selectSubmissionRows`; values the AI
+ * couldn't read don't count.
+ */
+export const analysisDiffers = sql<boolean>`(${analyses.status} = 'completed' and (${sql.join(
+  [
+    aiDiffers(
+      analyses.departmentId,
+      analyses.departmentName,
+      departments.id,
+      sql`coalesce(${departments.name}, ${submissions.customDepartmentName})`,
+    ),
+    aiDiffers(
+      analyses.courseId,
+      analyses.courseName,
+      courses.id,
+      sql`coalesce(${courses.name}, ${submissions.customCourseName})`,
+    ),
+    aiDiffers(
+      analyses.semesterId,
+      analyses.semesterName,
+      semesters.id,
+      sql`coalesce(${semesters.name}, ${submissions.customSemesterName})`,
+    ),
+    aiDiffers(
+      analyses.examTypeId,
+      analyses.examTypeName,
+      examTypes.id,
+      examTypes.name,
+    ),
+  ],
+  sql` or `,
+)}))`;
+
+/** A completed analysis that says the file isn't exactly one question paper. */
+export const analysisFlagged = sql<boolean>`(${analyses.status} = 'completed' and (${analyses.isQuestionPaper} = 0 or ${analyses.paperCount} > 1))`;
+
+/** How a submission row reaches its classification (question or proposal) and analysis. */
+const rowJoins = {
+  questions: eq(questions.id, submissions.questionId),
+  departments: eq(
+    departments.id,
+    sql`coalesce(${questions.departmentId}, ${submissions.departmentId})`,
+  ),
+  courses: eq(
+    courses.id,
+    sql`coalesce(${questions.courseId}, ${submissions.courseId})`,
+  ),
+  semesters: eq(
+    semesters.id,
+    sql`coalesce(${questions.semesterId}, ${submissions.semesterId})`,
+  ),
+  examTypes: eq(
+    examTypes.id,
+    sql`coalesce(${questions.examTypeId}, ${submissions.examTypeId})`,
+  ),
+  analyses: eq(analyses.submissionId, submissions.id),
+};
 
 /**
  * Submissions with what they are filed under and who uploaded them. Chain `where`,
@@ -57,39 +134,40 @@ export function selectSubmissionRows(db: Database) {
         email: user.email,
         image: user.image,
       },
+      analysis: {
+        status: analyses.status,
+        isQuestionPaper: analyses.isQuestionPaper,
+        paperCount: analyses.paperCount,
+        differs: analysisDiffers.mapWith(Boolean),
+      },
     })
     .from(submissions)
-    .leftJoin(questions, eq(questions.id, submissions.questionId))
-    .leftJoin(
-      departments,
-      eq(
-        departments.id,
-        sql`coalesce(${questions.departmentId}, ${submissions.departmentId})`,
-      ),
-    )
-    .leftJoin(
-      courses,
-      eq(
-        courses.id,
-        sql`coalesce(${questions.courseId}, ${submissions.courseId})`,
-      ),
-    )
-    .leftJoin(
-      semesters,
-      eq(
-        semesters.id,
-        sql`coalesce(${questions.semesterId}, ${submissions.semesterId})`,
-      ),
-    )
-    .leftJoin(
-      examTypes,
-      eq(
-        examTypes.id,
-        sql`coalesce(${questions.examTypeId}, ${submissions.examTypeId})`,
-      ),
-    )
+    .leftJoin(questions, rowJoins.questions)
+    .leftJoin(departments, rowJoins.departments)
+    .leftJoin(courses, rowJoins.courses)
+    .leftJoin(semesters, rowJoins.semesters)
+    .leftJoin(examTypes, rowJoins.examTypes)
     .leftJoin(user, eq(user.id, submissions.uploaderId))
+    .leftJoin(analyses, rowJoins.analyses)
     .$dynamic();
+}
+
+/** Counts the rows `selectSubmissionRows` would return for `where`. */
+export async function countSubmissionRows(
+  db: Database,
+  where: SQL | undefined,
+): Promise<number> {
+  const [row] = await db
+    .select({ total: count() })
+    .from(submissions)
+    .leftJoin(questions, rowJoins.questions)
+    .leftJoin(departments, rowJoins.departments)
+    .leftJoin(courses, rowJoins.courses)
+    .leftJoin(semesters, rowJoins.semesters)
+    .leftJoin(examTypes, rowJoins.examTypes)
+    .leftJoin(analyses, rowJoins.analyses)
+    .where(where);
+  return row?.total ?? 0;
 }
 
 export type SubmissionRowData = Awaited<
@@ -128,6 +206,18 @@ export function toContributorSubmission(
   };
 }
 
+function toAnalysisSummary(row: SubmissionRowData): AnalysisSummary | null {
+  const { analysis } = row;
+  // Left joined: null (or all null) when the submission was never analysed.
+  if (!analysis?.status) return null;
+  const completed = analysis.status === "completed";
+  return {
+    status: analysis.status,
+    flag: completed ? analysisFlag(analysis) : null,
+    matches: completed ? !analysis.differs : null,
+  };
+}
+
 export function toAdminSubmission(row: SubmissionRowData): AdminSubmission {
   return {
     ...row.submission,
@@ -135,5 +225,6 @@ export function toAdminSubmission(row: SubmissionRowData): AdminSubmission {
     updatedAt: row.submission.updatedAt.toISOString(),
     classification: toClassification(row),
     uploader: row.uploader,
+    analysis: toAnalysisSummary(row),
   };
 }

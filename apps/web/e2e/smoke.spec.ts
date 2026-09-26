@@ -169,11 +169,11 @@ test("a question links to the same exam from other semesters", async ({
   await page.goto("/questions/1");
   const others = page.getByRole("heading", { name: "Other semesters" });
   await others.scrollIntoViewIfNeeded();
-  await clickUntilUrl(page, "1st Semester", /\/questions\/11$/);
+  await clickUntilUrl(page, "Spring 24", /\/questions\/11$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
   );
-  await expect(page.getByText("1st Semester").first()).toBeVisible();
+  await expect(page.getByText("Spring 24").first()).toBeVisible();
 });
 
 test("forgot password explains how to get a new one", async ({ page }) => {

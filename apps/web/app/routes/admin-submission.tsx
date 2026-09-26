@@ -1,25 +1,32 @@
 import type {
   AdminSubmissionDetail,
   AdminSubmissionReport,
+  SubmissionAnalysis,
+  SubmissionClassification,
   SubmissionStatus,
 } from "@qb/shared";
 import { REPORT_HIDE_THRESHOLD } from "@qb/shared/constants";
 import {
+  Bot,
   CircleCheck,
   CircleX,
   EllipsisVertical,
   ExternalLink,
   EyeOff,
   Globe,
+  LoaderCircle,
   Pencil,
+  RefreshCw,
   RotateCcw,
   Sparkles,
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  TriangleAlert,
+  Wand2,
 } from "lucide-react";
-import { useState } from "react";
-import { Link, redirect } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, redirect, useRevalidator } from "react-router";
 import {
   ActionDialog,
   ConfirmAction,
@@ -69,6 +76,10 @@ import {
   proposesNewEntries,
 } from "~/lib/admin";
 import { adminGetJson, adminRequest, formObject } from "~/lib/admin.server";
+import {
+  classificationFromAnalysis,
+  compareWithAnalysis,
+} from "~/lib/analysis";
 import { formatDate } from "~/lib/dates";
 import { REPORT_REASON_LABELS } from "~/lib/engagement";
 import { formatBytes, formatCount } from "~/lib/format";
@@ -120,6 +131,8 @@ export async function action({ request, params }: Route.ActionArgs) {
         `${path}/classification`,
         formObject(form, "intent"),
       );
+    case "analyze":
+      return adminRequest(request, intent, "POST", `${path}/analysis`);
     case "report":
       return adminRequest(
         request,
@@ -248,12 +261,63 @@ function DecisionActions({
   );
 }
 
+type Taxonomy = LoaderData["taxonomy"];
+
+/**
+ * Files the paper under a department, course, semester and exam type, creating new
+ * names. Opened with the current values, or with the AI's.
+ */
+function ClassifyDialog({
+  taxonomy,
+  classification,
+  details,
+  trigger,
+  title,
+  description,
+  submitLabel,
+  successMessage,
+}: {
+  taxonomy: Taxonomy;
+  classification: SubmissionClassification;
+  details: { section: string | null; batch: string | null };
+  trigger: React.ReactElement;
+  title: string;
+  description: string;
+  submitLabel: string;
+  successMessage: string;
+}) {
+  return (
+    <ActionDialog
+      trigger={trigger}
+      title={title}
+      description={description}
+      submitLabel={submitLabel}
+      pendingLabel="Saving…"
+      successMessage={successMessage}
+      fields={{ intent: "classify" }}
+      className="sm:max-w-2xl"
+    >
+      {(fieldErrors) => (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <ClassificationFields
+            {...taxonomy}
+            fieldErrors={fieldErrors}
+            defaults={defaultsFrom(classification)}
+            shortNameOptional={false}
+          />
+          <PaperDetailsFields fieldErrors={fieldErrors} defaults={details} />
+        </div>
+      )}
+    </ActionDialog>
+  );
+}
+
 function ClassificationCard({
   submission,
   taxonomy,
 }: {
   submission: AdminSubmissionDetail;
-  taxonomy: LoaderData["taxonomy"];
+  taxonomy: Taxonomy;
 }) {
   const { department, course, semester, examType } = submission.classification;
   const proposes = proposesNewEntries(submission.classification);
@@ -277,7 +341,10 @@ function ClassificationCard({
       <CardHeader>
         <CardTitle>Classification</CardTitle>
         <CardAction>
-          <ActionDialog
+          <ClassifyDialog
+            taxonomy={taxonomy}
+            classification={submission.classification}
+            details={submission}
             trigger={
               <Button variant={proposes ? "default" : "outline"} size="sm">
                 {proposes ? <Sparkles /> : <Pencil />}
@@ -291,28 +358,10 @@ function ClassificationCard({
                 : "Move this paper to another department, course, semester or exam type, or fix its section and batch."
             }
             submitLabel={proposes ? "Approve and save" : "Save"}
-            pendingLabel="Saving…"
             successMessage={
               proposes ? "New entries approved" : "Classification saved"
             }
-            fields={{ intent: "classify" }}
-            className="sm:max-w-2xl"
-          >
-            {(fieldErrors) => (
-              <div className="grid gap-5 sm:grid-cols-2">
-                <ClassificationFields
-                  {...taxonomy}
-                  fieldErrors={fieldErrors}
-                  defaults={defaultsFrom(submission.classification)}
-                  shortNameOptional={false}
-                />
-                <PaperDetailsFields
-                  fieldErrors={fieldErrors}
-                  defaults={submission}
-                />
-              </div>
-            )}
-          </ActionDialog>
+          />
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -328,6 +377,174 @@ function ClassificationCard({
           ))}
         </dl>
       </CardContent>
+    </Card>
+  );
+}
+
+const isChecking = (analysis: SubmissionAnalysis | null) =>
+  analysis?.status === "queued" || analysis?.status === "processing";
+
+/** Reloads the page every few seconds while the AI is still checking the paper. */
+function useRefreshWhileChecking(checking: boolean) {
+  const { revalidate, state } = useRevalidator();
+  useEffect(() => {
+    if (!checking) return;
+    const timer = setInterval(() => {
+      if (state === "idle" && document.visibilityState === "visible") {
+        void revalidate();
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [checking, revalidate, state]);
+}
+
+function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-2">
+      {ok ? (
+        <CircleCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+      ) : (
+        <TriangleAlert className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+      )}
+      <span>{children}</span>
+    </li>
+  );
+}
+
+/** What the AI found: validity checks, and its values next to the submitted ones. */
+function AnalysisCard({
+  submission,
+  taxonomy,
+}: {
+  submission: AdminSubmissionDetail;
+  taxonomy: Taxonomy;
+}) {
+  const analysis = submission.analysisDetail;
+  const { busy, run } = useFormAction();
+  const checking = isChecking(analysis);
+  useRefreshWhileChecking(checking);
+
+  const rows =
+    analysis?.values && compareWithAnalysis(submission, analysis.values);
+  const differs = rows?.some((row) => row.differs) ?? false;
+
+  let description: string;
+  if (!analysis) description = "This paper hasn’t been checked.";
+  else if (checking) description = "Checking the paper…";
+  else if (analysis.status === "failed") description = "The check failed.";
+  else description = `Checked ${formatDate(analysis.completedAt!)}`;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="size-4" aria-hidden />
+          AI check
+        </CardTitle>
+        <CardDescription>{description}</CardDescription>
+        <CardAction>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy || checking}
+            onClick={() => run({ intent: "analyze" }, "AI check started")}
+          >
+            {checking ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <RefreshCw />
+            )}
+            {analysis ? "Re-run" : "Run"}
+          </Button>
+        </CardAction>
+      </CardHeader>
+      {analysis && (analysis.error || analysis.status === "completed") && (
+        <CardContent className="grid gap-4 text-sm">
+          {analysis.error && (
+            <p className="text-muted-foreground">{analysis.error}</p>
+          )}
+          {analysis.status === "completed" && rows && (
+            <>
+              <ul className="grid gap-1.5">
+                <Check ok={analysis.isQuestionPaper === true}>
+                  {analysis.isQuestionPaper
+                    ? "A question paper"
+                    : "Not a question paper"}
+                </Check>
+                {analysis.isQuestionPaper && (
+                  <Check ok={analysis.paperCount === 1}>
+                    {analysis.paperCount === 1
+                      ? "A single paper"
+                      : `${analysis.paperCount} papers in one file`}
+                  </Check>
+                )}
+              </ul>
+              {analysis.note && (
+                <p className="border-l-2 pl-3 text-muted-foreground">
+                  {analysis.note}
+                </p>
+              )}
+              <Separator />
+              <dl className="grid gap-3">
+                {rows.map((row) => (
+                  <div key={row.label} className="grid gap-0.5">
+                    <dt className="text-muted-foreground">{row.label}</dt>
+                    <dd className="grid gap-0.5">
+                      <span className="font-medium break-words">
+                        {row.submitted ?? "—"}
+                      </span>
+                      {row.ai === null ? (
+                        <span className="text-xs text-muted-foreground">
+                          AI: not found
+                        </span>
+                      ) : row.differs ? (
+                        <span className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                          AI: {row.ai}
+                          {row.aiIsNew && (
+                            <Badge variant="secondary">New</Badge>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <CircleCheck className="size-3" aria-hidden />
+                          AI agrees
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {differs && (
+                <ClassifyDialog
+                  taxonomy={taxonomy}
+                  classification={classificationFromAnalysis(
+                    submission.classification,
+                    analysis.values!,
+                  )}
+                  details={{
+                    section: analysis.values!.section ?? submission.section,
+                    batch: analysis.values!.batch ?? submission.batch,
+                  }}
+                  trigger={
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="justify-self-start"
+                    >
+                      <Wand2 />
+                      Apply AI values
+                    </Button>
+                  }
+                  title="Apply AI values"
+                  description="The form is filled in with what the AI read from the paper. Check each field, pick existing entries where one fits, then save. New names are added to the catalog."
+                  submitLabel="Save"
+                  successMessage="Classification saved"
+                />
+              )}
+            </>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
@@ -466,6 +683,7 @@ export default function AdminSubmission({ loaderData }: Route.ComponentProps) {
     classification.semester.id === null &&
       `semester “${classification.semester.name}”`,
   ].filter(Boolean);
+  const analysisFlag = submission.analysisDetail?.flag;
 
   return (
     <>
@@ -490,6 +708,20 @@ export default function AdminSubmission({ loaderData }: Route.ComponentProps) {
           </AlertDescription>
         </Alert>
       )}
+      {analysisFlag && (
+        <Alert>
+          <TriangleAlert />
+          <AlertTitle>
+            {analysisFlag === "not_a_paper"
+              ? "The AI doesn’t think this is a question paper"
+              : "The AI found several question papers in this file"}
+          </AlertTitle>
+          <AlertDescription>
+            {submission.analysisDetail?.note ??
+              "Check the PDF before publishing."}
+          </AlertDescription>
+        </Alert>
+      )}
       {hiddenByReports && (
         <Alert>
           <EyeOff />
@@ -509,6 +741,7 @@ export default function AdminSubmission({ loaderData }: Route.ComponentProps) {
           title={`${classification.course.name} — ${STATUS_LABELS[submission.status]}`}
         />
         <div className="grid gap-4">
+          <AnalysisCard submission={submission} taxonomy={taxonomy} />
           <ClassificationCard submission={submission} taxonomy={taxonomy} />
           {submission.reports.length > 0 && (
             <Card>

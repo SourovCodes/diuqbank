@@ -34,3 +34,63 @@ export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 /** `admin` can moderate submissions and reports and manage the catalog and users. */
 export const USER_ROLES = ["user", "admin"] as const;
+
+/** Lifecycle of a submission's AI analysis (compress, then ask Gemini). */
+export const ANALYSIS_STATUSES = [
+  "queued",
+  "processing",
+  "completed",
+  "failed",
+] as const;
+/** Why the AI flags a submission for a closer look. */
+export const ANALYSIS_FLAGS = ["not_a_paper", "multiple_papers"] as const;
+/** Admin submission list filters on the AI result. */
+export const ANALYSIS_FILTERS = ["flagged", "differs"] as const;
+
+/**
+ * Standard spelling for catalog names (departments, courses, semesters, exam types):
+ * trimmed, single spaces, "and" instead of "&", straight quotes, no trailing period
+ * or comma. Applied to names typed by users and admins and to the AI's output.
+ */
+export function normalizeCatalogName(name: string): string {
+  return name
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/\s*[&＆]\s*/g, " and ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.,]+$/, "")
+    .trim();
+}
+
+/** Compares catalog names: normalized and case-insensitive. */
+export function catalogKey(name: string): string {
+  return normalizeCatalogName(name).toLowerCase();
+}
+
+/** Semester names are a term and a two-digit year: "Fall 25", "Short 20". */
+export const SEMESTER_TERMS = ["Spring", "Summer", "Fall", "Short"] as const;
+export const MIN_SEMESTER_YEAR = 15;
+export const MAX_SEMESTER_YEAR = 30;
+export const SEMESTER_FORMAT_MESSAGE = `Use a term and a year, e.g. Fall 25 (${SEMESTER_TERMS.join(", ")}; ${MIN_SEMESTER_YEAR}–${MAX_SEMESTER_YEAR})`;
+
+const SEMESTER_PATTERN = new RegExp(
+  `^(${SEMESTER_TERMS.join("|")})[\\s'’_-]*(?:20)?(\\d{2})$`,
+  "i",
+);
+
+/**
+ * The standard spelling of a semester name, or null if it isn't one. Lenient about
+ * case, separators and four-digit years: "fall 2025", "FALL-25" and "Fall'25" all
+ * become "Fall 25".
+ */
+export function parseSemesterName(name: string): string | null {
+  const match = SEMESTER_PATTERN.exec(name.trim());
+  if (!match) return null;
+  const year = Number(match[2]);
+  if (year < MIN_SEMESTER_YEAR || year > MAX_SEMESTER_YEAR) return null;
+  const term = SEMESTER_TERMS.find(
+    (t) => t.toLowerCase() === match[1]!.toLowerCase(),
+  )!;
+  return `${term} ${match[2]}`;
+}

@@ -1,3 +1,6 @@
 # Copy to .dev.vars for local development. Never commit .dev.vars.
 # Generate a value with: openssl rand -base64 32
 BETTER_AUTH_SECRET=replace-me-with-a-random-32-plus-character-string
+# AI analysis of uploads (optional locally; without them the analysis fails as "not configured").
+GEMINI_API_KEY=
+COMPRESSOR_API_KEY=

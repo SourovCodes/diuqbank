@@ -11,6 +11,10 @@
     "BETTER_AUTH_URL": "http://localhost:5173",
     // Comma-separated origins allowed to call auth endpoints.
     "TRUSTED_ORIGINS": "http://localhost:5173",
+    // AI analysis of uploads: PDFs are compressed (only to cut Gemini's input cost),
+    // then read by Gemini. Keys are the GEMINI_API_KEY and COMPRESSOR_API_KEY secrets.
+    "PDF_PROCESSOR_URL": "https://pdf-processor.diuqbank.com",
+    "GEMINI_MODEL": "gemini-3.8-flash",
   },
   "d1_databases": [
     {
@@ -27,4 +31,19 @@
       "bucket_name": "questionbank-papers",
     },
   ],
+  // Uploads are analysed in the background: the API enqueues, its queue handler runs
+  // the analysis (compress → Gemini) with retries.
+  "queues": {
+    "producers": [
+      { "binding": "ANALYSIS_QUEUE", "queue": "qb-submission-analysis" },
+    ],
+    "consumers": [
+      {
+        "queue": "qb-submission-analysis",
+        "max_batch_size": 1,
+        "max_retries": 3,
+        "retry_delay": 30,
+      },
+    ],
+  },
 }

@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import type { CreatedSubmission, QuestionDetail } from "@qb/shared";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { questions, submissions } from "../src/db/schema";
+import { questions, semesters, submissions } from "../src/db/schema";
 import {
   api,
   db,
@@ -154,7 +154,7 @@ describe("POST /api/v1/submissions", () => {
         customDepartmentName: "Mechanical Engineering",
         customDepartmentShortName: "ME",
         customCourseName: "Thermodynamics",
-        customSemesterName: "Summer Term",
+        customSemesterName: "Short 17",
         examTypeId: t.final.id,
       },
       cookie,
@@ -175,9 +175,24 @@ describe("POST /api/v1/submissions", () => {
       courseId: null,
       customCourseName: "Thermodynamics",
       semesterId: null,
-      customSemesterName: "Summer Term",
+      customSemesterName: "Short 17",
       examTypeId: t.final.id,
     });
+  });
+
+  it("rejects semester names outside the semester format", async () => {
+    const t = await seedTaxonomy();
+    const { cookie } = await signUp();
+    const res = await upload(
+      {
+        departmentId: t.cse.id,
+        courseId: t.algorithms.id,
+        customSemesterName: "Summer Term",
+        examTypeId: t.final.id,
+      },
+      cookie,
+    );
+    await expectFieldError(res, "customSemesterName");
   });
 
   it("accepts a new course in an existing department", async () => {
@@ -209,13 +224,21 @@ describe("POST /api/v1/submissions", () => {
   it("uses existing values when new names match them, ignoring case", async () => {
     const t = await seedTaxonomy();
     const { cookie } = await signUp();
+    // Typed in another spelling of the semester format.
+    await db()
+      .insert(semesters)
+      .values({ name: "Short 21" })
+      .onConflictDoNothing();
+    const semester = await db().query.semesters.findFirst({
+      where: eq(semesters.name, "Short 21"),
+    });
     const created = await (
       await upload(
         {
           customDepartmentName: t.cse.shortName.toLowerCase(),
           customDepartmentShortName: "IGNORED",
           customCourseName: t.algorithms.name.toUpperCase(),
-          customSemesterName: t.sem1.name.toLowerCase(),
+          customSemesterName: "short 2021",
           examTypeId: t.midterm.id,
         },
         cookie,
@@ -229,7 +252,7 @@ describe("POST /api/v1/submissions", () => {
     expect(question).toMatchObject({
       departmentId: t.cse.id,
       courseId: t.algorithms.id,
-      semesterId: t.sem1.id,
+      semesterId: semester!.id,
       examTypeId: t.midterm.id,
     });
   });
@@ -279,7 +302,7 @@ describe("POST /api/v1/submissions", () => {
           departmentId: t.cse.id,
           courseId: t.algorithms.id,
           semesterId: t.sem1.id,
-          customSemesterName: "Another",
+          customSemesterName: "Fall 25",
           examTypeId: t.midterm.id,
         },
         cookie,

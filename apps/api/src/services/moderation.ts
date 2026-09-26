@@ -11,7 +11,7 @@ import type {
   SubmissionFields,
   SubmissionStatus,
 } from "@qb/shared";
-import { count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   courses,
@@ -23,7 +23,11 @@ import {
 } from "../db/schema";
 import { isConstraintError } from "../lib/db-errors";
 import { AppError } from "../lib/errors";
+import { getSubmissionAnalysis } from "./analysis";
 import {
+  analysisDiffers,
+  analysisFlagged,
+  countSubmissionRows,
   selectSubmissionRows,
   toAdminSubmission,
   toClassification,
@@ -53,8 +57,12 @@ export async function listAdminSubmissions(
   db: Database,
   query: ListAdminSubmissionsQuery,
 ): Promise<AdminSubmissionList> {
-  const where = query.status ? eq(submissions.status, query.status) : undefined;
-  const [rows, [totals], counts] = await Promise.all([
+  const where = and(
+    query.status ? eq(submissions.status, query.status) : undefined,
+    query.ai === "flagged" ? analysisFlagged : undefined,
+    query.ai === "differs" ? analysisDiffers : undefined,
+  );
+  const [rows, total, counts] = await Promise.all([
     selectSubmissionRows(db)
       .where(where)
       .orderBy(
@@ -63,7 +71,7 @@ export async function listAdminSubmissions(
       )
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db.select({ total: count() }).from(submissions).where(where),
+    countSubmissionRows(db, where),
     submissionCountsByStatus(db),
   ]);
 
@@ -71,7 +79,7 @@ export async function listAdminSubmissions(
     items: rows.map(toAdminSubmission),
     page: query.page,
     pageSize: query.pageSize,
-    total: totals?.total ?? 0,
+    total,
     counts,
   };
 }
@@ -106,22 +114,26 @@ export async function getAdminSubmission(
   const submission = await findAdminSubmission(db, id);
   if (!submission) return null;
 
-  const reports = await db
-    .select({
-      id: submissionReports.id,
-      reason: submissionReports.reason,
-      details: submissionReports.details,
-      status: submissionReports.status,
-      createdAt: submissionReports.createdAt,
-      reporter: reporterColumns,
-    })
-    .from(submissionReports)
-    .innerJoin(user, eq(user.id, submissionReports.reporterId))
-    .where(eq(submissionReports.submissionId, id))
-    .orderBy(desc(submissionReports.createdAt), desc(submissionReports.id));
+  const [reports, analysisDetail] = await Promise.all([
+    db
+      .select({
+        id: submissionReports.id,
+        reason: submissionReports.reason,
+        details: submissionReports.details,
+        status: submissionReports.status,
+        createdAt: submissionReports.createdAt,
+        reporter: reporterColumns,
+      })
+      .from(submissionReports)
+      .innerJoin(user, eq(user.id, submissionReports.reporterId))
+      .where(eq(submissionReports.submissionId, id))
+      .orderBy(desc(submissionReports.createdAt), desc(submissionReports.id)),
+    getSubmissionAnalysis(db, id),
+  ]);
 
   return {
     ...submission,
+    analysisDetail,
     reports: reports.map((report) => ({
       ...report,
       createdAt: report.createdAt.toISOString(),

@@ -1,0 +1,115 @@
+import type {
+  AnalysisFilter,
+  AnalysisSummary,
+  AnalysisValues,
+  SubmissionClassification,
+} from "@qb/shared";
+import { catalogKey } from "@qb/shared/constants";
+
+export const ANALYSIS_FILTER_LABELS: Record<AnalysisFilter, string> = {
+  flagged: "Flagged by AI",
+  differs: "AI disagrees",
+};
+
+/** Short label for an analysis at a glance, and whether it needs attention. */
+export function analysisLabel(summary: AnalysisSummary): {
+  label: string;
+  tone: "muted" | "warning" | "ok";
+} {
+  switch (summary.status) {
+    case "queued":
+    case "processing":
+      return { label: "AI checking", tone: "muted" };
+    case "failed":
+      return { label: "AI failed", tone: "warning" };
+    case "completed":
+      if (summary.flag === "not_a_paper") {
+        return { label: "Not a paper", tone: "warning" };
+      }
+      if (summary.flag === "multiple_papers") {
+        return { label: "Multiple papers", tone: "warning" };
+      }
+      return summary.matches
+        ? { label: "AI agrees", tone: "ok" }
+        : { label: "AI disagrees", tone: "warning" };
+  }
+}
+
+type Named = { id: number | null; name: string } | null;
+
+/** Same catalog entry, or the same name ignoring case and "&" vs "and". */
+function sameValue(a: Named, b: Named) {
+  if (!a || !b) return false;
+  if (a.id !== null && b.id !== null) return a.id === b.id;
+  return catalogKey(a.name) === catalogKey(b.name);
+}
+
+export type ComparisonRow = {
+  label: string;
+  submitted: string | null;
+  ai: string | null;
+  /** The AI's value isn't in the catalog yet. */
+  aiIsNew: boolean;
+  /** The AI read a value, and it isn't the submitted one. */
+  differs: boolean;
+};
+
+/** The submission's values next to the AI's, field by field. */
+export function compareWithAnalysis(
+  submission: {
+    classification: SubmissionClassification;
+    section: string | null;
+    batch: string | null;
+  },
+  values: AnalysisValues,
+): ComparisonRow[] {
+  const { department, course, semester, examType } = submission.classification;
+  const entry = (
+    label: string,
+    mine: Named,
+    theirs: Named,
+    isEntry = true,
+  ): ComparisonRow => ({
+    label,
+    submitted: mine?.name ?? null,
+    ai: theirs?.name ?? null,
+    aiIsNew: isEntry && theirs !== null && theirs.id === null,
+    differs: theirs !== null && !sameValue(mine, theirs),
+  });
+  const detail = (label: string, mine: string | null, theirs: string | null) =>
+    entry(
+      label,
+      mine === null ? null : { id: null, name: mine },
+      theirs === null ? null : { id: null, name: theirs },
+      false,
+    );
+
+  return [
+    entry("Department", department, values.department),
+    entry("Course", course, values.course),
+    entry("Semester", semester, values.semester),
+    entry("Exam type", examType, values.examType),
+    detail("Section", submission.section, values.section),
+    detail("Batch", submission.batch, values.batch),
+  ];
+}
+
+/**
+ * The AI's values as a classification, to prefill the edit dialog. Values the AI
+ * couldn't read keep the submission's; so does the exam type unless the AI matched an
+ * existing one (new exam types can't be proposed).
+ */
+export function classificationFromAnalysis(
+  current: SubmissionClassification,
+  values: AnalysisValues,
+): SubmissionClassification {
+  return {
+    department: values.department ?? current.department,
+    course: values.course ?? current.course,
+    semester: values.semester ?? current.semester,
+    examType:
+      values.examType?.id != null
+        ? { id: values.examType.id, name: values.examType.name }
+        : current.examType,
+  };
+}

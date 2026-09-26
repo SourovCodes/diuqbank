@@ -71,11 +71,16 @@ export const submissionRoutes = new OpenAPIHono<AppEnv>({
 })
   .openapi(createSubmissionRoute, async (c) => {
     const { file, ...fields } = c.req.valid("form");
-    const created = await createSubmission(c.var.db, c.env.BUCKET, {
-      fields,
-      file,
-      uploaderId: c.var.session!.user.id,
-    });
+    const created = await createSubmission(
+      c.var.db,
+      c.env.BUCKET,
+      c.env.ANALYSIS_QUEUE,
+      {
+        fields,
+        file,
+        uploaderId: c.var.session!.user.id,
+      },
+    );
     return c.json(created, 201);
   })
   .openapi(getSubmissionFileRoute, async (c) => {

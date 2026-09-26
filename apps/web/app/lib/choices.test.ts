@@ -13,7 +13,7 @@ const courses = [
   { id: 10, name: "Discrete Mathematics", departmentId: 1 },
   { id: 20, name: "Discrete Mathematics", departmentId: 2 },
 ];
-const semesters = [{ id: 3, name: "3rd Semester" }];
+const semesters = [{ id: 3, name: "Fall 24" }];
 
 describe("findDepartmentByName", () => {
   it.each(["cse", " CSE ", "computer science and engineering"])(
@@ -39,6 +39,6 @@ describe("findCourseByName", () => {
 
 describe("findSemesterByName", () => {
   it("matches case-insensitively", () => {
-    expect(findSemesterByName(semesters, "3RD semester")?.id).toBe(3);
+    expect(findSemesterByName(semesters, "FALL 24")?.id).toBe(3);
   });
 });

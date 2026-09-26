@@ -80,7 +80,7 @@ async function seedProposal() {
       uploaderId: member.id,
       departmentId: t.cse.id,
       customCourseName: `Compilers ${id.slice(0, 6)}`,
-      customSemesterName: `Summer ${id.slice(0, 6)}`,
+      customSemesterName: "Short 18",
       examTypeId: t.final.id,
     })
     .returning();

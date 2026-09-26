@@ -78,7 +78,7 @@ export async function clickUntilUrl(page: Page, name: string, url: RegExp) {
   }).toPass();
 }
 
-/** Fills in and submits the contribute form: CSE, a new course, 3rd Semester, Final. */
+/** Fills in and submits the contribute form: CSE, a new course, Fall 24, Final. */
 export async function uploadPaperWithNewCourse(page: Page, courseName: string) {
   await openCombobox(page, "Department");
   await page.getByPlaceholder("Search or add department…").fill("CSE");
@@ -97,7 +97,7 @@ export async function uploadPaperWithNewCourse(page: Page, courseName: string) {
   );
 
   await openCombobox(page, "Semester");
-  await page.getByRole("option", { name: "3rd Semester" }).click();
+  await page.getByRole("option", { name: "Fall 24" }).click();
   await openCombobox(page, "Exam type");
   await page.getByRole("option", { name: "Final" }).click();
 

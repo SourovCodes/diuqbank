@@ -85,8 +85,14 @@ test("an admin approves a proposed course and publishes the paper", async ({
   await expect(page.getByTestId("pdf-viewer")).toBeVisible();
 });
 
-test("an admin adds, renames and deletes a semester", async ({ page }) => {
-  const name = `E2E Term ${unique()}`;
+test("an admin adds, renames and deletes a semester", async ({
+  page,
+}, testInfo) => {
+  // Semester names are a term and a two-digit year, so each project gets its own.
+  const [name, renamedName] =
+    testInfo.project.name === "mobile"
+      ? ["Short 17", "Short 18"]
+      : ["Short 15", "Short 16"];
   await logIn(page, SEED_ADMIN, "/admin/catalog?tab=semesters");
 
   const dialog = page.getByRole("dialog");
@@ -110,27 +116,62 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
 
   await row.getByRole("button", { name: `Actions for ${name}` }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
-  await dialog.getByLabel("Name").fill(`${name} renamed`);
+  await dialog.getByLabel("Name").fill(renamedName.toLowerCase());
   await dialog.getByRole("button", { name: "Save" }).click();
-  const renamed = page.getByRole("row", {
-    name: new RegExp(`${name} renamed`),
-  });
+  // Stored in the standard spelling.
+  const renamed = page.getByRole("row", { name: new RegExp(renamedName) });
   await expect(renamed).toBeVisible();
 
   await renamed
-    .getByRole("button", { name: `Actions for ${name} renamed` })
+    .getByRole("button", { name: `Actions for ${renamedName}` })
     .click();
   await page.getByRole("menuitem", { name: "Delete" }).click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Delete" })
     .click();
-  await expect(page.getByText(`Deleted “${name} renamed”`)).toBeVisible();
+  await expect(page.getByText(`Deleted “${renamedName}”`)).toBeVisible();
   await expect(renamed).toHaveCount(0);
 
   // Semesters in use can't be deleted.
-  await page.getByRole("button", { name: "Actions for 1st Semester" }).click();
+  await page.getByRole("button", { name: "Actions for Spring 24" }).click();
   await expect(
     page.getByRole("menuitem", { name: /can’t delete/ }),
   ).toHaveAttribute("aria-disabled", "true");
+});
+
+test("an admin compares the AI's reading and prefills the form with it", async ({
+  page,
+}) => {
+  // Seeded: the AI reads a different semester and a section for seed-15.
+  await logIn(page, SEED_ADMIN, "/admin/submissions/seed-15");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Operating Systems",
+  );
+  await expect(page.getByText("A question paper")).toBeVisible();
+  await expect(page.getByText("A single paper")).toBeVisible();
+  await expect(page.getByText("AI: Summer 25")).toBeVisible();
+
+  const dialog = page.getByRole("dialog");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Apply AI values" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await expect(
+    dialog.getByRole("combobox", { name: "Semester" }),
+  ).toContainText("Summer 25");
+  await expect(dialog.getByLabel("Section (optional)")).toHaveValue("B");
+  // Nothing is saved until the admin confirms.
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+
+  // The list flags papers the AI disagrees with, and multi-paper files.
+  await page.goto("/admin/submissions?ai=flagged");
+  await expect(
+    page.getByRole("row", { name: /Multiple papers/ }),
+  ).toBeVisible();
+  await page.goto("/admin/submissions/seed-13");
+  await expect(
+    page.getByText("The AI found several question papers in this file"),
+  ).toBeVisible();
 });

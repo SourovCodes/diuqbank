@@ -24,7 +24,7 @@ describe("createSubmissionInputSchema", () => {
         customDepartmentName: " Mechanical Engineering ",
         customDepartmentShortName: "ME",
         customCourseName: "Thermodynamics",
-        customSemesterName: "Summer Term",
+        customSemesterName: "Summer 25",
         examTypeId: "1",
       }),
     ).toEqual([]);
@@ -74,5 +74,41 @@ describe("createSubmissionInputSchema", () => {
     expect(
       issuesFor({ departmentId: "1", courseId: "1", semesterId: "1" }),
     ).toEqual(["examTypeId"]);
+  });
+});
+
+describe("new names", () => {
+  it("are stored in their standard spelling", () => {
+    const parsed = createSubmissionInputSchema.parse({
+      customDepartmentName: "Computer Science & Engineering",
+      customDepartmentShortName: "CSE",
+      customCourseName: "Data  Structures & Algorithms.",
+      customSemesterName: "Spring 2025",
+      examTypeId: "1",
+    });
+    expect(parsed.customDepartmentName).toBe(
+      "Computer Science and Engineering",
+    );
+    expect(parsed.customCourseName).toBe("Data Structures and Algorithms");
+  });
+});
+
+describe("semester names", () => {
+  const withSemester = (customSemesterName: string) =>
+    createSubmissionInputSchema.safeParse({
+      departmentId: "1",
+      courseId: "2",
+      customSemesterName,
+      examTypeId: "1",
+    });
+
+  it("are stored as term and two-digit year", () => {
+    expect(withSemester("fall 2025").data?.customSemesterName).toBe("Fall 25");
+  });
+
+  it("must use a known term and a year from 15 to 30", () => {
+    for (const name of ["Summer Term", "Winter 25", "Fall 31"]) {
+      expect(withSemester(name).success, name).toBe(false);
+    }
   });
 });

@@ -183,8 +183,15 @@ describe("courses", () => {
 
 describe("semesters and exam types", () => {
   it("creates, renames and deletes them", async () => {
-    for (const path of ["/semesters", "/exam-types"]) {
-      const name = `Entry ${unique()}`;
+    const entries = [
+      { path: "/semesters", name: "Short 15", renamed: "Short 16" },
+      {
+        path: "/exam-types",
+        name: `Entry ${unique()}`,
+        renamed: `Entry ${unique()} renamed`,
+      },
+    ];
+    for (const { path, name, renamed } of entries) {
       const created = await call("POST", path, { name });
       expect(created.status, path).toBe(201);
       const entry = await created.json<AdminSemester | AdminExamType>();
@@ -192,13 +199,27 @@ describe("semesters and exam types", () => {
 
       expect((await call("POST", path, { name })).status, path).toBe(409);
 
-      const renamed = await call("PATCH", `${path}/${entry.id}`, {
-        name: `${name} renamed`,
+      const res = await call("PATCH", `${path}/${entry.id}`, {
+        name: renamed,
       });
-      expect(renamed.status, path).toBe(200);
+      expect(res.status, path).toBe(200);
 
       expect((await call("DELETE", `${path}/${entry.id}`)).status, path).toBe(
         204,
+      );
+    }
+  });
+
+  it("stores semesters as a term and a two-digit year", async () => {
+    const created = await call("POST", "/semesters", { name: "short 2030" });
+    expect(created.status).toBe(201);
+    const entry = await created.json<AdminSemester>();
+    expect(entry.name).toBe("Short 30");
+    await call("DELETE", `/semesters/${entry.id}`);
+
+    for (const name of ["Winter 25", "Fall 31", "3rd Semester"]) {
+      expect((await call("POST", "/semesters", { name })).status, name).toBe(
+        422,
       );
     }
   });
