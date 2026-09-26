@@ -21,6 +21,7 @@ import {
   listAdminSubmissionsQuerySchema,
   listAdminUsersQuerySchema,
   nameInputSchema,
+  submissionAnalysisSchema,
   updateReportStatusInputSchema,
   updateSubmissionStatusInputSchema,
   updateUserRoleInputSchema,
@@ -30,6 +31,7 @@ import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { requireAdmin } from "../middleware/require-admin";
 import { getAdminStats } from "../services/admin-stats";
+import { rerunAnalysis } from "../services/analysis";
 import * as catalog from "../services/catalog";
 import {
   classifySubmission,
@@ -168,6 +170,22 @@ const classifySubmissionRoute = createRoute({
     404: errorResponse("Submission not found"),
     409: errorResponse("A new name clashes with an existing entry"),
     422: errorResponse("Invalid classification"),
+  },
+});
+
+const analyzeSubmissionRoute = createRoute({
+  method: "post",
+  path: "/submissions/{id}/analysis",
+  tags: submissionTags,
+  summary: "Run the AI analysis of a submission again",
+  description:
+    "Queues a new run (compress the PDF, ask Gemini) and clears the previous result.",
+  middleware,
+  request: { params: stringIdParams },
+  responses: {
+    202: jsonResponse(submissionAnalysisSchema, "Analysis queued"),
+    ...denied,
+    404: errorResponse("Submission not found"),
   },
 });
 
@@ -395,6 +413,16 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
         c.req.valid("json"),
       ),
       200,
+    ),
+  )
+  .openapi(analyzeSubmissionRoute, async (c) =>
+    c.json(
+      await rerunAnalysis(
+        c.var.db,
+        c.env.ANALYSIS_QUEUE,
+        c.req.valid("param").id,
+      ),
+      202,
     ),
   )
   .openapi(deleteSubmissionRoute, async (c) => {

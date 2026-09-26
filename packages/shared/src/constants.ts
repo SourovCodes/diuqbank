@@ -34,3 +34,36 @@ export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 /** `admin` can moderate submissions and reports and manage the catalog and users. */
 export const USER_ROLES = ["user", "admin"] as const;
+
+/** Lifecycle of a submission's AI analysis (compress, then ask Gemini). */
+export const ANALYSIS_STATUSES = [
+  "queued",
+  "processing",
+  "completed",
+  "failed",
+] as const;
+/** Why the AI flags a submission for a closer look. */
+export const ANALYSIS_FLAGS = ["not_a_paper", "multiple_papers"] as const;
+/** Admin submission list filters on the AI result. */
+export const ANALYSIS_FILTERS = ["flagged", "differs"] as const;
+
+/**
+ * Standard spelling for catalog names (departments, courses, semesters, exam types):
+ * trimmed, single spaces, "and" instead of "&", straight quotes, no trailing period
+ * or comma. Applied to names typed by users and admins and to the AI's output.
+ */
+export function normalizeCatalogName(name: string): string {
+  return name
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/\s*[&＆]\s*/g, " and ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.,]+$/, "")
+    .trim();
+}
+
+/** Compares catalog names: normalized and case-insensitive. */
+export function catalogKey(name: string): string {
+  return normalizeCatalogName(name).toLowerCase();
+}

@@ -134,3 +134,39 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
     page.getByRole("menuitem", { name: /can’t delete/ }),
   ).toHaveAttribute("aria-disabled", "true");
 });
+
+test("an admin compares the AI's reading and prefills the form with it", async ({
+  page,
+}) => {
+  // Seeded: the AI reads a different semester and a section for seed-15.
+  await logIn(page, SEED_ADMIN, "/admin/submissions/seed-15");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Operating Systems",
+  );
+  await expect(page.getByText("A question paper")).toBeVisible();
+  await expect(page.getByText("A single paper")).toBeVisible();
+  await expect(page.getByText("AI: 5th Semester")).toBeVisible();
+
+  const dialog = page.getByRole("dialog");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Apply AI values" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await expect(
+    dialog.getByRole("combobox", { name: "Semester" }),
+  ).toContainText("5th Semester");
+  await expect(dialog.getByLabel("Section (optional)")).toHaveValue("B");
+  // Nothing is saved until the admin confirms.
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+
+  // The list flags papers the AI disagrees with, and multi-paper files.
+  await page.goto("/admin/submissions?ai=flagged");
+  await expect(
+    page.getByRole("row", { name: /Multiple papers/ }),
+  ).toBeVisible();
+  await page.goto("/admin/submissions/seed-13");
+  await expect(
+    page.getByText("The AI found several question papers in this file"),
+  ).toBeVisible();
+});

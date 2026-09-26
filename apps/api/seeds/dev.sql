@@ -4,6 +4,7 @@
 
 DELETE FROM submission_reports;
 DELETE FROM submission_votes;
+DELETE FROM submission_analyses;
 DELETE FROM submissions;
 DELETE FROM questions;
 DELETE FROM courses;
@@ -87,6 +88,12 @@ INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) 
 INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
   ('seed-16', 11, 'published', 'submissions/seed-16.pdf', 0, 'seed-user-3', 1760000000000, 1760000000000);
 UPDATE submissions SET section = 'A', batch = '61' WHERE id = 'seed-01';
+
+-- AI analyses. seed-15: the AI reads a different semester and a section. seed-13: the
+-- AI found two papers in one file.
+INSERT INTO submission_analyses (submission_id, run_id, status, attempts, model, original_bytes, sent_bytes, is_question_paper, paper_count, note, department_id, department_name, department_short_name, course_id, course_name, semester_id, semester_name, exam_type_id, exam_type_name, section, batch, completed_at) VALUES
+  ('seed-15', 'seed-run-15', 'completed', 1, 'seed', 0, 0, 1, 1, 'A single final exam paper for Operating Systems.', 1, 'Computer Science and Engineering', 'CSE', NULL, 'Operating Systems', 5, '5th Semester', 2, 'Final', 'B', NULL, 1778544060000),
+  ('seed-13', 'seed-run-13', 'completed', 1, 'seed', 0, 0, 1, 2, 'The file contains two different midterm papers.', 1, 'Computer Science and Engineering', 'CSE', 1, 'Data Structures', 2, '2nd Semester', 1, 'Midterm', NULL, NULL, 1777939260000);
 
 -- Votes; the triggers fill in like_count and dislike_count. Nobody votes on their own paper.
 -- Question 1: seed-01 scores +2 and stays ranked first, seed-02 scores 0.

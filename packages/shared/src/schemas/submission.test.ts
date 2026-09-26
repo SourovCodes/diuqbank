@@ -76,3 +76,19 @@ describe("createSubmissionInputSchema", () => {
     ).toEqual(["examTypeId"]);
   });
 });
+
+describe("new names", () => {
+  it("are stored in their standard spelling", () => {
+    const parsed = createSubmissionInputSchema.parse({
+      customDepartmentName: "Computer Science & Engineering",
+      customDepartmentShortName: "CSE",
+      customCourseName: "Data  Structures & Algorithms.",
+      customSemesterName: "Spring 2025",
+      examTypeId: "1",
+    });
+    expect(parsed.customDepartmentName).toBe(
+      "Computer Science and Engineering",
+    );
+    expect(parsed.customCourseName).toBe("Data Structures and Algorithms");
+  });
+});

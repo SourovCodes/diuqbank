@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeCatalogName } from "../constants";
 import { submissionStatusSchema } from "./question";
 import { examTypeSchema, idQuerySchema } from "./taxonomy";
 
@@ -10,11 +11,13 @@ const optionalDetail = z
   .optional()
   .transform((value) => value || undefined);
 
+/** A new catalog name, stored in its standard spelling ("and" instead of "&", …). */
 const newName = z
   .string()
   .trim()
   .min(2, "Must be at least 2 characters")
-  .max(100, "Must be at most 100 characters");
+  .max(100, "Must be at most 100 characters")
+  .transform(normalizeCatalogName);
 
 /**
  * Classification fields sent as multipart form data when contributing a paper.

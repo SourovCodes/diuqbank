@@ -15,6 +15,10 @@ export default defineConfig(async () => {
           bindings: {
             TEST_MIGRATIONS: migrations,
             BETTER_AUTH_SECRET: "test-only-secret-that-is-long-enough-1234",
+            // Never call the real AI services from tests (.dev.vars may hold keys).
+            // Queued analyses then fail fast as "not configured".
+            GEMINI_API_KEY: "",
+            COMPRESSOR_API_KEY: "",
           },
         },
       }),

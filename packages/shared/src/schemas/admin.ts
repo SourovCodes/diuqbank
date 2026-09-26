@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { USER_ROLES } from "../constants";
+import { normalizeCatalogName, USER_ROLES } from "../constants";
+import {
+  analysisFilterSchema,
+  analysisSummarySchema,
+  submissionAnalysisSchema,
+} from "./analysis";
 import { paginatedSchema, paginationQuerySchema } from "./common";
 import { contributorSubmissionSchema } from "./contributor";
 import { reportReasonSchema, reportStatusSchema } from "./engagement";
@@ -65,11 +70,15 @@ export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   uploader: adminUserRefSchema.nullable(),
   pendingReportCount: z.number().int(),
   updatedAt: z.iso.datetime(),
+  /** Null for submissions that were never analysed. */
+  analysis: analysisSummarySchema.nullable(),
 });
 export type AdminSubmission = z.infer<typeof adminSubmissionSchema>;
 
 export const listAdminSubmissionsQuerySchema = paginationQuerySchema.extend({
   status: submissionStatusSchema.optional(),
+  /** `flagged`: not a question paper or several papers; `differs`: AI disagrees. */
+  ai: analysisFilterSchema.optional(),
 });
 export type ListAdminSubmissionsQuery = z.infer<
   typeof listAdminSubmissionsQuerySchema
@@ -97,6 +106,7 @@ export type AdminSubmissionReport = z.infer<typeof adminSubmissionReportSchema>;
 export const adminSubmissionDetailSchema = adminSubmissionSchema.extend({
   /** Newest first. */
   reports: z.array(adminSubmissionReportSchema),
+  analysisDetail: submissionAnalysisSchema.nullable(),
 });
 export type AdminSubmissionDetail = z.infer<typeof adminSubmissionDetailSchema>;
 
@@ -174,7 +184,8 @@ const catalogName = z
   .string()
   .trim()
   .min(2, "Must be at least 2 characters")
-  .max(100, "Must be at most 100 characters");
+  .max(100, "Must be at most 100 characters")
+  .transform(normalizeCatalogName);
 const shortName = z
   .string()
   .trim()

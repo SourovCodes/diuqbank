@@ -20,6 +20,7 @@ submissions (id, question_id?, status, file_key, file_size, uploader_id,
          status: pending_review | published | rejected — only published PDFs are public
          like_count, dislike_count, pending_report_count — maintained by triggers; view_count
      │
+submission_analyses (submission_id, run_id, status, AI verdict + extracted values)
 submission_votes (submission_id, user_id, value ±1)
 submission_reports (id, submission_id, reporter_id, reason, details, status: pending | resolved | dismissed)
 
@@ -37,6 +38,14 @@ Engagement on published papers:
 - **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). Admins resolve or dismiss reports in the admin panel; that doesn't publish a hidden paper again, which is a separate decision.
 
 When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
+
+## AI analysis of uploads
+
+Every upload is checked in the background. The API enqueues a message on the `qb-submission-analysis` Cloudflare Queue; its queue handler (`services/analysis.ts`) reads the PDF from R2, compresses it with the PDF processor API (only to cut AI cost; the compressed copy isn't stored) and sends it to Gemini in one `generateContent` call, together with the existing departments, courses, semesters and exam types. Gemini answers whether the file is a question paper, how many papers it contains, and the department (full name), course, semester, exam type, section and batch from its header. Names are matched to catalog entries or standardized (`normalizeCatalogName`: "and" instead of "&", single spaces, no trailing punctuation) — the same spelling rule applies to names typed by uploaders and admins. Failed runs retry up to 3 times.
+
+Results only flag, never reject: the admin list shows an AI badge and can filter by "Flagged by AI" (not a paper, several papers) or "AI disagrees". The review page shows the AI's values next to the submitted ones, **Apply AI values** prefills the classification dialog with them, and **Re-run** starts a new analysis.
+
+Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/api/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). Before the first deploy: `wrangler queues create qb-submission-analysis` and `wrangler secret put` for both keys. Tests never call the real services.
 
 ## Admin panel
 

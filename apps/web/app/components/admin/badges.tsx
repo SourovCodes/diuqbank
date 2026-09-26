@@ -1,7 +1,20 @@
-import type { ReportStatus, SubmissionClassification } from "@qb/shared";
-import { CircleCheck, CircleDashed, Flag, Sparkles } from "lucide-react";
+import type {
+  AnalysisSummary,
+  ReportStatus,
+  SubmissionClassification,
+} from "@qb/shared";
+import {
+  Bot,
+  CircleCheck,
+  CircleDashed,
+  Flag,
+  LoaderCircle,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { proposesNewEntries, REPORT_STATUS_LABELS } from "~/lib/admin";
+import { analysisLabel } from "~/lib/analysis";
 import { plural } from "~/lib/submissions";
 
 /** A submission's status; the same badge the public site uses. */
@@ -47,5 +60,33 @@ export function SubmissionFlags({
         </Badge>
       )}
     </>
+  );
+}
+
+/** The AI analysis at a glance: checking, failed, flagged, disagrees or agrees. */
+export function AnalysisBadge({ analysis }: { analysis: AnalysisSummary }) {
+  const { label, tone } = analysisLabel(analysis);
+  const checking =
+    analysis.status === "queued" || analysis.status === "processing";
+  return (
+    <Badge
+      variant="outline"
+      className={
+        tone === "warning"
+          ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+          : "text-muted-foreground"
+      }
+    >
+      {checking ? (
+        <LoaderCircle className="animate-spin" />
+      ) : tone === "warning" ? (
+        <TriangleAlert />
+      ) : tone === "ok" ? (
+        <CircleCheck className="text-emerald-600 dark:text-emerald-400" />
+      ) : (
+        <Bot />
+      )}
+      {label}
+    </Badge>
   );
 }
