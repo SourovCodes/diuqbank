@@ -11,6 +11,7 @@ import { reportReasonSchema, reportStatusSchema } from "./engagement";
 import { submissionCountsSchema, submissionStatusSchema } from "./question";
 import {
   refineSubmissionFields,
+  semesterNameSchema,
   submissionClassificationSchema,
   submissionFieldsSchema,
 } from "./submission";
@@ -228,9 +229,12 @@ export const createCourseInputSchema = z.object({
 });
 export type CreateCourseInput = z.infer<typeof createCourseInputSchema>;
 
-/** Semesters, exam types and course renames only carry a name. */
+/** Exam types and course renames only carry a name. */
 export const nameInputSchema = z.object({ name: catalogName });
 export type NameInput = z.infer<typeof nameInputSchema>;
+
+/** Semesters carry a name in the semester format, e.g. "Fall 25". */
+export const semesterInputSchema = z.object({ name: semesterNameSchema });
 
 // ── Users ────────────────────────────────────────────────────────────────────
 

@@ -17,14 +17,14 @@ export const countWhereStatus = (status: SubmissionStatus) =>
 export const submissionStatusOrder = sql`case ${submissions.status} when 'published' then 0 when 'pending_review' then 1 else 2 end`;
 
 /**
- * Newest semester first. Names ending in a year ("Spring 24", "Fall 2023") sort by
- * year, then term in calendar order (Spring, Summer, Fall); other names ("1st
- * Semester") come after them, by name. Spread into `orderBy`.
+ * Newest semester first. Names are a term and a two-digit year ("Fall 25", see
+ * `parseSemesterName`): by year, then term in calendar order (Short, Spring, Summer,
+ * Fall). Older names in another format come last, by name. Spread into `orderBy`.
  */
 export const semesterRecency = [
   desc(sql`cast(substr(trim(${semesters.name}), -2) as integer)`),
   desc(
-    sql`case when ${semesters.name} like '%Fall%' then 3 when ${semesters.name} like '%Summer%' then 2 when ${semesters.name} like '%Spring%' then 1 else 0 end`,
+    sql`case when ${semesters.name} like '%Fall%' then 3 when ${semesters.name} like '%Summer%' then 2 when ${semesters.name} like '%Spring%' then 1 when ${semesters.name} like '%Short%' then 0 else -1 end`,
   ),
   asc(semesters.name),
 ];

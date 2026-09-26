@@ -85,8 +85,14 @@ test("an admin approves a proposed course and publishes the paper", async ({
   await expect(page.getByTestId("pdf-viewer")).toBeVisible();
 });
 
-test("an admin adds, renames and deletes a semester", async ({ page }) => {
-  const name = `E2E Term ${unique()}`;
+test("an admin adds, renames and deletes a semester", async ({
+  page,
+}, testInfo) => {
+  // Semester names are a term and a two-digit year, so each project gets its own.
+  const [name, renamedName] =
+    testInfo.project.name === "mobile"
+      ? ["Short 17", "Short 18"]
+      : ["Short 15", "Short 16"];
   await logIn(page, SEED_ADMIN, "/admin/catalog?tab=semesters");
 
   const dialog = page.getByRole("dialog");
@@ -110,26 +116,25 @@ test("an admin adds, renames and deletes a semester", async ({ page }) => {
 
   await row.getByRole("button", { name: `Actions for ${name}` }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
-  await dialog.getByLabel("Name").fill(`${name} renamed`);
+  await dialog.getByLabel("Name").fill(renamedName.toLowerCase());
   await dialog.getByRole("button", { name: "Save" }).click();
-  const renamed = page.getByRole("row", {
-    name: new RegExp(`${name} renamed`),
-  });
+  // Stored in the standard spelling.
+  const renamed = page.getByRole("row", { name: new RegExp(renamedName) });
   await expect(renamed).toBeVisible();
 
   await renamed
-    .getByRole("button", { name: `Actions for ${name} renamed` })
+    .getByRole("button", { name: `Actions for ${renamedName}` })
     .click();
   await page.getByRole("menuitem", { name: "Delete" }).click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Delete" })
     .click();
-  await expect(page.getByText(`Deleted “${name} renamed”`)).toBeVisible();
+  await expect(page.getByText(`Deleted “${renamedName}”`)).toBeVisible();
   await expect(renamed).toHaveCount(0);
 
   // Semesters in use can't be deleted.
-  await page.getByRole("button", { name: "Actions for 1st Semester" }).click();
+  await page.getByRole("button", { name: "Actions for Spring 24" }).click();
   await expect(
     page.getByRole("menuitem", { name: /can’t delete/ }),
   ).toHaveAttribute("aria-disabled", "true");
@@ -145,7 +150,7 @@ test("an admin compares the AI's reading and prefills the form with it", async (
   );
   await expect(page.getByText("A question paper")).toBeVisible();
   await expect(page.getByText("A single paper")).toBeVisible();
-  await expect(page.getByText("AI: 5th Semester")).toBeVisible();
+  await expect(page.getByText("AI: Summer 25")).toBeVisible();
 
   const dialog = page.getByRole("dialog");
   await expect(async () => {
@@ -154,7 +159,7 @@ test("an admin compares the AI's reading and prefills the form with it", async (
   }).toPass();
   await expect(
     dialog.getByRole("combobox", { name: "Semester" }),
-  ).toContainText("5th Semester");
+  ).toContainText("Summer 25");
   await expect(dialog.getByLabel("Section (optional)")).toHaveValue("B");
   // Nothing is saved until the admin confirms.
   await dialog.getByRole("button", { name: "Cancel" }).click();

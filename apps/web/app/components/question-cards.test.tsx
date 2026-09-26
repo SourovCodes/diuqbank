@@ -14,7 +14,7 @@ const question: Question = {
     shortName: "CSE",
   },
   course: { id: 3, name: "Data Structures" },
-  semester: { id: 2, name: "2nd Semester" },
+  semester: { id: 2, name: "Summer 24" },
   examType: { id: 1, name: "Midterm" },
   submissionCounts: { published: 2, pendingReview: 1, rejected: 0 },
   viewCount: 1234,
@@ -32,7 +32,7 @@ async function renderCard(q: Question) {
 it("links to the question and summarises its submissions and views", async () => {
   const { link, card } = await renderCard(question);
   expect(link.getAttribute("href")).toBe("/questions/7");
-  for (const text of ["CSE", "Midterm", "2nd Semester", "2 papers", "1.2K"]) {
+  for (const text of ["CSE", "Midterm", "Summer 24", "2 papers", "1.2K"]) {
     expect(card.textContent).toContain(text);
   }
   expect(within(card).getByTitle("1 waiting for review")).toBeTruthy();

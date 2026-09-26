@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { normalizeCatalogName } from "../constants";
+import {
+  normalizeCatalogName,
+  parseSemesterName,
+  SEMESTER_FORMAT_MESSAGE,
+} from "../constants";
 import { submissionStatusSchema } from "./question";
 import { examTypeSchema, idQuerySchema } from "./taxonomy";
 
@@ -19,6 +23,19 @@ const newName = z
   .max(100, "Must be at most 100 characters")
   .transform(normalizeCatalogName);
 
+/** A semester name, stored in its standard spelling ("fall 2025" → "Fall 25"). */
+export const semesterNameSchema = z
+  .string()
+  .trim()
+  .transform((value, ctx) => {
+    const name = parseSemesterName(value);
+    if (name === null) {
+      ctx.addIssue({ code: "custom", message: SEMESTER_FORMAT_MESSAGE });
+      return z.NEVER;
+    }
+    return name;
+  });
+
 /**
  * Classification fields sent as multipart form data when contributing a paper.
  * Department, course and semester are each either an existing id or a new name
@@ -36,7 +53,7 @@ export const submissionFieldsSchema = z.object({
   courseId: idQuerySchema.optional(),
   customCourseName: newName.optional(),
   semesterId: idQuerySchema.optional(),
-  customSemesterName: newName.optional(),
+  customSemesterName: semesterNameSchema.optional(),
   examTypeId: z.coerce
     .number({ error: "Select an exam type" })
     .int()

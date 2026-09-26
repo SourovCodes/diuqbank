@@ -5,6 +5,10 @@ import type {
   Semester,
   SubmissionClassification,
 } from "@qb/shared";
+import {
+  parseSemesterName,
+  SEMESTER_FORMAT_MESSAGE,
+} from "@qb/shared/constants";
 import { useId, useState } from "react";
 import { SearchableSelect } from "~/components/searchable-select";
 import { Input } from "~/components/ui/input";
@@ -200,12 +204,16 @@ export function ClassificationFields({
     }
   };
 
-  const changeSemester = (next: Choice) =>
-    setSemester(
-      next?.kind === "new"
-        ? existing(findSemesterByName(semesters, next.name), next)
-        : next,
-    );
+  // New semesters get the standard spelling ("fall 2025" → "Fall 25") right away.
+  const changeSemester = (next: Choice) => {
+    if (next?.kind !== "new") return setSemester(next);
+    const typed = { ...next, name: parseSemesterName(next.name) ?? next.name };
+    setSemester(existing(findSemesterByName(semesters, typed.name), typed));
+  };
+  const semesterFormatError =
+    semester?.kind === "new" && parseSemesterName(semester.name) === null
+      ? SEMESTER_FORMAT_MESSAGE
+      : undefined;
 
   // A new department can't contain existing courses.
   const courseChoices =
@@ -291,7 +299,10 @@ export function ClassificationFields({
         onChange={changeSemester}
         idField="semesterId"
         nameField="customSemesterName"
-        error={errorFor("semesterId", "customSemesterName")}
+        error={
+          semesterFormatError ?? errorFor("semesterId", "customSemesterName")
+        }
+        hint="A term and a year, e.g. Fall 25"
       />
 
       <ChoiceField

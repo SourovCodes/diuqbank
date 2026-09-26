@@ -37,6 +37,8 @@ Engagement on published papers:
 - **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0003_engagement_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
 - **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). Admins resolve or dismiss reports in the admin panel; that doesn't publish a hidden paper again, which is a separate decision.
 
+Semester names have a strict format: a term (Spring, Summer, Fall or Short) and a two-digit year from 15 to 30, e.g. `Fall 25`. `parseSemesterName` (`@qb/shared/constants`) turns other spellings such as "fall 2025" into the standard one; uploads, admin edits, the catalog and the AI analysis all go through it, and anything else is rejected. Semesters sort newest first by year, then Fall, Summer, Spring, Short.
+
 When contributing, department, course and semester can each be an existing value or a new name. If every value exists, the submission is linked to its question (created on demand). A new name that matches an existing value (ignoring case; departments also by short name, courses only within the chosen department) uses the existing value. If any value is still new, `question_id` stays null and the proposed values are stored on the submission until an admin creates them. A CHECK constraint enforces that a submission has exactly one of these shapes.
 
 ## AI analysis of uploads

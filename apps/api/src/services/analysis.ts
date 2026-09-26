@@ -1,6 +1,10 @@
 import {
   catalogKey,
+  MAX_SEMESTER_YEAR,
+  MIN_SEMESTER_YEAR,
   normalizeCatalogName,
+  parseSemesterName,
+  SEMESTER_TERMS,
   type AnalysisFlag,
   type AnalysisValues,
   type Course,
@@ -81,14 +85,14 @@ Then read the paper's header (usually at the top of the first page) and extract:
 
 - department: the department that set the exam. Always give the full name, never an abbreviation (e.g. "Computer Science and Engineering", not "CSE"). If only an abbreviation is printed, expand it, using the existing departments' short names when one matches. shortName is the abbreviation if known.
 - course: the course title only, without the course code (e.g. "Data Structures", not "CSE 134: Data Structures").
-- semester: the academic term the exam was held in (e.g. "Spring 2025", "Summer 2024", "Fall 2023").
+- semester: the academic term the exam was held in, written exactly as a term and a two-digit year: "<Term> <YY>", where Term is one of ${SEMESTER_TERMS.join(", ")} and YY is ${MIN_SEMESTER_YEAR} to ${MAX_SEMESTER_YEAR} (e.g. "Fall 25" for Fall 2025, "Spring 26", "Short 20"). Use null if the paper doesn't show a term in this form.
 - examType: the kind of exam (e.g. midterm, final).
 - section and batch: only if printed on the paper (short labels such as "A" or "61"), otherwise null.
 
 Matching and spelling rules:
 
 - Prefer existing entries. If a value is the same as an existing entry below (ignoring case, abbreviations, word order, "&" versus "and", minor spelling differences), set existingId to that entry's id and name to its exact existing name. Courses must belong to the chosen department.
-- Otherwise set existingId to null and give a new name in the same style as the existing entries: Title Case, "and" instead of "&", no abbreviations, no trailing punctuation. New semesters follow the existing semesters' pattern.
+- Otherwise set existingId to null and give a new name in the same style as the existing entries: Title Case, "and" instead of "&", no abbreviations, no trailing punctuation. Semesters always use the "<Term> <YY>" format above.
 - The exam type should be one of the existing exam types whenever possible.
 - Use null for any value you can't find in the document. Never guess from the file name.
 
@@ -126,7 +130,7 @@ export const analysisResponseJsonSchema = {
     note: { type: "string" },
     department: value("Department, full name", { shortName: nullableString }),
     course: value("Course title without the course code"),
-    semester: value("Academic term, e.g. Spring 2025"),
+    semester: value('Academic term as "<Term> <YY>", e.g. Fall 25'),
     examType: value("Exam type"),
     section: nullableString,
     batch: nullableString,
@@ -240,11 +244,28 @@ export function matchToCatalog(
   return {
     department,
     course: pick(departmentCourses, reply.course),
-    semester: pick(catalog.semesters, reply.semester),
+    semester: pickSemester(catalog.semesters, reply.semester),
     examType: pick(catalog.examTypes, reply.examType),
     section: cleanDetail(reply.section),
     batch: cleanDetail(reply.batch),
   };
+}
+
+/**
+ * An existing semester, or a new name in the semester format ("fall 2025" becomes
+ * "Fall 25"); anything else counts as not found.
+ */
+function pickSemester(
+  semesters: Semester[],
+  value: { existingId: number | null; name: string } | null,
+): { id: number | null; name: string } | null {
+  if (!value) return null;
+  const name = parseSemesterName(value.name);
+  const match =
+    semesters.find((s) => s.id === value.existingId) ??
+    (name ? semesters.find((s) => s.name === name) : undefined);
+  if (match) return { id: match.id, name: match.name };
+  return name ? { id: null, name } : null;
 }
 
 // ── Rows ─────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ const classification: SubmissionClassification = {
     shortName: "CSE",
   },
   course: { id: null, name: "Compiler Design & Construction" },
-  semester: { id: 3, name: "Spring 2025" },
+  semester: { id: 3, name: "Spring 25" },
   examType: { id: 1, name: "Midterm" },
 };
 
@@ -24,7 +24,7 @@ const values: AnalysisValues = {
     shortName: "CSE",
   },
   course: { id: null, name: "Compiler Design and Construction" },
-  semester: { id: null, name: "Fall 2025" },
+  semester: { id: null, name: "Fall 25" },
   examType: { id: null, name: "Quiz" },
   section: "A",
   batch: null,

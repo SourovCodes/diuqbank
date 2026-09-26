@@ -67,7 +67,7 @@ async function seedPaper(overrides: Partial<NewSubmissionRow> = {}) {
       uploaderId: member.id,
       departmentId: t.cse.id,
       customCourseName: `Compilers ${id.slice(0, 6)}`,
-      customSemesterName: `Summer ${id.slice(0, 6)}`,
+      customSemesterName: "Short 18",
       examTypeId: t.final.id,
       ...overrides,
     })
@@ -204,7 +204,7 @@ describe("matchToCatalog", () => {
           shortName: null,
         },
         course: { existingId: null, name: t.algorithms.name.toUpperCase() },
-        semester: { existingId: null, name: " Spring  2025. " },
+        semester: { existingId: null, name: "spring 2025" },
         examType: { existingId: null, name: "Quiz & Viva" },
         section: "far too long for a section",
       },
@@ -213,7 +213,7 @@ describe("matchToCatalog", () => {
     expect(values).toMatchObject({
       department: { id: t.cse.id },
       course: { id: t.algorithms.id },
-      semester: { id: null, name: "Spring 2025" },
+      semester: { id: null, name: "Spring 25" },
       examType: { id: null, name: "Quiz and Viva" },
       section: null,
     });
@@ -239,6 +239,14 @@ describe("matchToCatalog", () => {
       shortName: "MPE",
     });
     expect(values.course).toEqual({ id: null, name: t.algorithms.name });
+  });
+
+  it("drops semesters that aren't in the semester format", () => {
+    const values = matchToCatalog(
+      { ...baseReply, semester: { existingId: null, name: "2nd Semester" } },
+      catalog(),
+    );
+    expect(values.semester).toBeNull();
   });
 });
 

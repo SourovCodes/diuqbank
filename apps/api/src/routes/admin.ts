@@ -21,6 +21,7 @@ import {
   listAdminSubmissionsQuerySchema,
   listAdminUsersQuerySchema,
   nameInputSchema,
+  semesterInputSchema,
   submissionAnalysisSchema,
   updateReportStatusInputSchema,
   updateSubmissionStatusInputSchema,
@@ -323,8 +324,8 @@ const courseRoutes = catalogRoutes("courses", "course", {
   result: adminCourseSchema,
 });
 const semesterRoutes = catalogRoutes("semesters", "semester", {
-  create: nameInputSchema,
-  update: nameInputSchema,
+  create: semesterInputSchema,
+  update: semesterInputSchema,
   result: adminSemesterSchema,
 });
 const examTypeRoutes = catalogRoutes("exam-types", "exam type", {

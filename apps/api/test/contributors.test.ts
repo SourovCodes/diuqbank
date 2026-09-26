@@ -124,7 +124,7 @@ describe("GET /api/v1/contributors/:id", () => {
         uploaderId: contributor.id,
         departmentId: t.cse.id,
         customCourseName: "Compilers",
-        customSemesterName: "Summer Term",
+        customSemesterName: "Short 19",
         examTypeId: t.final.id,
       });
 

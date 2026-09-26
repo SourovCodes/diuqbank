@@ -67,3 +67,30 @@ export function normalizeCatalogName(name: string): string {
 export function catalogKey(name: string): string {
   return normalizeCatalogName(name).toLowerCase();
 }
+
+/** Semester names are a term and a two-digit year: "Fall 25", "Short 20". */
+export const SEMESTER_TERMS = ["Spring", "Summer", "Fall", "Short"] as const;
+export const MIN_SEMESTER_YEAR = 15;
+export const MAX_SEMESTER_YEAR = 30;
+export const SEMESTER_FORMAT_MESSAGE = `Use a term and a year, e.g. Fall 25 (${SEMESTER_TERMS.join(", ")}; ${MIN_SEMESTER_YEAR}–${MAX_SEMESTER_YEAR})`;
+
+const SEMESTER_PATTERN = new RegExp(
+  `^(${SEMESTER_TERMS.join("|")})[\\s'’_-]*(?:20)?(\\d{2})$`,
+  "i",
+);
+
+/**
+ * The standard spelling of a semester name, or null if it isn't one. Lenient about
+ * case, separators and four-digit years: "fall 2025", "FALL-25" and "Fall'25" all
+ * become "Fall 25".
+ */
+export function parseSemesterName(name: string): string | null {
+  const match = SEMESTER_PATTERN.exec(name.trim());
+  if (!match) return null;
+  const year = Number(match[2]);
+  if (year < MIN_SEMESTER_YEAR || year > MAX_SEMESTER_YEAR) return null;
+  const term = SEMESTER_TERMS.find(
+    (t) => t.toLowerCase() === match[1]!.toLowerCase(),
+  )!;
+  return `${term} ${match[2]}`;
+}
