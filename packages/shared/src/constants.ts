@@ -42,8 +42,6 @@ export const ANALYSIS_STATUSES = [
   "completed",
   "failed",
 ] as const;
-/** The public site's domain, used in the watermark on public PDFs. */
-export const SITE_DOMAIN = "diuqbank.com";
 /**
  * Lifecycle of a published paper's watermarked copy (the public download). Null
  * means it was never requested.

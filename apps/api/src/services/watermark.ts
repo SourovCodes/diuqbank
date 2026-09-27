@@ -1,4 +1,4 @@
-import { SITE_DOMAIN, type SubmissionWatermark } from "@qb/shared";
+import type { SubmissionWatermark } from "@qb/shared";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { createDb, type Database } from "../db/client";
 import { submissions, user } from "../db/schema";
@@ -50,13 +50,17 @@ const toAscii = (text: string) =>
     .trim();
 
 /**
- * The credit line: the site, and the contributor when their account still exists
- * and their name has Latin letters.
+ * The credit line: the site's domain, and the contributor when their account still
+ * exists and their name has Latin letters.
  */
-export function watermarkText(uploaderName: string | null): string {
+export function watermarkText(
+  siteUrl: string,
+  uploaderName: string | null,
+): string {
+  const site = new URL(siteUrl).host;
   const name = toAscii(uploaderName ?? "");
-  if (!/[a-z]/i.test(name)) return `Downloaded from ${SITE_DOMAIN}`;
-  const prefix = `${SITE_DOMAIN} | Shared by `;
+  if (!/[a-z]/i.test(name)) return `Downloaded from ${site}`;
+  const prefix = `${site} | Shared by `;
   const room = MAX_WATERMARK_LENGTH - prefix.length;
   return prefix + (name.length > room ? `${name.slice(0, room - 3)}...` : name);
 }
@@ -179,6 +183,7 @@ export type WatermarkEnv = {
   BUCKET: R2Bucket;
   COMPRESSOR_API_KEY: string;
   PDF_PROCESSOR_URL: string;
+  SITE_URL: string;
 };
 
 /**
@@ -217,7 +222,7 @@ export async function runWatermark(
     }
     const pdf = await watermarkPdf(
       new Uint8Array(await object.arrayBuffer()),
-      watermarkText(row.uploaderName),
+      watermarkText(env.SITE_URL, row.uploaderName),
       {
         url: env.PDF_PROCESSOR_URL,
         apiKey: env.COMPRESSOR_API_KEY,

@@ -11,12 +11,10 @@ import { importGoogleAvatar } from "../services/avatars";
 export function authOptions(env: Env, db: Database) {
   return {
     appName: "QuestionBank",
-    baseURL: env.BETTER_AUTH_URL,
+    baseURL: new URL(env.SITE_URL).origin,
     basePath: "/api/auth",
     secret: env.BETTER_AUTH_SECRET,
-    trustedOrigins: env.TRUSTED_ORIGINS.split(",").map((origin) =>
-      origin.trim(),
-    ),
+    trustedOrigins: [new URL(env.SITE_URL).origin],
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
     user: {
       additionalFields: {
