@@ -24,7 +24,7 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumbs={[{ label: "Account" }]}
+        breadcrumbs={[{ label: "Home", to: "/" }, { label: "Account" }]}
         title={user.name}
         description={user.email}
         actions={

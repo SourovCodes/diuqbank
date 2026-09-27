@@ -6,7 +6,7 @@ import type {
   QuestionList,
   Submission,
 } from "@qb/shared";
-import { Clock, Download, ExternalLink, Eye, FileX } from "lucide-react";
+import { Clock, Download, ExternalLink, FileX } from "lucide-react";
 import {
   data,
   Link,
@@ -32,10 +32,9 @@ import {
   useCountView,
   type PaperActionResult,
 } from "~/lib/engagement";
-import { formatViews } from "~/lib/format";
 import { hasSessionCookie, requireUser } from "~/lib/session.server";
 import {
-  paperTitle,
+  paperTitles,
   plural,
   pickSubmission,
   submissionFileUrl,
@@ -219,10 +218,7 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
     (s) => s.status === "published",
   );
   const paperLabel = selected
-    ? paperTitle(
-        selected,
-        published.findIndex((s) => s.id === selected.id),
-      )
+    ? (paperTitles(published).get(selected.id) ?? "")
     : "";
 
   useCountView(`/api/v1/questions/${question.id}/views`);
@@ -264,10 +260,6 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
           <Badge variant="outline">{question.department.shortName}</Badge>
           <Badge variant="outline">{question.semester.name}</Badge>
           <Badge variant="outline">{question.examType.name}</Badge>
-          <Badge variant="outline" className="text-muted-foreground">
-            <Eye aria-hidden />
-            {formatViews(question.viewCount)}
-          </Badge>
         </div>
       </PageHeader>
 

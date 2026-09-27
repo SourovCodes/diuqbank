@@ -217,7 +217,7 @@ function SettingsCard({
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent className="grid max-w-md gap-4">
+        <CardContent className="grid gap-4">
           {children}
           <FormMessage message={result?.error} />
         </CardContent>
@@ -348,8 +348,9 @@ export default function AccountProfile({
     if (password?.success) passwordForm.current?.reset();
   }, [password]);
 
+  // A form column rather than cards stretched over the whole page.
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl space-y-6">
       {/* Re-mounted when the image changes, which clears the local preview. */}
       <AvatarCard
         key={user.image ?? "none"}

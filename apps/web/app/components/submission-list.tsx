@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { paperDetails, paperTitle, plural } from "~/lib/submissions";
+import { paperDetails, paperTitles, plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 type SubmissionListProps = {
@@ -42,7 +42,7 @@ export function SubmissionList({
   selectedId,
 }: SubmissionListProps) {
   const published = submissions.filter((s) => s.status === "published");
-  const paperIndex = new Map(published.map((s, i) => [s.id, i]));
+  const titles = paperTitles(published);
   const pendingCount = submissions.filter(
     (s) => s.status === "pending_review",
   ).length;
@@ -83,9 +83,26 @@ export function SubmissionList({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
-                      {paperTitle(submission, paperIndex.get(submission.id)!)}
+                      {titles.get(submission.id)}
                     </span>
                     <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                      {/* Titled by section or batch: say whose it is too, unless the
+                          title already does. */}
+                      {paperDetails(submission) &&
+                        submission.uploader &&
+                        !titles
+                          .get(submission.id)!
+                          .includes(submission.uploader.name) && (
+                          <span className="max-w-full truncate">
+                            by {submission.uploader.name}
+                          </span>
+                        )}
+                      <span>{formatDate(submission.createdAt)}</span>
+                      <Stat
+                        icon={Eye}
+                        value={submission.viewCount}
+                        label="views"
+                      />
                       {/* Votes only once there are some: rows of zeros are noise. */}
                       {submission.likeCount > 0 && (
                         <Stat
@@ -100,18 +117,6 @@ export function SubmissionList({
                           value={submission.dislikeCount}
                           label="dislikes"
                         />
-                      )}
-                      <Stat
-                        icon={Eye}
-                        value={submission.viewCount}
-                        label="views"
-                      />
-                      <span>Added {formatDate(submission.createdAt)}</span>
-                      {/* Titled by section or batch: say whose it is too. */}
-                      {paperDetails(submission) && submission.uploader && (
-                        <span className="truncate">
-                          by {submission.uploader.name}
-                        </span>
                       )}
                     </span>
                   </span>
@@ -158,11 +163,12 @@ export function PaperSwitcher({
 }: SubmissionListProps) {
   const published = submissions.filter((s) => s.status === "published");
   if (published.length < 2) return null;
+  const titles = paperTitles(published);
 
   return (
     <nav aria-label="Papers" className="-mx-4 overflow-x-auto px-4 lg:hidden">
       <ul className="flex w-max gap-2 pb-1">
-        {published.map((submission, index) => {
+        {published.map((submission) => {
           const active = submission.id === selectedId;
           return (
             <li key={submission.id}>
@@ -178,7 +184,7 @@ export function PaperSwitcher({
                 )}
               >
                 <span className="max-w-48 truncate font-medium">
-                  {paperTitle(submission, index)}
+                  {titles.get(submission.id)}
                 </span>
               </Link>
             </li>
