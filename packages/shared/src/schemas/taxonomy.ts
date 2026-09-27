@@ -29,7 +29,13 @@ function listSchema<T extends z.ZodType>(item: T) {
   return z.object({ items: z.array(item) });
 }
 
-export const departmentListSchema = listSchema(departmentSchema);
+/** A department as listed publicly, with how many papers can be read. */
+export const departmentListItemSchema = departmentSchema.extend({
+  publishedCount: z.number().int(),
+});
+export type DepartmentListItem = z.infer<typeof departmentListItemSchema>;
+
+export const departmentListSchema = listSchema(departmentListItemSchema);
 export const courseListSchema = listSchema(courseSchema);
 export const semesterListSchema = listSchema(semesterSchema);
 export const examTypeListSchema = listSchema(examTypeSchema);

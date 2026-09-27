@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useId, useState } from "react";
 import { Link, useFetcher, useLocation } from "react-router";
+import { ContributorAvatar } from "~/components/contributor-avatar";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   Dialog,
@@ -35,6 +36,7 @@ import {
   type PaperActionResult,
 } from "~/lib/engagement";
 import { formatCount, formatViews } from "~/lib/format";
+import { paperDetails } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 /** Who is looking at the paper, which decides what they can do with it. */
@@ -45,7 +47,7 @@ export type PaperViewer =
 
 type PaperToolbarProps = {
   submission: Submission;
-  /** e.g. "Paper 2" */
+  /** e.g. "Section A · Batch 61" or "By Ayesha Rahman"; shown when there's no uploader. */
   label: string;
   viewer: PaperViewer;
 };
@@ -75,16 +77,39 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
   const countFor = (value: VoteValue) =>
     value === 1 ? counts.likeCount : counts.dislikeCount;
 
+  const { uploader } = submission;
+  const details = paperDetails(submission);
   const loginHref = `/login?redirectTo=${encodeURIComponent(location.pathname + location.search)}`;
   const ghost = buttonVariants({ variant: "ghost", size: "sm" });
   const voteError = fetcher.data?.ok === false ? fetcher.data.error : null;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border bg-card px-2 py-1.5 shadow-xs sm:px-3">
-      <p className="flex min-w-0 items-center gap-3 px-1 text-sm">
-        <span className="truncate font-medium" title={label}>
-          {label}
-        </span>
+      {/* Who uploaded it, then how to tell it apart: the uploader card's job, in
+          one line. */}
+      <p className="flex min-w-0 items-center gap-x-3 gap-y-1 px-1 text-sm">
+        {uploader ? (
+          <Link
+            to={`/contributors/${encodeURIComponent(uploader.id)}`}
+            className="flex min-w-0 items-center gap-2 font-medium hover:underline"
+          >
+            <ContributorAvatar
+              name={uploader.name}
+              image={uploader.image}
+              size="xs"
+            />
+            <span className="truncate">{uploader.name}</span>
+          </Link>
+        ) : (
+          <span className="truncate font-medium" title={label}>
+            {label}
+          </span>
+        )}
+        {uploader && details && (
+          <span className="truncate text-muted-foreground max-sm:hidden">
+            {details}
+          </span>
+        )}
         <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">
           <Eye className="size-4" aria-hidden />
           {formatViews(submission.viewCount)}
@@ -102,7 +127,7 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
                 className={cn(ghost, "tabular-nums")}
               >
                 <Icon aria-hidden />
-                {formatCount(countFor(value))}
+                {countFor(value) > 0 && formatCount(countFor(value))}
               </Link>
             ))}
             <Link to={loginHref} className={ghost}>
@@ -140,7 +165,8 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
                     )}
                   >
                     <Icon aria-hidden />
-                    {formatCount(countFor(value))}
+                    {/* No "0": an empty count reads as a plain button. */}
+                    {countFor(value) > 0 && formatCount(countFor(value))}
                   </Button>
                 );
               })}

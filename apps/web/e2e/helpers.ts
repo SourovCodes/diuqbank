@@ -107,7 +107,11 @@ export async function uploadPaperWithNewCourse(page: Page, courseName: string) {
     buffer: Buffer.from("%PDF-1.7\n%e2e upload\n"),
   });
   await page.getByRole("button", { name: "Submit paper" }).click();
-  await expect(page.getByRole("status")).toContainText("submitted for review");
+  // Lands on the paper's status page.
+  await expect(page).toHaveURL(/\/account\/submissions\/[^/?]+/);
+  await expect(
+    page.getByText("Thanks! Your paper was uploaded."),
+  ).toBeVisible();
 }
 
 export async function logOut(page: Page) {

@@ -13,7 +13,12 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router";
-import { LINK_CARD, STRETCHED_LINK } from "~/components/question-cards";
+import {
+  CARD_GRID,
+  LINK_CARD,
+  QuestionCards,
+  STRETCHED_LINK,
+} from "~/components/question-cards";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -27,14 +32,33 @@ import { formatCount } from "~/lib/format";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/home";
 
+/** The first question of each course, so one course doesn't fill a section. */
+function onePerCourse(questions: QuestionList["items"], limit = 6) {
+  const seen = new Set<number>();
+  return questions
+    .filter((question) => {
+      if (seen.has(question.course.id)) return false;
+      seen.add(question.course.id);
+      return true;
+    })
+    .slice(0, limit);
+}
+
 /**
  * Live numbers and the departments to browse. The landing page must render even if
  * the API is down, so a failed request just leaves its part out.
  */
 export async function loader({ request }: Route.LoaderArgs) {
-  const [questions, contributors, courses, departments] =
+  const [newest, popular, contributors, courses, departments] =
     await Promise.allSettled([
-      apiGetJson<QuestionList>(request, "/api/v1/questions?pageSize=1"),
+      apiGetJson<QuestionList>(
+        request,
+        "/api/v1/questions?sort=newest&pageSize=24",
+      ),
+      apiGetJson<QuestionList>(
+        request,
+        "/api/v1/questions?sort=popular&pageSize=24",
+      ),
       apiGetJson<ContributorList>(request, "/api/v1/contributors?pageSize=1"),
       apiGetJson<CourseList>(request, "/api/v1/courses"),
       apiGetJson<DepartmentList>(request, "/api/v1/departments"),
@@ -43,13 +67,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     result.status === "fulfilled" ? result.value : null;
 
   const stats = [
-    { label: "questions", count: value(questions)?.total },
+    { label: "questions", count: value(newest)?.total },
     { label: "courses", count: value(courses)?.items.length },
     { label: "contributors", count: value(contributors)?.total },
   ].filter((stat): stat is { label: string; count: number } =>
     Boolean(stat.count),
   );
-  return { stats, departments: value(departments)?.items ?? [] };
+  return {
+    stats,
+    newest: onePerCourse(value(newest)?.items ?? []),
+    popular: onePerCourse(value(popular)?.items ?? []),
+    // Departments without papers have nothing to browse yet.
+    departments: (value(departments)?.items ?? []).filter(
+      (d) => d.publishedCount > 0,
+    ),
+  };
 }
 
 export const meta: Route.MetaFunction = () => [
@@ -82,8 +114,38 @@ const FEATURES = [
   },
 ];
 
+function QuestionSection({
+  id,
+  title,
+  href,
+  questions,
+}: {
+  id: string;
+  title: string;
+  href: string;
+  questions: QuestionList["items"];
+}) {
+  return (
+    <section aria-labelledby={id} className="space-y-4">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 id={id} className="text-xl font-semibold tracking-tight">
+          {title}
+        </h2>
+        <Link
+          to={href}
+          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          See all
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
+      <QuestionCards questions={questions} />
+    </section>
+  );
+}
+
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { stats, departments } = loaderData;
+  const { stats, newest, popular, departments } = loaderData;
 
   return (
     <div className="space-y-16 py-4 sm:py-12">
@@ -96,7 +158,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           Past question papers, all in one place
         </h1>
         <p className="max-w-xl text-lg text-pretty text-muted-foreground">
-          Find previous exam questions by department, course, semester and exam
+          Find previous exam questions by course, department, semester and exam
           type, then read them right in your browser.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
@@ -124,6 +186,23 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         )}
       </section>
 
+      {newest.length > 0 && (
+        <QuestionSection
+          id="newest-heading"
+          title="Newest papers"
+          href="/questions"
+          questions={newest}
+        />
+      )}
+      {popular.length > 0 && (
+        <QuestionSection
+          id="popular-heading"
+          title="Most viewed"
+          href="/questions?sort=popular"
+          questions={popular}
+        />
+      )}
+
       {departments.length > 0 && (
         <section aria-labelledby="departments-heading" className="space-y-4">
           <h2
@@ -132,22 +211,29 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           >
             Browse by department
           </h2>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className={CARD_GRID}>
             {departments.map((department) => (
               <li key={department.id} className="grid">
                 <Card className={cn(LINK_CARD, "py-4")}>
                   <CardHeader className="flex items-center gap-3 px-4">
-                    <span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border bg-background px-1.5 text-xs font-semibold shadow-xs">
-                      {department.shortName}
-                    </span>
-                    <CardTitle className="min-w-0 flex-1 text-sm leading-snug">
-                      <Link
-                        to={`/questions?departmentId=${department.id}`}
-                        className={STRETCHED_LINK}
-                      >
-                        {department.name}
-                      </Link>
-                    </CardTitle>
+                    <div className="grid min-w-0 flex-1 gap-1">
+                      <CardTitle className="text-sm leading-snug">
+                        <Link
+                          to={`/questions?departmentId=${department.id}`}
+                          className={STRETCHED_LINK}
+                        >
+                          {department.name}
+                        </Link>
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        {/* Some short names are just the name in capitals. */}
+                        {department.shortName.toLowerCase() !==
+                          department.name.toLowerCase() &&
+                          `${department.shortName} · `}
+                        {formatCount(department.publishedCount)}{" "}
+                        {department.publishedCount === 1 ? "paper" : "papers"}
+                      </CardDescription>
+                    </div>
                     <ChevronRight
                       className="size-4 shrink-0 text-muted-foreground"
                       aria-hidden

@@ -1,8 +1,7 @@
 import type { ApiError, CreatedSubmission } from "@qb/shared";
-import { CheckCircle2, Lightbulb } from "lucide-react";
-import { Link, useNavigation } from "react-router";
+import { ChevronDown, Lightbulb } from "lucide-react";
+import { redirect, useNavigation } from "react-router";
 import { ContributeForm } from "~/components/contribute-form";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { PageHeader } from "~/components/page-header";
 import { apiFetch, readJson } from "~/lib/api.server";
@@ -30,15 +29,15 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   if (res.status === 201) {
-    return {
-      ok: true as const,
-      submission: await readJson<CreatedSubmission>(res),
-    };
+    // Follow the review (AI check, then publishing) on the paper's status page.
+    const created = await readJson<CreatedSubmission>(res);
+    return redirect(
+      `/account/submissions/${encodeURIComponent(created.id)}?uploaded`,
+    );
   }
   const body = await readJson<ApiError>(res).catch(() => null);
   const fieldErrors = fieldErrorsFrom(body);
   return {
-    ok: false as const,
     fieldErrors,
     message:
       Object.keys(fieldErrors).length > 0
@@ -50,85 +49,78 @@ export async function action({ request }: Route.ActionArgs) {
 const STEPS = [
   "Choose the department, course, semester and exam type.",
   "Upload the question paper as a PDF.",
-  "An admin reviews it, along with any new entries, before it is published.",
+  "AI checks it. If it’s one question paper with the details you chose, it’s published right away.",
+  "Otherwise, or if it adds new entries, an admin reviews it first.",
 ];
+
+function HowItWorks() {
+  return (
+    <div className="grid gap-4 text-sm">
+      <ol className="space-y-3">
+        {STEPS.map((step, index) => (
+          <li key={step} className="flex gap-3">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
+              {index + 1}
+            </span>
+            <span className="pt-0.5 text-muted-foreground">{step}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="flex gap-2 border-t pt-4 text-muted-foreground">
+        <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <span>
+          Can’t find a department, course or semester? Type its name and choose
+          “Add”.
+        </span>
+      </p>
+    </div>
+  );
+}
 
 export default function Contribute({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
   const submitting = useNavigation().state === "submitting";
-  const failed = actionData && !actionData.ok ? actionData : null;
+  const failed = actionData ?? null;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Contribute a paper"
-        description="Upload a question paper PDF and tell us where it belongs. Every submission is reviewed before it is published."
+        description="Upload a question paper PDF and tell us where it belongs. It’s checked by AI, and by an admin when needed, before it is published."
       />
 
-      {actionData?.ok && (
-        <Alert role="status">
-          <CheckCircle2 />
-          <AlertTitle>Thanks! Your paper was submitted for review.</AlertTitle>
-          <AlertDescription>
-            <p>
-              {actionData.submission.questionId !== null ? (
-                <Link
-                  to={`/questions/${actionData.submission.questionId}`}
-                  className="underline underline-offset-4"
-                >
-                  View the question
-                </Link>
-              ) : (
-                "New entries will be added once an admin approves them."
-              )}{" "}
-              ·{" "}
-              <Link
-                // The public profile only lists published papers; this one is pending.
-                to="/account/submissions"
-                className="underline underline-offset-4"
-              >
-                See your contributions
-              </Link>
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Below `lg` the steps would come after the submit button, so they sit
+          above the form, folded away. */}
+      <details className="group rounded-xl border bg-muted/30 lg:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          How it works
+          <ChevronDown
+            className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <div className="px-4 pb-4">
+          <HowItWorks />
+        </div>
+      </details>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
-        {/* Re-mount after each successful upload to reset the form. */}
         <ContributeForm
-          key={actionData?.ok ? actionData.submission.id : "form"}
           {...loaderData}
           fieldErrors={failed?.fieldErrors ?? {}}
           message={failed?.message}
           submitting={submitting}
         />
-        <Card className="gap-4 bg-muted/30 shadow-none">
+        <Card className="gap-4 bg-muted/30 shadow-none max-lg:hidden">
           <CardHeader>
             <CardTitle>
               <h2>How it works</h2>
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 text-sm">
-            <ol className="space-y-3">
-              {STEPS.map((step, index) => (
-                <li key={step} className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
-                    {index + 1}
-                  </span>
-                  <span className="pt-0.5 text-muted-foreground">{step}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="flex gap-2 border-t pt-4 text-muted-foreground">
-              <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <span>
-                Can’t find a department, course or semester? Type its name and
-                choose “Add”.
-              </span>
-            </p>
+          <CardContent>
+            <HowItWorks />
           </CardContent>
         </Card>
       </div>

@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/card";
 import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { paperDetails, plural } from "~/lib/submissions";
+import { paperDetails, paperTitles, plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 type SubmissionListProps = {
@@ -42,7 +42,7 @@ export function SubmissionList({
   selectedId,
 }: SubmissionListProps) {
   const published = submissions.filter((s) => s.status === "published");
-  const paperNumbers = new Map(published.map((s, i) => [s.id, i + 1]));
+  const titles = paperTitles(published);
   const pendingCount = submissions.filter(
     (s) => s.status === "pending_review",
   ).length;
@@ -82,34 +82,42 @@ export function SubmissionList({
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate">
-                      <span className="font-medium">
-                        Paper {paperNumbers.get(submission.id)}
-                      </span>
-                      {paperDetails(submission) && (
-                        <span className="text-muted-foreground">
-                          {" · "}
-                          {paperDetails(submission)}
-                        </span>
-                      )}
+                    <span className="block truncate font-medium">
+                      {titles.get(submission.id)}
                     </span>
                     <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                      <Stat
-                        icon={ThumbsUp}
-                        value={submission.likeCount}
-                        label="likes"
-                      />
-                      <Stat
-                        icon={ThumbsDown}
-                        value={submission.dislikeCount}
-                        label="dislikes"
-                      />
+                      {/* Titled by section or batch: say whose it is too, unless the
+                          title already does. */}
+                      {paperDetails(submission) &&
+                        submission.uploader &&
+                        !titles
+                          .get(submission.id)!
+                          .includes(submission.uploader.name) && (
+                          <span className="max-w-full truncate">
+                            by {submission.uploader.name}
+                          </span>
+                        )}
+                      <span>{formatDate(submission.createdAt)}</span>
                       <Stat
                         icon={Eye}
                         value={submission.viewCount}
                         label="views"
                       />
-                      <span>Added {formatDate(submission.createdAt)}</span>
+                      {/* Votes only once there are some: rows of zeros are noise. */}
+                      {submission.likeCount > 0 && (
+                        <Stat
+                          icon={ThumbsUp}
+                          value={submission.likeCount}
+                          label="likes"
+                        />
+                      )}
+                      {submission.dislikeCount > 0 && (
+                        <Stat
+                          icon={ThumbsDown}
+                          value={submission.dislikeCount}
+                          label="dislikes"
+                        />
+                      )}
                     </span>
                   </span>
                   {active && <Check className="size-4" aria-hidden />}
@@ -155,13 +163,13 @@ export function PaperSwitcher({
 }: SubmissionListProps) {
   const published = submissions.filter((s) => s.status === "published");
   if (published.length < 2) return null;
+  const titles = paperTitles(published);
 
   return (
     <nav aria-label="Papers" className="-mx-4 overflow-x-auto px-4 lg:hidden">
       <ul className="flex w-max gap-2 pb-1">
-        {published.map((submission, index) => {
+        {published.map((submission) => {
           const active = submission.id === selectedId;
-          const details = paperDetails(submission);
           return (
             <li key={submission.id}>
               <Link
@@ -175,19 +183,9 @@ export function PaperSwitcher({
                     "border-primary bg-primary text-primary-foreground hover:bg-primary",
                 )}
               >
-                <span className="font-medium">Paper {index + 1}</span>
-                {details && (
-                  <span
-                    className={cn(
-                      "max-w-48 truncate",
-                      active
-                        ? "text-primary-foreground/80"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {details}
-                  </span>
-                )}
+                <span className="max-w-48 truncate font-medium">
+                  {titles.get(submission.id)}
+                </span>
               </Link>
             </li>
           );

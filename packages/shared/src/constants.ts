@@ -50,17 +50,25 @@ export const ANALYSIS_FILTERS = ["flagged", "differs"] as const;
 /**
  * Standard spelling for catalog names (departments, courses, semesters, exam types):
  * trimmed, single spaces, "and" instead of "&", straight quotes, no trailing period
- * or comma. Applied to names typed by users and admins and to the AI's output.
+ * or comma, and a numbered part as its own word ("Physics I", not "Physics-I").
+ * Applied to names typed by users and admins and to the AI's output.
  */
 export function normalizeCatalogName(name: string): string {
-  return name
-    .replace(/[‘’]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/\s*[&＆]\s*/g, " and ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/[.,]+$/, "")
-    .trim();
+  return (
+    name
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/\s*[&＆]\s*/g, " and ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/[.,]+$/, "")
+      .trim()
+      // A numbered part is a separate word: "Physics-I" → "Physics I".
+      .replace(
+        /\s*[-–]\s*(I{1,3}|IV|VI{0,3}|IX|X|\d{1,2})$/i,
+        (_, part: string) => ` ${part.toUpperCase()}`,
+      )
+  );
 }
 
 /** Compares catalog names: normalized and case-insensitive. */
@@ -94,3 +102,6 @@ export function parseSemesterName(name: string): string | null {
   )!;
   return `${term} ${match[2]}`;
 }
+
+/** Orders for the questions list: newest papers, most viewed, or by name. */
+export const QUESTION_SORTS = ["newest", "popular", "az"] as const;

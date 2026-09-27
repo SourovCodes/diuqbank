@@ -107,7 +107,9 @@ describe("GET /api/v1/questions", () => {
     }
 
     const body = await (
-      await api(`/api/v1/questions?courseId=${t.algorithms.id}&pageSize=100`)
+      await api(
+        `/api/v1/questions?courseId=${t.algorithms.id}&pageSize=100&sort=az`,
+      )
     ).json<QuestionList>();
     const order = ["Spring 25", "Fall 24", "Summer 24", "Fall 23"].map(
       (name) => byName(name).id,
@@ -150,6 +152,36 @@ describe("GET /api/v1/questions", () => {
     expect(
       await ids(`departmentId=${t.cse.id}&courseId=${t.circuits.id}`),
     ).toEqual([]);
+  });
+
+  it("puts the newest papers or the most viewed first", async () => {
+    const t = await seedTaxonomy();
+    const older = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.midterm.id,
+      viewCount: 50,
+    });
+    const newer = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem2.id,
+      examTypeId: t.midterm.id,
+    });
+    await seedSubmission(older.id, { createdAt: new Date(2026, 0, 1) });
+    await seedSubmission(newer.id, { createdAt: new Date(2026, 5, 1) });
+
+    const ids = async (sort: string) =>
+      (
+        await (
+          await api(
+            `/api/v1/questions?courseId=${t.algorithms.id}&sort=${sort}`,
+          )
+        ).json<QuestionList>()
+      ).items.map((item) => item.id);
+    expect(await ids("newest")).toEqual([newer.id, older.id]);
+    expect(await ids("popular")).toEqual([older.id, newer.id]);
   });
 
   it("rejects invalid filters", async () => {

@@ -37,16 +37,27 @@ export function ReportStatusBadge({ status }: { status: ReportStatus }) {
   );
 }
 
-/** Flags that need an admin's eye: open reports and proposed new entries. */
+/**
+ * Flags that need an admin's eye: open reports and proposed new entries; and papers
+ * the AI check published on its own.
+ */
 export function SubmissionFlags({
   pendingReportCount,
   classification,
+  autoPublished = false,
 }: {
   pendingReportCount: number;
   classification: SubmissionClassification;
+  autoPublished?: boolean;
 }) {
   return (
     <>
+      {autoPublished && (
+        <Badge variant="outline" className="text-muted-foreground">
+          <Bot />
+          Auto-published
+        </Badge>
+      )}
       {pendingReportCount > 0 && (
         <Badge variant="destructive">
           <Flag />

@@ -6,7 +6,7 @@ import type {
   QuestionList,
   Submission,
 } from "@qb/shared";
-import { Clock, Download, ExternalLink, Eye, FileX } from "lucide-react";
+import { Clock, Download, ExternalLink, FileX } from "lucide-react";
 import {
   data,
   Link,
@@ -25,17 +25,15 @@ import { PdfViewer } from "~/components/pdf-viewer";
 import { PaperSwitcher, SubmissionList } from "~/components/submission-list";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { UploaderCard } from "~/components/uploader-card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import {
   parseVoteValue,
   useCountView,
   type PaperActionResult,
 } from "~/lib/engagement";
-import { formatViews } from "~/lib/format";
 import { hasSessionCookie, requireUser } from "~/lib/session.server";
 import {
-  paperDetails,
+  paperTitles,
   plural,
   pickSubmission,
   submissionFileUrl,
@@ -76,6 +74,8 @@ async function loadOtherSemesters(request: Request, question: QuestionDetail) {
     courseId: String(question.course.id),
     examTypeId: String(question.examType.id),
     pageSize: "100",
+    // Newest semester first.
+    sort: "az",
   });
   const res = await apiFetch(request, `/api/v1/questions?${query}`);
   if (!res.ok) return [];
@@ -216,9 +216,8 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
   const published = question.submissions.filter(
     (s) => s.status === "published",
   );
-  const details = selected ? paperDetails(selected) : null;
   const paperLabel = selected
-    ? `Paper ${published.findIndex((s) => s.id === selected.id) + 1}${details ? ` · ${details}` : ""}`
+    ? (paperTitles(published).get(selected.id) ?? "")
     : "";
 
   useCountView(`/api/v1/questions/${question.id}/views`);
@@ -260,14 +259,10 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
           <Badge variant="outline">{question.department.shortName}</Badge>
           <Badge variant="outline">{question.semester.name}</Badge>
           <Badge variant="outline">{question.examType.name}</Badge>
-          <Badge variant="outline" className="text-muted-foreground">
-            <Eye aria-hidden />
-            {formatViews(question.viewCount)}
-          </Badge>
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         {/* The paper comes first on small screens too; the lists follow it. */}
         <section aria-label="Question paper" className="min-w-0 space-y-3">
           <PaperSwitcher
@@ -303,22 +298,24 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
               }
             />
           )}
-          <OtherSemesters
-            course={question.course.name}
-            examType={question.examType.name}
-            questions={otherSemesters}
-          />
         </section>
 
-        <aside>
-          <div className="space-y-4 lg:sticky lg:top-20">
+        {/* On phones the papers list follows the paper; from `lg` it is a sticky
+            column beside both the paper and the other semesters. */}
+        <aside className="lg:row-span-2">
+          <div className="lg:sticky lg:top-20">
             <SubmissionList
               submissions={question.submissions}
               selectedId={selected?.id ?? null}
             />
-            {selected && <UploaderCard submission={selected} />}
           </div>
         </aside>
+
+        <OtherSemesters
+          course={question.course.name}
+          examType={question.examType.name}
+          questions={otherSemesters}
+        />
       </div>
     </div>
   );

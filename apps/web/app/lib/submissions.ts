@@ -4,6 +4,7 @@ import type {
   SubmissionClassification,
   SubmissionStatus,
 } from "@qb/shared";
+import { formatNumber } from "./format";
 
 export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   published: "Published",
@@ -47,8 +48,60 @@ export function paperDetails({
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+/**
+ * How to tell the papers of one question apart: by section and batch when given,
+ * otherwise by who uploaded them, and only then by number ("Paper 2").
+ */
+export function paperTitle(
+  submission: Pick<Submission, "section" | "batch" | "uploader">,
+  index: number,
+) {
+  return (
+    paperDetails(submission) ??
+    (submission.uploader
+      ? `By ${submission.uploader.name}`
+      : `Paper ${index + 1}`)
+  );
+}
+
+/**
+ * Titles for a question's published papers (in list order) that tell them apart:
+ * two "Batch 65" papers become "Batch 65 · Jane" and "Batch 65 · Sam", and any
+ * that still clash are numbered.
+ */
+export function paperTitles(
+  published: Pick<Submission, "id" | "section" | "batch" | "uploader">[],
+): Map<string, string> {
+  const countOf = (titles: string[]) => {
+    const counts = new Map<string, number>();
+    for (const title of titles) counts.set(title, (counts.get(title) ?? 0) + 1);
+    return counts;
+  };
+
+  const base = published.map((s, i) => paperTitle(s, i));
+  const baseCounts = countOf(base);
+  const named = published.map((s, i) =>
+    baseCounts.get(base[i]!)! > 1 && paperDetails(s) && s.uploader
+      ? `${base[i]} · ${s.uploader.name}`
+      : base[i]!,
+  );
+
+  const namedCounts = countOf(named);
+  const seen = new Map<string, number>();
+  return new Map(
+    published.map((s, i) => {
+      const title = named[i]!;
+      if (namedCounts.get(title)! === 1) return [s.id, title];
+      const n = (seen.get(title) ?? 0) + 1;
+      seen.set(title, n);
+      return [s.id, `${title} (${n})`];
+    }),
+  );
+}
+
+/** e.g. "1 paper", "1,586 questions". */
 export function plural(count: number, singular: string, pluralForm?: string) {
-  return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
+  return `${formatNumber(count)} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
 }
 
 /** Whether a submission still proposes new catalog entries. */

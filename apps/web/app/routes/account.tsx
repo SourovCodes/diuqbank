@@ -1,6 +1,5 @@
 import { FileText, UserRound } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
-import { ContributorAvatar } from "~/components/contributor-avatar";
 import { PageHeader } from "~/components/page-header";
 import { requireUser } from "~/lib/session.server";
 import { buttonVariants } from "~/components/ui/button";
@@ -23,16 +22,8 @@ export default function AccountLayout({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        breadcrumbs={[{ label: "Account" }]}
-        title={user.name}
-        description={user.email}
-        actions={
-          <span className="hidden sm:block">
-            <ContributorAvatar name={user.name} image={user.image} size="lg" />
-          </span>
-        }
-      />
+      {/* The site header's avatar already says who is signed in. */}
+      <PageHeader title="Account" description={`Signed in as ${user.email}`} />
 
       <Separator />
 

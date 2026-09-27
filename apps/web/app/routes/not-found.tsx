@@ -19,17 +19,22 @@ export function loader() {
 export default function NotFound() {
   return (
     <EmptyState
-      className="py-16"
+      className="min-h-[60svh] border-none"
       icon={FileQuestion}
       title="Page not found"
-      description="We couldn't find what you were looking for."
+      description="The link may be old, or the page may have moved. Try browsing the question papers instead."
       action={
-        <Link
-          to="/"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          Back to home
-        </Link>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link to="/questions" className={buttonVariants({ size: "sm" })}>
+            Browse questions
+          </Link>
+          <Link
+            to="/"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Back to home
+          </Link>
+        </div>
       }
     />
   );

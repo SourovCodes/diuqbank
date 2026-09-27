@@ -17,6 +17,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { createDb, type Database } from "../db/client";
 import {
+  courses,
+  departments,
+  examTypes,
+  questions,
+  semesters,
   submissionAnalyses,
   submissions,
   type SubmissionAnalysisRow,
@@ -365,15 +370,22 @@ export async function enqueueAnalysis(
   db: Database,
   queue: Queue<AnalysisJob>,
   submissionId: string,
+  { autoPublish }: { autoPublish: boolean },
 ): Promise<SubmissionAnalysis> {
   const runId = crypto.randomUUID();
   const now = new Date();
   await db
     .insert(submissionAnalyses)
-    .values({ submissionId, runId, ...clearedResult })
+    .values({ submissionId, runId, autoPublish, ...clearedResult })
     .onConflictDoUpdate({
       target: submissionAnalyses.submissionId,
-      set: { runId, ...clearedResult, attempts: 0, createdAt: now },
+      set: {
+        runId,
+        autoPublish,
+        ...clearedResult,
+        attempts: 0,
+        createdAt: now,
+      },
     });
   try {
     await queue.send({ submissionId, runId });
@@ -400,7 +412,8 @@ export async function rerunAnalysis(
   if (!submission) {
     throw new AppError(404, "NOT_FOUND", "Submission not found");
   }
-  return enqueueAnalysis(db, queue, submissionId);
+  // Re-runs only inform the admin; they never publish.
+  return enqueueAnalysis(db, queue, submissionId, { autoPublish: false });
 }
 
 /** The bindings an analysis needs (vars widened to plain strings, for tests). */
@@ -411,6 +424,73 @@ export type AnalysisEnv = {
   COMPRESSOR_API_KEY: string;
   PDF_PROCESSOR_URL: string;
 };
+
+/**
+ * Publishes a paper without an admin when the AI confirms it: exactly one question
+ * paper, and the department, course, semester and exam type the AI read are the same
+ * existing catalog entries (same id, same name, character for character) as the ones
+ * the paper is filed under. Papers with new entries, reports or a status an admin
+ * already changed are left for review. Returns whether it published.
+ */
+export async function publishIfConfirmed(
+  db: Database,
+  submissionId: string,
+  reply: Pick<AnalysisReply, "isQuestionPaper" | "paperCount">,
+  values: AnalysisValues,
+): Promise<boolean> {
+  if (!reply.isQuestionPaper || reply.paperCount !== 1) return false;
+
+  const [filed] = await db
+    .select({
+      status: submissions.status,
+      pendingReportCount: submissions.pendingReportCount,
+      department: { id: departments.id, name: departments.name },
+      course: { id: courses.id, name: courses.name },
+      semester: { id: semesters.id, name: semesters.name },
+      examType: { id: examTypes.id, name: examTypes.name },
+    })
+    .from(submissions)
+    // Only papers filed under a question: every value already exists.
+    .innerJoin(questions, eq(questions.id, submissions.questionId))
+    .innerJoin(departments, eq(departments.id, questions.departmentId))
+    .innerJoin(courses, eq(courses.id, questions.courseId))
+    .innerJoin(semesters, eq(semesters.id, questions.semesterId))
+    .innerJoin(examTypes, eq(examTypes.id, questions.examTypeId))
+    .where(eq(submissions.id, submissionId));
+  if (
+    !filed ||
+    filed.status !== "pending_review" ||
+    filed.pendingReportCount > 0
+  ) {
+    return false;
+  }
+
+  const same = (
+    ai: { id: number | null; name: string } | null,
+    mine: { id: number; name: string },
+  ) => ai !== null && ai.id === mine.id && ai.name === mine.name;
+  if (
+    !same(values.department, filed.department) ||
+    !same(values.course, filed.course) ||
+    !same(values.semester, filed.semester) ||
+    !same(values.examType, filed.examType)
+  ) {
+    return false;
+  }
+
+  // Guarded by the status, in case an admin decided in the meantime.
+  const published = await db
+    .update(submissions)
+    .set({ status: "published", autoPublishedAt: new Date() })
+    .where(
+      and(
+        eq(submissions.id, submissionId),
+        eq(submissions.status, "pending_review"),
+      ),
+    )
+    .returning({ id: submissions.id });
+  return published.length > 0;
+}
 
 /** A failure that retrying won't fix. */
 class PermanentError extends Error {}
@@ -435,7 +515,10 @@ export async function runAnalysis(
     db.update(submissionAnalyses).set(values).where(thisRun);
 
   const [row] = await db
-    .select({ fileKey: submissions.fileKey })
+    .select({
+      fileKey: submissions.fileKey,
+      autoPublish: submissionAnalyses.autoPublish,
+    })
     .from(submissionAnalyses)
     .innerJoin(submissions, eq(submissions.id, submissionAnalyses.submissionId))
     .where(thisRun);
@@ -502,6 +585,9 @@ export async function runAnalysis(
       rawResponse: text,
       completedAt: new Date(),
     });
+    if (row.autoPublish) {
+      await publishIfConfirmed(db, job.submissionId, reply.data, values);
+    }
     return "done";
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

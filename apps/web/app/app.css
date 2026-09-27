@@ -119,9 +119,20 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Always reserve the scrollbar's space, so moving between short and long pages
+     doesn't shift the layout sideways. */
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Dialogs and menus lock scrolling (react-remove-scroll) and make up for the hidden
+   scrollbar with a right margin; the gutter above already keeps that space. */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
 }
 
 /* Tailwind's default `container` (max-width per breakpoint), centred with side padding. */

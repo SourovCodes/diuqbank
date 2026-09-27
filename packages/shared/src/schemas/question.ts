@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SUBMISSION_STATUSES } from "../constants";
+import { QUESTION_SORTS, SUBMISSION_STATUSES } from "../constants";
 import { paginatedSchema, paginationQuerySchema } from "./common";
 import {
   courseSchema,
@@ -78,7 +78,12 @@ export const questionDetailSchema = questionSchema.extend({
 });
 export type QuestionDetail = z.infer<typeof questionDetailSchema>;
 
+export const questionSortSchema = z.enum(QUESTION_SORTS);
+export type QuestionSort = z.infer<typeof questionSortSchema>;
+
 export const listQuestionsQuerySchema = paginationQuerySchema.extend({
+  /** `newest`: most recently added paper first (default); `popular`: most viewed. */
+  sort: questionSortSchema.default("newest"),
   departmentId: idQuerySchema.optional(),
   courseId: idQuerySchema.optional(),
   semesterId: idQuerySchema.optional(),

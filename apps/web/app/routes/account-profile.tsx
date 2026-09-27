@@ -5,19 +5,14 @@ import { data, Form, useNavigation } from "react-router";
 import { AvatarInput } from "~/components/avatar-input";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { FormField, FormMessage } from "~/components/form";
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Button, buttonVariants } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
 import { apiFetch, readJson, setCookieHeaders } from "~/lib/api.server";
 import { requireUser } from "~/lib/session.server";
+import { cn } from "~/lib/utils";
 import type { Route } from "./+types/account-profile";
 
 export const meta: Route.MetaFunction = () => [
@@ -179,68 +174,56 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
-function SettingsCard({
-  intent,
+/** A settings row: what it is on the left (from `md`), the controls in a card. */
+function SettingsSection({
   title,
   description,
-  submitLabel,
-  result,
-  formRef,
   children,
 }: {
-  intent: Intent;
   title: string;
   description: string;
-  submitLabel: string;
-  result?: ActionResult;
-  formRef?: React.Ref<HTMLFormElement>;
   children: React.ReactNode;
 }) {
-  const navigation = useNavigation();
-  const submitting =
-    navigation.state === "submitting" &&
-    navigation.formData?.get("intent") === intent;
   const headingId = useId();
-
   return (
-    <Card>
-      <Form
-        method="post"
-        ref={formRef}
-        aria-labelledby={headingId}
-        className="grid gap-6"
-      >
-        <input type="hidden" name="intent" value={intent} />
-        <CardHeader>
-          <CardTitle>
-            <h2 id={headingId}>{title}</h2>
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid max-w-md gap-4">
-          {children}
-          <FormMessage message={result?.error} />
-        </CardContent>
-        <CardFooter className="justify-end gap-3 border-t">
-          {result?.success && !submitting && (
-            <p
-              role="status"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground"
-            >
-              <Check className="size-4" aria-hidden />
-              {result.success}
-            </p>
-          )}
-          <Button type="submit" size="sm" disabled={submitting}>
-            {submitting ? "Saving…" : submitLabel}
-          </Button>
-        </CardFooter>
-      </Form>
-    </Card>
+    <section
+      aria-labelledby={headingId}
+      className="grid gap-4 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-8"
+    >
+      <div className="space-y-1">
+        <h2 id={headingId} className="font-medium">
+          {title}
+        </h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <Card className="gap-0 py-0">{children}</Card>
+    </section>
   );
 }
 
-function AvatarCard({
+function Saved({ message }: { message: string }) {
+  return (
+    <p
+      role="status"
+      className="flex items-center gap-1.5 text-sm text-muted-foreground"
+    >
+      <Check className="size-4" aria-hidden />
+      {message}
+    </p>
+  );
+}
+
+function useSubmitting(...intents: string[]) {
+  const navigation = useNavigation();
+  const intent = navigation.formData?.get("intent");
+  return (
+    navigation.state === "submitting" &&
+    typeof intent === "string" &&
+    intents.includes(intent)
+  );
+}
+
+function AvatarField({
   name,
   image,
   result,
@@ -249,11 +232,7 @@ function AvatarCard({
   image?: string | null;
   result?: ActionResult;
 }) {
-  const navigation = useNavigation();
-  const intent = navigation.formData?.get("intent");
-  const busy =
-    navigation.state === "submitting" &&
-    (intent === "avatar" || intent === "removeAvatar");
+  const busy = useSubmitting("avatar", "removeAvatar");
   const [preview, setPreview] = useState<string | null>(null);
 
   // Free the previous preview's object URL.
@@ -265,70 +244,225 @@ function AvatarCard({
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>Profile photo</h2>
-        </CardTitle>
-        <CardDescription>
-          Shown next to your name. JPEG, PNG or WebP; you’ll crop it to a
-          square.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-4">
-        <ContributorAvatar name={name} image={preview ?? image} size="xl" />
-        <Form
-          method="post"
-          encType="multipart/form-data"
-          className="flex flex-wrap items-center gap-2"
-        >
-          <input type="hidden" name="intent" value="avatar" />
-          <AvatarInput
-            name="file"
-            label={image ? "Change photo" : "Choose photo"}
-            onChange={(file) =>
-              setPreview(file ? URL.createObjectURL(file) : null)
-            }
-          />
-          {preview && (
-            <Button type="submit" size="sm" disabled={busy}>
-              {busy ? "Saving…" : "Save photo"}
-            </Button>
+    <div className="flex items-center gap-4">
+      <ContributorAvatar name={name} image={preview ?? image} size="xl" />
+      <div className="min-w-0 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Form
+            method="post"
+            encType="multipart/form-data"
+            className="flex flex-wrap items-center gap-2"
+          >
+            <input type="hidden" name="intent" value="avatar" />
+            <AvatarInput
+              name="file"
+              label={image ? "Change photo" : "Choose photo"}
+              onChange={(file) =>
+                setPreview(file ? URL.createObjectURL(file) : null)
+              }
+            />
+            {preview && (
+              <Button type="submit" size="sm" disabled={busy}>
+                {busy ? "Saving…" : "Save photo"}
+              </Button>
+            )}
+          </Form>
+          {image && !preview && (
+            <Form method="post">
+              <input type="hidden" name="intent" value="removeAvatar" />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                Remove
+              </Button>
+            </Form>
           )}
-        </Form>
-        {image && !preview && (
-          <Form method="post">
-            <input type="hidden" name="intent" value="removeAvatar" />
+        </div>
+        {result?.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {result.error}
+          </p>
+        ) : result?.success && !busy ? (
+          <Saved message={result.success} />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            JPEG, PNG or WebP. You’ll crop it to a square.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileSection({
+  user,
+  avatar,
+  profile,
+}: {
+  user: { name: string; email: string; image?: string | null };
+  avatar?: ActionResult;
+  profile?: ActionResult;
+}) {
+  const submitting = useSubmitting("profile");
+
+  return (
+    <SettingsSection
+      title="Profile"
+      description="Your photo and name are shown on the papers you contribute."
+    >
+      {/* The photo has forms of its own, so it sits outside the profile form. */}
+      <div className="border-b p-6">
+        {/* Re-mounted when the image changes, which clears the local preview. */}
+        <AvatarField
+          key={user.image ?? "none"}
+          name={user.name}
+          image={user.image}
+          result={avatar}
+        />
+      </div>
+      <Form method="post" aria-label="Profile details">
+        <input type="hidden" name="intent" value="profile" />
+        <div className="grid gap-4 p-6">
+          <FormField
+            label="Name"
+            name="name"
+            defaultValue={user.name}
+            autoComplete="name"
+            required
+            maxLength={MAX_NAME}
+            error={profile?.fieldErrors?.name}
+          />
+          <div className="grid gap-1.5">
+            <FormField
+              label="Email"
+              name="email"
+              type="email"
+              value={user.email}
+              readOnly
+              disabled
+            />
+            <p className="text-xs text-muted-foreground">
+              Private, and can’t be changed yet.
+            </p>
+          </div>
+          <FormMessage message={profile?.error} />
+        </div>
+        <div className="flex items-center justify-end gap-3 border-t px-6 py-4">
+          {profile?.success && !submitting && (
+            <Saved message={profile.success} />
+          )}
+          <Button type="submit" size="sm" disabled={submitting}>
+            {submitting ? "Saving…" : "Save changes"}
+          </Button>
+        </div>
+      </Form>
+    </SettingsSection>
+  );
+}
+
+function PasswordSection({ result }: { result?: ActionResult }) {
+  const submitting = useSubmitting("password");
+  const details = useRef<HTMLDetailsElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  const revokeId = useId();
+  const failed = Boolean(result?.error || result?.fieldErrors);
+
+  // Don't leave passwords sitting in the fields after a successful change.
+  useEffect(() => {
+    if (!result?.success) return;
+    form.current?.reset();
+    if (details.current) details.current.open = false;
+  }, [result]);
+
+  return (
+    <SettingsSection
+      title="Password"
+      description="Use at least 8 characters. You’ll stay signed in on this device."
+    >
+      {/* A native disclosure, so the form opens without JavaScript too. Reopened
+          by the server when the change failed. */}
+      <details ref={details} open={failed || undefined} className="group">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 [&::-webkit-details-marker]:hidden">
+          {result?.success && !submitting ? (
+            <Saved message={result.success} />
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Change the password you log in with.
+            </span>
+          )}
+          <span
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "group-open:hidden",
+            )}
+          >
+            Change password
+          </span>
+        </summary>
+        <Form method="post" ref={form} aria-label="Change password">
+          <input type="hidden" name="intent" value="password" />
+          <div className="grid gap-4 px-6 pb-6">
+            <FormField
+              label="Current password"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              required
+              error={result?.fieldErrors?.currentPassword}
+            />
+            <FormField
+              label="New password"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={MIN_PASSWORD}
+              maxLength={MAX_PASSWORD}
+              error={result?.fieldErrors?.newPassword}
+            />
+            <FormField
+              label="Confirm new password"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              error={result?.fieldErrors?.confirmPassword}
+            />
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={revokeId}
+                name="revokeOtherSessions"
+                defaultChecked
+              />
+              <Label htmlFor={revokeId} className="font-normal">
+                Sign out of all other devices
+              </Label>
+            </div>
+            <FormMessage message={result?.error} />
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t px-6 py-4">
             <Button
-              type="submit"
+              type="button"
               variant="ghost"
               size="sm"
-              disabled={busy}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => {
+                form.current?.reset();
+                if (details.current) details.current.open = false;
+              }}
             >
-              Remove
+              Cancel
             </Button>
-          </Form>
-        )}
-      </CardContent>
-      {(result?.error || (result?.success && !busy)) && (
-        <CardFooter className="border-t">
-          {result.error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {result.error}
-            </p>
-          ) : (
-            <p
-              role="status"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground"
-            >
-              <Check className="size-4" aria-hidden />
-              {result.success}
-            </p>
-          )}
-        </CardFooter>
-      )}
-    </Card>
+            <Button type="submit" size="sm" disabled={submitting}>
+              {submitting ? "Saving…" : "Update password"}
+            </Button>
+          </div>
+        </Form>
+      </details>
+    </SettingsSection>
   );
 }
 
@@ -337,98 +471,18 @@ export default function AccountProfile({
   actionData,
 }: Route.ComponentProps) {
   const { user } = loaderData;
-  const avatar = actionData?.intent === "avatar" ? actionData : undefined;
-  const profile = actionData?.intent === "profile" ? actionData : undefined;
-  const password = actionData?.intent === "password" ? actionData : undefined;
-  const passwordForm = useRef<HTMLFormElement>(null);
-  const revokeId = useId();
-
-  // Don't leave passwords sitting in the fields after a successful change.
-  useEffect(() => {
-    if (password?.success) passwordForm.current?.reset();
-  }, [password]);
+  const pick = (intent: Intent) =>
+    actionData?.intent === intent ? actionData : undefined;
 
   return (
-    <div className="space-y-6">
-      {/* Re-mounted when the image changes, which clears the local preview. */}
-      <AvatarCard
-        key={user.image ?? "none"}
-        name={user.name}
-        image={user.image}
-        result={avatar}
+    <div className="space-y-8">
+      <ProfileSection
+        user={user}
+        avatar={pick("avatar")}
+        profile={pick("profile")}
       />
-      <SettingsCard
-        intent="profile"
-        title="Profile"
-        description="Your name is shown publicly on the papers you contribute."
-        submitLabel="Save changes"
-        result={profile}
-      >
-        <FormField
-          label="Name"
-          name="name"
-          defaultValue={user.name}
-          autoComplete="name"
-          required
-          maxLength={MAX_NAME}
-          error={profile?.fieldErrors?.name}
-        />
-        <div className="grid gap-1.5">
-          <FormField
-            label="Email"
-            name="email"
-            type="email"
-            value={user.email}
-            readOnly
-            disabled
-          />
-          <p className="text-xs text-muted-foreground">
-            Your email is private and can’t be changed yet.
-          </p>
-        </div>
-      </SettingsCard>
-
-      <SettingsCard
-        intent="password"
-        title="Password"
-        description="Use at least 8 characters. You’ll stay signed in on this device."
-        submitLabel="Change password"
-        result={password}
-        formRef={passwordForm}
-      >
-        <FormField
-          label="Current password"
-          name="currentPassword"
-          type="password"
-          autoComplete="current-password"
-          required
-          error={password?.fieldErrors?.currentPassword}
-        />
-        <FormField
-          label="New password"
-          name="newPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={MIN_PASSWORD}
-          maxLength={MAX_PASSWORD}
-          error={password?.fieldErrors?.newPassword}
-        />
-        <FormField
-          label="Confirm new password"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          error={password?.fieldErrors?.confirmPassword}
-        />
-        <div className="flex items-center gap-2">
-          <Checkbox id={revokeId} name="revokeOtherSessions" defaultChecked />
-          <Label htmlFor={revokeId} className="font-normal">
-            Sign out of all other devices
-          </Label>
-        </div>
-      </SettingsCard>
+      <Separator />
+      <PasswordSection result={pick("password")} />
     </div>
   );
 }

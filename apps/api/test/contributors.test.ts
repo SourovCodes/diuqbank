@@ -28,13 +28,13 @@ async function seedQuestions() {
 
 describe("GET /api/v1/contributors", () => {
   it("lists only users with published papers, most published first", async () => {
-    const { midterm, final } = await seedQuestions();
+    const { t, midterm, final } = await seedQuestions();
     const newcomer = await seedUser("Newcomer");
     const top = await seedUser("Top Contributor");
     const lurker = await seedUser("Lurker");
 
-    await seedSubmission(midterm.id, { uploaderId: top.id });
-    await seedSubmission(final.id, { uploaderId: top.id });
+    await seedSubmission(midterm.id, { uploaderId: top.id, viewCount: 5 });
+    await seedSubmission(final.id, { uploaderId: top.id, viewCount: 7 });
     await seedSubmission(final.id, { uploaderId: top.id, status: "rejected" });
     await seedSubmission(midterm.id, {
       uploaderId: newcomer.id,
@@ -55,9 +55,76 @@ describe("GET /api/v1/contributors", () => {
         image: null,
         joinedAt: top.createdAt.toISOString(),
         publishedCount: 2,
+        viewCount: 12,
+        departments: [
+          {
+            id: t.cse.id,
+            name: t.cse.name,
+            shortName: t.cse.shortName,
+            publishedCount: 2,
+          },
+        ],
       },
     ]);
     expect(JSON.stringify(body)).not.toContain("@example.com");
+  });
+
+  it("pages through a contributor's papers, newest first", async () => {
+    const { midterm } = await seedQuestions();
+    const contributor = await seedUser("Prolific Contributor");
+    const papers = [];
+    for (let day = 1; day <= 3; day++) {
+      papers.push(
+        await seedSubmission(midterm.id, {
+          uploaderId: contributor.id,
+          createdAt: new Date(2026, 0, day),
+        }),
+      );
+    }
+    const page = async (n: number) =>
+      (
+        await (
+          await api(
+            `/api/v1/contributors/${contributor.id}?page=${n}&pageSize=2`,
+          )
+        ).json<ContributorDetail>()
+      ).submissions;
+
+    const first = await page(1);
+    expect(first.total).toBe(3);
+    expect(first.items.map((s) => s.id)).toEqual([
+      papers[2]!.id,
+      papers[1]!.id,
+    ]);
+    expect((await page(2)).items.map((s) => s.id)).toEqual([papers[0]!.id]);
+  });
+
+  it("filters a contributor's papers by department", async () => {
+    const { t, midterm } = await seedQuestions();
+    const contributor = await seedUser("Two Departments");
+    const circuits = await seedQuestion({
+      departmentId: t.eee.id,
+      courseId: t.circuits.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.final.id,
+    });
+    await seedSubmission(midterm.id, { uploaderId: contributor.id });
+    await seedSubmission(midterm.id, { uploaderId: contributor.id });
+    const eee = await seedSubmission(circuits.id, {
+      uploaderId: contributor.id,
+    });
+
+    const body = await (
+      await api(
+        `/api/v1/contributors/${contributor.id}?departmentId=${t.eee.id}`,
+      )
+    ).json<ContributorDetail>();
+    expect(body.departments.map((d) => [d.id, d.publishedCount])).toEqual([
+      [t.cse.id, 2],
+      [t.eee.id, 1],
+    ]);
+    expect(body.submissions.total).toBe(1);
+    expect(body.submissions.items.map((s) => s.id)).toEqual([eee.id]);
   });
 
   it("rejects invalid pagination", async () => {
@@ -86,7 +153,8 @@ describe("GET /api/v1/contributors/:id", () => {
       name: "Busy Contributor",
       publishedCount: 1,
     });
-    expect(body.submissions).toEqual([
+    expect(body.submissions).toMatchObject({ page: 1, total: 1 });
+    expect(body.submissions.items).toEqual([
       {
         id: published.id,
         status: "published",

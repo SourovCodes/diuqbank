@@ -25,8 +25,8 @@ import {
   TriangleAlert,
   Wand2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link, redirect, useRevalidator } from "react-router";
+import { useState } from "react";
+import { Link, redirect } from "react-router";
 import {
   ActionDialog,
   ConfirmAction,
@@ -46,6 +46,7 @@ import {
 } from "~/components/classification-fields";
 import { PaperDetailsFields } from "~/components/paper-details-fields";
 import { PdfViewer } from "~/components/pdf-viewer";
+import { useRefreshWhile } from "~/hooks/use-refresh-while";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -298,7 +299,7 @@ function ClassifyDialog({
       className="sm:max-w-2xl"
     >
       {(fieldErrors) => (
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <ClassificationFields
             {...taxonomy}
             fieldErrors={fieldErrors}
@@ -384,20 +385,6 @@ function ClassificationCard({
 const isChecking = (analysis: SubmissionAnalysis | null) =>
   analysis?.status === "queued" || analysis?.status === "processing";
 
-/** Reloads the page every few seconds while the AI is still checking the paper. */
-function useRefreshWhileChecking(checking: boolean) {
-  const { revalidate, state } = useRevalidator();
-  useEffect(() => {
-    if (!checking) return;
-    const timer = setInterval(() => {
-      if (state === "idle" && document.visibilityState === "visible") {
-        void revalidate();
-      }
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [checking, revalidate, state]);
-}
-
 function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2">
@@ -422,7 +409,7 @@ function AnalysisCard({
   const analysis = submission.analysisDetail;
   const { busy, run } = useFormAction();
   const checking = isChecking(analysis);
-  useRefreshWhileChecking(checking);
+  useRefreshWhile(checking);
 
   const rows =
     analysis?.values && compareWithAnalysis(submission, analysis.values);

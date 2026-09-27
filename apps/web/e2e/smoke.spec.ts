@@ -92,14 +92,22 @@ test("course filter follows the selected department", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
   );
+
+  // The next visit opens on the department picked last.
+  await page.goto("/questions");
+  await expect(page).toHaveURL(/\/questions\?departmentId=1$/);
 });
 
-/** A paper switch: the list's link, or on phones the chip row's, which comes first. */
-const paperLink = (page: Page, n: number) =>
+/** A paper in the list (or, on phones, the switcher) by its title. */
+const paperLink = (page: Page, title: string) =>
   page
-    .getByRole("link", { name: new RegExp(`^Paper ${n}(?!\\d)`) })
+    .getByRole("link", { name: new RegExp(`^${title}`) })
     .filter({ visible: true })
     .first();
+
+// Papers are titled by section and batch, otherwise by uploader.
+const SEED_01 = "Section A · Batch 61";
+const SEED_02 = "By Tanvir Hasan";
 
 test("question page embeds the PDF, shows its uploader and switches submissions", async ({
   page,
@@ -110,7 +118,10 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   );
 
   // The newest published paper (seed-01, by Ayesha) is selected by default.
-  await expect(paperLink(page, 1)).toHaveAttribute("aria-current", "true");
+  await expect(paperLink(page, SEED_01)).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   const viewer = page.getByTestId("pdf-viewer");
   await expect(viewer).toHaveAttribute(
     "data",
@@ -120,20 +131,25 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   await expect(
     page.getByTestId("pdf-viewer-fallback").locator("a[download]"),
   ).toHaveAttribute("href", "/api/v1/submissions/seed-01/file");
-  await expect(page.getByRole("link", { name: /Ayesha Rahman/ })).toBeVisible();
+  // The uploader card links to their profile.
+  await expect(
+    page.getByRole("link", { name: /^Ayesha Rahman/ }),
+  ).toBeVisible();
   // The optional section and batch tell papers apart.
-  await expect(paperLink(page, 1)).toContainText("Section A · Batch 61");
 
-  await paperLink(page, 2).click();
+  await paperLink(page, SEED_02).click();
   await expect(page).toHaveURL(/submission=seed-02/);
-  await expect(paperLink(page, 2)).toHaveAttribute("aria-current", "true");
+  await expect(paperLink(page, SEED_02)).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await expect(viewer).toHaveAttribute("data", /seed-02/);
-  await expect(page.getByRole("link", { name: /Tanvir Hasan/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Tanvir Hasan/ })).toBeVisible();
 
   // Switching back and forth keeps exactly one toolbar and viewer on the page.
-  await paperLink(page, 1).click();
+  await paperLink(page, SEED_01).click();
   await expect(viewer).toHaveAttribute("data", /seed-01/);
-  await paperLink(page, 2).click();
+  await paperLink(page, SEED_02).click();
   await expect(viewer).toHaveAttribute("data", /seed-02/);
   await expect(page.getByRole("link", { name: /^Log in to like/ })).toHaveCount(
     1,
@@ -212,7 +228,7 @@ test("contributors index leads to a contributor's submissions", async ({
   // Published submissions open the question with that paper selected.
   await page.getByRole("link", { name: /Algorithms/ }).click();
   await expect(page).toHaveURL(/\/questions\/3\?submission=seed-04$/);
-  await expect(page.getByRole("link", { name: /Nusrat Jahan/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Nusrat Jahan/ })).toBeVisible();
 });
 
 test("a contributor can upload a paper with a new course", async ({ page }) => {
@@ -230,11 +246,19 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
   const courseName = `E2E Course ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);
 
-  await page.getByRole("link", { name: "See your contributions" }).click();
-  await expect(page.getByText(courseName)).toBeVisible();
-  await expect(
-    page.getByText("Includes new entries awaiting approval"),
-  ).toBeVisible();
+  // The status page says where the paper stands and what happened so far.
+  await expect(page.getByRole("heading", { name: courseName })).toBeVisible();
+  await expect(page.getByText("Pending review").first()).toBeVisible();
+  await expect(page.getByText("Activity", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "My submissions" }).first().click();
+  const card = page
+    .getByRole("list", { name: "My submissions" })
+    .getByRole("listitem")
+    .filter({ hasText: courseName });
+  await expect(card).toBeVisible();
+  await card.getByRole("link", { name: courseName }).click();
+  await expect(page).toHaveURL(/\/account\/submissions\/[^/?]+$/);
 });
 
 type ButtonLocator = ReturnType<Page["getByRole"]>;
@@ -414,7 +438,10 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "My submissions" }).click();
   await expect(page).toHaveURL(/\/account\/submissions$/);
-  const row = page.getByRole("row").filter({ hasText: courseName });
+  const row = page
+    .getByRole("list", { name: "My submissions" })
+    .getByRole("listitem")
+    .filter({ hasText: courseName });
   await expect(row).toContainText("Pending review");
 
   // Uploaders can open their own pending PDF.
@@ -423,11 +450,11 @@ test("a contributor can manage their submissions and profile", async ({
   });
   await expect(async () => {
     await actions.click();
-    await expect(page.getByRole("menuitem", { name: "Preview" })).toBeVisible({
-      timeout: 1_000,
-    });
+    await expect(
+      page.getByRole("menuitem", { name: "Preview PDF" }),
+    ).toBeVisible({ timeout: 1_000 });
   }).toPass();
-  const preview = page.getByRole("menuitem", { name: "Preview" });
+  const preview = page.getByRole("menuitem", { name: "Preview PDF" });
   const previewFile = await page.request.get(
     (await preview.getAttribute("href"))!,
   );
@@ -446,16 +473,17 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Name", { exact: true }).fill("Renamed Contributor");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Profile updated")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Renamed Contributor",
   );
 
-  // Wrong current password, then a real change.
+  // Wrong current password, then a real change. The form opens from a disclosure.
   const newPassword = "another-horse-battery";
+  await page.getByText("Change password", { exact: true }).click();
   await page.getByLabel("Current password").fill("not-my-password");
   await page.getByLabel("New password", { exact: true }).fill(newPassword);
   await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Change password" }).click();
+  await page.getByRole("button", { name: "Update password" }).click();
   await expect(
     page.getByText("Your current password is incorrect."),
   ).toBeVisible();
@@ -463,8 +491,9 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Current password").fill("correct-horse-battery");
   await page.getByLabel("New password", { exact: true }).fill(newPassword);
   await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Change password" }).click();
+  await page.getByRole("button", { name: "Update password" }).click();
   await expect(page.getByText("Password changed")).toBeVisible();
+  await expect(page.getByLabel("Current password")).toBeHidden();
 
   // The new password works.
   await logOut(page);
@@ -473,7 +502,7 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Password").fill(newPassword);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Renamed Contributor",
   );
 });

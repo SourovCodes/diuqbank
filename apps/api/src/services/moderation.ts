@@ -172,7 +172,11 @@ export async function updateSubmissionStatus(
     );
   }
   if (submission.status !== status) {
-    await db.update(submissions).set({ status }).where(eq(submissions.id, id));
+    // An admin's decision replaces the AI's.
+    await db
+      .update(submissions)
+      .set({ status, autoPublishedAt: null })
+      .where(eq(submissions.id, id));
   }
   return requireAdminSubmission(db, id);
 }
