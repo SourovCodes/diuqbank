@@ -38,6 +38,8 @@ if (!token) {
 }
 
 const apiDir = path.join(import.meta.dirname, "..");
+// Wrangler runs where the Worker's config (and its local state) lives.
+const webDir = path.join(apiDir, "../web");
 const cacheDir = path.join(apiDir, ".legacy-import");
 const bucket = "questionbank-papers";
 const target = remote ? "--remote" : "--local";
@@ -49,7 +51,7 @@ const DOWNLOAD_CONCURRENCY = 8;
 
 function wrangler(args, { json = false } = {}) {
   const output = execFileSync("pnpm", ["exec", "wrangler", ...args], {
-    cwd: apiDir,
+    cwd: webDir,
     encoding: "utf8",
     stdio: ["ignore", json ? "pipe" : "inherit", "inherit"],
     maxBuffer: 256 * 1024 * 1024,

@@ -1,3 +1,4 @@
+import api, { type QueueJob } from "@qb/api";
 import { createRequestHandler } from "react-router";
 
 const requestHandler = createRequestHandler(
@@ -6,13 +7,14 @@ const requestHandler = createRequestHandler(
 );
 
 export default {
-  async fetch(request, env) {
-    // Browsers only ever talk to this origin: API and auth calls are forwarded to the
-    // API worker, so session cookies stay first-party and no CORS is needed.
-    // Native apps call the API worker directly.
+  async fetch(request, env, ctx) {
+    // The API (and Better Auth) lives under /api/* on the same origin, so session
+    // cookies stay first-party and no CORS is needed. Native apps call it here too.
     if (new URL(request.url).pathname.startsWith("/api/")) {
-      return env.API.fetch(request);
+      return api.fetch(request, env, ctx);
     }
     return requestHandler(request);
   },
-} satisfies ExportedHandler<Env>;
+  // Upload analysis and PDF watermarks (queue consumers in wrangler.jsonc).
+  queue: api.queue,
+} satisfies ExportedHandler<Env, QueueJob>;

@@ -3,17 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "description": "The API (Hono + Better Auth + D1/R2/Queues). Runs inside apps/web's Worker.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "dev": "wrangler dev --port 8787",
-    "build": "wrangler deploy --dry-run --outdir dist",
-    "cf-typegen": "wrangler types",
-    "postinstall": "wrangler types",
-    "typecheck": "wrangler types && tsc",
+    "cf-typegen": "wrangler types -c ../web/wrangler.jsonc --include-env=false",
+    "postinstall": "pnpm cf-typegen",
+    "typecheck": "pnpm cf-typegen && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local --cwd ../web",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --cwd ../web",
     "db:seed:local": "node seeds/seed-local.mjs",
     "import-legacy": "node scripts/import-legacy.mjs",
     "make-admin": "node scripts/make-admin.mjs"

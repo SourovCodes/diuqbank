@@ -1,6 +1,6 @@
 # QuestionBank – working notes
 
-pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overview.
+pnpm monorepo, one Cloudflare Worker: `apps/web` (React Router SSR) runs `@qb/api` (Hono, a library in `apps/api`) under `/api/*` and its queue handlers. The Worker config (bindings, vars, `.dev.vars`, local state) lives in `apps/web`. See README.md for the architecture overview.
 
 ## Commands
 
@@ -9,7 +9,7 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 - `pnpm test:e2e` – Playwright; needs `pnpm db:migrate && pnpm db:seed` first (tests rely on `apps/api/seeds/dev.sql`).
 - After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns.
 - Triggers (and other SQL drizzle-kit can't model) go in a custom migration: `pnpm --filter @qb/api exec drizzle-kit generate --custom --name=<name>`, separated with `--> statement-breakpoint` as in `0001_triggers.sql`. `wrangler d1` and the Vitest pool both split `BEGIN … END` trigger bodies correctly.
-- After editing a `wrangler.jsonc`: `pnpm --filter <pkg> cf-typegen`.
+- After editing `apps/web/wrangler.jsonc`: `pnpm --filter @qb/web cf-typegen` and `pnpm --filter @qb/api cf-typegen`. A new binding, var or secret the API uses also goes in `apps/api/src/env.d.ts` (the API declares what it needs; vars are typed as plain strings on both sides).
 
 ## Conventions
 
@@ -20,7 +20,7 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 - `submissions.like_count`, `dislike_count` and `pending_report_count` are maintained by triggers: write to `submission_votes` / `submission_reports`, never to the counters. View counters are bumped with raw SQL so `updated_at` doesn't change.
 - Only protected routes look up sessions (`requireAuth`); public reads must stay session-free.
 - Admin-only API routes live in `routes/admin.ts` behind `requireAdmin` (403 for non-admins). Web admin pages sit under `/admin` (`routes/admin*.tsx`): the layout calls `requireAdmin`, child loaders use `adminGetJson` and actions `adminRequest` (`app/lib/admin.server.ts`).
-- Web: data loading happens in loaders/actions via `apiFetch` (`app/lib/api.server.ts`), never directly against D1/R2. Server-only modules end in `.server.ts`.
+- Web: data loading happens in loaders/actions via `apiFetch` (`app/lib/api.server.ts`, an in-process call into `@qb/api`), never directly against D1/R2. Server-only modules end in `.server.ts`.
 - UI uses shadcn/ui components in `app/components/ui` (add with `pnpm dlx shadcn@latest add <name>` from `apps/web`).
 - The site and the admin panel share one look: `PageHeader` (breadcrumbs, title, actions), `EmptyState` (shadcn Empty), `StatusBadge`, `ContributorAvatar` (shadcn Avatar), `TablePagination`, `UrlTabs` (URL-driven Tabs), and `components/actions.tsx` (`ActionDialog`, `ConfirmAction`, `useFormAction`, with sonner toasts). Public lists (questions, contributors, a contributor's papers) are card grids (`CARD_GRID`, `LINK_CARD`, `STRETCHED_LINK` in `components/question-cards.tsx`); account and admin lists are bordered `Table`s with a `bg-muted` header and row `DropdownMenu`s. When an action removes the row it was started from, run it through a `useFormAction` owned by the page, or the result toast is lost with the row.
 - Sign-in is Google-only (Better Auth `socialProviders.google`); there are no password endpoints. API tests sign in with `signIn()` (Better Auth `testUtils`), e2e tests with `logInAs(page, NEW_USER | SEED_ADMIN, path)`, which claims a session that Playwright's global setup wrote to local D1 (`e2e/sessions.ts`). Don't write to the local D1 file while tests run: the dev server's queries then fail.

@@ -7,7 +7,7 @@
     "node": ">=22.22"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @qb/api --filter @qb/web dev",
+    "dev": "pnpm --filter @qb/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",

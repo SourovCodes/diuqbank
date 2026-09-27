@@ -27,7 +27,7 @@ export default defineConfig({
     ],
   },
   server: {
-    // Must match SITE_URL in apps/api/wrangler.jsonc.
+    // Must match SITE_URL in wrangler.jsonc.
     port: 5173,
     strictPort: true,
   },

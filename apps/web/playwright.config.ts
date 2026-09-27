@@ -19,16 +19,9 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   // Local D1 must be migrated first: `pnpm db:migrate` from the repo root.
-  webServer: [
-    {
-      command: "pnpm --filter @qb/api dev",
-      url: "http://localhost:8787/api/v1/health",
-      reuseExistingServer: !isCI,
-    },
-    {
-      command: "pnpm --filter @qb/web dev",
-      url: "http://localhost:5173",
-      reuseExistingServer: !isCI,
-    },
-  ],
+  webServer: {
+    command: "pnpm --filter @qb/web dev",
+    url: "http://localhost:5173/api/v1/health",
+    reuseExistingServer: !isCI,
+  },
 });

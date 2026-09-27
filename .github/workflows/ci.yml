@@ -53,9 +53,9 @@ jobs:
         run: pnpm --filter @qb/web exec playwright install-deps chromium
       - name: Prepare local API secrets and database
         run: |
-          printf "BETTER_AUTH_SECRET=%s\n" "$(openssl rand -base64 32)" > apps/api/.dev.vars
+          printf "BETTER_AUTH_SECRET=%s\n" "$(openssl rand -base64 32)" > apps/web/.dev.vars
           # Placeholder Google client: the e2e tests stop at Google's (stubbed) sign-in page.
-          printf "GOOGLE_CLIENT_ID=e2e-client-id\nGOOGLE_CLIENT_SECRET=e2e-client-secret\n" >> apps/api/.dev.vars
+          printf "GOOGLE_CLIENT_ID=e2e-client-id\nGOOGLE_CLIENT_SECRET=e2e-client-secret\n" >> apps/web/.dev.vars
           pnpm db:migrate
           pnpm db:seed
       - run: pnpm test:e2e
@@ -84,13 +84,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      # Schema first, so new code never runs against the old one. Then the API,
-      # which the web worker's service binding points at.
+      # Schema first, so new code never runs against the old one.
       - name: Apply D1 migrations
         run: pnpm --filter @qb/api db:migrate:remote
-      - name: Deploy API worker
-        working-directory: apps/api
-        run: pnpm exec wrangler deploy --var "SITE_URL:${{ vars.SITE_URL }}"
-      - name: Deploy web worker
+      - name: Deploy the Worker
         working-directory: apps/web
-        run: pnpm build && pnpm exec wrangler deploy
+        run: pnpm build && pnpm exec wrangler deploy --var "SITE_URL:${{ vars.SITE_URL }}"

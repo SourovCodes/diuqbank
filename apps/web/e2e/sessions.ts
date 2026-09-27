@@ -15,7 +15,7 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-const apiDir = path.join(import.meta.dirname, "../../api");
+const webDir = path.join(import.meta.dirname, "..");
 const sessionsDir = path.join(import.meta.dirname, ".sessions");
 const poolFile = path.join(sessionsDir, "pool.json");
 const claimsDir = path.join(sessionsDir, "claims");
@@ -30,21 +30,21 @@ export type SessionKind = keyof typeof POOL_SIZE;
 export type TestSession = { userId: string; email: string; cookie: string };
 type Pool = Record<SessionKind, TestSession[]>;
 
-/** The API's session-cookie secret, from `apps/api/.dev.vars` (CI writes a random one). */
+/** The API's session-cookie secret, from `apps/web/.dev.vars` (CI writes a random one). */
 function authSecret() {
-  const vars = readFileSync(path.join(apiDir, ".dev.vars"), "utf8");
+  const vars = readFileSync(path.join(webDir, ".dev.vars"), "utf8");
   const secret = /^BETTER_AUTH_SECRET=(.*)$/m
     .exec(vars)?.[1]
     ?.trim()
     .replace(/^"(.*)"$/, "$1");
   if (!secret)
-    throw new Error("BETTER_AUTH_SECRET missing from apps/api/.dev.vars");
+    throw new Error("BETTER_AUTH_SECRET missing from apps/web/.dev.vars");
   return secret;
 }
 
 function localDb() {
   const dir = path.join(
-    apiDir,
+    webDir,
     ".wrangler/state/v3/d1/miniflare-D1DatabaseObject",
   );
   const file = readdirSync(dir).find(
