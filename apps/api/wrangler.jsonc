@@ -9,7 +9,7 @@
   "vars": {
     // The public site (the web worker, which proxies /api/* here). Auth runs on this
     // origin and trusts only it, and its domain goes in the watermark on public PDFs.
-    // CI sets the production value at deploy time (`--var SITE_URL:…`).
+    // CI sets the deployed value at deploy time (`--var SITE_URL:…`).
     "SITE_URL": "http://localhost:5173",
     // AI analysis of uploads: PDFs are compressed (only to cut Gemini's input cost),
     // then read by Gemini. Published papers are watermarked by the same PDF processor.
@@ -21,8 +21,8 @@
     {
       "binding": "DB",
       "database_name": "questionbank",
-      // Local-only placeholder. Replace with the real id from `wrangler d1 create` before deploying.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Production. Local dev and tests use a local copy, whatever the id.
+      "database_id": "ad50a07f-3aed-4006-9974-78df2b9bcfc6",
       "migrations_dir": "migrations",
     },
   ],
@@ -54,5 +54,54 @@
         "retry_delay": 30,
       },
     ],
+  },
+  // The top level is production (and local dev). `staging` is deployed from the dev
+  // branch as questionbank-api-staging, with its own database, bucket and queues.
+  // Bindings and vars aren't inherited, so every one is repeated here.
+  "env": {
+    "staging": {
+      "vars": {
+        "SITE_URL": "http://localhost:5173",
+        "PDF_PROCESSOR_URL": "https://pdf-processor.diuqbank.com",
+        "GEMINI_MODEL": "gemini-3.8-flash",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "questionbank-staging",
+          "database_id": "3f71cc27-97ef-409a-8e8f-65aecdfc3fc7",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "questionbank-papers-staging",
+        },
+      ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "ANALYSIS_QUEUE",
+            "queue": "qb-submission-analysis-staging",
+          },
+          { "binding": "WATERMARK_QUEUE", "queue": "qb-pdf-watermark-staging" },
+        ],
+        "consumers": [
+          {
+            "queue": "qb-submission-analysis-staging",
+            "max_batch_size": 1,
+            "max_retries": 3,
+            "retry_delay": 30,
+          },
+          {
+            "queue": "qb-pdf-watermark-staging",
+            "max_batch_size": 1,
+            "max_retries": 3,
+            "retry_delay": 30,
+          },
+        ],
+      },
+    },
   },
 }

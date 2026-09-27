@@ -1,13 +1,16 @@
 // Grants the admin role to an existing account, e.g. the first admin in production.
-// Usage: pnpm make-admin <email> [--remote]   (local D1 unless --remote is given)
+// Usage: pnpm make-admin <email> [--remote | --staging]
+//   (local D1 unless --remote (production) or --staging is given)
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
 const args = process.argv.slice(2);
-const remote = args.includes("--remote");
+const staging = args.includes("--staging");
+const remote = staging || args.includes("--remote");
+const where = staging ? "staging" : remote ? "production" : "local";
 const email = args.find((arg) => !arg.startsWith("--"));
 if (!email || !email.includes("@")) {
-  console.error("Usage: pnpm make-admin <email> [--remote]");
+  console.error("Usage: pnpm make-admin <email> [--remote | --staging]");
   process.exit(1);
 }
 
@@ -20,7 +23,8 @@ const output = execFileSync(
     "d1",
     "execute",
     "DB",
-    remote ? "--remote" : "--local",
+    ...(remote ? ["--remote"] : ["--local"]),
+    ...(staging ? ["--env", "staging"] : []),
     "--json",
     "--command",
     `UPDATE "user" SET role = 'admin' WHERE lower(email) = ${quoted} RETURNING id`,
@@ -38,4 +42,4 @@ if (updated === 0) {
   console.error(`No account with the email ${email}. Sign up first.`);
   process.exit(1);
 }
-console.log(`${email} is now an admin (${remote ? "remote" : "local"} D1).`);
+console.log(`${email} is now an admin (${where} D1).`);

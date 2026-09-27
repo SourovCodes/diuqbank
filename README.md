@@ -73,7 +73,7 @@ Users with the `admin` role get an **Admin panel** entry in the account menu, le
 - **Catalog** — add, rename and delete departments, courses, semesters and exam types. Entries in use can be renamed but not deleted; a course keeps its department because questions depend on it.
 - **Users** — search by name or email, and grant or remove admin rights. Admins can't change their own role, so there is always at least one.
 
-`role` is a Better Auth additional field with `input: false`, so sign-up and `update-user` can't set it. To make yourself an admin, log in with Google once, then run `pnpm make-admin you@gmail.com` (add `--remote` for the deployed database). `pnpm db:seed` also adds an admin user without a login, for the e2e tests.
+`role` is a Better Auth additional field with `input: false`, so sign-up and `update-user` can't set it. To make yourself an admin, log in with Google once, then run `pnpm make-admin you@gmail.com` (add `--remote` for production or `--staging` for staging). `pnpm db:seed` also adds an admin user without a login, for the e2e tests.
 
 ## Stack
 
@@ -146,17 +146,17 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 
 ## Common commands
 
-| Command            | What it does                                                          |
-| ------------------ | --------------------------------------------------------------------- |
-| `pnpm dev`         | Run API and web workers locally                                       |
-| `pnpm check`       | Lint + format check + typecheck + unit/integration tests              |
-| `pnpm test`        | Unit and integration tests for every package                          |
-| `pnpm test:e2e`    | Playwright end-to-end tests (needs `pnpm db:migrate && pnpm db:seed`) |
-| `pnpm db:generate` | Generate a SQL migration after changing `apps/api/src/db/schema`      |
-| `pnpm db:migrate`  | Apply pending migrations to the local D1 database                     |
-| `pnpm db:seed`     | Reset local question data to the sample set, with an admin login      |
-| `pnpm make-admin`  | Give an existing account the admin role (`<email> [--remote]`)        |
-| `pnpm format`      | Format the codebase with Prettier                                     |
+| Command            | What it does                                                                |
+| ------------------ | --------------------------------------------------------------------------- |
+| `pnpm dev`         | Run API and web workers locally                                             |
+| `pnpm check`       | Lint + format check + typecheck + unit/integration tests                    |
+| `pnpm test`        | Unit and integration tests for every package                                |
+| `pnpm test:e2e`    | Playwright end-to-end tests (needs `pnpm db:migrate && pnpm db:seed`)       |
+| `pnpm db:generate` | Generate a SQL migration after changing `apps/api/src/db/schema`            |
+| `pnpm db:migrate`  | Apply pending migrations to the local D1 database                           |
+| `pnpm db:seed`     | Reset local question data to the sample set, with an admin login            |
+| `pnpm make-admin`  | Give an existing account the admin role (`<email> [--remote \| --staging]`) |
+| `pnpm format`      | Format the codebase with Prettier                                           |
 
 ## Testing strategy
 
@@ -167,18 +167,24 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 
 ## Deploying
 
-CI deploys `main` after lint, tests and e2e pass (the `deploy` job in `.github/workflows/ci.yml`): it applies the D1 migrations, deploys the API worker, then builds and deploys the web worker. Nothing in the repo names the production domain. The site's URL is the `SITE_URL` var of the API worker (auth origin, trusted origin, and the domain in PDF watermarks). It defaults to `http://localhost:5173`, and CI replaces it with the `SITE_URL` repository variable at deploy time. To move the site, change that variable, the custom domain and the Google redirect URI, then re-run the deploy.
+There are two sites, each with its own workers, D1 database, R2 bucket and queues:
 
-One-time setup (the deploy job is skipped until `SITE_URL` is set):
+| Branch | Site       | Workers                                                | Wrangler environment |
+| ------ | ---------- | ------------------------------------------------------ | -------------------- |
+| `dev`  | staging    | `questionbank-api-staging`, `questionbank-web-staging` | `env.staging`        |
+| `main` | production | `questionbank-api`, `questionbank-web`                 | top level            |
 
-1. Create the resources, from `apps/api` (after `pnpm exec wrangler login`):
-   - `wrangler d1 create questionbank`, and put its id in `apps/api/wrangler.jsonc` (replacing the `0000…` placeholder)
-   - `wrangler r2 bucket create questionbank-papers`
-   - `wrangler queues create qb-submission-analysis` and `wrangler queues create qb-pdf-watermark`
-2. Set the API secrets with `wrangler secret put <NAME>`: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEMINI_API_KEY`, `COMPRESSOR_API_KEY`. They survive deploys, so CI never sees them.
-3. Create a Cloudflare API token with Workers Scripts, D1, Workers R2 Storage and Queues edit permissions. In GitHub (Settings → Secrets and variables → Actions), add the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` and the variable `SITE_URL` (e.g. `https://example.com`, no trailing path).
-4. Push to `main` (or re-run the latest CI run) to deploy. Then attach the domain in the dashboard: Workers & Pages → `questionbank-web` → Settings → Domains & Routes → Custom domain. The web worker's `wrangler.jsonc` has no `routes`, so deploys leave that domain alone.
-5. Add `<SITE_URL>/api/auth/callback/google` to the Google OAuth client's redirect URIs, log in, and promote yourself with `pnpm make-admin <email> --remote`.
+Work goes feature branch → PR into `dev` (deploys staging) → PR `dev` → `main` (deploys production). The `deploy` job in `.github/workflows/ci.yml` runs after lint, tests and e2e pass. It applies the D1 migrations, deploys the API worker, then builds and deploys the web worker (`CLOUDFLARE_ENV=staging` selects the staging config at build time).
+
+Nothing in the repo names a domain. The site's URL is the API worker's `SITE_URL` var (auth origin, trusted origin, and the domain in PDF watermarks). It is `http://localhost:5173` in `wrangler.jsonc`, and CI replaces it at deploy time with the repository variable `PRODUCTION_SITE_URL` or `STAGING_SITE_URL`. To move a site, change that variable, attach the domain in the dashboard (Workers & Pages → the web worker → Settings → Domains & Routes), add the Google redirect URI, then re-run the deploy. The web workers' `wrangler.jsonc` has no `routes`, so deploys leave dashboard domains alone.
+
+One-time setup per site (a site's deploy is skipped until its URL variable is set). From `apps/api`, add `--env staging` for staging:
+
+1. Resources: `wrangler d1 create questionbank` (or `questionbank-staging`) and put its id in `apps/api/wrangler.jsonc`, `wrangler r2 bucket create questionbank-papers[-staging]`, and `wrangler queues create` for `qb-submission-analysis[-staging]` and `qb-pdf-watermark[-staging]`.
+2. Secrets, with `wrangler secret put <NAME> [--env staging]`: `BETTER_AUTH_SECRET` (different per site), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEMINI_API_KEY`, `COMPRESSOR_API_KEY`. They survive deploys, so CI never sees them.
+3. GitHub (Settings → Secrets and variables → Actions): the secrets `CLOUDFLARE_API_TOKEN` (a Cloudflare API token with Workers Scripts, D1, Workers R2 Storage and Queues edit permissions) and `CLOUDFLARE_ACCOUNT_ID`, and the variable `PRODUCTION_SITE_URL` / `STAGING_SITE_URL` (e.g. `https://questionbank-web.<subdomain>.workers.dev`).
+4. Add `<site URL>/api/auth/callback/google` to the Google OAuth client's redirect URIs (one client serves both sites).
+5. Push to the branch (or re-run its latest CI run), log in, and promote yourself with `pnpm make-admin <email> --remote` (production) or `--staging`.
 
 ## Before going to production (later)
 

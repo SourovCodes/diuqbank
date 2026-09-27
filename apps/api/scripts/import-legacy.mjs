@@ -3,7 +3,8 @@
 // users and their avatars. Original (unwatermarked) PDFs are copied into R2.
 //
 // Usage: LEGACY_TOKEN=<legacy admin JWT> pnpm import-legacy [--remote]
-//   (local D1/R2 unless --remote is given; LEGACY_API_URL overrides the API origin)
+//   (local D1/R2 unless --remote (production) or --staging is given;
+//   LEGACY_API_URL overrides the API origin)
 //
 // Safe to re-run: rows get deterministic `legacy-*` ids and are inserted with
 // INSERT OR IGNORE, taxonomy and questions are matched by name, and anything already
@@ -26,21 +27,27 @@ import {
 import path from "node:path";
 import { hashPassword } from "better-auth/crypto";
 
-const remote = process.argv.includes("--remote");
+const staging = process.argv.includes("--staging");
+const remote = staging || process.argv.includes("--remote");
 const token = process.env.LEGACY_TOKEN;
 const legacyApi = (
   process.env.LEGACY_API_URL ?? "https://api.diuqbank.com"
 ).replace(/\/$/, "");
 if (!token) {
   console.error("Set LEGACY_TOKEN to a legacy admin bearer token.");
-  console.error("Usage: LEGACY_TOKEN=<token> pnpm import-legacy [--remote]");
+  console.error(
+    "Usage: LEGACY_TOKEN=<token> pnpm import-legacy [--remote | --staging]",
+  );
   process.exit(1);
 }
 
 const apiDir = path.join(import.meta.dirname, "..");
 const cacheDir = path.join(apiDir, ".legacy-import");
-const bucket = "questionbank-papers";
-const target = remote ? "--remote" : "--local";
+const bucket = staging ? "questionbank-papers-staging" : "questionbank-papers";
+const target = [
+  remote ? "--remote" : "--local",
+  ...(staging ? ["--env", "staging"] : []),
+];
 // Keep in sync with AVATAR_CONTENT_TYPES / MAX_AVATAR_BYTES in @qb/shared.
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const DOWNLOAD_CONCURRENCY = 8;
@@ -59,7 +66,7 @@ function wrangler(args, { json = false } = {}) {
 
 function d1Query(sql) {
   return (
-    wrangler(["d1", "execute", "DB", target, "--json", "--command", sql], {
+    wrangler(["d1", "execute", "DB", ...target, "--json", "--command", sql], {
       json: true,
     })[0]?.results ?? []
   );
@@ -343,7 +350,7 @@ function bulkPut(entries, contentType, name) {
     manifest,
     "--content-type",
     contentType,
-    target,
+    ...target,
   ]);
 }
 
@@ -529,7 +536,7 @@ console.log(
 );
 // Captured, not printed: wrangler reports one result object per statement.
 wrangler(
-  ["d1", "execute", "DB", target, "--yes", "--json", "--file", sqlFile],
+  ["d1", "execute", "DB", ...target, "--yes", "--json", "--file", sqlFile],
   {
     json: true,
   },
