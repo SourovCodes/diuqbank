@@ -63,7 +63,7 @@ export function UrlTabs({
         </Select>
         <TabsList
           aria-label={label}
-          className="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @3xl/main:flex"
+          className="hidden **:data-[slot=badge]:h-5 **:data-[slot=badge]:min-w-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1.5 @3xl/main:flex"
         >
           {tabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>

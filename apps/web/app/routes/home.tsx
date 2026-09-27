@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import {
+  CARD_GRID,
   LINK_CARD,
   QuestionCards,
   STRETCHED_LINK,
@@ -210,7 +211,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           >
             Browse by department
           </h2>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className={CARD_GRID}>
             {departments.map((department) => (
               <li key={department.id} className="grid">
                 <Card className={cn(LINK_CARD, "py-4")}>

@@ -1,3 +1,4 @@
+import { formatNumber } from "~/lib/format";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router";
 import { Button, buttonVariants } from "~/components/ui/button";
@@ -55,7 +56,7 @@ export function TablePagination({
       <p className="text-sm text-muted-foreground">
         {total === 0
           ? `No ${noun}s`
-          : `${from}–${to} of ${total} ${total === 1 ? noun : `${noun}s`}`}
+          : `${formatNumber(from)}–${formatNumber(to)} of ${formatNumber(total)} ${total === 1 ? noun : `${noun}s`}`}
       </p>
       {pages > 1 && (
         <nav aria-label="Pagination">

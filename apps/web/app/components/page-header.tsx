@@ -22,6 +22,32 @@ type PageHeaderProps = {
   children?: React.ReactNode;
 };
 
+/** A trail of links; the last crumb is the current page. */
+export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {crumbs.map((crumb, i) => (
+          <Fragment key={`${crumb.label}-${i}`}>
+            {i > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem className="min-w-0">
+              {crumb.to ? (
+                <BreadcrumbLink asChild>
+                  <Link to={crumb.to}>{crumb.label}</Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage className="truncate">
+                  {crumb.label}
+                </BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+          </Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
 /** The header every page starts with, shared by the site and the admin panel. */
 export function PageHeader({
   title,
@@ -33,26 +59,7 @@ export function PageHeader({
   return (
     <div className="space-y-3">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((crumb, i) => (
-              <Fragment key={`${crumb.label}-${i}`}>
-                {i > 0 && <BreadcrumbSeparator />}
-                <BreadcrumbItem className="min-w-0">
-                  {crumb.to ? (
-                    <BreadcrumbLink asChild>
-                      <Link to={crumb.to}>{crumb.label}</Link>
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage className="truncate">
-                      {crumb.label}
-                    </BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-              </Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
+        <Breadcrumbs crumbs={breadcrumbs} />
       )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">

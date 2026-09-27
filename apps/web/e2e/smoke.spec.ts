@@ -92,9 +92,12 @@ test("course filter follows the selected department", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Data Structures",
   );
+
+  // The next visit opens on the department picked last.
+  await page.goto("/questions");
+  await expect(page).toHaveURL(/\/questions\?departmentId=1$/);
 });
 
-/** A paper switch: the list's link, or on phones the chip row's, which comes first. */
 /** A paper in the list (or, on phones, the switcher) by its title. */
 const paperLink = (page: Page, title: string) =>
   page

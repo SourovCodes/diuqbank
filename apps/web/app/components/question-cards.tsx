@@ -1,20 +1,22 @@
 import type { Question } from "@qb/shared";
-import { CalendarDays, Eye, FileText } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardTitle } from "~/components/ui/card";
 import { formatCount } from "~/lib/format";
 import { plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 /** Card-grid layout shared by the public lists. */
-export const CARD_GRID = "grid gap-4 sm:grid-cols-2 xl:grid-cols-3";
+export const CARD_GRID = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
+
+/** On phones, a grid of cards becomes one bordered list with dividers. */
+export const CARD_LIST_ON_PHONES =
+  "max-sm:gap-0 max-sm:divide-y max-sm:overflow-hidden max-sm:rounded-xl max-sm:border";
+
+/** The matching card style: a borderless row of that list on phones. */
+export const CARD_ROW_ON_PHONES =
+  "max-sm:rounded-none max-sm:border-0 max-sm:shadow-none max-sm:hover:shadow-none";
 
 /** Hover and focus styles for a card that is one big link. */
 export const LINK_CARD =
@@ -28,64 +30,53 @@ function QuestionCard({ question }: { question: Question }) {
   const { published, pendingReview } = question.submissionCounts;
 
   return (
-    // On phones a compact row of a bordered list, so a screen holds many; cards from `sm` up.
-    <Card
-      className={cn(
-        LINK_CARD,
-        "gap-4 py-6 max-sm:gap-0 max-sm:rounded-none max-sm:border-0 max-sm:py-3 max-sm:shadow-none max-sm:hover:shadow-none",
-      )}
-    >
-      <CardHeader className="gap-3 px-6 max-sm:gap-1 max-sm:px-4">
-        <div className="flex flex-wrap items-center gap-1.5 max-sm:hidden">
-          <Badge variant="secondary" title={question.department.name}>
-            {question.department.shortName}
-          </Badge>
-          <Badge variant="outline" className="text-muted-foreground">
+    // Compact: title and exam type, where it's from, then how much there is to read.
+    // On phones a borderless row of the list that `QuestionCards` frames.
+    <Card className={cn(LINK_CARD, "gap-0 py-0", CARD_ROW_ON_PHONES)}>
+      <div className="flex h-full flex-col gap-1.5 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="line-clamp-2 text-[0.9375rem] leading-snug">
+            <Link
+              to={`/questions/${question.id}`}
+              prefetch="intent"
+              className={STRETCHED_LINK}
+            >
+              {question.course.name}
+            </Link>
+          </CardTitle>
+          <Badge variant="outline" className="shrink-0 text-muted-foreground">
             {question.examType.name}
           </Badge>
         </div>
-        <CardTitle className="text-base leading-snug">
-          <Link
-            to={`/questions/${question.id}`}
-            prefetch="intent"
-            className={STRETCHED_LINK}
-          >
-            {question.course.name}
-          </Link>
-        </CardTitle>
-        <CardDescription className="items-center gap-1.5 sm:flex">
-          <CalendarDays className="size-3.5 max-sm:hidden" aria-hidden />
-          {/* Phones: everything on one line under the title. */}
-          <span className="sm:hidden">
-            {question.department.shortName} · {question.examType.name} ·{" "}
+        <p className="text-sm text-muted-foreground">
+          <span title={question.department.name}>
+            {question.department.shortName}
           </span>
+          {" · "}
           {question.semester.name}
-          <span className="sm:hidden"> · {plural(published, "paper")}</span>
-        </CardDescription>
-      </CardHeader>
-      <CardFooter className="mt-auto justify-between gap-3 border-t px-6 text-sm text-muted-foreground max-sm:hidden [.border-t]:pt-4">
-        <span className="flex items-center gap-1.5">
-          <FileText className="size-4" aria-hidden />
-          <span className={published > 0 ? "font-medium text-foreground" : ""}>
-            {published > 0 ? plural(published, "paper") : "No papers yet"}
-          </span>
-          {pendingReview > 0 && (
-            <Badge
-              variant="outline"
-              className="text-muted-foreground"
-              title={`${pendingReview} waiting for review`}
+        </p>
+        <div className="mt-auto flex items-center gap-4 pt-1.5 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <FileText className="size-3.5" aria-hidden />
+            <span
+              className={cn(published > 0 && "font-medium text-foreground")}
             >
-              +{pendingReview}
-              <span className="sr-only"> pending review</span>
-            </Badge>
-          )}
-        </span>
-        <span className="flex items-center gap-1 tabular-nums">
-          <Eye className="size-4" aria-hidden />
-          {formatCount(question.viewCount)}
-          <span className="sr-only"> views</span>
-        </span>
-      </CardFooter>
+              {published > 0 ? plural(published, "paper") : "No papers yet"}
+            </span>
+            {pendingReview > 0 && (
+              <span title={`${pendingReview} waiting for review`}>
+                +{pendingReview}
+                <span className="sr-only"> pending review</span>
+              </span>
+            )}
+          </span>
+          <span className="flex items-center gap-1 tabular-nums">
+            <Eye className="size-3.5" aria-hidden />
+            {formatCount(question.viewCount)}
+            <span className="sr-only"> views</span>
+          </span>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -93,13 +84,7 @@ function QuestionCard({ question }: { question: Question }) {
 /** Questions as a grid of cards; each card opens the question. */
 export function QuestionCards({ questions }: { questions: Question[] }) {
   return (
-    <ul
-      aria-label="Questions"
-      className={cn(
-        CARD_GRID,
-        "max-sm:gap-0 max-sm:divide-y max-sm:overflow-hidden max-sm:rounded-xl max-sm:border",
-      )}
-    >
+    <ul aria-label="Questions" className={cn(CARD_GRID, CARD_LIST_ON_PHONES)}>
       {questions.map((question) => (
         <li key={question.id} className="grid">
           <QuestionCard question={question} />

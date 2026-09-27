@@ -10,15 +10,12 @@ import {
   LINK_CARD,
   STRETCHED_LINK,
 } from "~/components/question-cards";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardTitle } from "~/components/ui/card";
 import { apiFetch, readJson } from "~/lib/api.server";
-import { formatMonth } from "~/lib/dates";
+import { formatCount } from "~/lib/format";
 import { plural } from "~/lib/submissions";
+import { cn } from "~/lib/utils";
 import type { Route } from "./+types/contributors";
 
 export const meta: Route.MetaFunction = () => [
@@ -31,14 +28,16 @@ export const meta: Route.MetaFunction = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   const page = new URL(request.url).searchParams.get("page");
-  const query = page ? `?page=${encodeURIComponent(page)}` : "";
-  const res = await apiFetch(request, `/api/v1/contributors${query}`);
+  // 24 fills a grid of one, two or three columns.
+  const query = new URLSearchParams({ pageSize: "24" });
+  if (page) query.set("page", page);
+  const res = await apiFetch(request, `/api/v1/contributors?${query}`);
 
   if (res.status === 422) {
     const empty: ContributorList = {
       items: [],
       page: 1,
-      pageSize: 20,
+      pageSize: 24,
       total: 0,
     };
     return { list: empty };
@@ -70,18 +69,19 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
           />
         ) : (
           <ul aria-label="Contributors" className={CARD_GRID}>
-            {list.items.map((contributor) => {
+            {list.items.map((contributor, index) => {
+              const rank = (list.page - 1) * list.pageSize + index + 1;
               return (
                 <li key={contributor.id} className="grid">
-                  <Card className={LINK_CARD}>
-                    <CardHeader className="flex items-center gap-4">
+                  <Card className={cn(LINK_CARD, "gap-0 py-0")}>
+                    <div className="flex items-center gap-4 p-4">
                       <ContributorAvatar
                         name={contributor.name}
                         image={contributor.image}
                         size="lg"
                       />
-                      <div className="grid min-w-0 gap-1.5">
-                        <CardTitle className="truncate text-base leading-snug">
+                      <div className="grid min-w-0 flex-1 gap-1">
+                        <CardTitle className="truncate text-[0.9375rem] leading-snug">
                           <Link
                             to={`/contributors/${encodeURIComponent(contributor.id)}`}
                             prefetch="intent"
@@ -90,15 +90,36 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
                             {contributor.name}
                           </Link>
                         </CardTitle>
-                        <CardDescription>
+                        <p className="text-sm text-muted-foreground">
                           <span className="font-medium text-foreground">
                             {plural(contributor.publishedCount, "paper")}
                           </span>
                           {" · "}
-                          joined {formatMonth(contributor.joinedAt)}
-                        </CardDescription>
+                          {formatCount(contributor.viewCount)}{" "}
+                          {contributor.viewCount === 1 ? "view" : "views"}
+                        </p>
+                        {contributor.departments.length > 0 && (
+                          <p className="flex flex-wrap gap-1 pt-0.5">
+                            {contributor.departments.slice(0, 3).map((d) => (
+                              <Badge
+                                key={d.id}
+                                variant="secondary"
+                                title={d.name}
+                                className="font-normal"
+                              >
+                                {d.shortName}
+                              </Badge>
+                            ))}
+                          </p>
+                        )}
                       </div>
-                    </CardHeader>
+                      <span
+                        className="self-start text-xs font-medium text-muted-foreground tabular-nums"
+                        title={`Ranked #${rank} by published papers`}
+                      >
+                        #{rank}
+                      </span>
+                    </div>
                   </Card>
                 </li>
               );

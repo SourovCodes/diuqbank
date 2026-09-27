@@ -2,17 +2,31 @@ import { z } from "zod";
 import { paginatedSchema, paginationQuerySchema } from "./common";
 import { submissionStatsSchema, submissionStatusSchema } from "./question";
 import { submissionClassificationSchema } from "./submission";
+import { idQuerySchema } from "./taxonomy";
 
 /**
  * A user with at least one published paper. Only public profile fields are exposed
  * (never the email address), and only published papers are counted.
  */
+/** How many of a contributor's published papers belong to one department. */
+export const contributorDepartmentSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  shortName: z.string(),
+  publishedCount: z.number().int(),
+});
+export type ContributorDepartment = z.infer<typeof contributorDepartmentSchema>;
+
 export const contributorSchema = z.object({
   id: z.string(),
   name: z.string(),
   image: z.string().nullable(),
   joinedAt: z.iso.datetime(),
   publishedCount: z.number().int(),
+  /** Views of all their published papers. */
+  viewCount: z.number().int(),
+  /** Departments of their published papers, the most papers first. */
+  departments: z.array(contributorDepartmentSchema),
 });
 export type Contributor = z.infer<typeof contributorSchema>;
 
@@ -37,9 +51,10 @@ export type ContributorDetail = z.infer<typeof contributorDetailSchema>;
 
 export const listContributorsQuerySchema = paginationQuerySchema;
 
-/** Pages through a contributor's papers. */
+/** Pages through a contributor's papers, optionally of one department. */
 export const contributorPapersQuerySchema = paginationQuerySchema.extend({
   pageSize: paginationQuerySchema.shape.pageSize.default(24),
+  departmentId: idQuerySchema.optional(),
 });
 export type ContributorPapersQuery = z.infer<
   typeof contributorPapersQuerySchema

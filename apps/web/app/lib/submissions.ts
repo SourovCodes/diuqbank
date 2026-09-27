@@ -4,6 +4,7 @@ import type {
   SubmissionClassification,
   SubmissionStatus,
 } from "@qb/shared";
+import { formatNumber } from "./format";
 
 export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   published: "Published",
@@ -63,8 +64,9 @@ export function paperTitle(
   );
 }
 
+/** e.g. "1 paper", "1,586 questions". */
 export function plural(count: number, singular: string, pluralForm?: string) {
-  return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
+  return `${formatNumber(count)} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
 }
 
 /** Whether a submission still proposes new catalog entries. */

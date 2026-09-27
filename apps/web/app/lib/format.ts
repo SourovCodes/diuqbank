@@ -16,6 +16,13 @@ const compact = new Intl.NumberFormat("en", {
   maximumFractionDigits: 1,
 });
 
+const grouped = new Intl.NumberFormat("en");
+
+/** Exact counts with thousands separators, e.g. 1586 → "1,586". */
+export function formatNumber(count: number): string {
+  return grouped.format(count);
+}
+
 /** Short counts for badges and toolbars, e.g. 1234 → "1.2K". */
 export function formatCount(count: number): string {
   return compact.format(count);
