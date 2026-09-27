@@ -163,7 +163,7 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - **`packages/shared`** – unit tests for schemas.
 - **`apps/api`** – integration tests call the real worker inside `workerd` with isolated per-file D1 and R2 storage (`@cloudflare/vitest-plugin`). Migrations are applied automatically.
 - **`apps/web`** – unit/component tests with Vitest + Testing Library; Playwright covers full user journeys against both workers.
-- **CI** (`.github/workflows/ci.yml`) runs all of the above on every push and pull request.
+- **CI** (`.github/workflows/ci.yml`) runs all of the above on pull requests (except docs-only ones) and on every push to `main`, which then deploys. Dependabot opens weekly, grouped update PRs for npm packages and GitHub Actions.
 
 ## Deploying
 

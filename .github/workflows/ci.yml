@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # Docs-only PRs skip CI. Pushes to main always run, so every merge deploys.
   pull_request:
+    paths-ignore: ["**/*.md"]
 
 permissions:
   contents: read
