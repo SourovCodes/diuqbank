@@ -19,6 +19,7 @@ import {
   RefreshCw,
   RotateCcw,
   Sparkles,
+  Stamp,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -134,6 +135,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
     case "analyze":
       return adminRequest(request, intent, "POST", `${path}/analysis`);
+    case "watermark":
+      return adminRequest(request, intent, "POST", `${path}/watermark`);
     case "report":
       return adminRequest(
         request,
@@ -237,6 +240,19 @@ function DecisionActions({
                 <Globe />
                 Open the public page
               </Link>
+            </DropdownMenuItem>
+          )}
+          {status === "published" && (
+            <DropdownMenuItem
+              disabled={busy}
+              onSelect={() =>
+                run({ intent: "watermark" }, "Watermarking the public copy")
+              }
+            >
+              <Stamp />
+              {submission.watermark?.status === "done"
+                ? "Redo the watermark"
+                : "Watermark the PDF"}
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
@@ -536,8 +552,23 @@ function AnalysisCard({
   );
 }
 
+/** What the public downloads: the watermarked copy, or the original meanwhile. */
+function publicCopyLabel({ status, watermark }: AdminSubmissionDetail) {
+  switch (watermark?.status) {
+    case "done":
+      return `Watermarked, ${formatBytes(watermark.fileSize ?? 0)}`;
+    case "queued":
+      return "Watermarking…";
+    case "failed":
+      return "Original (watermark failed)";
+    default:
+      return status === "published" ? "Original (not watermarked)" : "—";
+  }
+}
+
 function DetailsCard({ submission }: { submission: AdminSubmissionDetail }) {
-  const { uploader } = submission;
+  const { uploader, watermark } = submission;
+  useRefreshWhile(watermark?.status === "queued");
   const details = [
     { label: "Uploaded", value: formatDate(submission.createdAt) },
     { label: "Last changed", value: formatDate(submission.updatedAt) },
@@ -577,6 +608,15 @@ function DetailsCard({ submission }: { submission: AdminSubmissionDetail }) {
               <dd className="font-medium">{value}</dd>
             </div>
           ))}
+          <div className="col-span-2 grid gap-0.5">
+            <dt className="text-muted-foreground">Public download</dt>
+            <dd className="font-medium">{publicCopyLabel(submission)}</dd>
+            {watermark?.status === "failed" && watermark.error && (
+              <dd className="text-xs break-words text-muted-foreground">
+                {watermark.error}
+              </dd>
+            )}
+          </div>
         </dl>
         <div className="flex gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">

@@ -12,9 +12,10 @@ import {
   ExternalLink,
   Eye,
   Inbox,
+  Stamp,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { useFormAction } from "~/components/actions";
+import { ConfirmAction, useFormAction } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import {
   AnalysisBadge,
@@ -54,7 +55,7 @@ import {
   adminSubmissionUrl,
   classificationLine,
 } from "~/lib/admin";
-import { adminGetJson } from "~/lib/admin.server";
+import { adminGetJson, adminRequest } from "~/lib/admin.server";
 import { ANALYSIS_FILTER_LABELS } from "~/lib/analysis";
 import { formatDate } from "~/lib/dates";
 import { STATUS_LABELS } from "~/lib/submissions";
@@ -97,6 +98,15 @@ export async function loader({ request }: Route.LoaderArgs) {
     `/submissions?${query}`,
   );
   return { list, status, ai };
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const form = await request.formData();
+  const intent = String(form.get("intent"));
+  if (intent !== "watermark-missing") {
+    throw new Response("Unknown intent", { status: 400 });
+  }
+  return adminRequest(request, intent, "POST", "/submissions/watermark");
 }
 
 export { AdminRouteError as ErrorBoundary };
@@ -256,6 +266,21 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
       <AdminPageHeader
         title="Submissions"
         description="Review uploaded papers. Reported papers are listed first."
+        actions={
+          <ConfirmAction
+            trigger={
+              <Button variant="outline" size="sm">
+                <Stamp />
+                Watermark missing PDFs
+              </Button>
+            }
+            title="Watermark published papers?"
+            description="Published papers without a watermarked copy, or whose watermark failed, get one in the background. The public downloads the original until it's ready."
+            confirmLabel="Watermark"
+            successMessage="Watermarking started"
+            fields={{ intent: "watermark-missing" }}
+          />
+        }
       />
       <UrlTabs
         label="Filter by status"

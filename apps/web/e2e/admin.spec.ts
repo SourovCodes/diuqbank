@@ -77,12 +77,29 @@ test("an admin approves a proposed course and publishes the paper", async ({
   await expect(
     page.getByRole("button", { name: "Back to review" }),
   ).toBeVisible();
+  // Publishing starts the watermarked public copy.
+  await expect(page.getByText("Public download")).toBeVisible();
+  await expect(
+    page.getByText(/Watermarking…|Watermarked|watermark failed/),
+  ).toBeVisible();
 
   // Now it's public, filed under the new course.
   await page.getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menuitem", { name: "Open the public page" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(courseName);
   await expect(page.getByTestId("pdf-viewer")).toBeVisible();
+});
+
+test("an admin watermarks published papers that have no public copy", async ({
+  page,
+}) => {
+  await logIn(page, SEED_ADMIN, "/admin/submissions");
+  await page.getByRole("button", { name: "Watermark missing PDFs" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText("Watermark published papers?");
+  await dialog.getByRole("button", { name: "Watermark" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Watermarking started")).toBeVisible();
 });
 
 test("an admin adds, renames and deletes a semester", async ({

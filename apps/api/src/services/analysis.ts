@@ -28,13 +28,14 @@ import {
 } from "../db/schema";
 import { AppError } from "../lib/errors";
 import { GeminiError, generateJsonFromPdf } from "../lib/gemini";
-import { compressPdf, type Fetcher } from "../lib/pdf-compressor";
+import { compressPdf, type Fetcher } from "../lib/pdf-processor";
 import {
   listCourses,
   listDepartments,
   listExamTypes,
   listSemesters,
 } from "./taxonomy";
+import { watermarkIfMissing, type WatermarkJob } from "./watermark";
 
 /** The queue message. A message whose run was superseded by a re-run is ignored. */
 export type AnalysisJob = { submissionId: string; runId: string };
@@ -423,6 +424,7 @@ export type AnalysisEnv = {
   GEMINI_MODEL: string;
   COMPRESSOR_API_KEY: string;
   PDF_PROCESSOR_URL: string;
+  WATERMARK_QUEUE: Queue<WatermarkJob>;
 };
 
 /**
@@ -430,10 +432,12 @@ export type AnalysisEnv = {
  * paper, and the department, course, semester and exam type the AI read are the same
  * existing catalog entries (same id, same name, character for character) as the ones
  * the paper is filed under. Papers with new entries, reports or a status an admin
- * already changed are left for review. Returns whether it published.
+ * already changed are left for review. A published paper is queued for its
+ * watermarked copy. Returns whether it published.
  */
 export async function publishIfConfirmed(
   db: Database,
+  watermarkQueue: Queue<WatermarkJob>,
   submissionId: string,
   reply: Pick<AnalysisReply, "isQuestionPaper" | "paperCount">,
   values: AnalysisValues,
@@ -489,7 +493,9 @@ export async function publishIfConfirmed(
       ),
     )
     .returning({ id: submissions.id });
-  return published.length > 0;
+  if (published.length === 0) return false;
+  await watermarkIfMissing(db, watermarkQueue, submissionId);
+  return true;
 }
 
 /** A failure that retrying won't fix. */
@@ -586,7 +592,13 @@ export async function runAnalysis(
       completedAt: new Date(),
     });
     if (row.autoPublish) {
-      await publishIfConfirmed(db, job.submissionId, reply.data, values);
+      await publishIfConfirmed(
+        db,
+        env.WATERMARK_QUEUE,
+        job.submissionId,
+        reply.data,
+        values,
+      );
     }
     return "done";
   } catch (err) {

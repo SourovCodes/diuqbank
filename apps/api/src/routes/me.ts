@@ -133,6 +133,7 @@ export const meRoutes = new OpenAPIHono<AppEnv>({
     c.json(
       await reclassifyOwnSubmission(
         c.var.db,
+        c.env.WATERMARK_QUEUE,
         c.var.session!.user.id,
         c.req.valid("param").id,
         c.req.valid("json"),

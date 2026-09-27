@@ -26,6 +26,8 @@ import {
   updateReportStatusInputSchema,
   updateSubmissionStatusInputSchema,
   updateUserRoleInputSchema,
+  submissionWatermarkSchema,
+  watermarkQueuedSchema,
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
 import { objectResponse } from "../lib/files";
@@ -45,6 +47,7 @@ import {
   updateSubmissionStatus,
 } from "../services/moderation";
 import { listAdminUsers, updateUserRole } from "../services/users";
+import { rewatermark, watermarkMissing } from "../services/watermark";
 import type { AppEnv } from "../types";
 
 // Every route here is for admins only.
@@ -187,6 +190,37 @@ const analyzeSubmissionRoute = createRoute({
     202: jsonResponse(submissionAnalysisSchema, "Analysis queued"),
     ...denied,
     404: errorResponse("Submission not found"),
+  },
+});
+
+const watermarkMissingRoute = createRoute({
+  method: "post",
+  path: "/submissions/watermark",
+  tags: submissionTags,
+  summary: "Watermark every published paper that has no watermarked copy",
+  description:
+    "Queues published papers that were never watermarked or whose watermark failed. Until a copy is ready, the public downloads the original.",
+  middleware,
+  responses: {
+    202: jsonResponse(watermarkQueuedSchema, "Papers queued"),
+    ...denied,
+  },
+});
+
+const rewatermarkSubmissionRoute = createRoute({
+  method: "post",
+  path: "/submissions/{id}/watermark",
+  tags: submissionTags,
+  summary: "Make the watermarked copy of a published paper again",
+  description:
+    "E.g. after the contributor changed their name. The current copy is served until the new one is ready.",
+  middleware,
+  request: { params: stringIdParams },
+  responses: {
+    202: jsonResponse(submissionWatermarkSchema, "Watermark queued"),
+    ...denied,
+    404: errorResponse("Submission not found"),
+    409: errorResponse("The submission isn't published"),
   },
 });
 
@@ -400,6 +434,7 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
     c.json(
       await updateSubmissionStatus(
         c.var.db,
+        c.env.WATERMARK_QUEUE,
         c.req.valid("param").id,
         c.req.valid("json").status,
       ),
@@ -421,6 +456,22 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
       await rerunAnalysis(
         c.var.db,
         c.env.ANALYSIS_QUEUE,
+        c.req.valid("param").id,
+      ),
+      202,
+    ),
+  )
+  .openapi(watermarkMissingRoute, async (c) =>
+    c.json(
+      { queued: await watermarkMissing(c.var.db, c.env.WATERMARK_QUEUE) },
+      202,
+    ),
+  )
+  .openapi(rewatermarkSubmissionRoute, async (c) =>
+    c.json(
+      await rewatermark(
+        c.var.db,
+        c.env.WATERMARK_QUEUE,
         c.req.valid("param").id,
       ),
       202,

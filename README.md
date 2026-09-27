@@ -53,7 +53,15 @@ The questions list shows the newest papers first by default (`sort=newest`), or 
 
 Otherwise results only flag, never reject: the admin list shows an AI badge and can filter by "Flagged by AI" (not a paper, several papers) or "AI disagrees". The review page shows the AI's values next to the submitted ones, **Apply AI values** prefills the classification dialog with them, and **Re-run** starts a new analysis.
 
-Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/api/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). Before the first deploy: `wrangler queues create qb-submission-analysis` and `wrangler secret put` for both keys. Tests never call the real services.
+Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/api/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). Before the first deploy: `wrangler queues create qb-submission-analysis`, `wrangler queues create qb-pdf-watermark` and `wrangler secret put` for both keys. Tests never call the real services.
+
+## Watermarked public PDFs
+
+Whenever a paper is published (by an admin, by the AI check, or after its uploader fixes the details), the API queues it on `qb-pdf-watermark`. The handler (`services/watermark.ts`) sends the original to the PDF processor's `watermark-compress` endpoint. That endpoint puts a credit line on top of every page ("diuqbank.com | Shared by <contributor>", ASCII only because the processor uses a standard PDF font) and compresses the file. The handler stores the result in R2 as `watermarked/{id}.pdf`. The original under `file_key` is never changed.
+
+- **Public route** `/api/v1/submissions/{id}/file` serves the watermarked copy. Until the copy is ready, or if watermarking failed, it serves the original, cached for 5 minutes instead of a day. Public file sizes are those of the copy.
+- **Originals:** the admin and uploader file routes keep serving the original.
+- **Admins:** the review page shows the state of the public copy and can **Redo the watermark**, e.g. after a contributor renames themselves. **Watermark missing PDFs** on the submissions list queues every published paper without a copy, which is how existing papers get one.
 
 ## Admin panel
 

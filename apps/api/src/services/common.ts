@@ -13,6 +13,9 @@ import {
 export const countWhereStatus = (status: SubmissionStatus) =>
   sql<number>`sum(case when ${submissions.status} = ${status} then 1 else 0 end)`;
 
+/** Size of the PDF the public downloads: the watermarked copy once it's ready. */
+export const publicFileSize = sql<number>`coalesce(${submissions.watermarkedFileSize}, ${submissions.fileSize})`;
+
 /** Sort order for submission lists: published, then pending review, then rejected. */
 export const submissionStatusOrder = sql`case ${submissions.status} when 'published' then 0 when 'pending_review' then 1 else 2 end`;
 

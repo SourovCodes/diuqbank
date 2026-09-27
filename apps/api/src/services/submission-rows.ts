@@ -19,6 +19,7 @@ import {
   user,
 } from "../db/schema";
 import { analysisFlag } from "./analysis";
+import { publicFileSize } from "./common";
 
 /**
  * True when the AI read a value (name not null) that isn't the submission's: neither
@@ -136,6 +137,12 @@ export function selectSubmissionRows(db: Database) {
         image: user.image,
       },
       autoPublishedAt: submissions.autoPublishedAt,
+      publicFileSize: publicFileSize.mapWith(Number),
+      watermark: {
+        status: submissions.watermarkStatus,
+        error: submissions.watermarkError,
+        fileSize: submissions.watermarkedFileSize,
+      },
       analysis: {
         status: analyses.status,
         isQuestionPaper: analyses.isQuestionPaper,
@@ -192,7 +199,10 @@ export function toClassification(
   };
 }
 
-/** The public view of a row: no uploader details, report counts or edit times. */
+/**
+ * The public view of a row: no uploader details, report counts or edit times, and
+ * the size of the public (watermarked) copy.
+ */
 export function toContributorSubmission(
   row: SubmissionRowData,
 ): ContributorSubmission {
@@ -203,6 +213,7 @@ export function toContributorSubmission(
   } = row.submission;
   return {
     ...submission,
+    fileSize: row.publicFileSize,
     createdAt: submission.createdAt.toISOString(),
     classification: toClassification(row),
   };
@@ -229,13 +240,20 @@ export function toAdminSubmission(row: SubmissionRowData): AdminSubmission {
     uploader: row.uploader,
     analysis: toAnalysisSummary(row),
     autoPublished: row.autoPublishedAt !== null,
+    watermark: row.watermark?.status
+      ? { ...row.watermark, status: row.watermark.status }
+      : null,
   };
 }
 
-/** The uploader's view: the public fields plus how the review is going. */
+/**
+ * The uploader's view: the public fields plus how the review is going. They
+ * download their original, so its size.
+ */
 export function toMySubmission(row: SubmissionRowData): MySubmission {
   return {
     ...toContributorSubmission(row),
+    fileSize: row.submission.fileSize,
     autoPublished: row.autoPublishedAt !== null,
     analysis: toAnalysisSummary(row),
   };
