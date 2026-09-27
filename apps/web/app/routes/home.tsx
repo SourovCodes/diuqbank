@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router";
+import { ContributorAvatar } from "~/components/contributor-avatar";
 import {
   CARD_GRID,
   LINK_CARD,
@@ -28,6 +29,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { apiGetJson } from "~/lib/api.server";
+import { AUTHOR } from "~/lib/author";
 import { formatCount } from "~/lib/format";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/home";
@@ -263,6 +265,34 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </CardHeader>
           </Card>
         ))}
+      </section>
+
+      <section
+        aria-labelledby="why-free-heading"
+        className="mx-auto flex max-w-2xl flex-col items-center gap-4 rounded-xl border bg-muted/40 p-6 text-center sm:flex-row sm:text-left"
+      >
+        <ContributorAvatar
+          name={AUTHOR.name}
+          image={AUTHOR.avatar}
+          size="lg"
+          className="shrink-0"
+        />
+        <div className="grid gap-1">
+          <h2 id="why-free-heading" className="font-semibold">
+            Why is this free?
+          </h2>
+          <p className="text-sm text-pretty text-muted-foreground">
+            Short version: building this site helped me land a job, so now it
+            gets to stay free forever. No ads, ever.{" "}
+            <Link
+              to="/about"
+              className="inline-flex items-center gap-1 font-medium whitespace-nowrap text-foreground underline-offset-4 hover:underline"
+            >
+              Read the story
+              <ArrowRight className="size-3.5" aria-hidden />
+            </Link>
+          </p>
+        </div>
       </section>
     </div>
   );

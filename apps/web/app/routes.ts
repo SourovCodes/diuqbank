@@ -7,6 +7,7 @@ export default [
   route("contributors", "routes/contributors.tsx"),
   route("contributors/:id", "routes/contributor.tsx"),
   route("contribute", "routes/contribute.tsx"),
+  route("about", "routes/about.tsx"),
   // A full page of its own, outside the account shell.
   route("account/submissions/:id", "routes/account-submission.tsx"),
   route("account", "routes/account.tsx", [

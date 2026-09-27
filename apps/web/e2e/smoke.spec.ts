@@ -28,6 +28,25 @@ test("landing page leads to the questions page", async ({ page }) => {
   );
 });
 
+test("the footer leads to the about page and its promise", async ({ page }) => {
+  await page.goto("/");
+  await clickUntilUrl(page, "About", /\/about$/);
+  await expect(page).toHaveTitle("About — QuestionBank");
+  await expect(
+    page.getByRole("heading", { name: "The promise" }),
+  ).toBeVisible();
+  await expect(page.getByText("Free forever", { exact: true })).toBeVisible();
+
+  const linkedin = page
+    .getByRole("main")
+    .getByRole("link", { name: "LinkedIn" });
+  await expect(linkedin).toHaveAttribute(
+    "href",
+    "https://www.linkedin.com/in/sourov-biswas/",
+  );
+  await expect(linkedin).toHaveAttribute("target", "_blank");
+});
+
 test("an unknown URL renders a styled 404 page", async ({ page }) => {
   const response = await page.goto("/no-such-page");
   expect(response?.status()).toBe(404);

@@ -17,8 +17,10 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { EmptyState } from "~/components/empty-state";
 import { SiteHeader } from "~/components/site-header";
+import { SocialIcon } from "~/components/social-icons";
 import { buttonVariants } from "~/components/ui/button";
 import { Toaster } from "~/components/ui/sonner";
+import { AUTHOR } from "~/lib/author";
 import { getUser } from "~/lib/session.server";
 import { THEME_SCRIPT } from "~/lib/theme";
 
@@ -74,14 +76,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {children}
             </main>
             <footer className="border-t">
-              <div className="container flex flex-col gap-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <div className="container grid gap-4 py-6 text-sm text-muted-foreground sm:grid-cols-[1fr_auto] sm:items-center">
                 <p className="flex items-center gap-2">
                   <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
                     <BookOpen className="size-3.5" aria-hidden />
                   </span>
-                  QuestionBank · Free past question papers
+                  QuestionBank · Free forever, no ads
                 </p>
-                <nav aria-label="Footer" className="flex gap-4">
+                <nav aria-label="Footer" className="flex flex-wrap gap-4">
                   <Link to="/questions" className="hover:text-foreground">
                     Questions
                   </Link>
@@ -91,7 +93,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link to="/contribute" className="hover:text-foreground">
                     Contribute
                   </Link>
+                  <Link to="/about" className="hover:text-foreground">
+                    About
+                  </Link>
                 </nav>
+                <div className="flex items-center gap-2 text-xs sm:col-span-2">
+                  <span>
+                    Made with ☕ by{" "}
+                    <Link
+                      to="/about"
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                    >
+                      {AUTHOR.firstName}
+                    </Link>
+                  </span>
+                  {AUTHOR.links.map(({ network, label, href }) => (
+                    <a
+                      key={network}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${AUTHOR.firstName} on ${label}`}
+                      className="rounded-sm p-1 transition-colors hover:text-foreground"
+                    >
+                      <SocialIcon network={network} className="size-3.5" />
+                    </a>
+                  ))}
+                </div>
               </div>
             </footer>
           </div>
