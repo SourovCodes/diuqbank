@@ -7,8 +7,8 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 - `pnpm check` – run before considering work done (lint, format, typecheck, tests).
 - `pnpm --filter @qb/api test` / `pnpm --filter @qb/web test` – package tests.
 - `pnpm test:e2e` – Playwright; needs `pnpm db:migrate && pnpm db:seed` first (tests rely on `apps/api/seeds/dev.sql`).
-- After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns, as in `0001_submission_proposals.sql`.
-- Triggers (and other SQL drizzle-kit can't model) go in a custom migration: `pnpm --filter @qb/api exec drizzle-kit generate --custom --name=<name>`, separated with `--> statement-breakpoint` as in `0003_engagement_triggers.sql`. `wrangler d1` and the Vitest pool both split `BEGIN … END` trigger bodies correctly.
+- After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns.
+- Triggers (and other SQL drizzle-kit can't model) go in a custom migration: `pnpm --filter @qb/api exec drizzle-kit generate --custom --name=<name>`, separated with `--> statement-breakpoint` as in `0001_triggers.sql`. `wrangler d1` and the Vitest pool both split `BEGIN … END` trigger bodies correctly.
 - After editing a `wrangler.jsonc`: `pnpm --filter <pkg> cf-typegen`.
 
 ## Conventions
@@ -23,4 +23,6 @@ pnpm monorepo, two Cloudflare Workers. See README.md for the architecture overvi
 - Web: data loading happens in loaders/actions via `apiFetch` (`app/lib/api.server.ts`), never directly against D1/R2. Server-only modules end in `.server.ts`.
 - UI uses shadcn/ui components in `app/components/ui` (add with `pnpm dlx shadcn@latest add <name>` from `apps/web`).
 - The site and the admin panel share one look: `PageHeader` (breadcrumbs, title, actions), `EmptyState` (shadcn Empty), `StatusBadge`, `ContributorAvatar` (shadcn Avatar), `TablePagination`, `UrlTabs` (URL-driven Tabs), and `components/actions.tsx` (`ActionDialog`, `ConfirmAction`, `useFormAction`, with sonner toasts). Public lists (questions, contributors, a contributor's papers) are card grids (`CARD_GRID`, `LINK_CARD`, `STRETCHED_LINK` in `components/question-cards.tsx`); account and admin lists are bordered `Table`s with a `bg-muted` header and row `DropdownMenu`s. When an action removes the row it was started from, run it through a `useFormAction` owned by the page, or the result toast is lost with the row.
+- Sign-in is Google-only (Better Auth `socialProviders.google`); there are no password endpoints. API tests sign in with `signIn()` (Better Auth `testUtils`), e2e tests with `logInAs()`, which writes a session to local D1 and sets the signed cookie.
+- Theme: the `dark` class on `<html>` is set by `THEME_SCRIPT` / `setTheme` (`app/lib/theme.ts`), never rendered by React. Give hard-coded palette colours a `dark:` variant.
 - Every new API route gets an integration test in `apps/api/test`; user-facing flows get a Playwright test.

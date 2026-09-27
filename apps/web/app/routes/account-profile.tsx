@@ -1,18 +1,14 @@
 import type { ApiError } from "@qb/shared";
 import { Check } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { data, Form, useNavigation } from "react-router";
 import { AvatarInput } from "~/components/avatar-input";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { FormField, FormMessage } from "~/components/form";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import { apiFetch, readJson, setCookieHeaders } from "~/lib/api.server";
 import { requireUser } from "~/lib/session.server";
-import { cn } from "~/lib/utils";
 import type { Route } from "./+types/account-profile";
 
 export const meta: Route.MetaFunction = () => [
@@ -24,7 +20,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { user: await requireUser(request) };
 }
 
-type Intent = "profile" | "password" | "avatar";
+type Intent = "profile" | "avatar";
 
 type ActionResult = {
   intent: Intent;
@@ -33,8 +29,6 @@ type ActionResult = {
   fieldErrors?: Record<string, string>;
 };
 
-const MIN_PASSWORD = 8;
-const MAX_PASSWORD = 128;
 const MAX_NAME = 100;
 
 const invalid = (intent: Intent, fieldErrors: Record<string, string>) =>
@@ -64,62 +58,6 @@ async function updateProfile(request: Request, form: FormData) {
   }
   return data<ActionResult>(
     { intent: "profile", success: "Profile updated" },
-    { headers: setCookieHeaders(res) },
-  );
-}
-
-async function changePassword(request: Request, form: FormData) {
-  const currentPassword = String(form.get("currentPassword") ?? "");
-  const newPassword = String(form.get("newPassword") ?? "");
-  const confirmPassword = String(form.get("confirmPassword") ?? "");
-
-  const fieldErrors: Record<string, string> = {};
-  if (!currentPassword) {
-    fieldErrors.currentPassword = "Enter your current password.";
-  }
-  if (newPassword.length < MIN_PASSWORD || newPassword.length > MAX_PASSWORD) {
-    fieldErrors.newPassword = `Use ${MIN_PASSWORD} to ${MAX_PASSWORD} characters.`;
-  } else if (newPassword !== confirmPassword) {
-    fieldErrors.confirmPassword = "The passwords don't match.";
-  }
-  if (Object.keys(fieldErrors).length > 0) {
-    return invalid("password", fieldErrors);
-  }
-
-  const res = await apiFetch(request, "/api/auth/change-password", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      currentPassword,
-      newPassword,
-      revokeOtherSessions: form.get("revokeOtherSessions") === "on",
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await readJson<{ code?: string; message?: string }>(res).catch(
-      () => null,
-    );
-    if (body?.code === "INVALID_PASSWORD") {
-      return invalid("password", {
-        currentPassword: "Your current password is incorrect.",
-      });
-    }
-    return data<ActionResult>(
-      {
-        intent: "password",
-        // Better Auth requires a recent sign-in for password changes.
-        error:
-          res.status === 403
-            ? "For your security, log out and log back in, then try again."
-            : (body?.message ?? "Could not change your password."),
-      },
-      { status: res.status },
-    );
-  }
-  // Revoking other sessions issues a new session cookie for this one.
-  return data<ActionResult>(
-    { intent: "password", success: "Password changed" },
     { headers: setCookieHeaders(res) },
   );
 }
@@ -167,8 +105,6 @@ export async function action({ request }: Route.ActionArgs) {
       return removeAvatar(request);
     case "profile":
       return updateProfile(request, form);
-    case "password":
-      return changePassword(request, form);
     default:
       throw data("Unknown action", { status: 400 });
   }
@@ -346,7 +282,7 @@ function ProfileSection({
               disabled
             />
             <p className="text-xs text-muted-foreground">
-              Private, and can’t be changed yet.
+              The Google account you log in with. Private.
             </p>
           </div>
           <FormMessage message={profile?.error} />
@@ -364,108 +300,6 @@ function ProfileSection({
   );
 }
 
-function PasswordSection({ result }: { result?: ActionResult }) {
-  const submitting = useSubmitting("password");
-  const details = useRef<HTMLDetailsElement>(null);
-  const form = useRef<HTMLFormElement>(null);
-  const revokeId = useId();
-  const failed = Boolean(result?.error || result?.fieldErrors);
-
-  // Don't leave passwords sitting in the fields after a successful change.
-  useEffect(() => {
-    if (!result?.success) return;
-    form.current?.reset();
-    if (details.current) details.current.open = false;
-  }, [result]);
-
-  return (
-    <SettingsSection
-      title="Password"
-      description="Use at least 8 characters. You’ll stay signed in on this device."
-    >
-      {/* A native disclosure, so the form opens without JavaScript too. Reopened
-          by the server when the change failed. */}
-      <details ref={details} open={failed || undefined} className="group">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 [&::-webkit-details-marker]:hidden">
-          {result?.success && !submitting ? (
-            <Saved message={result.success} />
-          ) : (
-            <span className="text-sm text-muted-foreground">
-              Change the password you log in with.
-            </span>
-          )}
-          <span
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "group-open:hidden",
-            )}
-          >
-            Change password
-          </span>
-        </summary>
-        <Form method="post" ref={form} aria-label="Change password">
-          <input type="hidden" name="intent" value="password" />
-          <div className="grid gap-4 px-6 pb-6">
-            <FormField
-              label="Current password"
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              required
-              error={result?.fieldErrors?.currentPassword}
-            />
-            <FormField
-              label="New password"
-              name="newPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={MIN_PASSWORD}
-              maxLength={MAX_PASSWORD}
-              error={result?.fieldErrors?.newPassword}
-            />
-            <FormField
-              label="Confirm new password"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              error={result?.fieldErrors?.confirmPassword}
-            />
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id={revokeId}
-                name="revokeOtherSessions"
-                defaultChecked
-              />
-              <Label htmlFor={revokeId} className="font-normal">
-                Sign out of all other devices
-              </Label>
-            </div>
-            <FormMessage message={result?.error} />
-          </div>
-          <div className="flex items-center justify-end gap-2 border-t px-6 py-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                form.current?.reset();
-                if (details.current) details.current.open = false;
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={submitting}>
-              {submitting ? "Saving…" : "Update password"}
-            </Button>
-          </div>
-        </Form>
-      </details>
-    </SettingsSection>
-  );
-}
-
 export default function AccountProfile({
   loaderData,
   actionData,
@@ -475,14 +309,10 @@ export default function AccountProfile({
     actionData?.intent === intent ? actionData : undefined;
 
   return (
-    <div className="space-y-8">
-      <ProfileSection
-        user={user}
-        avatar={pick("avatar")}
-        profile={pick("profile")}
-      />
-      <Separator />
-      <PasswordSection result={pick("password")} />
-    </div>
+    <ProfileSection
+      user={user}
+      avatar={pick("avatar")}
+      profile={pick("profile")}
+    />
   );
 }

@@ -6,6 +6,8 @@
 // as "not configured".
 interface Env {
   BETTER_AUTH_SECRET: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
   GEMINI_API_KEY: string;
   COMPRESSOR_API_KEY: string;
 }
@@ -13,6 +15,8 @@ interface Env {
 declare namespace Cloudflare {
   interface Env {
     BETTER_AUTH_SECRET: string;
+    GOOGLE_CLIENT_ID: string;
+    GOOGLE_CLIENT_SECRET: string;
     GEMINI_API_KEY: string;
     COMPRESSOR_API_KEY: string;
   }

@@ -3,10 +3,10 @@ import {
   clickUntilUrl,
   closeQuestionFilters,
   failOnConsoleErrors,
+  logInAs,
   logOut,
   openCombobox,
   openQuestionFilters,
-  signUpAs,
   uploadPaperWithNewCourse,
 } from "./helpers";
 
@@ -192,15 +192,30 @@ test("a question links to the same exam from other semesters", async ({
   await expect(page.getByText("Spring 24").first()).toBeVisible();
 });
 
-test("forgot password explains how to get a new one", async ({ page }) => {
-  await page.goto("/login");
-  await clickUntilUrl(page, "Forgot password?", /\/forgot-password$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Forgot your password?",
+test("logging in sends visitors to Google and back", async ({ page }) => {
+  // Google itself is never contacted: its sign-in page is stubbed.
+  await page.route("https://accounts.google.com/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "Google sign-in" }),
   );
-  await expect(
-    page.getByRole("link", { name: "Email for a new password" }),
-  ).toHaveAttribute("href", /^mailto:sourov2305101004@diu\.edu\.bd\?/);
+  await page.goto("/login?redirectTo=%2Fcontribute");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+    await expect(page).toHaveURL(/^https:\/\/accounts\.google\.com\//, {
+      timeout: 2_000,
+    });
+  }).toPass();
+
+  const google = new URL(page.url());
+  expect(google.searchParams.get("redirect_uri")).toBe(
+    "http://localhost:5173/api/auth/callback/google",
+  );
+  expect(google.searchParams.get("state")).toBeTruthy();
+});
+
+test("a failed Google sign-in explains what happened", async ({ page }) => {
+  await page.goto("/login?error=access_denied");
+  await expect(page.getByText("Google sign-in was cancelled.")).toBeVisible();
 });
 
 test("contributors index leads to a contributor's submissions", async ({
@@ -236,12 +251,7 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?redirectTo=%2Fcontribute/);
 
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  await page.goto("/signup?redirectTo=%2Fcontribute");
-  await page.getByLabel("Name").fill("E2E Contributor");
-  await page.getByLabel("Email").fill(`e2e-${suffix}@example.com`);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/contribute$/);
+  await logInAs(page, { name: "E2E Contributor" }, "/contribute");
 
   const courseName = `E2E Course ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);
@@ -289,7 +299,7 @@ test("a member can like, dislike and report a paper", async ({
   // The two projects share one database, so each votes on its own paper:
   // question 10 (seed-11) on desktop, question 8 (seed-09) on mobile.
   const questionId = testInfo.project.name === "mobile" ? 8 : 10;
-  await signUpAs(page, "E2E Voter", `/questions/${questionId}`);
+  await logInAs(page, { name: "E2E Voter" }, `/questions/${questionId}`);
   await expect(page.getByText(/\d+ views?/).first()).toBeVisible();
 
   const like = page.getByRole("button", { name: /^Like/ });
@@ -359,7 +369,7 @@ async function widePhoto(page: Page) {
 }
 
 test("a user crops, sets and removes a profile photo", async ({ page }) => {
-  await signUpAs(page, "E2E Photo", "/account");
+  await logInAs(page, { name: "E2E Photo" }, "/account");
   const headerImage = page
     .getByRole("button", { name: "Account menu" })
     .locator("img");
@@ -407,15 +417,8 @@ test("a user crops, sets and removes a profile photo", async ({ page }) => {
   await expect(headerImage).toHaveCount(0);
 });
 
-test("a user can sign up and log out", async ({ page }) => {
-  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-
-  await page.goto("/signup");
-  await page.getByLabel("Name").fill("E2E Tester");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-
+test("a user can log out", async ({ page }) => {
+  await logInAs(page, { name: "E2E Tester" }, "/");
   await logOut(page);
 });
 
@@ -423,13 +426,7 @@ test("a contributor can manage their submissions and profile", async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const email = `e2e-${suffix}@example.com`;
-  await page.goto("/signup?redirectTo=%2Fcontribute");
-  await page.getByLabel("Name").fill("E2E Account");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/contribute$/);
+  const { email } = await logInAs(page, { name: "E2E Account" }, "/contribute");
 
   const courseName = `E2E Withdrawn ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);
@@ -477,32 +474,27 @@ test("a contributor can manage their submissions and profile", async ({
     "Renamed Contributor",
   );
 
-  // Wrong current password, then a real change. The form opens from a disclosure.
-  const newPassword = "another-horse-battery";
-  await page.getByText("Change password", { exact: true }).click();
-  await page.getByLabel("Current password").fill("not-my-password");
-  await page.getByLabel("New password", { exact: true }).fill(newPassword);
-  await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Update password" }).click();
+  // The email comes from Google and can't be changed here.
+  await expect(page.getByText(email)).toBeVisible();
+});
+
+test("the theme follows the OS until one is picked", async ({ page }) => {
+  const html = page.locator("html");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await expect(html).toHaveClass(/\bdark\b/);
+
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(html).not.toHaveClass(/\bdark\b/);
+
+  // A picked theme sticks across reloads and ignores the OS.
+  await expect(async () => {
+    await page.getByRole("button", { name: "Switch to dark theme" }).click();
+    await expect(html).toHaveClass(/\bdark\b/, { timeout: 1_000 });
+  }).toPass();
+  await page.reload();
+  await expect(html).toHaveClass(/\bdark\b/);
   await expect(
-    page.getByText("Your current password is incorrect."),
+    page.getByRole("button", { name: "Switch to light theme" }),
   ).toBeVisible();
-
-  await page.getByLabel("Current password").fill("correct-horse-battery");
-  await page.getByLabel("New password", { exact: true }).fill(newPassword);
-  await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Update password" }).click();
-  await expect(page.getByText("Password changed")).toBeVisible();
-  await expect(page.getByLabel("Current password")).toBeHidden();
-
-  // The new password works.
-  await logOut(page);
-  await page.goto("/login?redirectTo=%2Faccount");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(newPassword);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
-    "Renamed Contributor",
-  );
 });

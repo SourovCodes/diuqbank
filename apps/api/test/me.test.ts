@@ -9,11 +9,11 @@ import {
   seedQuestion,
   seedSubmission,
   seedTaxonomy,
-  signUp,
+  signIn,
 } from "./helpers";
 
 async function signedInUser() {
-  const { cookie } = await signUp();
+  const { cookie } = await signIn();
   const res = await api("/api/auth/get-session", { headers: { cookie } });
   const session = await res.json<{ user: { id: string } }>();
   return { cookie, id: session.user.id };

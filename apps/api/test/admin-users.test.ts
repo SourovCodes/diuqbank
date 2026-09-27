@@ -7,13 +7,13 @@ import {
   seedSubmission,
   seedTaxonomy,
   seedUser,
-  signUpAdmin,
-  signUpUser,
+  signInAdmin,
+  signIn,
 } from "./helpers";
 
 describe("GET /api/v1/admin/users", () => {
   it("lists users newest first with their submission counts, searching name and email", async () => {
-    const admin = await signUpAdmin();
+    const admin = await signInAdmin();
     const tag = crypto.randomUUID().slice(0, 8);
     const uploader = await seedUser(`Searchable ${tag}`);
     const t = await seedTaxonomy();
@@ -67,8 +67,8 @@ describe("GET /api/v1/admin/users", () => {
 
 describe("PATCH /api/v1/admin/users/{id}", () => {
   it("grants and removes admin rights, but not on yourself", async () => {
-    const admin = await signUpAdmin();
-    const member = await signUpUser();
+    const admin = await signInAdmin();
+    const member = await signIn();
     const setRole = (id: string, role: string) =>
       api(
         `/api/v1/admin/users/${id}`,

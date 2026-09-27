@@ -361,7 +361,7 @@ function CheckPanel({
     return (
       <Card>
         <CardContent className="flex items-center gap-3 text-sm">
-          <LoaderCircle className="size-4 shrink-0 animate-spin text-sky-600" />
+          <LoaderCircle className="size-4 shrink-0 animate-spin text-sky-600 dark:text-sky-400" />
           The AI is reading your paper. This page updates by itself.
         </CardContent>
       </Card>

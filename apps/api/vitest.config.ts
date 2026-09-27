@@ -15,6 +15,8 @@ export default defineConfig(async () => {
           bindings: {
             TEST_MIGRATIONS: migrations,
             BETTER_AUTH_SECRET: "test-only-secret-that-is-long-enough-1234",
+            GOOGLE_CLIENT_ID: "test-google-client-id",
+            GOOGLE_CLIENT_SECRET: "test-google-client-secret",
             // Never call the real AI services from tests (.dev.vars may hold keys).
             // Queued analyses then fail fast as "not configured".
             GEMINI_API_KEY: "",

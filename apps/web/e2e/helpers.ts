@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 // Shared by the e2e specs. They rely on the local seed data: `pnpm db:migrate && pnpm db:seed`.
@@ -125,37 +129,76 @@ export async function logOut(page: Page) {
   await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
 }
 
-/** Signs up a fresh account and waits to land on `redirectTo`. */
-export async function signUpAs(page: Page, name: string, redirectTo: string) {
-  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-  await page.goto(`/signup?redirectTo=${encodeURIComponent(redirectTo)}`);
-  await page.getByLabel("Name").fill(name);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`${redirectTo.replace(/[?]/g, "\\?")}$`),
-  );
-  return email;
+const apiDir = path.join(import.meta.dirname, "../../api");
+
+/** The API's session-cookie secret, from `apps/api/.dev.vars` (CI writes a random one). */
+function authSecret() {
+  const vars = readFileSync(path.join(apiDir, ".dev.vars"), "utf8");
+  const secret = /^BETTER_AUTH_SECRET=(.*)$/m
+    .exec(vars)?.[1]
+    ?.trim()
+    .replace(/^"(.*)"$/, "$1");
+  if (!secret)
+    throw new Error("BETTER_AUTH_SECRET missing from apps/api/.dev.vars");
+  return secret;
 }
 
-/** The admin account created by `pnpm db:seed`. */
-export const SEED_ADMIN = {
-  email: "admin@seed.local",
-  password: "correct-horse-battery",
-};
+const sql = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
-/** Logs in and waits to land on `redirectTo`. */
-export async function logIn(
+/** The admin account created by `pnpm db:seed`. */
+export const SEED_ADMIN = { id: "seed-user-admin" };
+
+/**
+ * Signs in without Google: writes a session straight into the local D1 database and
+ * gives the browser Better Auth's signed session cookie, then opens `redirectTo`.
+ * Pass `{ name }` for a fresh user (an `@example.com` address, which `pnpm db:seed`
+ * cleans up) or `{ id }` for an existing one.
+ */
+export async function logInAs(
   page: Page,
-  { email, password }: { email: string; password: string },
+  user: { name: string } | { id: string },
   redirectTo: string,
 ) {
-  await page.goto(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`${redirectTo.replace(/[?]/g, "\\?")}$`),
+  const id = "id" in user ? user.id : `e2e-${randomUUID()}`;
+  const email = `${id}@example.com`;
+  const token = randomBytes(24).toString("base64url");
+  const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+  const statements = [
+    ...("name" in user
+      ? [
+          `INSERT INTO "user" (id, name, email, email_verified) VALUES (${sql(id)}, ${sql(user.name)}, ${sql(email)}, 1);`,
+        ]
+      : []),
+    `INSERT INTO session (id, token, user_id, expires_at) VALUES (${sql(randomUUID())}, ${sql(token)}, ${sql(id)}, ${expiresAt});`,
+  ];
+  execFileSync(
+    "pnpm",
+    [
+      "exec",
+      "wrangler",
+      "d1",
+      "execute",
+      "DB",
+      "--local",
+      "--command",
+      statements.join(" "),
+    ],
+    { cwd: apiDir, stdio: ["ignore", "ignore", "inherit"] },
   );
+
+  // Signed like Better Auth (better-call): `token.base64(HMAC-SHA256(token))`, URI-encoded.
+  const signature = createHmac("sha256", authSecret())
+    .update(token)
+    .digest("base64");
+  await page.context().addCookies([
+    {
+      name: "better-auth.session_token",
+      value: encodeURIComponent(`${token}.${signature}`),
+      url: "http://localhost:5173",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+  await page.goto(redirectTo);
+  return { id, email };
 }

@@ -5,71 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1789455523770,
+      "when": 1790508221736,
       "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1789462072603,
-      "tag": "0001_submission_proposals",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1789495258874,
-      "tag": "0002_engagement",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1789495259313,
-      "tag": "0003_engagement_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1790213575318,
-      "tag": "0004_user_roles",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1790278730053,
-      "tag": "0005_submission_section_batch",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1790433577446,
-      "tag": "0006_submission_analyses",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1790455043130,
-      "tag": "0007_auto_publish",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1790458716024,
-      "tag": "0008_course_name_parts",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1790504727270,
-      "tag": "0009_pdf_watermark",
+      "when": 1790508229971,
+      "tag": "0001_triggers",
       "breakpoints": true
     }
   ]

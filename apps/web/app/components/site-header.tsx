@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useSubmit } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { Button, buttonVariants } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -164,18 +165,10 @@ function MobileMenu({ user }: { user: SessionUser | null }) {
           ))}
         </nav>
         {!user && (
-          <div className="mt-auto grid gap-2 border-t p-4">
+          <div className="mt-auto grid border-t p-4">
             <SheetClose asChild>
-              <Link
-                to="/login"
-                className={buttonVariants({ variant: "outline" })}
-              >
+              <Link to="/login" className={buttonVariants()}>
                 Log in
-              </Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link to="/signup" className={buttonVariants()}>
-                Sign up
               </Link>
             </SheetClose>
           </div>
@@ -218,26 +211,16 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
             <Upload aria-hidden />
             Contribute
           </Link>
+          <ThemeToggle />
           {user ? (
             <UserMenu user={user} />
           ) : (
-            <>
-              <Link
-                to="/login"
-                className={buttonVariants({ variant: "ghost", size: "sm" })}
-              >
-                Log in
-              </Link>
-              <Link
-                to="/signup"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "hidden sm:inline-flex",
-                )}
-              >
-                Sign up
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              Log in
+            </Link>
           )}
           <MobileMenu user={user} />
         </div>

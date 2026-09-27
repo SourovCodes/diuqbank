@@ -29,12 +29,12 @@ user (Better Auth) + role: user | admin
 
 PDFs live in R2 under `file_key`. A question is listed once it has at least one submission.
 
-Signed-in users manage their account at `/account` (name and password, through Better Auth's `update-user` and `change-password` endpoints) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank. Profile images are cropped to a square in the browser (`AvatarInput`, react-easy-crop) and re-encoded as WebP at up to 512 px before upload, so the file that reaches the API is small; they are stored in R2 (JPEG, PNG or WebP, max 2 MB) and served from `/api/v1/avatars/{id}`.
+Sign-in is Google-only (`/login`, Better Auth's `sign-in/social`); the account is created on the first sign-in, and Google reports whether the email is verified, and new users are stored that way. `pnpm import-legacy` marks imported users verified, so their first Google sign-in with the same email links to the imported account (Better Auth only links to verified users). Signed-in users manage their account at `/account` (name and photo; the name through Better Auth's `update-user` endpoint) and their uploads at `/account/submissions` (backed by `/api/v1/me/submissions`). Uploaders can preview their own PDFs in any status and withdraw submissions that aren't published yet; published papers stay in the bank. Profile images are cropped to a square in the browser (`AvatarInput`, react-easy-crop) and re-encoded as WebP at up to 512 px before upload, so the file that reaches the API is small; they are stored in R2 (JPEG, PNG or WebP, max 2 MB) and served from `/api/v1/avatars/{id}`. A new user's Google photo is copied the same way when the account is created (full size, which is Google's URL without its `=s96-c` size option, falling back to the size Google sent). If both downloads fail, the user keeps Google's URL.
 
 Engagement on published papers:
 
 - **Views** — question pages and papers count their views separately (`POST …/views`, open to everyone, no deduplication yet).
-- **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0003_engagement_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
+- **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0001_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
 - **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). Admins resolve or dismiss reports in the admin panel; that doesn't publish a hidden paper again, which is a separate decision.
 
 Semester names have a strict format: a term (Spring, Summer, Fall or Short) and a two-digit year from 15 to 30, e.g. `Fall 25`. `parseSemesterName` (`@qb/shared/constants`) turns other spellings such as "fall 2025" into the standard one; uploads, admin edits, the catalog and the AI analysis all go through it, and anything else is rejected. Semesters sort newest first by year, then Fall, Summer, Spring, Short.
@@ -49,7 +49,7 @@ Every upload is checked in the background. The API enqueues a message on the `qb
 
 **Uploaders** follow their papers at `/account/submissions` (cards) and `/account/submissions/{id}`: a timeline (uploaded → AI check → decision), what the AI said and read next to what they chose, and whether it was auto-published or is waiting for an admin (`/api/v1/me/submissions/{id}`). Uploading leads straight to that page, which refreshes while the check runs. While a paper waits for review, its uploader can fix the details ("Use the AI's details" or "Edit my details", `PUT /api/v1/me/submissions/{id}/classification`); the new details are compared with the AI's earlier reading and the paper is published right away if they now match.
 
-The questions list shows the newest papers first by default (`sort=newest`), or the most viewed (`popular`) or A–Z (`az`). Course names get the standard spelling for numbered parts ("Physics I", not "Physics-I"); migration `0008_course_name_parts` fixes existing names, skipping any that would clash with a course already in the department.
+The questions list shows the newest papers first by default (`sort=newest`), or the most viewed (`popular`) or A–Z (`az`). Course names get the standard spelling for numbered parts ("Physics I", not "Physics-I"); `pnpm import-legacy` applies the same spelling to imported names, skipping any that would clash with a course already in the department.
 
 Otherwise results only flag, never reject: the admin list shows an AI badge and can filter by "Flagged by AI" (not a paper, several papers) or "AI disagrees". The review page shows the AI's values next to the submitted ones, **Apply AI values** prefills the classification dialog with them, and **Re-run** starts a new analysis.
 
@@ -73,7 +73,7 @@ Users with the `admin` role get an **Admin panel** entry in the account menu, le
 - **Catalog** — add, rename and delete departments, courses, semesters and exam types. Entries in use can be renamed but not deleted; a course keeps its department because questions depend on it.
 - **Users** — search by name or email, and grant or remove admin rights. Admins can't change their own role, so there is always at least one.
 
-`role` is a Better Auth additional field with `input: false`, so sign-up and `update-user` can't set it. `pnpm db:seed` creates a local admin (`admin@seed.local` / `correct-horse-battery`). To promote an existing account, sign up first, then run `pnpm make-admin you@example.com` (add `--remote` for the deployed database).
+`role` is a Better Auth additional field with `input: false`, so sign-up and `update-user` can't set it. To make yourself an admin, log in with Google once, then run `pnpm make-admin you@gmail.com` (add `--remote` for the deployed database). `pnpm db:seed` also adds an admin user without a login, for the e2e tests.
 
 ## Stack
 
@@ -84,7 +84,7 @@ Users with the `admin` role get an **Admin panel** entry in the account menu, le
 | Web             | [React Router v8](https://reactrouter.com) (SSR) + Tailwind CSS v4 + shadcn/ui        |
 | Database        | Cloudflare D1 (SQLite) via [Drizzle ORM](https://orm.drizzle.team)                    |
 | File storage    | Cloudflare R2 (PDFs)                                                                  |
-| Auth            | [Better Auth](https://better-auth.com) (email + password, cookie sessions)            |
+| Auth            | [Better Auth](https://better-auth.com) (Google OAuth, cookie sessions)                |
 | Shared contract | Zod schemas in `packages/shared`, used by the API, the web app and future mobile apps |
 | Tests           | Vitest (API runs inside `workerd` with real local D1/R2), Testing Library, Playwright |
 | Tooling         | pnpm workspaces, TypeScript, ESLint, Prettier, GitHub Actions                         |
@@ -130,11 +130,13 @@ Prerequisites: Node.js 22.22+ (see `.nvmrc`) and pnpm 11 (`corepack enable`).
 
 ```bash
 pnpm install
-cp apps/api/.dev.vars.example apps/api/.dev.vars   # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
+cp apps/api/.dev.vars.example apps/api/.dev.vars   # then set BETTER_AUTH_SECRET and the Google OAuth client
 pnpm db:migrate                                    # create tables in the local D1 database
 pnpm db:seed                                       # sample departments, courses, questions + PDFs
 pnpm dev                                           # api on :8787, web on :5173
 ```
+
+Google sign-in needs an OAuth client (Google Cloud Console → APIs & Services → Credentials → "Web application") with the redirect URI `http://localhost:5173/api/auth/callback/google`; `.dev.vars.example` has the details.
 
 Open http://localhost:5173. API docs are at http://localhost:8787/api/docs.
 
@@ -166,8 +168,8 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 ## Before going to production (later)
 
 - Create real resources (`wrangler d1 create`, `wrangler r2 bucket create`) and put the D1 id in `apps/api/wrangler.jsonc`.
-- Set `BETTER_AUTH_SECRET` with `wrangler secret put`, and update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain.
-- Add email verification and password reset (e.g. Cloudflare Email Service), rate limiting and Turnstile on auth forms.
-- Promote the first admin with `pnpm make-admin <email> --remote` after signing up.
+- Set `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with `wrangler secret put`, update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain, and add `https://<domain>/api/auth/callback/google` to the OAuth client's redirect URIs.
+- Add rate limiting on the API.
+- Promote the first admin with `pnpm make-admin <email> --remote` after logging in with Google.
 - Add email change (with verification) and account deletion.
 - Add caching for public pages and PDFs, a sitemap, and staging/production environments.

@@ -12,6 +12,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import { ThemeToggle } from "~/components/theme-toggle";
 
 /**
  * Admin routes name themselves in the breadcrumb through their `handle`: a string,
@@ -70,6 +71,7 @@ export function AdminHeader() {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link to="/">
               <ExternalLink />

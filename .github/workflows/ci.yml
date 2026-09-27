@@ -43,6 +43,8 @@ jobs:
       - name: Prepare local API secrets and database
         run: |
           printf "BETTER_AUTH_SECRET=%s\n" "$(openssl rand -base64 32)" > apps/api/.dev.vars
+          # Placeholder Google client: the e2e tests stop at Google's (stubbed) sign-in page.
+          printf "GOOGLE_CLIENT_ID=e2e-client-id\nGOOGLE_CLIENT_SECRET=e2e-client-secret\n" >> apps/api/.dev.vars
           pnpm db:migrate
           pnpm db:seed
       - run: pnpm test:e2e

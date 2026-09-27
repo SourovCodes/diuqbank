@@ -24,21 +24,21 @@ import {
   seedQuestion,
   seedTaxonomy,
   seedUser,
-  signUpAdmin,
-  signUpUser,
+  signInAdmin,
+  signIn,
 } from "./helpers";
 
 type Taxonomy = Awaited<ReturnType<typeof seedTaxonomy>>;
 
-let admin: Awaited<ReturnType<typeof signUpAdmin>>;
-let member: Awaited<ReturnType<typeof signUpUser>>;
+let admin: Awaited<ReturnType<typeof signInAdmin>>;
+let member: Awaited<ReturnType<typeof signIn>>;
 let t: Taxonomy;
 let questionId: number;
 
 beforeAll(async () => {
   [admin, member, t] = await Promise.all([
-    signUpAdmin(),
-    signUpUser(),
+    signInAdmin(),
+    signIn(),
     seedTaxonomy(),
   ]);
   questionId = (

@@ -13,11 +13,27 @@ function renderHeader(user: SessionUser | null) {
   render(<Stub initialEntries={["/"]} />);
 }
 
-it("offers log in and sign up to visitors", async () => {
+it("offers log in to visitors", async () => {
   renderHeader(null);
   expect(await screen.findByRole("link", { name: "Log in" })).toBeTruthy();
-  expect(screen.getByRole("link", { name: "Sign up" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Account menu" })).toBeNull();
+});
+
+it("switches between the light and dark theme", async () => {
+  renderHeader(null);
+  const toggle = await screen.findByRole("button", {
+    name: "Switch to dark theme",
+  });
+  toggle.click();
+  expect(document.documentElement.classList.contains("dark")).toBe(true);
+  expect(document.cookie).toContain("qb_theme=dark");
+
+  (
+    await screen.findByRole("button", { name: "Switch to light theme" })
+  ).click();
+  expect(document.documentElement.classList.contains("dark")).toBe(false);
+  expect(document.cookie).toContain("qb_theme=light");
 });
 
 it("shows the account menu instead when signed in", async () => {

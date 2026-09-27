@@ -97,3 +97,39 @@ export async function removeAvatar(
 export function getAvatarObject(bucket: R2Bucket, id: string) {
   return bucket.get(objectKey(id));
 }
+
+/** Profile photos from Google, which end in a size option like `=s96-c`. */
+const GOOGLE_PHOTO = /^https:\/\/lh\d+\.googleusercontent\.com\//;
+
+/** The original-size photo: Google's URL without the trailing size option. */
+export function fullSizeGooglePhoto(url: string) {
+  return url.replace(/=[^/=]*$/, "");
+}
+
+/**
+ * Copies a new user's Google photo into R2, so it is served from our own URL like an
+ * upload. Tries the full-size photo first, then the size Google sent. Never throws:
+ * if both fail (too large, not JPEG/PNG/WebP, Google unreachable), the user keeps
+ * Google's URL.
+ */
+export async function importGoogleAvatar(
+  db: Database,
+  bucket: R2Bucket,
+  userId: string,
+  url: string,
+) {
+  if (!GOOGLE_PHOTO.test(url)) return;
+  for (const candidate of new Set([fullSizeGooglePhoto(url), url])) {
+    try {
+      const res = await fetch(candidate, {
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!res.ok) continue;
+      const file = new File([await res.blob()], "google-photo");
+      await setAvatar(db, bucket, userId, file);
+      return;
+    } catch {
+      // Try the next size.
+    }
+  }
+}

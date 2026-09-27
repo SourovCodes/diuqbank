@@ -1,6 +1,12 @@
 # Copy to .dev.vars for local development. Never commit .dev.vars.
 # Generate a value with: openssl rand -base64 32
 BETTER_AUTH_SECRET=replace-me-with-a-random-32-plus-character-string
+# Google sign-in (the only way to log in). Create an OAuth client ("Web application")
+# in Google Cloud Console → APIs & Services → Credentials, with the authorised
+# redirect URI http://localhost:5173/api/auth/callback/google (and the production
+# origin's /api/auth/callback/google).
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 # AI analysis of uploads and watermarks on published PDFs (optional locally; without
 # them both fail as "not configured").
 GEMINI_API_KEY=
