@@ -5,22 +5,23 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+# A new push to a PR cancels its older run. Runs on main are never cancelled, since
+# one may be halfway through a deploy.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
     name: Lint, typecheck & unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
@@ -30,16 +31,24 @@ jobs:
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest
-    needs: check
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
+      # Browsers are cached per Playwright version; the system packages they need
+      # aren't, so they're installed either way.
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @qb/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        id: playwright-cache
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @qb/web exec playwright install --with-deps chromium
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @qb/web exec playwright install --with-deps chromium
+      - if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @qb/web exec playwright install-deps chromium
       - name: Prepare local API secrets and database
         run: |
           printf "BETTER_AUTH_SECRET=%s\n" "$(openssl rand -base64 32)" > apps/api/.dev.vars
@@ -60,6 +69,7 @@ jobs:
   deploy:
     name: Deploy to Cloudflare
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [check, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.SITE_URL != ''
     # Never cancel a deploy halfway, and run them one at a time in push order.
@@ -71,12 +81,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       # Schema first, so new code never runs against the old one. Then the API,
       # which the web worker's service binding points at.
       - name: Apply D1 migrations
