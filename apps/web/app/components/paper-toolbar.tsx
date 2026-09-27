@@ -45,7 +45,7 @@ export type PaperViewer =
 
 type PaperToolbarProps = {
   submission: Submission;
-  /** e.g. "Paper 2" */
+  /** e.g. "Section A · Batch 61" or "By Ayesha Rahman" */
   label: string;
   viewer: PaperViewer;
 };
@@ -102,7 +102,7 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
                 className={cn(ghost, "tabular-nums")}
               >
                 <Icon aria-hidden />
-                {formatCount(countFor(value))}
+                {countFor(value) > 0 && formatCount(countFor(value))}
               </Link>
             ))}
             <Link to={loginHref} className={ghost}>
@@ -140,7 +140,8 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
                     )}
                   >
                     <Icon aria-hidden />
-                    {formatCount(countFor(value))}
+                    {/* No "0": an empty count reads as a plain button. */}
+                    {countFor(value) > 0 && formatCount(countFor(value))}
                   </Button>
                 );
               })}

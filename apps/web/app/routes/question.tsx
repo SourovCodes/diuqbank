@@ -35,7 +35,7 @@ import {
 import { formatViews } from "~/lib/format";
 import { hasSessionCookie, requireUser } from "~/lib/session.server";
 import {
-  paperDetails,
+  paperTitle,
   plural,
   pickSubmission,
   submissionFileUrl,
@@ -76,6 +76,8 @@ async function loadOtherSemesters(request: Request, question: QuestionDetail) {
     courseId: String(question.course.id),
     examTypeId: String(question.examType.id),
     pageSize: "100",
+    // Newest semester first.
+    sort: "az",
   });
   const res = await apiFetch(request, `/api/v1/questions?${query}`);
   if (!res.ok) return [];
@@ -216,9 +218,11 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
   const published = question.submissions.filter(
     (s) => s.status === "published",
   );
-  const details = selected ? paperDetails(selected) : null;
   const paperLabel = selected
-    ? `Paper ${published.findIndex((s) => s.id === selected.id) + 1}${details ? ` · ${details}` : ""}`
+    ? paperTitle(
+        selected,
+        published.findIndex((s) => s.id === selected.id),
+      )
     : "";
 
   useCountView(`/api/v1/questions/${question.id}/views`);

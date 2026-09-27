@@ -1,8 +1,7 @@
 import type { ApiError, CreatedSubmission } from "@qb/shared";
-import { CheckCircle2, Lightbulb } from "lucide-react";
-import { Link, useNavigation } from "react-router";
+import { Lightbulb } from "lucide-react";
+import { redirect, useNavigation } from "react-router";
 import { ContributeForm } from "~/components/contribute-form";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { PageHeader } from "~/components/page-header";
 import { apiFetch, readJson } from "~/lib/api.server";
@@ -30,15 +29,15 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   if (res.status === 201) {
-    return {
-      ok: true as const,
-      submission: await readJson<CreatedSubmission>(res),
-    };
+    // Follow the review (AI check, then publishing) on the paper's status page.
+    const created = await readJson<CreatedSubmission>(res);
+    return redirect(
+      `/account/submissions/${encodeURIComponent(created.id)}?uploaded`,
+    );
   }
   const body = await readJson<ApiError>(res).catch(() => null);
   const fieldErrors = fieldErrorsFrom(body);
   return {
-    ok: false as const,
     fieldErrors,
     message:
       Object.keys(fieldErrors).length > 0
@@ -50,7 +49,8 @@ export async function action({ request }: Route.ActionArgs) {
 const STEPS = [
   "Choose the department, course, semester and exam type.",
   "Upload the question paper as a PDF.",
-  "An admin reviews it, along with any new entries, before it is published.",
+  "AI checks it. If it’s one question paper with the details you chose, it’s published right away.",
+  "Otherwise, or if it adds new entries, an admin reviews it first.",
 ];
 
 export default function Contribute({
@@ -58,48 +58,17 @@ export default function Contribute({
   actionData,
 }: Route.ComponentProps) {
   const submitting = useNavigation().state === "submitting";
-  const failed = actionData && !actionData.ok ? actionData : null;
+  const failed = actionData ?? null;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Contribute a paper"
-        description="Upload a question paper PDF and tell us where it belongs. Every submission is reviewed before it is published."
+        description="Upload a question paper PDF and tell us where it belongs. It’s checked by AI, and by an admin when needed, before it is published."
       />
 
-      {actionData?.ok && (
-        <Alert role="status">
-          <CheckCircle2 />
-          <AlertTitle>Thanks! Your paper was submitted for review.</AlertTitle>
-          <AlertDescription>
-            <p>
-              {actionData.submission.questionId !== null ? (
-                <Link
-                  to={`/questions/${actionData.submission.questionId}`}
-                  className="underline underline-offset-4"
-                >
-                  View the question
-                </Link>
-              ) : (
-                "New entries will be added once an admin approves them."
-              )}{" "}
-              ·{" "}
-              <Link
-                // The public profile only lists published papers; this one is pending.
-                to="/account/submissions"
-                className="underline underline-offset-4"
-              >
-                See your contributions
-              </Link>
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
-        {/* Re-mount after each successful upload to reset the form. */}
         <ContributeForm
-          key={actionData?.ok ? actionData.submission.id : "form"}
           {...loaderData}
           fieldErrors={failed?.fieldErrors ?? {}}
           message={failed?.message}

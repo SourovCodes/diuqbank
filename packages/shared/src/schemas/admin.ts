@@ -73,6 +73,8 @@ export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   updatedAt: z.iso.datetime(),
   /** Null for submissions that were never analysed. */
   analysis: analysisSummarySchema.nullable(),
+  /** Published by the AI check right after upload, not by an admin. */
+  autoPublished: z.boolean(),
 });
 export type AdminSubmission = z.infer<typeof adminSubmissionSchema>;
 

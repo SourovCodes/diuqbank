@@ -28,10 +28,15 @@ function QuestionCard({ question }: { question: Question }) {
   const { published, pendingReview } = question.submissionCounts;
 
   return (
-    // Tighter on phones, where a full-size card fits barely three to a screen.
-    <Card className={cn(LINK_CARD, "gap-3 py-4 sm:gap-4 sm:py-6")}>
-      <CardHeader className="gap-2 px-4 sm:gap-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-1.5">
+    // On phones a compact row of a bordered list, so a screen holds many; cards from `sm` up.
+    <Card
+      className={cn(
+        LINK_CARD,
+        "gap-4 py-6 max-sm:gap-0 max-sm:rounded-none max-sm:border-0 max-sm:py-3 max-sm:shadow-none max-sm:hover:shadow-none",
+      )}
+    >
+      <CardHeader className="gap-3 px-6 max-sm:gap-1 max-sm:px-4">
+        <div className="flex flex-wrap items-center gap-1.5 max-sm:hidden">
           <Badge variant="secondary" title={question.department.name}>
             {question.department.shortName}
           </Badge>
@@ -48,12 +53,17 @@ function QuestionCard({ question }: { question: Question }) {
             {question.course.name}
           </Link>
         </CardTitle>
-        <CardDescription className="flex items-center gap-1.5">
-          <CalendarDays className="size-3.5" aria-hidden />
+        <CardDescription className="items-center gap-1.5 sm:flex">
+          <CalendarDays className="size-3.5 max-sm:hidden" aria-hidden />
+          {/* Phones: everything on one line under the title. */}
+          <span className="sm:hidden">
+            {question.department.shortName} · {question.examType.name} ·{" "}
+          </span>
           {question.semester.name}
+          <span className="sm:hidden"> · {plural(published, "paper")}</span>
         </CardDescription>
       </CardHeader>
-      <CardFooter className="mt-auto justify-between gap-3 border-t px-4 pt-3 text-sm text-muted-foreground sm:px-6 sm:pt-4 [.border-t]:pt-3 sm:[.border-t]:pt-4">
+      <CardFooter className="mt-auto justify-between gap-3 border-t px-6 text-sm text-muted-foreground max-sm:hidden [.border-t]:pt-4">
         <span className="flex items-center gap-1.5">
           <FileText className="size-4" aria-hidden />
           <span className={published > 0 ? "font-medium text-foreground" : ""}>
@@ -83,7 +93,13 @@ function QuestionCard({ question }: { question: Question }) {
 /** Questions as a grid of cards; each card opens the question. */
 export function QuestionCards({ questions }: { questions: Question[] }) {
   return (
-    <ul aria-label="Questions" className={CARD_GRID}>
+    <ul
+      aria-label="Questions"
+      className={cn(
+        CARD_GRID,
+        "max-sm:gap-0 max-sm:divide-y max-sm:overflow-hidden max-sm:rounded-xl max-sm:border",
+      )}
+    >
       {questions.map((question) => (
         <li key={question.id} className="grid">
           <QuestionCard question={question} />

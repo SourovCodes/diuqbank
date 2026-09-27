@@ -1,4 +1,4 @@
-import type { QuestionList } from "@qb/shared";
+import type { QuestionList, QuestionSort } from "@qb/shared";
 import { SearchX, SlidersHorizontal, X } from "lucide-react";
 import { data, Link, useNavigation, useSearchParams } from "react-router";
 import { EmptyState } from "~/components/empty-state";
@@ -8,6 +8,13 @@ import { SearchableSelect } from "~/components/searchable-select";
 import { TablePagination } from "~/components/table-pagination";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import {
   Sheet,
   SheetClose,
@@ -24,6 +31,7 @@ import {
   applyFilter,
   courseOptions,
   FILTER_KEYS,
+  LIST_KEYS,
   type FilterKey,
 } from "~/lib/filters";
 import { plural } from "~/lib/submissions";
@@ -42,7 +50,7 @@ export const meta: Route.MetaFunction = () => [
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const query = new URLSearchParams();
-  for (const key of [...FILTER_KEYS, "page"]) {
+  for (const key of [...FILTER_KEYS, ...LIST_KEYS, "page"]) {
     const value = url.searchParams.get(key);
     if (value) query.set(key, value);
   }
@@ -63,6 +71,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { ...taxonomy, list, invalid };
 }
 
+const SORT_LABELS: Record<QuestionSort, string> = {
+  newest: "Newest papers",
+  popular: "Most viewed",
+  az: "A–Z",
+};
+
 export default function Questions({ loaderData }: Route.ComponentProps) {
   const { departments, courses, semesters, examTypes, list, invalid } =
     loaderData;
@@ -73,7 +87,15 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
     navigation.location.pathname === "/questions";
 
   const departmentId = searchParams.get("departmentId");
+  const sort = (searchParams.get("sort") as QuestionSort | null) ?? "newest";
   const hasFilters = FILTER_KEYS.some((key) => searchParams.has(key));
+  const setSort = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === "newest") next.delete("sort");
+    else next.set("sort", value);
+    next.delete("page");
+    setSearchParams(next, { preventScrollReset: true });
+  };
 
   const setFilter = (key: FilterKey, value: string | null) =>
     setSearchParams(applyFilter(searchParams, key, value, courses), {
@@ -208,18 +230,32 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         aria-busy={loading}
         className={cn("space-y-4 transition-opacity", loading && "opacity-60")}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="results-heading" className="text-sm font-medium">
             {plural(list.total, "question")}
           </h2>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/questions" preventScrollReset>
-                <X />
-                Clear filters
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {hasFilters && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/questions" preventScrollReset>
+                  <X />
+                  Clear
+                </Link>
+              </Button>
+            )}
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger size="sm" aria-label="Sort questions">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {(Object.keys(SORT_LABELS) as QuestionSort[]).map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {SORT_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {invalid && (
@@ -231,11 +267,7 @@ export default function Questions({ loaderData }: Route.ComponentProps) {
         {list.items.length === 0 ? (
           <EmptyState
             icon={SearchX}
-            title={
-              hasFilters
-                ? "No questions match these filters"
-                : "No questions yet"
-            }
+            title={hasFilters ? "No questions match" : "No questions yet"}
             description={
               hasFilters
                 ? "Try removing a filter or choosing a different combination."

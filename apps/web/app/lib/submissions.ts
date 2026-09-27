@@ -47,6 +47,22 @@ export function paperDetails({
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+/**
+ * How to tell the papers of one question apart: by section and batch when given,
+ * otherwise by who uploaded them, and only then by number ("Paper 2").
+ */
+export function paperTitle(
+  submission: Pick<Submission, "section" | "batch" | "uploader">,
+  index: number,
+) {
+  return (
+    paperDetails(submission) ??
+    (submission.uploader
+      ? `By ${submission.uploader.name}`
+      : `Paper ${index + 1}`)
+  );
+}
+
 export function plural(count: number, singular: string, pluralForm?: string) {
   return `${count} ${count === 1 ? singular : (pluralForm ?? `${singular}s`)}`;
 }

@@ -2,6 +2,7 @@ import type { AnalysisValues, SubmissionClassification } from "@qb/shared";
 import { describe, expect, it } from "vitest";
 import {
   analysisLabel,
+  classificationFields,
   classificationFromAnalysis,
   compareWithAnalysis,
 } from "./analysis";
@@ -89,5 +90,22 @@ describe("analysisLabel", () => {
     expect(
       analysisLabel({ status: "processing", flag: null, matches: null }).label,
     ).toBe("AI checking");
+  });
+});
+
+describe("classificationFields", () => {
+  it("sends ids for existing entries and names for new ones", () => {
+    expect(
+      classificationFields(classificationFromAnalysis(classification, values), {
+        section: "A",
+        batch: null,
+      }),
+    ).toEqual({
+      departmentId: "1",
+      customCourseName: "Compiler Design and Construction",
+      customSemesterName: "Fall 25",
+      examTypeId: "1",
+      section: "A",
+    });
   });
 });

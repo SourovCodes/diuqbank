@@ -1,14 +1,15 @@
 import type {
   ApiError,
-  ContributorSubmission,
+  MySubmission,
   MySubmissionList,
   SubmissionStatus,
 } from "@qb/shared";
 import {
   EllipsisVertical,
   ExternalLink,
-  Eye,
   FileUp,
+  Globe,
+  ListChecks,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -21,7 +22,10 @@ import {
 } from "react-router";
 import { ConfirmAction, useFormAction } from "~/components/actions";
 import { EmptyState } from "~/components/empty-state";
-import { SubmissionTable } from "~/components/submission-table";
+import {
+  MySubmissionCards,
+  mySubmissionUrl,
+} from "~/components/my-submission-cards";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +37,8 @@ import {
 import { UrlTabs } from "~/components/url-tabs";
 import type { ActionResult } from "~/lib/action-result";
 import { apiFetch, apiGetJson, readJson } from "~/lib/api.server";
+import { isChecking } from "~/lib/review";
+import { useRefreshWhile } from "~/hooks/use-refresh-while";
 import { requireUser } from "~/lib/session.server";
 import {
   ownSubmissionFileUrl,
@@ -97,12 +103,12 @@ const FILTER_STATUSES: SubmissionStatus[] = [
   "rejected",
 ];
 
-/** View or preview the paper, and withdraw it while it isn't published. */
-function RowActions({
+/** Status, public page, PDF, and withdrawing while the paper isn't published. */
+function CardActions({
   submission,
   run,
 }: {
-  submission: ContributorSubmission;
+  submission: MySubmission;
   run: ReturnType<typeof useFormAction>["run"];
 }) {
   const [withdrawing, setWithdrawing] = useState(false);
@@ -122,27 +128,32 @@ function RowActions({
             <EllipsisVertical />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          {href ? (
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild>
+            <Link to={mySubmissionUrl(submission.id)}>
+              <ListChecks />
+              Review status
+            </Link>
+          </DropdownMenuItem>
+          {href && (
             <DropdownMenuItem asChild>
               <Link to={href}>
-                <Eye />
-                View
+                <Globe />
+                Public page
               </Link>
             </DropdownMenuItem>
-          ) : (
-            // A plain link: the PDF comes straight from the API, not a page route.
-            <DropdownMenuItem asChild>
-              <a
-                href={ownSubmissionFileUrl(submission.id)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink />
-                Preview
-              </a>
-            </DropdownMenuItem>
           )}
+          {/* A plain link: the PDF comes straight from the API, not a page route. */}
+          <DropdownMenuItem asChild>
+            <a
+              href={ownSubmissionFileUrl(submission.id)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink />
+              Preview PDF
+            </a>
+          </DropdownMenuItem>
           {submission.status !== "published" && (
             <>
               <DropdownMenuSeparator />
@@ -178,6 +189,8 @@ export default function AccountSubmissions({
   const { userId, submissions } = loaderData;
   // Owned by the page: a withdrawn submission's row disappears.
   const { run } = useFormAction();
+  // Keeps "Checking your paper" cards up to date.
+  useRefreshWhile(submissions.some(isChecking));
   const [searchParams] = useSearchParams();
   const requested = searchParams.get("status");
   const status = FILTER_STATUSES.find((s) => s === requested) ?? null;
@@ -203,8 +216,8 @@ export default function AccountSubmissions({
             My submissions
           </h2>
           <p className="text-sm text-muted-foreground">
-            Follow the review of your papers, and withdraw ones that aren’t
-            published.
+            Follow the review of your papers: the AI check, and the admin’s
+            decision. Open a paper to see what the AI read from it.
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -242,10 +255,10 @@ export default function AccountSubmissions({
               title={`No ${STATUS_LABELS[status!].toLowerCase()} submissions`}
             />
           ) : (
-            <SubmissionTable
+            <MySubmissionCards
               submissions={visible}
               actions={(submission) => (
-                <RowActions submission={submission} run={run} />
+                <CardActions submission={submission} run={run} />
               )}
             />
           )}

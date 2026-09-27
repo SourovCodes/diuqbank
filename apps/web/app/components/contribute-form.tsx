@@ -29,7 +29,7 @@ export function ContributeForm({
   return (
     <Form method="post" encType="multipart/form-data" className="min-w-0">
       <Card className="gap-0 py-0">
-        <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-6">
+        <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 sm:p-6">
           <ClassificationFields
             departments={departments}
             courses={courses}

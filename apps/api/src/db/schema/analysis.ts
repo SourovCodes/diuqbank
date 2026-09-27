@@ -20,6 +20,11 @@ export const submissionAnalyses = sqliteTable(
       .primaryKey()
       .references(() => submissions.id, { onDelete: "cascade" }),
     runId: text().notNull(),
+    /**
+     * Whether a passing result publishes the paper. Only the check that runs right
+     * after upload does; re-runs by an admin never publish.
+     */
+    autoPublish: integer({ mode: "boolean" }).notNull().default(false),
     status: text({ enum: ANALYSIS_STATUSES }).notNull().default("queued"),
     error: text(),
     /** Delivery attempt of the current run. */

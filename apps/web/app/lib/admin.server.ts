@@ -1,8 +1,6 @@
-import type { ApiError } from "@qb/shared";
 import { data, redirect } from "react-router";
-import { apiFetch, readJson } from "./api.server";
 import type { ActionResult } from "./action-result";
-import { fieldErrorsFrom } from "./api-errors";
+import { apiFetch, apiRequest, readJson } from "./api.server";
 
 /** What an admin form action returns to its fetcher. */
 export type AdminActionResult = ActionResult;
@@ -11,49 +9,17 @@ export type AdminActionResult = ActionResult;
  * Calls an admin API endpoint (`/api/v1/admin{path}`) on behalf of the signed-in admin
  * and turns the response into a result for the form that triggered it.
  */
-export async function adminRequest(
+export function adminRequest(
   request: Request,
   intent: string,
   method: string,
   path: string,
   body?: unknown,
 ) {
-  const res = await apiFetch(request, `/api/v1/admin${path}`, {
-    method,
-    ...(body === undefined
-      ? {}
-      : {
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        }),
-  });
-  if (res.ok) return data<AdminActionResult>({ ok: true, intent });
-
-  const error = await readJson<ApiError>(res).catch(() => null);
-  const fieldErrors = fieldErrorsFrom(error);
-  return data<AdminActionResult>(
-    {
-      ok: false,
-      intent,
-      error:
-        Object.keys(fieldErrors).length > 0
-          ? "Check the highlighted fields."
-          : (error?.error.message ?? "Something went wrong. Please try again."),
-      fieldErrors,
-    },
-    // 4xx skips revalidation: nothing changed.
-    { status: res.status >= 500 ? 502 : res.status },
-  );
+  return apiRequest(request, intent, method, `/api/v1/admin${path}`, body);
 }
 
-/** Form fields as a plain object, leaving out empty values. */
-export function formObject(form: FormData, ...skip: string[]) {
-  const entries = [...form.entries()].filter(
-    ([key, value]) =>
-      !skip.includes(key) && typeof value === "string" && value.trim() !== "",
-  );
-  return Object.fromEntries(entries) as Record<string, string>;
-}
+export { formObject } from "./form";
 
 /**
  * GETs JSON from an admin endpoint for a loader. Non-admins get the same 404 as

@@ -7,7 +7,9 @@ import type {
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
+  questions,
   submissionAnalyses,
+  submissionReports,
   submissions,
   type NewSubmissionRow,
 } from "../src/db/schema";
@@ -134,9 +136,9 @@ function fakeFetch(options: {
   return { fetch: fetcher, calls };
 }
 
-async function startRun(submissionId: string) {
+async function startRun(submissionId: string, autoPublish = false) {
   const { queue, sent } = fakeQueue();
-  await enqueueAnalysis(db(), queue, submissionId);
+  await enqueueAnalysis(db(), queue, submissionId, { autoPublish });
   return sent[0]!;
 }
 
@@ -387,7 +389,9 @@ describe("runAnalysis", () => {
   it("marks the run failed when it can't be queued", async () => {
     const paper = await seedPaper();
     const { queue } = fakeQueue(true);
-    const analysis = await enqueueAnalysis(db(), queue, paper.id);
+    const analysis = await enqueueAnalysis(db(), queue, paper.id, {
+      autoPublish: true,
+    });
     expect(analysis).toMatchObject({
       status: "failed",
       error: "Couldn't queue the analysis",
@@ -399,6 +403,127 @@ describe("runAnalysis", () => {
     await startRun(paper.id);
     await db().delete(submissions).where(eq(submissions.id, paper.id));
     expect(await analysisRow(paper.id)).toBeUndefined();
+  });
+});
+
+/** A pending paper filed under Algorithms · 1st semester · Midterm (all existing). */
+async function seedFiledPaper() {
+  const values = {
+    departmentId: t.cse.id,
+    courseId: t.algorithms.id,
+    semesterId: t.sem1.id,
+    examTypeId: t.midterm.id,
+  };
+  await db().insert(questions).values(values).onConflictDoNothing();
+  const question = await db().query.questions.findFirst({
+    where: eq(questions.courseId, t.algorithms.id),
+  });
+  return seedPaper({
+    questionId: question!.id,
+    departmentId: null,
+    customCourseName: null,
+    customSemesterName: null,
+    examTypeId: null,
+  });
+}
+
+/** Gemini's answer for the paper from `seedFiledPaper`. */
+const confirmingReply = (): AnalysisReply => ({
+  ...baseReply,
+  department: { existingId: t.cse.id, name: t.cse.name, shortName: null },
+  course: { existingId: t.algorithms.id, name: t.algorithms.name },
+  semester: { existingId: t.sem1.id, name: t.sem1.name },
+  examType: { existingId: t.midterm.id, name: t.midterm.name },
+});
+
+const submissionRow = (id: string) =>
+  db().query.submissions.findFirst({ where: eq(submissions.id, id) });
+
+describe("auto-publishing", () => {
+  it("publishes a single paper whose four values the AI confirms", async () => {
+    const paper = await seedFiledPaper();
+    const job = await startRun(paper.id, true);
+    const { fetch } = fakeFetch({ reply: confirmingReply() });
+    await runAnalysis(db(), analysisEnv, job, { fetch });
+
+    const row = await submissionRow(paper.id);
+    expect(row?.status).toBe("published");
+    expect(row?.autoPublishedAt).toBeInstanceOf(Date);
+  });
+
+  it.each<[string, (reply: AnalysisReply) => AnalysisReply]>([
+    [
+      "one value differs",
+      (reply) => ({
+        ...reply,
+        examType: { existingId: t.final.id, name: t.final.name },
+      }),
+    ],
+    ["the AI can't read a value", (reply) => ({ ...reply, semester: null })],
+    [
+      "it isn't a question paper",
+      (reply) => ({ ...reply, isQuestionPaper: false }),
+    ],
+    ["the file has two papers", (reply) => ({ ...reply, paperCount: 2 })],
+  ])("leaves it for review when %s", async (_, change) => {
+    const paper = await seedFiledPaper();
+    const job = await startRun(paper.id, true);
+    const { fetch } = fakeFetch({ reply: change(confirmingReply()) });
+    await runAnalysis(db(), analysisEnv, job, { fetch });
+    expect((await submissionRow(paper.id))?.status).toBe("pending_review");
+  });
+
+  it("never publishes new entries, reported papers or re-runs", async () => {
+    // Proposes a new course and semester.
+    const proposal = await seedPaper();
+    const proposalJob = await startRun(proposal.id, true);
+    await runAnalysis(db(), analysisEnv, proposalJob, {
+      fetch: fakeFetch({
+        reply: {
+          ...confirmingReply(),
+          course: { existingId: null, name: proposal.customCourseName! },
+          semester: { existingId: null, name: proposal.customSemesterName! },
+          examType: { existingId: t.final.id, name: t.final.name },
+        },
+      }).fetch,
+    });
+    expect((await submissionRow(proposal.id))?.status).toBe("pending_review");
+
+    const reported = await seedFiledPaper();
+    await db().insert(submissionReports).values({
+      submissionId: reported.id,
+      reporterId: admin.id,
+      reason: "other",
+    });
+    const reportedJob = await startRun(reported.id, true);
+    await runAnalysis(db(), analysisEnv, reportedJob, {
+      fetch: fakeFetch({ reply: confirmingReply() }).fetch,
+    });
+    expect((await submissionRow(reported.id))?.status).toBe("pending_review");
+
+    const rerun = await seedFiledPaper();
+    const rerunJob = await startRun(rerun.id, false);
+    await runAnalysis(db(), analysisEnv, rerunJob, {
+      fetch: fakeFetch({ reply: confirmingReply() }).fetch,
+    });
+    expect((await submissionRow(rerun.id))?.status).toBe("pending_review");
+  });
+
+  it("is undone by an admin's decision", async () => {
+    const paper = await seedFiledPaper();
+    const job = await startRun(paper.id, true);
+    await runAnalysis(db(), analysisEnv, job, {
+      fetch: fakeFetch({ reply: confirmingReply() }).fetch,
+    });
+    const res = await asAdmin(
+      `/api/v1/admin/submissions/${paper.id}`,
+      jsonRequest("PATCH", { status: "rejected" }),
+    );
+    expect(await res.json()).toMatchObject({
+      status: "rejected",
+      autoPublished: false,
+    });
+    expect((await submissionRow(paper.id))?.autoPublishedAt).toBeNull();
   });
 });
 
@@ -419,6 +544,8 @@ describe("POST /api/v1/submissions", () => {
     const { id } = await res.json<{ id: string }>();
     const row = await analysisRow(id);
     expect(row?.runId).toEqual(expect.any(String));
+    // Right after upload, a confirming check may publish the paper.
+    expect(row?.autoPublish).toBe(true);
   });
 });
 
@@ -546,6 +673,7 @@ describe("admin analysis", () => {
     expect(analysis.values).toBeNull();
     const after = await analysisRow(paper.id);
     expect(after?.runId).not.toBe(before?.runId);
+    expect(after?.autoPublish).toBe(false);
     expect(after?.courseName).toBeNull();
 
     const missing = await asAdmin("/api/v1/admin/submissions/nope/analysis", {

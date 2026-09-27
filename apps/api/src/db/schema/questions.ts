@@ -86,6 +86,11 @@ export const submissions = sqliteTable(
     status: text({ enum: SUBMISSION_STATUSES })
       .notNull()
       .default("pending_review"),
+    /**
+     * Set when the AI check published the paper without an admin; cleared when an
+     * admin changes the status.
+     */
+    autoPublishedAt: integer({ mode: "timestamp_ms" }),
     /** R2 object key of the PDF. */
     fileKey: text().notNull().unique(),
     fileSize: integer().notNull(),

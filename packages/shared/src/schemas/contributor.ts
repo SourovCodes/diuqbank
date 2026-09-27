@@ -30,12 +30,20 @@ export const contributorSubmissionSchema = submissionStatsSchema.extend({
 export type ContributorSubmission = z.infer<typeof contributorSubmissionSchema>;
 
 export const contributorDetailSchema = contributorSchema.extend({
-  /** Published papers only, newest first. */
-  submissions: z.array(contributorSubmissionSchema),
+  /** Published papers only, newest first, one page at a time. */
+  submissions: paginatedSchema(contributorSubmissionSchema),
 });
 export type ContributorDetail = z.infer<typeof contributorDetailSchema>;
 
 export const listContributorsQuerySchema = paginationQuerySchema;
+
+/** Pages through a contributor's papers. */
+export const contributorPapersQuerySchema = paginationQuerySchema.extend({
+  pageSize: paginationQuerySchema.shape.pageSize.default(24),
+});
+export type ContributorPapersQuery = z.infer<
+  typeof contributorPapersQuerySchema
+>;
 export type ListContributorsQuery = z.infer<typeof listContributorsQuerySchema>;
 
 export const contributorListSchema = paginatedSchema(contributorSchema);

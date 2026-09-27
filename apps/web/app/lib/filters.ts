@@ -10,6 +10,9 @@ export const FILTER_KEYS = [
 ] as const;
 export type FilterKey = (typeof FILTER_KEYS)[number];
 
+/** URL parameters of the questions list besides the filters. */
+export const LIST_KEYS = ["sort"] as const;
+
 /**
  * Course options for the course filter. With a department selected, only that
  * department's courses are shown; otherwise every course, suffixed with its

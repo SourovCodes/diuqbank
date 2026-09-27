@@ -1,13 +1,12 @@
 import type {
   ContributorDetail,
   ContributorList,
-  ContributorSubmission,
+  ContributorPapersQuery,
   ListContributorsQuery,
 } from "@qb/shared";
 import { and, asc, count, desc, eq, isNotNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { submissions, user } from "../db/schema";
-import { submissionStatusOrder } from "./common";
 import {
   selectSubmissionRows,
   toContributorSubmission,
@@ -79,37 +78,34 @@ export async function listContributors(
   };
 }
 
-/**
- * All submissions by one uploader, in every status: published first (newest first),
- * then pending review, then rejected. For the uploader's own account page.
- */
-export async function listUploaderSubmissions(
-  db: Database,
-  uploaderId: string,
-): Promise<ContributorSubmission[]> {
-  const rows = await selectSubmissionRows(db)
-    .where(eq(submissions.uploaderId, uploaderId))
-    .orderBy(submissionStatusOrder, desc(submissions.createdAt));
-  return rows.map(toContributorSubmission);
-}
-
 export async function getContributor(
   db: Database,
   id: string,
+  query: ContributorPapersQuery,
 ): Promise<ContributorDetail | null> {
   const [contributor] = await selectContributors(db)
     .query.where(eq(user.id, id))
     .limit(1);
   if (!contributor) return null;
 
+  const published = and(
+    eq(submissions.uploaderId, id),
+    eq(submissions.status, "published"),
+  );
   const rows = await selectSubmissionRows(db)
-    .where(
-      and(eq(submissions.uploaderId, id), eq(submissions.status, "published")),
-    )
-    .orderBy(desc(submissions.createdAt));
+    .where(published)
+    .orderBy(desc(submissions.createdAt), desc(submissions.id))
+    .limit(query.pageSize)
+    .offset((query.page - 1) * query.pageSize);
   return {
     ...contributor,
     joinedAt: contributor.joinedAt.toISOString(),
-    submissions: rows.map(toContributorSubmission),
+    submissions: {
+      items: rows.map(toContributorSubmission),
+      page: query.page,
+      pageSize: query.pageSize,
+      // Every published paper is counted as one of theirs.
+      total: contributor.publishedCount,
+    },
   };
 }

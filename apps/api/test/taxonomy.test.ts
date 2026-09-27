@@ -5,11 +5,20 @@ import type {
   SemesterList,
 } from "@qb/shared";
 import { describe, expect, it } from "vitest";
-import { api, seedTaxonomy } from "./helpers";
+import { api, seedQuestion, seedSubmission, seedTaxonomy } from "./helpers";
 
 describe("taxonomy routes", () => {
-  it("lists departments with their short names", async () => {
-    const { cse } = await seedTaxonomy();
+  it("lists departments with their short names and published papers", async () => {
+    const { cse, algorithms, sem1, midterm } = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: cse.id,
+      courseId: algorithms.id,
+      semesterId: sem1.id,
+      examTypeId: midterm.id,
+    });
+    await seedSubmission(question.id);
+    await seedSubmission(question.id, { status: "pending_review" });
+
     const body = await (
       await api("/api/v1/departments")
     ).json<DepartmentList>();
@@ -17,6 +26,7 @@ describe("taxonomy routes", () => {
       id: cse.id,
       name: cse.name,
       shortName: cse.shortName,
+      publishedCount: 1,
     });
   });
 

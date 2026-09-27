@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   contributorDetailSchema,
   contributorListSchema,
+  contributorPapersQuerySchema,
   listContributorsQuerySchema,
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
@@ -27,11 +28,15 @@ const getContributorRoute = createRoute({
   method: "get",
   path: "/{id}",
   tags,
-  summary: "Get a contributor with their submissions",
-  request: { params: z.object({ id: z.string().min(1) }) },
+  summary: "Get a contributor with a page of their published papers",
+  request: {
+    params: z.object({ id: z.string().min(1) }),
+    query: contributorPapersQuerySchema,
+  },
   responses: {
     200: jsonResponse(contributorDetailSchema, "Contributor"),
     404: errorResponse("Contributor not found"),
+    422: errorResponse("Invalid query"),
   },
 });
 
@@ -42,7 +47,11 @@ export const contributorRoutes = new OpenAPIHono<AppEnv>({
     c.json(await listContributors(c.var.db, c.req.valid("query")), 200),
   )
   .openapi(getContributorRoute, async (c) => {
-    const contributor = await getContributor(c.var.db, c.req.valid("param").id);
+    const contributor = await getContributor(
+      c.var.db,
+      c.req.valid("param").id,
+      c.req.valid("query"),
+    );
     if (!contributor) {
       throw new AppError(404, "NOT_FOUND", "Contributor not found");
     }

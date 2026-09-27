@@ -1,11 +1,30 @@
-import type { Course, Department, ExamType, Semester } from "@qb/shared";
-import { asc, eq } from "drizzle-orm";
+import type {
+  Course,
+  DepartmentListItem,
+  ExamType,
+  Semester,
+} from "@qb/shared";
+import { asc, eq, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { courses, departments, examTypes, semesters } from "../db/schema";
 import { semesterRecency } from "./common";
 
-export function listDepartments(db: Database): Promise<Department[]> {
-  return db.select().from(departments).orderBy(asc(departments.name));
+/** Departments by name, with their number of published papers. */
+export function listDepartments(db: Database): Promise<DepartmentListItem[]> {
+  return db
+    .select({
+      id: departments.id,
+      name: departments.name,
+      shortName: departments.shortName,
+      // Qualified by hand: drizzle leaves columns unqualified in a one-table select.
+      publishedCount: sql<number>`(
+        select count(*) from submissions s
+        inner join questions q on q.id = s.question_id
+        where q.department_id = departments.id and s.status = 'published'
+      )`.mapWith(Number),
+    })
+    .from(departments)
+    .orderBy(asc(departments.name));
 }
 
 export function listCourses(

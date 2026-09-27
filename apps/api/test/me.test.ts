@@ -1,8 +1,8 @@
 import { env } from "cloudflare:workers";
-import type { MySubmissionList } from "@qb/shared";
+import type { MySubmissionDetail, MySubmissionList } from "@qb/shared";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { submissions } from "../src/db/schema";
+import { submissionAnalyses, submissions } from "../src/db/schema";
 import {
   api,
   db,
@@ -78,6 +78,160 @@ describe("GET /api/v1/me/submissions", () => {
     expect(body.items[1]).toMatchObject({
       status: "pending_review",
       questionId: question.id,
+    });
+  });
+});
+
+describe("GET /api/v1/me/submissions/{id}", () => {
+  it("shows the uploader the review status and what the AI read", async () => {
+    const question = await seedAnyQuestion();
+    const me = await signedInUser();
+    const other = await signedInUser();
+    const paper = await seedSubmission(question.id, {
+      uploaderId: me.id,
+      status: "published",
+      autoPublishedAt: new Date(),
+    });
+    await db().insert(submissionAnalyses).values({
+      submissionId: paper.id,
+      runId: crypto.randomUUID(),
+      status: "completed",
+      isQuestionPaper: true,
+      paperCount: 1,
+      note: "One final exam paper.",
+      courseName: "Algorithms",
+      error: "internal detail",
+      completedAt: new Date(),
+    });
+
+    const res = await api(`/api/v1/me/submissions/${paper.id}`, {
+      headers: { cookie: me.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<MySubmissionDetail>();
+    expect(body).toMatchObject({
+      id: paper.id,
+      status: "published",
+      autoPublished: true,
+      analysis: { status: "completed", flag: null },
+      analysisDetail: {
+        status: "completed",
+        note: "One final exam paper.",
+        values: { course: { id: null, name: "Algorithms" } },
+      },
+    });
+    // Errors and costs stay with the admins.
+    expect(body.analysisDetail).not.toHaveProperty("error");
+    expect(body.analysisDetail).not.toHaveProperty("sentBytes");
+
+    const list = await (
+      await api("/api/v1/me/submissions", { headers: { cookie: me.cookie } })
+    ).json<MySubmissionList>();
+    expect(list.items[0]).toMatchObject({ id: paper.id, autoPublished: true });
+
+    const hidden = await api(`/api/v1/me/submissions/${paper.id}`, {
+      headers: { cookie: other.cookie },
+    });
+    expect(hidden.status).toBe(404);
+  });
+});
+
+describe("PUT /api/v1/me/submissions/{id}/classification", () => {
+  const reclassify = (id: string, body: unknown, cookie: string) =>
+    api(`/api/v1/me/submissions/${id}/classification`, {
+      method: "PUT",
+      headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("lets the uploader fix details and publishes when they match the AI", async () => {
+    const t = await seedTaxonomy();
+    const wrong = await seedQuestion({
+      departmentId: t.cse.id,
+      courseId: t.algorithms.id,
+      semesterId: t.sem1.id,
+      examTypeId: t.final.id,
+    });
+    const me = await signedInUser();
+    const paper = await seedSubmission(wrong.id, {
+      uploaderId: me.id,
+      status: "pending_review",
+    });
+    // The AI read the midterm, not the final.
+    await db().insert(submissionAnalyses).values({
+      submissionId: paper.id,
+      runId: crypto.randomUUID(),
+      status: "completed",
+      isQuestionPaper: true,
+      paperCount: 1,
+      departmentId: t.cse.id,
+      departmentName: t.cse.name,
+      courseId: t.algorithms.id,
+      courseName: t.algorithms.name,
+      semesterId: t.sem1.id,
+      semesterName: t.sem1.name,
+      examTypeId: t.midterm.id,
+      examTypeName: t.midterm.name,
+      completedAt: new Date(),
+    });
+
+    const res = await reclassify(
+      paper.id,
+      {
+        departmentId: t.cse.id,
+        courseId: t.algorithms.id,
+        semesterId: t.sem1.id,
+        examTypeId: t.midterm.id,
+        batch: "61",
+      },
+      me.cookie,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json<MySubmissionDetail>();
+    expect(body).toMatchObject({
+      status: "published",
+      autoPublished: true,
+      batch: "61",
+      classification: { examType: { id: t.midterm.id } },
+    });
+
+    // Published papers can't be changed any more.
+    const again = await reclassify(
+      paper.id,
+      {
+        departmentId: t.cse.id,
+        courseId: t.algorithms.id,
+        semesterId: t.sem1.id,
+        examTypeId: t.final.id,
+      },
+      me.cookie,
+    );
+    expect(again.status).toBe(409);
+  });
+
+  it("keeps new names as a proposal for an admin, and hides others' papers", async () => {
+    const question = await seedAnyQuestion();
+    const me = await signedInUser();
+    const other = await signedInUser();
+    const paper = await seedSubmission(question.id, {
+      uploaderId: me.id,
+      status: "pending_review",
+    });
+    const body = {
+      departmentId: question.departmentId,
+      customCourseName: "Compiler Design",
+      semesterId: question.semesterId,
+      examTypeId: question.examTypeId,
+    };
+
+    expect((await reclassify(paper.id, body, other.cookie)).status).toBe(404);
+
+    const res = await reclassify(paper.id, body, me.cookie);
+    expect(res.status).toBe(200);
+    expect(await findSubmission(paper.id)).toMatchObject({
+      status: "pending_review",
+      questionId: null,
+      customCourseName: "Compiler Design",
     });
   });
 });

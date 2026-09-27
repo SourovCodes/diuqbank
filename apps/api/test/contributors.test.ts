@@ -60,6 +60,36 @@ describe("GET /api/v1/contributors", () => {
     expect(JSON.stringify(body)).not.toContain("@example.com");
   });
 
+  it("pages through a contributor's papers, newest first", async () => {
+    const { midterm } = await seedQuestions();
+    const contributor = await seedUser("Prolific Contributor");
+    const papers = [];
+    for (let day = 1; day <= 3; day++) {
+      papers.push(
+        await seedSubmission(midterm.id, {
+          uploaderId: contributor.id,
+          createdAt: new Date(2026, 0, day),
+        }),
+      );
+    }
+    const page = async (n: number) =>
+      (
+        await (
+          await api(
+            `/api/v1/contributors/${contributor.id}?page=${n}&pageSize=2`,
+          )
+        ).json<ContributorDetail>()
+      ).submissions;
+
+    const first = await page(1);
+    expect(first.total).toBe(3);
+    expect(first.items.map((s) => s.id)).toEqual([
+      papers[2]!.id,
+      papers[1]!.id,
+    ]);
+    expect((await page(2)).items.map((s) => s.id)).toEqual([papers[0]!.id]);
+  });
+
   it("rejects invalid pagination", async () => {
     expect((await api("/api/v1/contributors?page=0")).status).toBe(422);
   });
@@ -86,7 +116,8 @@ describe("GET /api/v1/contributors/:id", () => {
       name: "Busy Contributor",
       publishedCount: 1,
     });
-    expect(body.submissions).toEqual([
+    expect(body.submissions).toMatchObject({ page: 1, total: 1 });
+    expect(body.submissions.items).toEqual([
       {
         id: published.id,
         status: "published",

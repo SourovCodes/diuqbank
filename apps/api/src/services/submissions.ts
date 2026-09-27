@@ -171,6 +171,33 @@ export async function resolveQuestionId(
   return question?.id ?? null;
 }
 
+/**
+ * The classification columns of a submission: linked to its question, or carrying
+ * the proposed values for admin review. Always sets every column, so it also clears
+ * the other shape on update.
+ */
+export function classificationColumns(
+  fields: SubmissionFields,
+  questionId: number | null,
+) {
+  const proposal = questionId === null;
+  return {
+    questionId,
+    departmentId: proposal ? (fields.departmentId ?? null) : null,
+    customDepartmentName: proposal
+      ? (fields.customDepartmentName ?? null)
+      : null,
+    customDepartmentShortName: proposal
+      ? (fields.customDepartmentShortName ?? null)
+      : null,
+    courseId: proposal ? (fields.courseId ?? null) : null,
+    customCourseName: proposal ? (fields.customCourseName ?? null) : null,
+    semesterId: proposal ? (fields.semesterId ?? null) : null,
+    customSemesterName: proposal ? (fields.customSemesterName ?? null) : null,
+    examTypeId: proposal ? fields.examTypeId : null,
+  };
+}
+
 export async function createSubmission(
   db: Database,
   bucket: R2Bucket,
@@ -188,20 +215,7 @@ export async function createSubmission(
     httpMetadata: { contentType: "application/pdf" },
   });
 
-  // Either linked to a question, or carrying the proposed values for admin review.
-  const classification =
-    questionId !== null
-      ? { questionId }
-      : {
-          departmentId: fields.departmentId ?? null,
-          customDepartmentName: fields.customDepartmentName ?? null,
-          customDepartmentShortName: fields.customDepartmentShortName ?? null,
-          courseId: fields.courseId ?? null,
-          customCourseName: fields.customCourseName ?? null,
-          semesterId: fields.semesterId ?? null,
-          customSemesterName: fields.customSemesterName ?? null,
-          examTypeId: fields.examTypeId,
-        };
+  const classification = classificationColumns(fields, questionId);
 
   let created: CreatedSubmission;
   try {
@@ -227,7 +241,7 @@ export async function createSubmission(
     await bucket.delete(fileKey);
     throw err;
   }
-  // AI checks for the admin review; runs in the background.
-  await enqueueAnalysis(db, queue, id);
+  // The AI check runs in the background and publishes the paper if it confirms it.
+  await enqueueAnalysis(db, queue, id, { autoPublish: true });
   return created;
 }

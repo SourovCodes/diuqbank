@@ -113,3 +113,32 @@ export function classificationFromAnalysis(
         : current.examType,
   };
 }
+
+/**
+ * A classification as the fields of the upload form: an id for existing entries, a
+ * name for new ones. Used to send the AI's reading as the uploader's own details.
+ */
+export function classificationFields(
+  classification: SubmissionClassification,
+  details: { section: string | null; batch: string | null },
+): Record<string, string> {
+  const { department, course, semester, examType } = classification;
+  const fields: Record<string, string> = {
+    examTypeId: String(examType.id),
+  };
+  if (department.id !== null) {
+    fields.departmentId = String(department.id);
+  } else {
+    fields.customDepartmentName = department.name;
+    if (department.shortName) {
+      fields.customDepartmentShortName = department.shortName;
+    }
+  }
+  if (course.id !== null) fields.courseId = String(course.id);
+  else fields.customCourseName = course.name;
+  if (semester.id !== null) fields.semesterId = String(semester.id);
+  else fields.customSemesterName = semester.name;
+  if (details.section) fields.section = details.section;
+  if (details.batch) fields.batch = details.batch;
+  return fields;
+}

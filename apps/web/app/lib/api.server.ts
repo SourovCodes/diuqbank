@@ -1,5 +1,8 @@
+import type { ApiError } from "@qb/shared";
 import { env } from "cloudflare:workers";
 import { data } from "react-router";
+import type { ActionResult } from "./action-result";
+import { fieldErrorsFrom } from "./api-errors";
 
 /**
  * Calls the API worker over its service binding on behalf of the incoming request,
@@ -38,4 +41,43 @@ export function setCookieHeaders(res: Response) {
   for (const cookie of res.headers.getSetCookie())
     headers.append("set-cookie", cookie);
   return headers;
+}
+
+/**
+ * Calls an API endpoint for a form action and turns the response into a result for
+ * the form: field errors, or the API's message.
+ */
+export async function apiRequest(
+  request: Request,
+  intent: string,
+  method: string,
+  path: string,
+  body?: unknown,
+) {
+  const res = await apiFetch(request, path, {
+    method,
+    ...(body === undefined
+      ? {}
+      : {
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+  });
+  if (res.ok) return data<ActionResult>({ ok: true, intent });
+
+  const error = await readJson<ApiError>(res).catch(() => null);
+  const fieldErrors = fieldErrorsFrom(error);
+  return data<ActionResult>(
+    {
+      ok: false,
+      intent,
+      error:
+        Object.keys(fieldErrors).length > 0
+          ? "Check the highlighted fields."
+          : (error?.error.message ?? "Something went wrong. Please try again."),
+      fieldErrors,
+    },
+    // 4xx skips revalidation: nothing changed.
+    { status: res.status >= 500 ? 502 : res.status },
+  );
 }

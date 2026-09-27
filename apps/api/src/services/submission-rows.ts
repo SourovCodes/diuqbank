@@ -1,6 +1,7 @@
 import type {
   AdminSubmission,
   AnalysisSummary,
+  MySubmission,
   ContributorSubmission,
   SubmissionClassification,
 } from "@qb/shared";
@@ -134,6 +135,7 @@ export function selectSubmissionRows(db: Database) {
         email: user.email,
         image: user.image,
       },
+      autoPublishedAt: submissions.autoPublishedAt,
       analysis: {
         status: analyses.status,
         isQuestionPaper: analyses.isQuestionPaper,
@@ -225,6 +227,16 @@ export function toAdminSubmission(row: SubmissionRowData): AdminSubmission {
     updatedAt: row.submission.updatedAt.toISOString(),
     classification: toClassification(row),
     uploader: row.uploader,
+    analysis: toAnalysisSummary(row),
+    autoPublished: row.autoPublishedAt !== null,
+  };
+}
+
+/** The uploader's view: the public fields plus how the review is going. */
+export function toMySubmission(row: SubmissionRowData): MySubmission {
+  return {
+    ...toContributorSubmission(row),
+    autoPublished: row.autoPublishedAt !== null,
     analysis: toAnalysisSummary(row),
   };
 }

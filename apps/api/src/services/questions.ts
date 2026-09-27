@@ -32,6 +32,10 @@ function submissionCounts(db: Database) {
         "pending_review_count",
       ),
       rejected: countWhereStatus("rejected").as("rejected_count"),
+      latestPublishedAt:
+        sql<number>`max(case when ${submissions.status} = 'published' then ${submissions.createdAt} end)`.as(
+          "latest_published_at",
+        ),
     })
     .from(submissions)
     .groupBy(submissions.questionId)
@@ -73,10 +77,21 @@ function questionFilters(query: ListQuestionsQuery) {
   return and(...filters);
 }
 
+const QUESTION_ORDER = {
+  // Grouped by course and exam type with the newest semester first, since students
+  // compare one exam across semesters.
+  az: [
+    asc(departments.shortName),
+    asc(courses.name),
+    asc(examTypes.name),
+    ...semesterRecency,
+  ],
+  popular: [desc(questions.viewCount), asc(courses.name)],
+} as const;
+
 /**
  * Questions with at least one published paper; ones whose papers are all still under
- * review (or rejected) have nothing to read yet. Grouped by course and exam type with
- * the newest semester first, since students compare one exam across semesters.
+ * review (or rejected) have nothing to read yet. Newest papers first by default.
  */
 export async function listQuestions(
   db: Database,
@@ -85,16 +100,15 @@ export async function listQuestions(
   const where = questionFilters(query);
   const itemCounts = submissionCounts(db);
   const totalCounts = submissionCounts(db);
+  const order =
+    query.sort === "newest"
+      ? [desc(itemCounts.latestPublishedAt), asc(courses.name)]
+      : QUESTION_ORDER[query.sort];
 
   const [items, totals] = await Promise.all([
     selectQuestions(db, itemCounts)
       .where(and(where, gt(itemCounts.published, 0)))
-      .orderBy(
-        asc(departments.shortName),
-        asc(courses.name),
-        asc(examTypes.name),
-        ...semesterRecency,
-      )
+      .orderBy(...order, asc(questions.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
     db

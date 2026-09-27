@@ -13,6 +13,15 @@ describe("normalizeCatalogName", () => {
     ["Business Administration.", "Business Administration"],
     ["Men’s Health", "Men's Health"],
     ["C++ Programming", "C++ Programming"],
+    ["Physics-I", "Physics I"],
+    ["Agricultural Chemistry -I", "Agricultural Chemistry I"],
+    ["Fabric Manufacturing - ii", "Fabric Manufacturing II"],
+    ["English-1", "English 1"],
+    ["Statistics for Decision-Making", "Statistics for Decision-Making"],
+    [
+      "Microprocessor and Micro-controller",
+      "Microprocessor and Micro-controller",
+    ],
   ])("%s → %s", (input, output) => {
     expect(normalizeCatalogName(input)).toBe(output);
   });

@@ -1,11 +1,20 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { mySubmissionListSchema } from "@qb/shared";
+import {
+  createSubmissionInputSchema,
+  mySubmissionDetailSchema,
+  mySubmissionListSchema,
+} from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
 import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { requireAuth } from "../middleware/require-auth";
-import { getOwnSubmissionFile, withdrawSubmission } from "../services/account";
-import { listUploaderSubmissions } from "../services/contributors";
+import {
+  getOwnSubmission,
+  getOwnSubmissionFile,
+  listOwnSubmissions,
+  reclassifyOwnSubmission,
+  withdrawSubmission,
+} from "../services/account";
 import type { AppEnv } from "../types";
 
 const tags = ["Account"];
@@ -20,6 +29,45 @@ const listMySubmissionsRoute = createRoute({
   responses: {
     200: jsonResponse(mySubmissionListSchema, "Your submissions"),
     401: errorResponse("Not signed in"),
+  },
+});
+
+const getMySubmissionRoute = createRoute({
+  method: "get",
+  path: "/submissions/{id}",
+  tags,
+  summary: "Get one of your submissions with its review status and AI check",
+  middleware: [requireAuth] as const,
+  request: { params: idParams },
+  responses: {
+    200: jsonResponse(mySubmissionDetailSchema, "Your submission"),
+    401: errorResponse("Not signed in"),
+    404: errorResponse("Submission not found"),
+  },
+});
+
+const reclassifyMySubmissionRoute = createRoute({
+  method: "put",
+  path: "/submissions/{id}/classification",
+  tags,
+  summary: "Correct the details of one of your papers waiting for review",
+  description:
+    "Same fields as uploading. The new details are compared with the AI check's " +
+    "reading, and the paper is published right away if they match.",
+  middleware: [requireAuth] as const,
+  request: {
+    params: idParams,
+    body: {
+      required: true,
+      content: { "application/json": { schema: createSubmissionInputSchema } },
+    },
+  },
+  responses: {
+    200: jsonResponse(mySubmissionDetailSchema, "Updated submission"),
+    401: errorResponse("Not signed in"),
+    404: errorResponse("Submission not found"),
+    409: errorResponse("The paper isn't waiting for review"),
+    422: errorResponse("Invalid details"),
   },
 });
 
@@ -65,8 +113,30 @@ export const meRoutes = new OpenAPIHono<AppEnv>({
   .openapi(listMySubmissionsRoute, async (c) =>
     c.json(
       {
-        items: await listUploaderSubmissions(c.var.db, c.var.session!.user.id),
+        items: await listOwnSubmissions(c.var.db, c.var.session!.user.id),
       },
+      200,
+    ),
+  )
+  .openapi(getMySubmissionRoute, async (c) => {
+    const submission = await getOwnSubmission(
+      c.var.db,
+      c.var.session!.user.id,
+      c.req.valid("param").id,
+    );
+    if (!submission) {
+      throw new AppError(404, "NOT_FOUND", "Submission not found");
+    }
+    return c.json(submission, 200);
+  })
+  .openapi(reclassifyMySubmissionRoute, async (c) =>
+    c.json(
+      await reclassifyOwnSubmission(
+        c.var.db,
+        c.var.session!.user.id,
+        c.req.valid("param").id,
+        c.req.valid("json"),
+      ),
       200,
     ),
   )
