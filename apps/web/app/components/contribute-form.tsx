@@ -37,7 +37,10 @@ export function ContributeForm({
             examTypes={examTypes}
             fieldErrors={fieldErrors}
           />
-          <PaperDetailsFields fieldErrors={fieldErrors} />
+          {/* Two short fields: side by side on phones too. */}
+          <div className="grid grid-cols-2 gap-3 sm:col-span-2 sm:gap-5">
+            <PaperDetailsFields fieldErrors={fieldErrors} />
+          </div>
 
           <div className="sm:col-span-2">
             <PdfFileInput

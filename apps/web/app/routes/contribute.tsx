@@ -1,5 +1,5 @@
 import type { ApiError, CreatedSubmission } from "@qb/shared";
-import { Lightbulb } from "lucide-react";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import { redirect, useNavigation } from "react-router";
 import { ContributeForm } from "~/components/contribute-form";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -53,6 +53,30 @@ const STEPS = [
   "Otherwise, or if it adds new entries, an admin reviews it first.",
 ];
 
+function HowItWorks() {
+  return (
+    <div className="grid gap-4 text-sm">
+      <ol className="space-y-3">
+        {STEPS.map((step, index) => (
+          <li key={step} className="flex gap-3">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
+              {index + 1}
+            </span>
+            <span className="pt-0.5 text-muted-foreground">{step}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="flex gap-2 border-t pt-4 text-muted-foreground">
+        <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <span>
+          Can’t find a department, course or semester? Type its name and choose
+          “Add”.
+        </span>
+      </p>
+    </div>
+  );
+}
+
 export default function Contribute({
   loaderData,
   actionData,
@@ -67,6 +91,21 @@ export default function Contribute({
         description="Upload a question paper PDF and tell us where it belongs. It’s checked by AI, and by an admin when needed, before it is published."
       />
 
+      {/* Below `lg` the steps would come after the submit button, so they sit
+          above the form, folded away. */}
+      <details className="group rounded-xl border bg-muted/30 lg:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          How it works
+          <ChevronDown
+            className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <div className="px-4 pb-4">
+          <HowItWorks />
+        </div>
+      </details>
+
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
         <ContributeForm
           {...loaderData}
@@ -74,30 +113,14 @@ export default function Contribute({
           message={failed?.message}
           submitting={submitting}
         />
-        <Card className="gap-4 bg-muted/30 shadow-none">
+        <Card className="gap-4 bg-muted/30 shadow-none max-lg:hidden">
           <CardHeader>
             <CardTitle>
               <h2>How it works</h2>
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 text-sm">
-            <ol className="space-y-3">
-              {STEPS.map((step, index) => (
-                <li key={step} className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-medium shadow-xs ring-1 ring-border">
-                    {index + 1}
-                  </span>
-                  <span className="pt-0.5 text-muted-foreground">{step}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="flex gap-2 border-t pt-4 text-muted-foreground">
-              <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <span>
-                Can’t find a department, course or semester? Type its name and
-                choose “Add”.
-              </span>
-            </p>
+          <CardContent>
+            <HowItWorks />
           </CardContent>
         </Card>
       </div>

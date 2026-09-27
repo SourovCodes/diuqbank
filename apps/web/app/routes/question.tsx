@@ -25,7 +25,6 @@ import { PdfViewer } from "~/components/pdf-viewer";
 import { PaperSwitcher, SubmissionList } from "~/components/submission-list";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { UploaderCard } from "~/components/uploader-card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import {
   parseVoteValue,
@@ -263,7 +262,7 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         {/* The paper comes first on small screens too; the lists follow it. */}
         <section aria-label="Question paper" className="min-w-0 space-y-3">
           <PaperSwitcher
@@ -299,22 +298,24 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
               }
             />
           )}
-          <OtherSemesters
-            course={question.course.name}
-            examType={question.examType.name}
-            questions={otherSemesters}
-          />
         </section>
 
-        <aside>
-          <div className="space-y-4 lg:sticky lg:top-20">
+        {/* On phones the papers list follows the paper; from `lg` it is a sticky
+            column beside both the paper and the other semesters. */}
+        <aside className="lg:row-span-2">
+          <div className="lg:sticky lg:top-20">
             <SubmissionList
               submissions={question.submissions}
               selectedId={selected?.id ?? null}
             />
-            {selected && <UploaderCard submission={selected} />}
           </div>
         </aside>
+
+        <OtherSemesters
+          course={question.course.name}
+          examType={question.examType.name}
+          questions={otherSemesters}
+        />
       </div>
     </div>
   );

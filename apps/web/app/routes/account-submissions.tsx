@@ -208,48 +208,49 @@ export default function AccountSubmissions({
     })),
   ];
 
+  // The account tab names the page, so the heading is for screen readers only;
+  // the actions share the row with the status tabs.
   return (
-    <section aria-labelledby="my-submissions-heading" className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h2 id="my-submissions-heading" className="text-lg font-semibold">
-            My submissions
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Follow the review of your papers: the AI check, and the admin’s
-            decision. Open a paper to see what the AI read from it.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          {submissions.length > 0 && (
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/contributors/${encodeURIComponent(userId)}`}>
-                Public profile
-              </Link>
-            </Button>
-          )}
-          <Button size="sm" asChild>
-            <Link to="/contribute">
-              <Upload />
-              Contribute
-            </Link>
-          </Button>
-        </div>
-      </div>
+    <section aria-labelledby="my-submissions-heading" className="space-y-4">
+      <h2 id="my-submissions-heading" className="sr-only">
+        My submissions
+      </h2>
 
       {submissions.length === 0 ? (
         <EmptyState
           icon={FileUp}
           title="No submissions yet"
-          description="Papers you upload show up here while they’re reviewed."
+          description="Upload a question paper and follow its review here: the AI check, and the admin’s decision when one is needed."
           action={
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/contribute">Contribute a paper</Link>
+            <Button size="sm" asChild>
+              <Link to="/contribute">
+                <Upload />
+                Contribute a paper
+              </Link>
             </Button>
           }
         />
       ) : (
-        <UrlTabs label="Filter by status" tabs={tabs} value={status ?? "all"}>
+        <UrlTabs
+          label="Filter by status"
+          tabs={tabs}
+          value={status ?? "all"}
+          toolbar={
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/contributors/${encodeURIComponent(userId)}`}>
+                  Public profile
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/contribute">
+                  <Upload />
+                  Contribute
+                </Link>
+              </Button>
+            </>
+          }
+        >
           {visible.length === 0 ? (
             <EmptyState
               title={`No ${STATUS_LABELS[status!].toLowerCase()} submissions`}
@@ -263,8 +264,8 @@ export default function AccountSubmissions({
             />
           )}
           <p className="px-1 text-xs text-muted-foreground">
-            Published papers can’t be withdrawn. Contact an admin if one needs
-            to be removed.
+            Open a paper to see what the AI read from it. Published papers can’t
+            be withdrawn; contact an admin if one needs to be removed.
           </p>
         </UrlTabs>
       )}
