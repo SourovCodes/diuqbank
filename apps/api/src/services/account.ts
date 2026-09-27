@@ -15,6 +15,7 @@ import {
   preferExistingValues,
   resolveQuestionId,
 } from "./submissions";
+import { submissionFileKeys, type WatermarkJob } from "./watermark";
 
 /** The user's own submissions in every status: published first, then newest first. */
 export async function listOwnSubmissions(
@@ -56,7 +57,7 @@ export async function getOwnSubmission(
 
 function findOwnSubmission(db: Database, uploaderId: string, id: string) {
   return db.query.submissions.findFirst({
-    columns: { fileKey: true, status: true },
+    columns: { fileKey: true, watermarkedFileKey: true, status: true },
     where: and(eq(submissions.id, id), eq(submissions.uploaderId, uploaderId)),
   });
 }
@@ -113,7 +114,8 @@ export async function withdrawSubmission(
       "This submission was just published and can no longer be withdrawn.",
     );
   }
-  await bucket.delete(submission.fileKey);
+  // A paper hidden by reports may have been published, with a watermarked copy.
+  await bucket.delete(submissionFileKeys(submission));
 }
 
 /**
@@ -123,6 +125,7 @@ export async function withdrawSubmission(
  */
 export async function reclassifyOwnSubmission(
   db: Database,
+  watermarkQueue: Queue<WatermarkJob>,
   uploaderId: string,
   id: string,
   input: SubmissionFields,
@@ -156,6 +159,7 @@ export async function reclassifyOwnSubmission(
   if (analysis?.status === "completed" && analysis.values) {
     await publishIfConfirmed(
       db,
+      watermarkQueue,
       id,
       {
         isQuestionPaper: analysis.isQuestionPaper ?? false,

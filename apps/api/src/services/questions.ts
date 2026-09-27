@@ -17,6 +17,7 @@ import {
 } from "../db/schema";
 import {
   countWhereStatus,
+  publicFileSize,
   questionSummaryColumns,
   semesterRecency,
   submissionStatusOrder,
@@ -141,7 +142,7 @@ export async function getQuestion(
     .select({
       id: submissions.id,
       status: submissions.status,
-      fileSize: submissions.fileSize,
+      fileSize: publicFileSize,
       createdAt: submissions.createdAt,
       likeCount: submissions.likeCount,
       dislikeCount: submissions.dislikeCount,
@@ -170,16 +171,24 @@ export async function getQuestion(
   };
 }
 
-/** Returns the R2 object for a published submission, or null if it isn't public. */
+/**
+ * The public PDF of a published submission: its watermarked copy, or the original
+ * until the copy is ready. Null if the submission isn't public.
+ */
 export async function getPublishedSubmissionFile(
   db: Database,
   bucket: R2Bucket,
   id: string,
-) {
+): Promise<{ object: R2ObjectBody; watermarked: boolean } | null> {
   const submission = await db.query.submissions.findFirst({
-    columns: { fileKey: true },
+    columns: { fileKey: true, watermarkedFileKey: true },
     where: and(eq(submissions.id, id), eq(submissions.status, "published")),
   });
   if (!submission) return null;
-  return bucket.get(submission.fileKey);
+  if (submission.watermarkedFileKey) {
+    const object = await bucket.get(submission.watermarkedFileKey);
+    if (object) return { object, watermarked: true };
+  }
+  const object = await bucket.get(submission.fileKey);
+  return object ? { object, watermarked: false } : null;
 }

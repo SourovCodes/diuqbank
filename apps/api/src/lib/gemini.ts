@@ -1,4 +1,4 @@
-import type { Fetcher } from "./pdf-compressor";
+import type { Fetcher } from "./pdf-processor";
 
 /** Inline request data is capped at 20 MB, and base64 adds a third. */
 export const GEMINI_MAX_INLINE_PDF_BYTES = 14 * 1024 * 1024;

@@ -84,11 +84,15 @@ export const submissionRoutes = new OpenAPIHono<AppEnv>({
     return c.json(created, 201);
   })
   .openapi(getSubmissionFileRoute, async (c) => {
-    const object = await getPublishedSubmissionFile(
+    const file = await getPublishedSubmissionFile(
       c.var.db,
       c.env.BUCKET,
       c.req.valid("param").id,
     );
-    if (!object) throw new AppError(404, "NOT_FOUND", "Submission not found");
-    return objectResponse(object, "public, max-age=86400");
+    if (!file) throw new AppError(404, "NOT_FOUND", "Submission not found");
+    // The original stands in only until the watermarked copy is ready.
+    return objectResponse(
+      file.object,
+      file.watermarked ? "public, max-age=86400" : "public, max-age=300",
+    );
   });

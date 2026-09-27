@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { normalizeCatalogName, USER_ROLES } from "../constants";
+import {
+  normalizeCatalogName,
+  USER_ROLES,
+  WATERMARK_STATUSES,
+} from "../constants";
 import {
   analysisFilterSchema,
   analysisSummarySchema,
@@ -66,6 +70,23 @@ export type AdminStats = z.infer<typeof adminStatsSchema>;
 
 // ── Submissions ──────────────────────────────────────────────────────────────
 
+export const watermarkStatusSchema = z.enum(WATERMARK_STATUSES);
+export type WatermarkStatus = z.infer<typeof watermarkStatusSchema>;
+
+/** The watermarked copy that the public downloads (published papers). */
+export const submissionWatermarkSchema = z.object({
+  status: watermarkStatusSchema,
+  /** Why the last attempt failed. */
+  error: z.string().nullable(),
+  /** Null until done. */
+  fileSize: z.number().int().nullable(),
+});
+export type SubmissionWatermark = z.infer<typeof submissionWatermarkSchema>;
+
+/** How many papers were queued for watermarking. */
+export const watermarkQueuedSchema = z.object({ queued: z.number().int() });
+export type WatermarkQueued = z.infer<typeof watermarkQueuedSchema>;
+
 export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   /** Null when the uploader's account no longer exists. */
   uploader: adminUserRefSchema.nullable(),
@@ -75,6 +96,11 @@ export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   analysis: analysisSummarySchema.nullable(),
   /** Published by the AI check right after upload, not by an admin. */
   autoPublished: z.boolean(),
+  /**
+   * The public copy with a credit line. Null when it was never requested; until
+   * it's done, the public gets the original.
+   */
+  watermark: submissionWatermarkSchema.nullable(),
 });
 export type AdminSubmission = z.infer<typeof adminSubmissionSchema>;
 

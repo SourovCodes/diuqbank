@@ -25,6 +25,11 @@ import { isConstraintError } from "../lib/db-errors";
 import { AppError } from "../lib/errors";
 import { getSubmissionAnalysis } from "./analysis";
 import {
+  submissionFileKeys,
+  watermarkIfMissing,
+  type WatermarkJob,
+} from "./watermark";
+import {
   analysisDiffers,
   analysisFlagged,
   countSubmissionRows,
@@ -160,6 +165,7 @@ export async function getAdminSubmissionFile(
  */
 export async function updateSubmissionStatus(
   db: Database,
+  watermarkQueue: Queue<WatermarkJob>,
   id: string,
   status: SubmissionStatus,
 ): Promise<AdminSubmission> {
@@ -177,6 +183,8 @@ export async function updateSubmissionStatus(
       .update(submissions)
       .set({ status, autoPublishedAt: null })
       .where(eq(submissions.id, id));
+    if (status === "published")
+      await watermarkIfMissing(db, watermarkQueue, id);
   }
   return requireAdminSubmission(db, id);
 }
@@ -284,9 +292,12 @@ export async function deleteSubmission(
   const [deleted] = await db
     .delete(submissions)
     .where(eq(submissions.id, id))
-    .returning({ fileKey: submissions.fileKey });
+    .returning({
+      fileKey: submissions.fileKey,
+      watermarkedFileKey: submissions.watermarkedFileKey,
+    });
   if (!deleted) throw notFound();
-  await bucket.delete(deleted.fileKey);
+  await bucket.delete(submissionFileKeys(deleted));
 }
 
 // ── Reports ──────────────────────────────────────────────────────────────────

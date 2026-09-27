@@ -1,4 +1,4 @@
-import { SUBMISSION_STATUSES } from "@qb/shared";
+import { SUBMISSION_STATUSES, WATERMARK_STATUSES } from "@qb/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -94,6 +94,14 @@ export const submissions = sqliteTable(
     /** R2 object key of the PDF. */
     fileKey: text().notNull().unique(),
     fileSize: integer().notNull(),
+    /**
+     * The public copy: the PDF with a credit line on every page, compressed. Made
+     * in the background when the paper is published; the original is kept as is.
+     */
+    watermarkedFileKey: text().unique(),
+    watermarkedFileSize: integer(),
+    watermarkStatus: text({ enum: WATERMARK_STATUSES }),
+    watermarkError: text(),
     uploaderId: text().references(() => user.id, { onDelete: "set null" }),
 
     // Denormalised counters. Likes, dislikes and pending reports are maintained by
