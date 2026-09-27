@@ -4,14 +4,15 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-const apiDir = path.join(import.meta.dirname, "..");
+// Wrangler runs where the Worker's config (and its local state) lives.
+const webDir = path.join(import.meta.dirname, "../../web");
 const sqlFile = path.join(import.meta.dirname, "dev.sql");
 const samplePdf = path.join(import.meta.dirname, "sample.pdf");
 const bucket = "questionbank-papers";
 
 function wrangler(args) {
   execFileSync("pnpm", ["exec", "wrangler", ...args], {
-    cwd: apiDir,
+    cwd: webDir,
     stdio: ["ignore", "ignore", "inherit"],
   });
 }

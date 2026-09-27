@@ -105,6 +105,9 @@ importers:
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.3.0
+      '@qb/api':
+        specifier: workspace:*
+        version: link:../api
       '@qb/shared':
         specifier: workspace:*
         version: link:../../packages/shared

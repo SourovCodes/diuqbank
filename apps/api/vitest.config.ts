@@ -10,7 +10,9 @@ export default defineConfig(async () => {
   return {
     plugins: [
       cloudflareTest({
-        wrangler: { configPath: "./wrangler.jsonc" },
+        // The web Worker's config (bindings, vars), running just the API.
+        main: "./src/index.ts",
+        wrangler: { configPath: "../web/wrangler.jsonc" },
         miniflare: {
           bindings: {
             TEST_MIGRATIONS: migrations,

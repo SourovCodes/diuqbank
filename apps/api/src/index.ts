@@ -4,6 +4,11 @@ import { handleWatermarkBatch, type WatermarkJob } from "./services/watermark";
 
 const app = createApp();
 
+/** A message on either queue. */
+export type QueueJob = AnalysisJob | WatermarkJob;
+
+// Not a Worker of its own: apps/web's Worker serves this under /api/* and runs the
+// queue handler (apps/web/workers/app.ts, which also holds the wrangler config).
 export default {
   fetch: app.fetch,
   // One consumer per queue in wrangler.jsonc.
@@ -14,4 +19,4 @@ export default {
       await handleAnalysisBatch(batch as MessageBatch<AnalysisJob>, env);
     }
   },
-} satisfies ExportedHandler<Env, AnalysisJob | WatermarkJob>;
+} satisfies ExportedHandler<Env, QueueJob>;

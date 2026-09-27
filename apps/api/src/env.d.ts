@@ -1,10 +1,21 @@
-// Secrets are not in wrangler.jsonc, so declare them here to keep types stable
-// regardless of whether a local .dev.vars exists (e.g. in CI).
+// The bindings the API needs. It runs inside apps/web's Worker, whose wrangler.jsonc
+// declares them; `wrangler types` there generates matching declarations that merge
+// with these (vars are generated as plain strings, so the types agree). The API only
+// generates runtime types, since the web Worker's generated Env imports its entry.
+// Secrets aren't in wrangler.jsonc, so they are always declared here, whether or not
+// a local .dev.vars exists (e.g. in CI).
 // `wrangler types` declares the global `Env` and `Cloudflare.Env` as separate
-// interfaces, so the secrets are added to both.
+// interfaces, so everything is added to both.
 // GEMINI_API_KEY and COMPRESSOR_API_KEY may be unset locally; AI analysis then fails
 // as "not configured".
 interface Env {
+  DB: D1Database;
+  BUCKET: R2Bucket;
+  ANALYSIS_QUEUE: Queue;
+  WATERMARK_QUEUE: Queue;
+  SITE_URL: string;
+  PDF_PROCESSOR_URL: string;
+  GEMINI_MODEL: string;
   BETTER_AUTH_SECRET: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
@@ -14,6 +25,13 @@ interface Env {
 
 declare namespace Cloudflare {
   interface Env {
+    DB: D1Database;
+    BUCKET: R2Bucket;
+    ANALYSIS_QUEUE: Queue;
+    WATERMARK_QUEUE: Queue;
+    SITE_URL: string;
+    PDF_PROCESSOR_URL: string;
+    GEMINI_MODEL: string;
     BETTER_AUTH_SECRET: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;

@@ -6,12 +6,15 @@
     "app/**/.server/**/*",
     "app/**/.client/**/*",
     "workers/**/*",
-    "worker-configuration.d.ts"
+    "worker-configuration.d.ts",
+    // Bindings and secrets @qb/api needs (merged with the generated Env).
+    "../api/src/env.d.ts"
   ],
   "compilerOptions": {
     "composite": true,
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["vite/client"],
+    // node: @qb/api uses Node APIs (nodejs_compat in wrangler.jsonc).
+    "types": ["vite/client", "node"],
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {

@@ -1,3 +1,4 @@
+import api from "@qb/api";
 import type { ApiError } from "@qb/shared";
 import { env } from "cloudflare:workers";
 import { data } from "react-router";
@@ -5,8 +6,9 @@ import type { ActionResult } from "./action-result";
 import { fieldErrorsFrom } from "./api-errors";
 
 /**
- * Calls the API worker over its service binding on behalf of the incoming request,
- * forwarding the user's cookies so the API sees the same session as the browser.
+ * Calls the API in-process (it runs in this Worker) on behalf of the incoming
+ * request, forwarding the user's cookies so the API sees the same session as the
+ * browser.
  */
 export function apiFetch(
   request: Request,
@@ -18,7 +20,10 @@ export function apiFetch(
   const cookie = request.headers.get("cookie");
   if (cookie) headers.set("cookie", cookie);
   headers.set("origin", origin);
-  return env.API.fetch(new URL(path, origin), { ...init, headers });
+  return api.fetch(
+    new Request(new URL(path, origin), { ...init, headers }),
+    env,
+  );
 }
 
 export async function readJson<T>(res: Response): Promise<T> {

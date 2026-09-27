@@ -26,7 +26,8 @@ const output = execFileSync(
     `UPDATE "user" SET role = 'admin' WHERE lower(email) = ${quoted} RETURNING id`,
   ],
   {
-    cwd: path.join(import.meta.dirname, ".."),
+    // Where the Worker's config (and its local state) lives.
+    cwd: path.join(import.meta.dirname, "../../web"),
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
   },
