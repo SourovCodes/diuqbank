@@ -213,6 +213,32 @@ const pendingUploads = [
     kind: "auto",
   })),
 ];
+
+// Numbered course parts as their own word, like the API's name normalizer does for new
+// names: "Physics-I" / "Chemistry -I" / "Manufacturing - II" → "Physics I". A name is
+// kept as is when the new one is already taken in the same department. Questions
+// refer to courses by department and course name, so they are renamed too.
+const NUMBERED_PART = /\s*[-–]\s*(I{1,3}|IV|VI{0,3}|IX|X|[1-9]|1[0-2])$/;
+const courseDeptName = new Map(departments.map((d) => [d.id, d.name]));
+const courseKey = (departmentName, name) => `${departmentName}\u0000${name}`;
+const courseNames = new Set(
+  courses.map((c) => courseKey(courseDeptName.get(c.departmentId), c.name)),
+);
+const renamedCourses = new Map();
+for (const c of courses) {
+  const departmentName = courseDeptName.get(c.departmentId);
+  const name = c.name.replace(NUMBERED_PART, " $1");
+  if (name === c.name || courseNames.has(courseKey(departmentName, name)))
+    continue;
+  courseNames.add(courseKey(departmentName, name));
+  renamedCourses.set(courseKey(departmentName, c.name), name);
+  c.name = name;
+}
+for (const q of questions) {
+  q.course.name =
+    renamedCourses.get(courseKey(q.department.name, q.course.name)) ??
+    q.course.name;
+}
 console.log(
   `  ${departments.length} departments, ${courses.length} courses, ${semesters.length} semesters, ` +
     `${examTypes.length} exam types, ${questions.length} questions, ${submissions.length} submissions, ` +

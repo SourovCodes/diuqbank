@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import {
   failOnConsoleErrors,
-  logIn,
+  logInAs,
+  NEW_USER,
   logOut,
   SEED_ADMIN,
-  signUpAs,
   uploadPaperWithNewCourse,
 } from "./helpers";
 
@@ -13,7 +13,7 @@ failOnConsoleErrors();
 const unique = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 test("members can't open the admin panel", async ({ page }) => {
-  await signUpAs(page, "E2E Member", "/account");
+  await logInAs(page, NEW_USER, "/account");
   const response = await page.goto("/admin");
   expect(response?.status()).toBe(404);
   await expect(page.getByText("Page not found")).toBeVisible();
@@ -28,12 +28,12 @@ test("an admin approves a proposed course and publishes the paper", async ({
 }) => {
   // A contributor uploads a paper with a new course.
   const courseName = `E2E Proposed ${unique()}`;
-  await signUpAs(page, "E2E Proposer", "/contribute");
+  await logInAs(page, NEW_USER, "/contribute");
   await uploadPaperWithNewCourse(page, courseName);
   await logOut(page);
 
   // The admin finds it in the review queue from the account menu.
-  await logIn(page, SEED_ADMIN, "/");
+  await logInAs(page, SEED_ADMIN, "/");
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "Admin panel" }).click();
   await expect(page).toHaveURL(/\/admin$/);
@@ -93,9 +93,13 @@ test("an admin approves a proposed course and publishes the paper", async ({
 test("an admin watermarks published papers that have no public copy", async ({
   page,
 }) => {
-  await logIn(page, SEED_ADMIN, "/admin/submissions");
-  await page.getByRole("button", { name: "Watermark missing PDFs" }).click();
+  await logInAs(page, SEED_ADMIN, "/admin/submissions");
+  // A click that lands before hydration is dropped, so retry until the dialog opens.
   const dialog = page.getByRole("alertdialog");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Watermark missing PDFs" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
   await expect(dialog).toContainText("Watermark published papers?");
   await dialog.getByRole("button", { name: "Watermark" }).click();
   await expect(dialog).toBeHidden();
@@ -110,7 +114,7 @@ test("an admin adds, renames and deletes a semester", async ({
     testInfo.project.name === "mobile"
       ? ["Short 17", "Short 18"]
       : ["Short 15", "Short 16"];
-  await logIn(page, SEED_ADMIN, "/admin/catalog?tab=semesters");
+  await logInAs(page, SEED_ADMIN, "/admin/catalog?tab=semesters");
 
   const dialog = page.getByRole("dialog");
   await expect(async () => {
@@ -161,7 +165,7 @@ test("an admin compares the AI's reading and prefills the form with it", async (
   page,
 }) => {
   // Seeded: the AI reads a different semester and a section for seed-15.
-  await logIn(page, SEED_ADMIN, "/admin/submissions/seed-15");
+  await logInAs(page, SEED_ADMIN, "/admin/submissions/seed-15");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Operating Systems",
   );

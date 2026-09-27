@@ -9,7 +9,7 @@ import {
   pdfFile,
   seedQuestion,
   seedTaxonomy,
-  signUp,
+  signIn,
 } from "./helpers";
 
 type Fields = Record<string, string | number>;
@@ -54,7 +54,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("files a PDF with existing values under one shared question, pending review", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const fields = {
       departmentId: t.cse.id,
       courseId: t.algorithms.id,
@@ -94,7 +94,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("stores an optional section and batch, treating blank fields as not given", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const fields = {
       departmentId: t.cse.id,
       courseId: t.algorithms.id,
@@ -124,7 +124,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("reuses a question that already exists", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const question = await seedQuestion({
       departmentId: t.eee.id,
       courseId: t.circuits.id,
@@ -148,7 +148,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("stores new department, course and semester names for review, without a question", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const res = await upload(
       {
         customDepartmentName: "Mechanical Engineering",
@@ -182,7 +182,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("rejects semester names outside the semester format", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const res = await upload(
       {
         departmentId: t.cse.id,
@@ -197,7 +197,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("accepts a new course in an existing department", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const created = await (
       await upload(
         {
@@ -223,7 +223,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("uses existing values when new names match them, ignoring case", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     // Typed in another spelling of the semester format.
     await db()
       .insert(semesters)
@@ -259,7 +259,7 @@ describe("POST /api/v1/submissions", () => {
 
   it("only matches a course name within the chosen department", async () => {
     const t = await seedTaxonomy();
-    const { cookie } = await signUp();
+    const { cookie } = await signIn();
     const created = await (
       await upload(
         {
@@ -286,7 +286,7 @@ describe("POST /api/v1/submissions", () => {
   describe("validation", () => {
     it("requires a department", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         { courseId: t.algorithms.id, semesterId: t.sem1.id, examTypeId: 1 },
         cookie,
@@ -296,7 +296,7 @@ describe("POST /api/v1/submissions", () => {
 
     it("rejects both an existing and a new semester", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         {
           departmentId: t.cse.id,
@@ -312,7 +312,7 @@ describe("POST /api/v1/submissions", () => {
 
     it("rejects a course from another department", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         {
           departmentId: t.eee.id,
@@ -327,7 +327,7 @@ describe("POST /api/v1/submissions", () => {
 
     it("rejects unknown ids", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         {
           departmentId: t.cse.id,
@@ -342,7 +342,7 @@ describe("POST /api/v1/submissions", () => {
 
     it("requires a file", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         {
           departmentId: t.cse.id,
@@ -358,7 +358,7 @@ describe("POST /api/v1/submissions", () => {
 
     it("rejects files that are not PDFs", async () => {
       const t = await seedTaxonomy();
-      const { cookie } = await signUp();
+      const { cookie } = await signIn();
       const res = await upload(
         {
           departmentId: t.cse.id,

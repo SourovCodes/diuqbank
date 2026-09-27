@@ -11,14 +11,14 @@ import {
   jsonRequest,
   seedQuestion,
   seedTaxonomy,
-  signUpAdmin,
-  signUpUser,
+  signInAdmin,
+  signIn,
 } from "./helpers";
 
-let admin: Awaited<ReturnType<typeof signUpAdmin>>;
+let admin: Awaited<ReturnType<typeof signInAdmin>>;
 
 beforeAll(async () => {
-  admin = await signUpAdmin();
+  admin = await signInAdmin();
 });
 
 const call = (method: string, path: string, body?: unknown) =>
@@ -61,7 +61,7 @@ describe("GET /api/v1/admin/catalog", () => {
   });
 
   it("is only for admins", async () => {
-    const member = await signUpUser();
+    const member = await signIn();
     const res = await api(
       "/api/v1/admin/departments",
       jsonRequest("POST", { name: "Nope", shortName: "NO" }, member.cookie),

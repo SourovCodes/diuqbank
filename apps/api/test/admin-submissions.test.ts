@@ -22,20 +22,20 @@ import {
   jsonRequest,
   seedSubmission,
   seedTaxonomy,
-  signUpAdmin,
-  signUpUser,
+  signInAdmin,
+  signIn,
 } from "./helpers";
 
 type Taxonomy = Awaited<ReturnType<typeof seedTaxonomy>>;
 
-let admin: Awaited<ReturnType<typeof signUpAdmin>>;
-let member: Awaited<ReturnType<typeof signUpUser>>;
+let admin: Awaited<ReturnType<typeof signInAdmin>>;
+let member: Awaited<ReturnType<typeof signIn>>;
 let t: Taxonomy;
 
 beforeAll(async () => {
   [admin, member, t] = await Promise.all([
-    signUpAdmin(),
-    signUpUser(),
+    signInAdmin(),
+    signIn(),
     seedTaxonomy(),
   ]);
 });
@@ -111,7 +111,7 @@ describe("admin access", () => {
     });
     expect(await res.json()).toMatchObject({ user: { role: "admin" } });
 
-    const signUp = await api(
+    const signIn = await api(
       "/api/auth/sign-up/email",
       jsonRequest("POST", {
         name: "Sneaky",
@@ -121,8 +121,8 @@ describe("admin access", () => {
       }),
     );
     // Fields marked `input: false` are ignored (or rejected): never an admin.
-    if (signUp.ok) {
-      const cookie = signUp.headers
+    if (signIn.ok) {
+      const cookie = signIn.headers
         .getSetCookie()
         .map((c) => c.split(";")[0])
         .join("; ");

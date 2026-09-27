@@ -1,4 +1,6 @@
 import { env, exports } from "cloudflare:workers";
+import { betterAuth } from "better-auth";
+import { testUtils } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { createDb } from "../src/db/client";
 import {
@@ -12,6 +14,7 @@ import {
   type NewSubmissionRow,
   user,
 } from "../src/db/schema";
+import { authOptions } from "../src/lib/auth";
 
 export const ORIGIN = "http://localhost:5173";
 
@@ -35,26 +38,25 @@ export function api(path: string, init: RequestInit = {}) {
 
 export const db = () => createDb(env.DB);
 
-/** Signs up a fresh user and returns a Cookie header value for authenticated requests. */
-export async function signUp(
+/**
+ * Test-only auth instance: the app's own options plus Better Auth's `testUtils`,
+ * which creates sessions directly. Sign-in is Google-only, so there is no endpoint
+ * a test could log in through.
+ */
+function testAuth() {
+  return betterAuth({ ...authOptions(env, db()), plugins: [testUtils()] });
+}
+
+/** Creates a fresh user and returns a Cookie header value for authenticated requests. */
+export async function signIn(
   email = `user-${crypto.randomUUID()}@example.com`,
 ) {
-  const res = await api("/api/auth/sign-up/email", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      name: "Test User",
-      email,
-      password: "correct-horse-battery",
-    }),
-  });
-  if (!res.ok)
-    throw new Error(`sign-up failed: ${res.status} ${await res.text()}`);
-  const cookie = res.headers
-    .getSetCookie()
-    .map((c) => c.split(";")[0])
-    .join("; ");
-  return { email, cookie };
+  const { test } = await testAuth().$context;
+  const saved = await test.saveUser(
+    test.createUser({ name: "Test User", email }),
+  );
+  const { headers } = await test.login({ userId: saved.id });
+  return { email, cookie: headers.get("cookie")!, id: saved.id };
 }
 
 /**
@@ -122,17 +124,9 @@ export async function seedSubmission(
   return row!;
 }
 
-/** Signs up a fresh user and also returns their id. */
-export async function signUpUser() {
-  const { email, cookie } = await signUp();
-  const res = await api("/api/auth/get-session", { headers: { cookie } });
-  const session = await res.json<{ user: { id: string } }>();
-  return { email, cookie, id: session.user.id };
-}
-
-/** Signs up a fresh user and makes them an admin. */
-export async function signUpAdmin() {
-  const admin = await signUpUser();
+/** Signs in a fresh user and makes them an admin. */
+export async function signInAdmin() {
+  const admin = await signIn();
   await db().update(user).set({ role: "admin" }).where(eq(user.id, admin.id));
   return admin;
 }

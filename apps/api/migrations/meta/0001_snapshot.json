@@ -1,9 +1,287 @@
 {
+  "id": "50843b74-66d2-40b4-a573-348368cb731d",
+  "prevId": "3f9cfe0c-3ef3-4931-8f6b-07a5b0b71aab",
   "version": "6",
   "dialect": "sqlite",
-  "id": "ba266b61-56bd-4c05-ac29-f342e974a52f",
-  "prevId": "cb2e850a-1208-4ae7-99b9-13cb74f5edf5",
   "tables": {
+    "submission_analyses": {
+      "name": "submission_analyses",
+      "columns": {
+        "submission_id": {
+          "name": "submission_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "auto_publish": {
+          "name": "auto_publish",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'queued'"
+        },
+        "error": {
+          "name": "error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "original_bytes": {
+          "name": "original_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sent_bytes": {
+          "name": "sent_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_question_paper": {
+          "name": "is_question_paper",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "paper_count": {
+          "name": "paper_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "department_name": {
+          "name": "department_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "department_short_name": {
+          "name": "department_short_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "course_name": {
+          "name": "course_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "semester_id": {
+          "name": "semester_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "semester_name": {
+          "name": "semester_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "exam_type_id": {
+          "name": "exam_type_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "exam_type_name": {
+          "name": "exam_type_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "batch": {
+          "name": "batch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "raw_response": {
+          "name": "raw_response",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "submission_analyses_status_idx": {
+          "name": "submission_analyses_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "submission_analyses_submission_id_submissions_id_fk": {
+          "name": "submission_analyses_submission_id_submissions_id_fk",
+          "tableFrom": "submission_analyses",
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "tableTo": "submissions",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "submission_analyses_department_id_departments_id_fk": {
+          "name": "submission_analyses_department_id_departments_id_fk",
+          "tableFrom": "submission_analyses",
+          "columnsFrom": [
+            "department_id"
+          ],
+          "tableTo": "departments",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "submission_analyses_course_id_courses_id_fk": {
+          "name": "submission_analyses_course_id_courses_id_fk",
+          "tableFrom": "submission_analyses",
+          "columnsFrom": [
+            "course_id"
+          ],
+          "tableTo": "courses",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "submission_analyses_semester_id_semesters_id_fk": {
+          "name": "submission_analyses_semester_id_semesters_id_fk",
+          "tableFrom": "submission_analyses",
+          "columnsFrom": [
+            "semester_id"
+          ],
+          "tableTo": "semesters",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "submission_analyses_exam_type_id_exam_types_id_fk": {
+          "name": "submission_analyses_exam_type_id_exam_types_id_fk",
+          "tableFrom": "submission_analyses",
+          "columnsFrom": [
+            "exam_type_id"
+          ],
+          "tableTo": "exam_types",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "account": {
       "name": "account",
       "columns": {
@@ -114,15 +392,15 @@
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -211,15 +489,15 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -264,6 +542,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'user'"
         },
         "created_at": {
           "name": "created_at",
@@ -358,6 +644,222 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "submission_reports": {
+      "name": "submission_reports",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "submission_id": {
+          "name": "submission_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reporter_id": {
+          "name": "reporter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "details": {
+          "name": "details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "submission_reports_open_unique": {
+          "name": "submission_reports_open_unique",
+          "columns": [
+            "submission_id",
+            "reporter_id"
+          ],
+          "where": "status = 'pending'",
+          "isUnique": true
+        },
+        "submission_reports_submission_id_status_idx": {
+          "name": "submission_reports_submission_id_status_idx",
+          "columns": [
+            "submission_id",
+            "status"
+          ],
+          "isUnique": false
+        },
+        "submission_reports_reporter_id_idx": {
+          "name": "submission_reports_reporter_id_idx",
+          "columns": [
+            "reporter_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "submission_reports_submission_id_submissions_id_fk": {
+          "name": "submission_reports_submission_id_submissions_id_fk",
+          "tableFrom": "submission_reports",
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "tableTo": "submissions",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "submission_reports_reporter_id_user_id_fk": {
+          "name": "submission_reports_reporter_id_user_id_fk",
+          "tableFrom": "submission_reports",
+          "columnsFrom": [
+            "reporter_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "submission_votes": {
+      "name": "submission_votes",
+      "columns": {
+        "submission_id": {
+          "name": "submission_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "submission_votes_user_id_idx": {
+          "name": "submission_votes_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "submission_votes_submission_id_submissions_id_fk": {
+          "name": "submission_votes_submission_id_submissions_id_fk",
+          "tableFrom": "submission_votes",
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "tableTo": "submissions",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "submission_votes_user_id_user_id_fk": {
+          "name": "submission_votes_user_id_user_id_fk",
+          "tableFrom": "submission_votes",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "submission_votes_submission_id_user_id_pk": {
+          "columns": [
+            "submission_id",
+            "user_id"
+          ],
+          "name": "submission_votes_submission_id_user_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "submission_votes_value_check": {
+          "name": "submission_votes_value_check",
+          "value": "\"submission_votes\".\"value\" in (1, -1)"
+        }
+      }
+    },
     "questions": {
       "name": "questions",
       "columns": {
@@ -395,6 +897,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -449,56 +959,56 @@
         "questions_department_id_departments_id_fk": {
           "name": "questions_department_id_departments_id_fk",
           "tableFrom": "questions",
-          "tableTo": "departments",
           "columnsFrom": [
             "department_id"
           ],
+          "tableTo": "departments",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "questions_semester_id_semesters_id_fk": {
           "name": "questions_semester_id_semesters_id_fk",
           "tableFrom": "questions",
-          "tableTo": "semesters",
           "columnsFrom": [
             "semester_id"
           ],
+          "tableTo": "semesters",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "questions_exam_type_id_exam_types_id_fk": {
           "name": "questions_exam_type_id_exam_types_id_fk",
           "tableFrom": "questions",
-          "tableTo": "exam_types",
           "columnsFrom": [
             "exam_type_id"
           ],
+          "tableTo": "exam_types",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "questions_course_department_fk": {
           "name": "questions_course_department_fk",
           "tableFrom": "questions",
-          "tableTo": "courses",
           "columnsFrom": [
             "course_id",
             "department_id"
           ],
+          "tableTo": "courses",
           "columnsTo": [
             "id",
             "department_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -578,6 +1088,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "batch": {
+          "name": "batch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "status": {
           "name": "status",
           "type": "text",
@@ -585,6 +1109,13 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'pending_review'"
+        },
+        "auto_published_at": {
+          "name": "auto_published_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "file_key": {
           "name": "file_key",
@@ -600,12 +1131,72 @@
           "notNull": true,
           "autoincrement": false
         },
+        "watermarked_file_key": {
+          "name": "watermarked_file_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "watermarked_file_size": {
+          "name": "watermarked_file_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "watermark_status": {
+          "name": "watermark_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "watermark_error": {
+          "name": "watermark_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "uploader_id": {
           "name": "uploader_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "like_count": {
+          "name": "like_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "dislike_count": {
+          "name": "dislike_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "pending_report_count": {
+          "name": "pending_report_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -632,6 +1223,13 @@
           ],
           "isUnique": true
         },
+        "submissions_watermarkedFileKey_unique": {
+          "name": "submissions_watermarkedFileKey_unique",
+          "columns": [
+            "watermarked_file_key"
+          ],
+          "isUnique": true
+        },
         "submissions_question_id_status_idx": {
           "name": "submissions_question_id_status_idx",
           "columns": [
@@ -652,95 +1250,95 @@
         "submissions_question_id_questions_id_fk": {
           "name": "submissions_question_id_questions_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "questions",
           "columnsFrom": [
             "question_id"
           ],
+          "tableTo": "questions",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "submissions_department_id_departments_id_fk": {
           "name": "submissions_department_id_departments_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "departments",
           "columnsFrom": [
             "department_id"
           ],
+          "tableTo": "departments",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "submissions_course_id_courses_id_fk": {
           "name": "submissions_course_id_courses_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "courses",
           "columnsFrom": [
             "course_id"
           ],
+          "tableTo": "courses",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "submissions_semester_id_semesters_id_fk": {
           "name": "submissions_semester_id_semesters_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "semesters",
           "columnsFrom": [
             "semester_id"
           ],
+          "tableTo": "semesters",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "submissions_exam_type_id_exam_types_id_fk": {
           "name": "submissions_exam_type_id_exam_types_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "exam_types",
           "columnsFrom": [
             "exam_type_id"
           ],
+          "tableTo": "exam_types",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "submissions_uploader_id_user_id_fk": {
           "name": "submissions_uploader_id_user_id_fk",
           "tableFrom": "submissions",
-          "tableTo": "user",
           "columnsFrom": [
             "uploader_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "submissions_course_department_fk": {
           "name": "submissions_course_department_fk",
           "tableFrom": "submissions",
-          "tableTo": "courses",
           "columnsFrom": [
             "course_id",
             "department_id"
           ],
+          "tableTo": "courses",
           "columnsTo": [
             "id",
             "department_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -799,15 +1397,15 @@
         "courses_department_id_departments_id_fk": {
           "name": "courses_department_id_departments_id_fk",
           "tableFrom": "courses",
-          "tableTo": "departments",
           "columnsFrom": [
             "department_id"
           ],
+          "tableTo": "departments",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -928,9 +1526,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {}

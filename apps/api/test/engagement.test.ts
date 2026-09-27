@@ -22,7 +22,7 @@ import {
   seedSubmission,
   seedTaxonomy,
   seedUser,
-  signUpUser,
+  signIn,
 } from "./helpers";
 
 async function seedQuestionWithPaper(
@@ -102,8 +102,8 @@ describe("PUT and DELETE /api/v1/submissions/{id}/vote", () => {
 
   it("keeps like and dislike counts in sync as votes change", async () => {
     const { submission } = await seedQuestionWithPaper();
-    const alice = await signUpUser();
-    const bob = await signUpUser();
+    const alice = await signIn();
+    const bob = await signIn();
 
     const liked = await vote(submission.id, 1, alice.cookie);
     expect(liked.status).toBe(200);
@@ -143,8 +143,8 @@ describe("PUT and DELETE /api/v1/submissions/{id}/vote", () => {
   });
 
   it("rejects invalid values, votes on your own paper and unpublished papers", async () => {
-    const owner = await signUpUser();
-    const voter = await signUpUser();
+    const owner = await signIn();
+    const voter = await signIn();
     const { submission } = await seedQuestionWithPaper({
       uploaderId: owner.id,
     });
@@ -220,7 +220,7 @@ describe("submission ranking", () => {
 
 describe("GET /api/v1/me/questions/{id}/interactions", () => {
   it("returns the user's votes and open reports on the question's papers", async () => {
-    const me = await signUpUser();
+    const me = await signIn();
     const { question, submission } = await seedQuestionWithPaper();
     const other = await seedSubmission(question.id);
     await db()
@@ -264,8 +264,8 @@ describe("POST /api/v1/submissions/{id}/reports", () => {
   });
 
   it("files one open report per user, never on their own paper", async () => {
-    const owner = await signUpUser();
-    const reporter = await signUpUser();
+    const owner = await signIn();
+    const reporter = await signIn();
     const { submission } = await seedQuestionWithPaper({
       uploaderId: owner.id,
     });
@@ -301,7 +301,7 @@ describe("POST /api/v1/submissions/{id}/reports", () => {
   it(`hides a published paper once ${REPORT_HIDE_THRESHOLD} users report it`, async () => {
     const { submission } = await seedQuestionWithPaper();
     const reporters = await Promise.all(
-      Array.from({ length: REPORT_HIDE_THRESHOLD }, () => signUpUser()),
+      Array.from({ length: REPORT_HIDE_THRESHOLD }, () => signIn()),
     );
 
     for (const [i, reporter] of reporters.entries()) {
@@ -320,7 +320,7 @@ describe("POST /api/v1/submissions/{id}/reports", () => {
     ).toBe(404);
 
     // Hidden papers can't be reported (or voted on) any more.
-    const late = await signUpUser();
+    const late = await signIn();
     expect((await report(submission.id, late.cookie)).status).toBe(404);
   });
 

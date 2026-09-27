@@ -20,6 +20,7 @@ import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
 import { Toaster } from "~/components/ui/sonner";
 import { getUser } from "~/lib/session.server";
+import { THEME_SCRIPT } from "~/lib/theme";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
@@ -54,10 +55,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     );
 
   return (
-    <html lang="en">
+    // THEME_SCRIPT adds the `dark` class before hydration.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <Meta />
         <Links />
       </head>

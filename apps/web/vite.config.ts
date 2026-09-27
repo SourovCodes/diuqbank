@@ -21,6 +21,9 @@ export default defineConfig({
       "cn",
       "lucide-react",
       "radix-ui",
+      "react-easy-crop",
+      "recharts",
+      "sonner",
     ],
   },
   server: {

@@ -4,6 +4,8 @@ const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Signed-in sessions for the tests (sign-in is Google-only): see e2e/sessions.ts.
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,

@@ -13,7 +13,7 @@ import {
   seedQuestion,
   seedSubmission,
   seedTaxonomy,
-  signUpUser,
+  signIn,
 } from "./helpers";
 
 const PNG = new Uint8Array([
@@ -46,7 +46,7 @@ describe("profile images", () => {
   });
 
   it("stores and serves an uploaded image, replacing the previous one", async () => {
-    const me = await signUpUser();
+    const me = await signIn();
     const res = await upload(
       new File([PNG], "me.png", { type: "image/png" }),
       me.cookie,
@@ -75,7 +75,7 @@ describe("profile images", () => {
   });
 
   it("rejects files that aren't JPEG, PNG or WebP, or are too large", async () => {
-    const me = await signUpUser();
+    const me = await signIn();
     const svg = await upload(
       new File(["<svg xmlns='http://www.w3.org/2000/svg'/>"], "x.svg", {
         type: "image/svg+xml",
@@ -93,7 +93,7 @@ describe("profile images", () => {
   });
 
   it("removes the image", async () => {
-    const me = await signUpUser();
+    const me = await signIn();
     const { image } = await (
       await upload(new File([PNG], "me.png"), me.cookie)
     ).json<Avatar>();
@@ -108,7 +108,7 @@ describe("profile images", () => {
   });
 
   it("shows the image on the user's papers and contributor profile", async () => {
-    const me = await signUpUser();
+    const me = await signIn();
     const { image } = await (
       await upload(new File([PNG], "me.png"), me.cookie)
     ).json<Avatar>();

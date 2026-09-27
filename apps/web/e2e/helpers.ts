@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { claimSession, type SessionKind } from "./sessions";
 
 // Shared by the e2e specs. They rely on the local seed data: `pnpm db:migrate && pnpm db:seed`.
 
@@ -125,37 +126,29 @@ export async function logOut(page: Page) {
   await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
 }
 
-/** Signs up a fresh account and waits to land on `redirectTo`. */
-export async function signUpAs(page: Page, name: string, redirectTo: string) {
-  const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-  await page.goto(`/signup?redirectTo=${encodeURIComponent(redirectTo)}`);
-  await page.getByLabel("Name").fill(name);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("correct-horse-battery");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`${redirectTo.replace(/[?]/g, "\\?")}$`),
-  );
-  return email;
-}
+/** Who `logInAs` signs in: a fresh member, or the admin created by `pnpm db:seed`. */
+export const NEW_USER = "user";
+export const SEED_ADMIN = "admin";
 
-/** The admin account created by `pnpm db:seed`. */
-export const SEED_ADMIN = {
-  email: "admin@seed.local",
-  password: "correct-horse-battery",
-};
-
-/** Logs in and waits to land on `redirectTo`. */
-export async function logIn(
+/**
+ * Signs in without Google: gives the browser a session from the pool that global
+ * setup wrote (see `sessions.ts`), then opens `redirectTo`.
+ */
+export async function logInAs(
   page: Page,
-  { email, password }: { email: string; password: string },
+  kind: SessionKind,
   redirectTo: string,
 ) {
-  await page.goto(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`${redirectTo.replace(/[?]/g, "\\?")}$`),
-  );
+  const session = claimSession(kind);
+  await page.context().addCookies([
+    {
+      name: "better-auth.session_token",
+      value: session.cookie,
+      url: "http://localhost:5173",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+  await page.goto(redirectTo);
+  return { id: session.userId, email: session.email };
 }
