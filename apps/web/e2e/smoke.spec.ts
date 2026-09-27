@@ -473,16 +473,17 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Name", { exact: true }).fill("Renamed Contributor");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Profile updated")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Renamed Contributor",
   );
 
-  // Wrong current password, then a real change.
+  // Wrong current password, then a real change. The form opens from a disclosure.
   const newPassword = "another-horse-battery";
+  await page.getByText("Change password", { exact: true }).click();
   await page.getByLabel("Current password").fill("not-my-password");
   await page.getByLabel("New password", { exact: true }).fill(newPassword);
   await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Change password" }).click();
+  await page.getByRole("button", { name: "Update password" }).click();
   await expect(
     page.getByText("Your current password is incorrect."),
   ).toBeVisible();
@@ -490,8 +491,9 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Current password").fill("correct-horse-battery");
   await page.getByLabel("New password", { exact: true }).fill(newPassword);
   await page.getByLabel("Confirm new password").fill(newPassword);
-  await page.getByRole("button", { name: "Change password" }).click();
+  await page.getByRole("button", { name: "Update password" }).click();
   await expect(page.getByText("Password changed")).toBeVisible();
+  await expect(page.getByLabel("Current password")).toBeHidden();
 
   // The new password works.
   await logOut(page);
@@ -500,7 +502,7 @@ test("a contributor can manage their submissions and profile", async ({
   await page.getByLabel("Password").fill(newPassword);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Renamed Contributor",
   );
 });
