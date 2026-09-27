@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   failOnConsoleErrors,
   logInAs,
+  NEW_USER,
   logOut,
   SEED_ADMIN,
   uploadPaperWithNewCourse,
@@ -12,7 +13,7 @@ failOnConsoleErrors();
 const unique = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 test("members can't open the admin panel", async ({ page }) => {
-  await logInAs(page, { name: "E2E Member" }, "/account");
+  await logInAs(page, NEW_USER, "/account");
   const response = await page.goto("/admin");
   expect(response?.status()).toBe(404);
   await expect(page.getByText("Page not found")).toBeVisible();
@@ -27,7 +28,7 @@ test("an admin approves a proposed course and publishes the paper", async ({
 }) => {
   // A contributor uploads a paper with a new course.
   const courseName = `E2E Proposed ${unique()}`;
-  await logInAs(page, { name: "E2E Proposer" }, "/contribute");
+  await logInAs(page, NEW_USER, "/contribute");
   await uploadPaperWithNewCourse(page, courseName);
   await logOut(page);
 
@@ -93,8 +94,12 @@ test("an admin watermarks published papers that have no public copy", async ({
   page,
 }) => {
   await logInAs(page, SEED_ADMIN, "/admin/submissions");
-  await page.getByRole("button", { name: "Watermark missing PDFs" }).click();
+  // A click that lands before hydration is dropped, so retry until the dialog opens.
   const dialog = page.getByRole("alertdialog");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Watermark missing PDFs" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
   await expect(dialog).toContainText("Watermark published papers?");
   await dialog.getByRole("button", { name: "Watermark" }).click();
   await expect(dialog).toBeHidden();

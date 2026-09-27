@@ -4,6 +4,7 @@ import {
   closeQuestionFilters,
   failOnConsoleErrors,
   logInAs,
+  NEW_USER,
   logOut,
   openCombobox,
   openQuestionFilters,
@@ -192,25 +193,29 @@ test("a question links to the same exam from other semesters", async ({
   await expect(page.getByText("Spring 24").first()).toBeVisible();
 });
 
-test("logging in sends visitors to Google and back", async ({ page }) => {
-  // Google itself is never contacted: its sign-in page is stubbed.
-  await page.route("https://accounts.google.com/**", (route) =>
-    route.fulfill({ contentType: "text/html", body: "Google sign-in" }),
-  );
+test("logging in sends visitors to Google", async ({ page }) => {
   await page.goto("/login?redirectTo=%2Fcontribute");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Log in");
-  await expect(async () => {
-    await page.getByRole("button", { name: "Continue with Google" }).click();
-    await expect(page).toHaveURL(/^https:\/\/accounts\.google\.com\//, {
-      timeout: 2_000,
-    });
-  }).toPass();
+  await expect(
+    page.getByRole("button", { name: "Continue with Google" }),
+  ).toBeVisible();
 
-  const google = new URL(page.url());
+  // Submitted like the button's form, without following the redirect: the browser
+  // would go on to the real Google (a redirect can't be stubbed with page.route).
+  const res = await page.request.post("/login?redirectTo=%2Fcontribute", {
+    form: { redirectTo: "/contribute" },
+    headers: { origin: "http://localhost:5173" },
+    maxRedirects: 0,
+  });
+  expect(res.status()).toBe(302);
+  const google = new URL(res.headers()["location"]!);
+  expect(google.origin).toBe("https://accounts.google.com");
   expect(google.searchParams.get("redirect_uri")).toBe(
     "http://localhost:5173/api/auth/callback/google",
   );
   expect(google.searchParams.get("state")).toBeTruthy();
+  // The OAuth state cookie comes along, for the callback to check.
+  expect(res.headers()["set-cookie"]).toContain("better-auth.state=");
 });
 
 test("a failed Google sign-in explains what happened", async ({ page }) => {
@@ -251,7 +256,7 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?redirectTo=%2Fcontribute/);
 
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  await logInAs(page, { name: "E2E Contributor" }, "/contribute");
+  await logInAs(page, NEW_USER, "/contribute");
 
   const courseName = `E2E Course ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);
@@ -299,7 +304,7 @@ test("a member can like, dislike and report a paper", async ({
   // The two projects share one database, so each votes on its own paper:
   // question 10 (seed-11) on desktop, question 8 (seed-09) on mobile.
   const questionId = testInfo.project.name === "mobile" ? 8 : 10;
-  await logInAs(page, { name: "E2E Voter" }, `/questions/${questionId}`);
+  await logInAs(page, NEW_USER, `/questions/${questionId}`);
   await expect(page.getByText(/\d+ views?/).first()).toBeVisible();
 
   const like = page.getByRole("button", { name: /^Like/ });
@@ -369,7 +374,7 @@ async function widePhoto(page: Page) {
 }
 
 test("a user crops, sets and removes a profile photo", async ({ page }) => {
-  await logInAs(page, { name: "E2E Photo" }, "/account");
+  await logInAs(page, NEW_USER, "/account");
   const headerImage = page
     .getByRole("button", { name: "Account menu" })
     .locator("img");
@@ -418,7 +423,7 @@ test("a user crops, sets and removes a profile photo", async ({ page }) => {
 });
 
 test("a user can log out", async ({ page }) => {
-  await logInAs(page, { name: "E2E Tester" }, "/");
+  await logInAs(page, NEW_USER, "/");
   await logOut(page);
 });
 
@@ -426,7 +431,7 @@ test("a contributor can manage their submissions and profile", async ({
   page,
 }) => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const { email } = await logInAs(page, { name: "E2E Account" }, "/contribute");
+  const { email } = await logInAs(page, NEW_USER, "/contribute");
 
   const courseName = `E2E Withdrawn ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);

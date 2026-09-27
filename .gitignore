@@ -23,6 +23,7 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+apps/web/e2e/.sessions/
 
 # OS / editors
 .DS_Store
