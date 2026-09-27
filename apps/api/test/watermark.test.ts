@@ -99,7 +99,10 @@ const watermarkEnv = {
   BUCKET: env.BUCKET,
   COMPRESSOR_API_KEY: "processor-test-key",
   PDF_PROCESSOR_URL: "https://pdf-processor.test",
+  SITE_URL: "https://diuqbank.com",
 } satisfies WatermarkEnv;
+
+const SITE = "https://diuqbank.com/";
 
 /** Answers the PDF processor and records the watermark requests. */
 function fakeProcessor(respond?: () => Response) {
@@ -127,27 +130,29 @@ function fakeProcessor(respond?: () => Response) {
 
 describe("watermarkText", () => {
   it("credits the site and the contributor", () => {
-    expect(watermarkText("Jane  Doe ")).toBe(
+    expect(watermarkText(SITE, "Jane  Doe ")).toBe(
       "diuqbank.com | Shared by Jane Doe",
     );
   });
 
   it("credits only the site without a contributor", () => {
-    expect(watermarkText(null)).toBe("Downloaded from diuqbank.com");
-    expect(watermarkText("  ")).toBe("Downloaded from diuqbank.com");
+    expect(watermarkText(SITE, null)).toBe("Downloaded from diuqbank.com");
+    expect(watermarkText(SITE, "  ")).toBe("Downloaded from diuqbank.com");
   });
 
   it("stays within the processor's 255 characters", () => {
-    const text = watermarkText("n".repeat(400));
+    const text = watermarkText(SITE, "n".repeat(400));
     expect(text).toHaveLength(255);
     expect(text.endsWith("...")).toBe(true);
   });
 
   it("keeps to ASCII, which the processor's font can draw", () => {
-    expect(watermarkText("José Núñez")).toBe(
+    expect(watermarkText(SITE, "José Núñez")).toBe(
       "diuqbank.com | Shared by Jose Nunez",
     );
-    expect(watermarkText("সৌরভ বিশ্বাস")).toBe("Downloaded from diuqbank.com");
+    expect(watermarkText(SITE, "সৌরভ বিশ্বাস")).toBe(
+      "Downloaded from diuqbank.com",
+    );
   });
 });
 

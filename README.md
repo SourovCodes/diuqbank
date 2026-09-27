@@ -53,7 +53,7 @@ The questions list shows the newest papers first by default (`sort=newest`), or 
 
 Otherwise results only flag, never reject: the admin list shows an AI badge and can filter by "Flagged by AI" (not a paper, several papers) or "AI disagrees". The review page shows the AI's values next to the submitted ones, **Apply AI values** prefills the classification dialog with them, and **Re-run** starts a new analysis.
 
-Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/api/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). Before the first deploy: `wrangler queues create qb-submission-analysis`, `wrangler queues create qb-pdf-watermark` and `wrangler secret put` for both keys. Tests never call the real services.
+Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/api/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). See [Deploying](#deploying) for the production setup. Tests never call the real services.
 
 ## Watermarked public PDFs
 
@@ -165,11 +165,23 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - **`apps/web`** – unit/component tests with Vitest + Testing Library; Playwright covers full user journeys against both workers.
 - **CI** (`.github/workflows/ci.yml`) runs all of the above on every push and pull request.
 
+## Deploying
+
+CI deploys `main` after lint, tests and e2e pass (the `deploy` job in `.github/workflows/ci.yml`): it applies the D1 migrations, deploys the API worker, then builds and deploys the web worker. Nothing in the repo names the production domain. The site's URL is the `SITE_URL` var of the API worker (auth origin, trusted origin, and the domain in PDF watermarks). It defaults to `http://localhost:5173`, and CI replaces it with the `SITE_URL` repository variable at deploy time. To move the site, change that variable, the custom domain and the Google redirect URI, then re-run the deploy.
+
+One-time setup (the deploy job is skipped until `SITE_URL` is set):
+
+1. Create the resources, from `apps/api` (after `pnpm exec wrangler login`):
+   - `wrangler d1 create questionbank`, and put its id in `apps/api/wrangler.jsonc` (replacing the `0000…` placeholder)
+   - `wrangler r2 bucket create questionbank-papers`
+   - `wrangler queues create qb-submission-analysis` and `wrangler queues create qb-pdf-watermark`
+2. Set the API secrets with `wrangler secret put <NAME>`: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GEMINI_API_KEY`, `COMPRESSOR_API_KEY`. They survive deploys, so CI never sees them.
+3. Create a Cloudflare API token with Workers Scripts, D1, Workers R2 Storage and Queues edit permissions. In GitHub (Settings → Secrets and variables → Actions), add the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` and the variable `SITE_URL` (e.g. `https://example.com`, no trailing path).
+4. Push to `main` (or re-run the latest CI run) to deploy. Then attach the domain in the dashboard: Workers & Pages → `questionbank-web` → Settings → Domains & Routes → Custom domain. The web worker's `wrangler.jsonc` has no `routes`, so deploys leave that domain alone.
+5. Add `<SITE_URL>/api/auth/callback/google` to the Google OAuth client's redirect URIs, log in, and promote yourself with `pnpm make-admin <email> --remote`.
+
 ## Before going to production (later)
 
-- Create real resources (`wrangler d1 create`, `wrangler r2 bucket create`) and put the D1 id in `apps/api/wrangler.jsonc`.
-- Set `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with `wrangler secret put`, update `BETTER_AUTH_URL` / `TRUSTED_ORIGINS` for the real domain, and add `https://<domain>/api/auth/callback/google` to the OAuth client's redirect URIs.
 - Add rate limiting on the API.
-- Promote the first admin with `pnpm make-admin <email> --remote` after logging in with Google.
 - Add email change (with verification) and account deletion.
 - Add caching for public pages and PDFs, a sitemap, and staging/production environments.

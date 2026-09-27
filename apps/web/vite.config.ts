@@ -27,7 +27,7 @@ export default defineConfig({
     ],
   },
   server: {
-    // Must match BETTER_AUTH_URL / TRUSTED_ORIGINS in apps/api/wrangler.jsonc.
+    // Must match SITE_URL in apps/api/wrangler.jsonc.
     port: 5173,
     strictPort: true,
   },
