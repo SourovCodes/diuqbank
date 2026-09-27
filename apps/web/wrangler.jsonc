@@ -12,11 +12,4 @@
       "service": "questionbank-api",
     },
   ],
-  // Deployed from the dev branch as questionbank-web-staging (build with
-  // CLOUDFLARE_ENV=staging). Service bindings aren't inherited.
-  "env": {
-    "staging": {
-      "services": [{ "binding": "API", "service": "questionbank-api-staging" }],
-    },
-  },
 }
