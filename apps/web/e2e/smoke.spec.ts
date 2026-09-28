@@ -31,12 +31,14 @@ test("landing page leads to the questions page", async ({ page }) => {
 test("a slow navigation shows the top loader until the page is ready", async ({
   page,
 }) => {
-  await page.goto("/");
-  // A client-side navigation first, so the page is hydrated.
-  await clickUntilUrl(page, "Browse questions", /\/questions$/);
+  await page.goto("/questions");
+  // Hydrated once its scripts have loaded; a click before that would load the next
+  // page in full, which the loader doesn't show for.
+  await page.waitForLoadState("networkidle");
   // Client navigations load their data from `*.data`; hold it back for a moment.
   await page.route("**/*.data*", async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    // Long enough to see the bar even on a busy test machine.
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
     await route.continue();
   });
   const loader = page.getByRole("progressbar", { name: "Loading page" });
