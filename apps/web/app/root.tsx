@@ -1,4 +1,6 @@
 import "@fontsource-variable/inter";
+// The one subset every page needs; the CSS alone would find it only after it loads.
+import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import { BookOpen, FileQuestion, TriangleAlert } from "lucide-react";
 import {
   isRouteErrorResponse,
@@ -33,6 +35,13 @@ import { THEME_SCRIPT } from "~/lib/theme";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+  {
+    rel: "preload",
+    href: interLatin,
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
