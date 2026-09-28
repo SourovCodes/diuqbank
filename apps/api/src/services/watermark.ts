@@ -1,6 +1,7 @@
 import type { SubmissionWatermark } from "@qb/shared";
-import { and, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { createDb, type Database } from "../db/client";
+import { inList } from "../db/in-list";
 import { submissions, user } from "../db/schema";
 import { AppError } from "../lib/errors";
 import {
@@ -80,7 +81,7 @@ export async function enqueueWatermarks(
     await db
       .update(submissions)
       .set({ watermarkStatus: "queued", watermarkError: null })
-      .where(inArray(submissions.id, chunk));
+      .where(inList(submissions.id, chunk));
     try {
       await queue.sendBatch(
         chunk.map((submissionId) => ({ body: { submissionId } })),
@@ -93,7 +94,7 @@ export async function enqueueWatermarks(
           watermarkStatus: "failed",
           watermarkError: "Couldn't queue the watermark",
         })
-        .where(inArray(submissions.id, chunk));
+        .where(inList(submissions.id, chunk));
     }
   }
 }

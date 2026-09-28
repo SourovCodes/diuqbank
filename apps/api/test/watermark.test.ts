@@ -6,6 +6,7 @@ import type {
 } from "@qb/shared";
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
+import { inList } from "../src/db/in-list";
 import { submissions, type NewSubmissionRow } from "../src/db/schema";
 import { publishIfConfirmed } from "../src/services/analysis";
 import { updateSubmissionStatus } from "../src/services/moderation";
@@ -452,6 +453,24 @@ describe("admin endpoints", () => {
     expect(ids).not.toContain(done.id);
     expect(ids).not.toContain(pending.id);
     expect(queued).toBe(sent.length);
+  });
+
+  it("queues more papers than one D1 query can bind", async () => {
+    const papers = await Promise.all(
+      Array.from({ length: 150 }, () => seedPaper()),
+    );
+    const { queue, sent } = fakeQueue();
+    await watermarkMissing(db(), queue);
+    const ids = new Set(sent.map((job) => job.submissionId));
+    expect(papers.every((paper) => ids.has(paper.id))).toBe(true);
+    const rows = await db().query.submissions.findMany({
+      columns: { watermarkStatus: true },
+      where: inList(
+        submissions.id,
+        papers.map((paper) => paper.id),
+      ),
+    });
+    expect(rows.every((row) => row.watermarkStatus === "queued")).toBe(true);
   });
 
   it("backfills through the API, for admins only", async () => {

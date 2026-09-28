@@ -5,17 +5,9 @@ import type {
   ContributorPapersQuery,
   ListContributorsQuery,
 } from "@qb/shared";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { inList } from "../db/in-list";
 import { departments, questions, submissions, user } from "../db/schema";
 import {
   selectSubmissionRows,
@@ -83,7 +75,7 @@ async function departmentBreakdown(
     .innerJoin(departments, eq(departments.id, questions.departmentId))
     .where(
       and(
-        inArray(submissions.uploaderId, uploaderIds),
+        inList(submissions.uploaderId, uploaderIds),
         eq(submissions.status, "published"),
       ),
     )

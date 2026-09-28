@@ -11,8 +11,9 @@ import type {
   SubmissionFields,
   SubmissionStatus,
 } from "@qb/shared";
-import { and, count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { inList } from "../db/in-list";
 import {
   courses,
   departments,
@@ -328,7 +329,7 @@ async function selectReports(
 
   const ids = [...new Set(reports.map((report) => report.submissionId))];
   const rows = await selectSubmissionRows(db).where(
-    inArray(submissions.id, ids),
+    inList(submissions.id, ids),
   );
   const byId = new Map(rows.map((row) => [row.submission.id, row]));
 
