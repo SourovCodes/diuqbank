@@ -165,7 +165,7 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 
 ## Deploying
 
-CI deploys `main` after lint, tests and e2e pass (the `deploy` job in `.github/workflows/ci.yml`): it applies the D1 migrations, then builds and deploys the Worker (`questionbank`). Nothing in the repo names the production domain. The site's URL is the Worker's `SITE_URL` var (auth origin, trusted origin, and the domain in PDF watermarks). It defaults to `http://localhost:5173`, and CI replaces it with the `SITE_URL` repository variable at deploy time. To move the site, change that variable, the custom domain and the Google redirect URI, then re-run the deploy.
+CI deploys `main` after lint, tests and e2e pass (the `deploy` job in `.github/workflows/ci.yml`): it applies the D1 migrations, then builds and deploys the Worker (`questionbank`). Nothing in the repo names the production domain. The site's URL is the Worker's `SITE_URL` var (auth origin, trusted origin, and the domain in PDF watermarks). It defaults to `http://localhost:5173`, and CI replaces it with the `SITE_URL` repository variable at deploy time. Requests that reach the Worker on any other host (`www.`, its workers.dev address) are redirected there (`canonicalHostRedirect` in `app/lib/redirect.ts`, skipped for `http://` so local dev is unaffected). To move the site, change that variable, the custom domain and the Google redirect URI, then re-run the deploy.
 
 One-time setup (the deploy job is skipped until `SITE_URL` is set):
 
