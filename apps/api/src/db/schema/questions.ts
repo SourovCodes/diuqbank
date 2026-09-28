@@ -141,6 +141,11 @@ export const submissions = sqliteTable(
     ),
     index("submissions_question_id_status_idx").on(t.questionId, t.status),
     index("submissions_uploader_id_idx").on(t.uploaderId),
+    // The admin catalog counts submissions per department, course, semester and exam type.
+    index("submissions_department_id_idx").on(t.departmentId),
+    index("submissions_course_id_idx").on(t.courseId),
+    index("submissions_semester_id_idx").on(t.semesterId),
+    index("submissions_exam_type_id_idx").on(t.examTypeId),
   ],
 );
 
