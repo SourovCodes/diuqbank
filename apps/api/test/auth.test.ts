@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { EMAIL_DOMAIN_NOT_ALLOWED } from "@qb/shared/constants";
 import { account, user } from "../src/db/schema";
 import { api, db, jsonRequest, ORIGIN, seedUser, signIn } from "./helpers";
 
@@ -172,7 +173,7 @@ describe("auth", () => {
   });
 
   it("creates a verified user on the first Google sign-in", async () => {
-    const email = `new-${crypto.randomUUID()}@example.com`;
+    const email = `new-${crypto.randomUUID()}@s.diu.edu.bd`;
 
     const { res } = await completeGoogleSignIn({
       sub: `google-${email}`,
@@ -189,6 +190,64 @@ describe("auth", () => {
     });
   });
 
+  describe("DIU email rule", () => {
+    /** Where a refused sign-in is sent: the login page, with the reason. */
+    const refusal = (res: Response) => {
+      expect(res.status).toBe(302);
+      const location = new URL(res.headers.get("location")!, ORIGIN);
+      return location.searchParams.get("error");
+    };
+
+    it("refuses a new account on another domain, without creating it", async () => {
+      const email = `outsider-${crypto.randomUUID()}@gmail.com`;
+      const { res } = await completeGoogleSignIn({
+        sub: `google-${email}`,
+        email,
+        name: "Outsider",
+      });
+
+      expect(refusal(res)).toBe(EMAIL_DOMAIN_NOT_ALLOWED);
+      expect(res.headers.getSetCookie().join()).not.toContain("session_token=");
+      const rows = await db().select().from(user).where(eq(user.email, email));
+      expect(rows).toEqual([]);
+    });
+
+    it("refuses an existing account on another domain", async () => {
+      const existing = await seedUser("Old Contributor");
+      const email = `old-${existing.id}@gmail.com`;
+      await db()
+        .update(user)
+        .set({ email, emailVerified: true })
+        .where(eq(user.id, existing.id));
+
+      const { res } = await completeGoogleSignIn({
+        sub: `google-${existing.id}`,
+        email,
+        name: "Old Contributor",
+      });
+
+      expect(refusal(res)).toBe(EMAIL_DOMAIN_NOT_ALLOWED);
+    });
+
+    it("lets admins on another domain in", async () => {
+      const existing = await seedUser("Gmail Admin");
+      const email = `admin-${existing.id}@gmail.com`;
+      await db()
+        .update(user)
+        .set({ email, emailVerified: true, role: "admin" })
+        .where(eq(user.id, existing.id));
+
+      const { res } = await completeGoogleSignIn({
+        sub: `google-${existing.id}`,
+        email,
+        name: "Gmail Admin",
+      });
+
+      expect(res.headers.get("location")).toBe("/contribute");
+      expect(await sessionUser(res)).toMatchObject({ id: existing.id });
+    });
+  });
+
   describe("Google photo", () => {
     const JPEG = new Blob([
       new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]),
@@ -196,7 +255,7 @@ describe("auth", () => {
     const sized = "https://lh3.googleusercontent.com/a/photo-id=s96-c";
     const fullSize = "https://lh3.googleusercontent.com/a/photo-id";
     const newProfile = () => {
-      const email = `photo-${crypto.randomUUID()}@example.com`;
+      const email = `photo-${crypto.randomUUID()}@diu.edu.bd`;
       return {
         sub: `google-${email}`,
         email,

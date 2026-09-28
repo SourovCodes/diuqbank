@@ -1,11 +1,22 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { EMAIL_DOMAIN_NOT_ALLOWED, isAllowedEmail } from "@qb/shared/constants";
+import { APIError, betterAuth, type BetterAuthOptions } from "better-auth";
+import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import * as schema from "../db/schema";
+import { user } from "../db/schema";
 import { importGoogleAvatar } from "../services/avatars";
 
+/** A sign-in refused by the DIU email rule; the login page explains it. */
+const notAllowed = () =>
+  new APIError("FORBIDDEN", {
+    code: EMAIL_DOMAIN_NOT_ALLOWED,
+    message: "Only DIU email addresses can sign in",
+  });
+
 /**
- * Google is the only way to sign in. Exported on its own so tests can build an auth
+ * Google is the only way to sign in, with a DIU address (ALLOWED_EMAIL_DOMAINS), or
+ * as an admin. Exported on its own so tests can build an auth
  * instance with the same options plus Better Auth's `testUtils` plugin.
  */
 export function authOptions(env: Env, db: Database) {
@@ -29,8 +40,26 @@ export function authOptions(env: Env, db: Database) {
       },
     },
     databaseHooks: {
+      // Every sign-in makes a session, for new and existing users alike.
+      session: {
+        create: {
+          before: async (session) => {
+            const [row] = await db
+              .select({ email: user.email, role: user.role })
+              .from(user)
+              .where(eq(user.id, session.userId));
+            if (row?.role !== "admin" && !isAllowedEmail(row?.email ?? "")) {
+              throw notAllowed();
+            }
+          },
+        },
+      },
       user: {
         create: {
+          // Refused before the account exists, so no stray users are left behind.
+          before: async (created) => {
+            if (!isAllowedEmail(created.email)) throw notAllowed();
+          },
           // Google gives a new user its photo URL; keep a copy of our own instead.
           after: async (created) => {
             if (created.image) {

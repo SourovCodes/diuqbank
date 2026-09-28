@@ -23,7 +23,7 @@ export async function seedUser(name = "Test Contributor") {
   const id = crypto.randomUUID();
   const [row] = await createDb(env.DB)
     .insert(user)
-    .values({ id, name, email: `${id}@example.com` })
+    .values({ id, name, email: `${id}@diu.edu.bd` })
     .returning();
   return row!;
 }
@@ -48,9 +48,7 @@ function testAuth() {
 }
 
 /** Creates a fresh user and returns a Cookie header value for authenticated requests. */
-export async function signIn(
-  email = `user-${crypto.randomUUID()}@example.com`,
-) {
+export async function signIn(email = `user-${crypto.randomUUID()}@diu.edu.bd`) {
   const { test } = await testAuth().$context;
   const saved = await test.saveUser(
     test.createUser({ name: "Test User", email }),

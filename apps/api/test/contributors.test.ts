@@ -66,7 +66,7 @@ describe("GET /api/v1/contributors", () => {
         ],
       },
     ]);
-    expect(JSON.stringify(body)).not.toContain("@example.com");
+    expect(JSON.stringify(body)).not.toContain("@diu.edu.bd");
   });
 
   it("pages through a contributor's papers, newest first", async () => {
@@ -174,7 +174,7 @@ describe("GET /api/v1/contributors/:id", () => {
         },
       },
     ]);
-    expect(JSON.stringify(body)).not.toContain("@example.com");
+    expect(JSON.stringify(body)).not.toContain("@diu.edu.bd");
   });
 
   it("404s for users whose papers are all still under review or rejected", async () => {

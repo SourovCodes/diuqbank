@@ -257,7 +257,7 @@ describe("GET /api/v1/questions/:id", () => {
       ],
       [anonymous.id, null],
     ]);
-    expect(JSON.stringify(body)).not.toContain("@example.com");
+    expect(JSON.stringify(body)).not.toContain("@diu.edu.bd");
   });
 
   it("shows a question whose only submissions are pending review", async () => {
