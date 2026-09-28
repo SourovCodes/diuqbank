@@ -8,7 +8,7 @@ allowBuilds:
 
 # Single source of truth for versions shared across workspace packages.
 catalog:
-  "@types/node": ^24.0.0
+  "@types/node": ^24.13.6
   hono: ^4.13.9
   typescript: ~6.0.3
   vitest: ~4.1.11
