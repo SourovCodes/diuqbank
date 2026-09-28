@@ -1,5 +1,6 @@
 import type { AdminUser, AdminUserList } from "@qb/shared";
 import {
+  AtSign,
   EllipsisVertical,
   FileText,
   Search,
@@ -9,7 +10,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Form, Link, useRouteLoaderData } from "react-router";
-import { ConfirmAction } from "~/components/actions";
+import { USERNAME_RULES } from "@qb/shared/constants";
+import { ActionDialog, ConfirmAction } from "~/components/actions";
+import { FormField } from "~/components/form";
 import { AdminPageHeader } from "~/components/admin/admin-header";
 import { AdminRouteError } from "~/components/admin/route-error";
 import { TablePagination } from "~/components/table-pagination";
@@ -71,6 +74,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
+  if (form.get("intent") === "username") {
+    return adminRequest(
+      request,
+      "username",
+      "PUT",
+      `/users/${encodeURIComponent(String(form.get("id")))}/username`,
+      { username: form.get("username") },
+    );
+  }
   return adminRequest(
     request,
     "role",
@@ -109,6 +121,7 @@ function PaperCounts({ counts }: { counts: AdminUser["submissionCounts"] }) {
 
 function RowActions({ user }: { user: AdminUser }) {
   const [confirming, setConfirming] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const makeAdmin = user.role !== "admin";
   const hasPapers =
     user.submissionCounts.published +
@@ -141,6 +154,10 @@ function RowActions({ user }: { user: AdminUser }) {
               <DropdownMenuSeparator />
             </>
           )}
+          <DropdownMenuItem onSelect={() => setRenaming(true)}>
+            <AtSign />
+            Edit username
+          </DropdownMenuItem>
           <DropdownMenuItem
             variant={makeAdmin ? "default" : "destructive"}
             onSelect={() => setConfirming(true)}
@@ -150,6 +167,31 @@ function RowActions({ user }: { user: AdminUser }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <ActionDialog
+        open={renaming}
+        onOpenChange={setRenaming}
+        title={`Change ${user.name}’s username`}
+        description={`It’s in their public profile’s address: /contributors/<username>. ${USERNAME_RULES}.`}
+        submitLabel="Save"
+        pendingLabel="Saving…"
+        successMessage="Username changed"
+        fields={{ intent: "username", id: user.id }}
+      >
+        {(fieldErrors) => (
+          <FormField
+            label="Username"
+            name="username"
+            defaultValue={user.username}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            minLength={3}
+            maxLength={50}
+            error={fieldErrors.username}
+          />
+        )}
+      </ActionDialog>
       <ConfirmAction
         open={confirming}
         onOpenChange={setConfirming}
@@ -256,7 +298,7 @@ export default function AdminUsers({ loaderData }: Route.ComponentProps) {
                             {user.name}
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
-                            {user.email}
+                            @{user.username} · {user.email}
                           </span>
                         </div>
                       </div>

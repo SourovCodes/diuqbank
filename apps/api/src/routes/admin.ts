@@ -26,6 +26,8 @@ import {
   updateReportStatusInputSchema,
   updateSubmissionStatusInputSchema,
   updateUserRoleInputSchema,
+  updateUsernameInputSchema,
+  USERNAME_RULES,
   submissionWatermarkSchema,
   checksQueuedSchema,
   watermarkQueuedSchema,
@@ -47,6 +49,7 @@ import {
   updateReportStatus,
   updateSubmissionStatus,
 } from "../services/moderation";
+import { updateUsername } from "../services/account";
 import { listAdminUsers, updateUserRole } from "../services/users";
 import { rewatermark, watermarkMissing } from "../services/watermark";
 import type { AppEnv } from "../types";
@@ -417,6 +420,23 @@ const updateUserRoleRoute = createRoute({
   },
 });
 
+const updateUserUsernameRoute = createRoute({
+  method: "put",
+  path: "/users/{id}/username",
+  tags: userTags,
+  summary: "Change a user's username",
+  description: `Same rules as changing your own: ${USERNAME_RULES}; saved in lowercase.`,
+  middleware,
+  request: { params: userIdParams, ...jsonBody(updateUsernameInputSchema) },
+  responses: {
+    200: jsonResponse(updateUsernameInputSchema, "Their new username"),
+    ...denied,
+    404: errorResponse("User not found"),
+    409: errorResponse("Someone else already has that username"),
+    422: errorResponse("Not a valid username"),
+  },
+});
+
 export const adminRoutes = new OpenAPIHono<AppEnv>({
   defaultHook: validationHook,
 })
@@ -607,6 +627,18 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
         c.req.valid("param").id,
         c.req.valid("json").role,
       ),
+      200,
+    ),
+  )
+  .openapi(updateUserUsernameRoute, async (c) =>
+    c.json(
+      {
+        username: await updateUsername(
+          c.var.db,
+          c.req.valid("param").id,
+          c.req.valid("json").username,
+        ),
+      },
       200,
     ),
   );

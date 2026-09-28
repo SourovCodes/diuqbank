@@ -248,3 +248,29 @@ test("an admin rejects a paper with a reason the uploader sees", async ({
     "Two papers in one file. Please split them.",
   );
 });
+
+test("an admin changes a user's username", async ({ page, browser }) => {
+  // A member, in their own browser session.
+  const memberPage = await browser.newPage();
+  const member = await logInAs(memberPage, NEW_USER, "/account");
+  await memberPage.close();
+
+  await logInAs(
+    page,
+    SEED_ADMIN,
+    `/admin/users?q=${encodeURIComponent(member.email)}`,
+  );
+  const row = page.getByRole("row").filter({ hasText: member.email });
+  const dialog = page.getByRole("dialog");
+  await expect(async () => {
+    await row.getByRole("button", { name: /^Actions for/ }).click();
+    await page.getByRole("menuitem", { name: "Edit username" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+
+  const username = `renamed.${unique()}`;
+  await dialog.getByLabel("Username").fill(username.toUpperCase());
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Username changed")).toBeVisible();
+  await expect(row).toContainText(`@${username}`);
+});

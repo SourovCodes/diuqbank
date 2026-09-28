@@ -174,7 +174,10 @@ export async function reclassifyOwnSubmission(
 const usernameTaken = () =>
   new AppError(409, "USERNAME_TAKEN", "Someone already has that username");
 
-/** Changes the user's username (already validated and lowercased). */
+/**
+ * Changes a user's username (already validated and lowercased): their own, or any
+ * user's for an admin.
+ */
 export async function updateUsername(
   db: Database,
   userId: string,
@@ -186,7 +189,14 @@ export async function updateUsername(
     .where(and(eq(user.username, username), ne(user.id, userId)));
   if (taken) throw usernameTaken();
   try {
-    await db.update(user).set({ username }).where(eq(user.id, userId));
+    const updated = await db
+      .update(user)
+      .set({ username })
+      .where(eq(user.id, userId))
+      .returning({ id: user.id });
+    if (updated.length === 0) {
+      throw new AppError(404, "NOT_FOUND", "User not found");
+    }
   } catch (err) {
     // Taken by someone else in the meantime: the unique index wins.
     if (String(err).includes("UNIQUE constraint failed")) throw usernameTaken();

@@ -8,6 +8,7 @@ import {
   seedTaxonomy,
   seedUser,
   signIn,
+  signInAdmin,
 } from "./helpers";
 
 const setUsername = (cookie: string, username: unknown) =>
@@ -90,5 +91,43 @@ describe("usernames", () => {
       });
     }
     expect((await api("/api/v1/contributors/nobody-here")).status).toBe(404);
+  });
+
+  describe("for admins", () => {
+    const adminSet = (cookie: string, id: string, username: unknown) =>
+      api(`/api/v1/admin/users/${encodeURIComponent(id)}/username`, {
+        ...jsonRequest("PUT", { username }),
+        headers: { "content-type": "application/json", cookie },
+      });
+
+    it("changes any user's username, with the same rules", async () => {
+      const admin = await signInAdmin();
+      const target = await seedUser();
+      const name = `Fixed_${crypto.randomUUID().slice(0, 8)}`;
+
+      const res = await adminSet(admin.cookie, target.id, name);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ username: name.toLowerCase() });
+      const page = await api(`/api/v1/contributors/${name.toLowerCase()}`);
+      // No published papers, so not a public contributor yet.
+      expect(page.status).toBe(404);
+
+      expect((await adminSet(admin.cookie, target.id, "a b")).status).toBe(422);
+      const other = await seedUser();
+      expect(
+        (await adminSet(admin.cookie, target.id, other.username)).status,
+      ).toBe(409);
+      expect(
+        (await adminSet(admin.cookie, "nobody", "someone_new")).status,
+      ).toBe(404);
+    });
+
+    it("is for admins only", async () => {
+      const member = await signIn();
+      const target = await seedUser();
+      expect((await adminSet(member.cookie, target.id, "hijack")).status).toBe(
+        403,
+      );
+    });
   });
 });
