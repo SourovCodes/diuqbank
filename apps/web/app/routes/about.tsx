@@ -72,20 +72,6 @@ export default function About() {
         </p>
       </div>
 
-      <figure className="space-y-2">
-        <img
-          src={AUTHOR.photo}
-          alt={`${AUTHOR.name} in front of the Shahjalal University of Science and Technology sign`}
-          width={1200}
-          height={900}
-          loading="lazy"
-          className="aspect-[4/3] w-full rounded-xl border object-cover"
-        />
-        <figcaption className="text-center text-sm text-muted-foreground">
-          Me at SUST, Sylhet.
-        </figcaption>
-      </figure>
-
       <section aria-labelledby="promise-heading" className="space-y-4">
         <h2
           id="promise-heading"

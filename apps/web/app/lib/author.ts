@@ -3,7 +3,6 @@ export const AUTHOR = {
   name: "Sourov Biswas",
   firstName: "Sourov",
   avatar: "/sourov.webp",
-  photo: "/sourov-sust.webp",
   links: [
     {
       network: "linkedin",
