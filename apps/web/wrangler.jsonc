@@ -8,6 +8,9 @@
   // Required by Better Auth (AsyncLocalStorage) and node:crypto.
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Run next to D1 (APAC) rather than at the visitor's edge: a page makes several
+  // D1 round trips, the visitor only one.
+  "placement": { "mode": "smart" },
   "vars": {
     // The public site. Auth runs on this origin and trusts only it, and its domain
     // goes in the watermark on public PDFs.
