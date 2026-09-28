@@ -74,7 +74,12 @@ export async function seedTaxonomy() {
       { name: `Computer Science ${tag}`, shortName: `CSE-${tag}` },
       { name: `Electrical Engineering ${tag}`, shortName: `EEE-${tag}` },
     ])
-    .returning();
+    // As questions show a department (the row also has its trigger-kept count).
+    .returning({
+      id: departments.id,
+      name: departments.name,
+      shortName: departments.shortName,
+    });
   const [algorithms, circuits] = await db()
     .insert(courses)
     .values([

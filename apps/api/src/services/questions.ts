@@ -4,7 +4,17 @@ import type {
   QuestionDetail,
   QuestionList,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, gt, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  isNotNull,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import type { Database } from "../db/client";
 import { usernameOf } from "../db/username";
 import {
@@ -17,55 +27,36 @@ import {
   user,
 } from "../db/schema";
 import {
-  countWhereStatus,
   publicFileSize,
   questionSummaryColumns,
   semesterRecency,
   submissionStatusOrder,
 } from "./common";
 
-/** Subquery with per-status submission counts for each question that has submissions. */
-function submissionCounts(db: Database) {
-  return db
-    .select({
-      questionId: submissions.questionId,
-      published: countWhereStatus("published").as("published_count"),
-      pendingReview: countWhereStatus("pending_review").as(
-        "pending_review_count",
-      ),
-      rejected: countWhereStatus("rejected").as("rejected_count"),
-      latestPublishedAt:
-        sql<number>`max(case when ${submissions.status} = 'published' then ${submissions.createdAt} end)`.as(
-          "latest_published_at",
-        ),
-    })
-    .from(submissions)
-    .groupBy(submissions.questionId)
-    .as("submission_counts");
-}
-
 /**
- * Questions joined with their lookup names and submission counts. Inner-joining the
- * counts means only questions with at least one submission (of any status) are listed.
+ * Questions joined with their lookup names. The submission counts are columns kept up
+ * to date by triggers (migration 0006).
  */
-function selectQuestions(db: Database, counts = submissionCounts(db)) {
+function selectQuestions(db: Database) {
   return db
     .select({
       ...questionSummaryColumns,
       viewCount: questions.viewCount,
       submissionCounts: {
-        published: counts.published,
-        pendingReview: counts.pendingReview,
-        rejected: counts.rejected,
+        published: questions.publishedCount,
+        pendingReview: questions.pendingReviewCount,
+        rejected: questions.rejectedCount,
       },
     })
     .from(questions)
-    .innerJoin(counts, eq(counts.questionId, questions.id))
     .innerJoin(departments, eq(departments.id, questions.departmentId))
     .innerJoin(courses, eq(courses.id, questions.courseId))
     .innerJoin(semesters, eq(semesters.id, questions.semesterId))
     .innerJoin(examTypes, eq(examTypes.id, questions.examTypeId));
 }
+
+/** Set exactly when a question has a published paper; indexed, unlike the count. */
+const hasPublished = isNotNull(questions.latestPublishedAt);
 
 function questionFilters(query: ListQuestionsQuery) {
   const filters: SQL[] = [];
@@ -88,7 +79,10 @@ const QUESTION_ORDER = {
     asc(examTypes.name),
     ...semesterRecency,
   ],
-  popular: [desc(questions.viewCount), asc(courses.name)],
+  // By the indexed column alone (ids break ties), so SQLite can read the first page
+  // straight off an index instead of sorting every question.
+  newest: [desc(questions.latestPublishedAt)],
+  popular: [desc(questions.viewCount)],
 } as const;
 
 /**
@@ -99,25 +93,14 @@ export async function listQuestions(
   db: Database,
   query: ListQuestionsQuery,
 ): Promise<QuestionList> {
-  const where = questionFilters(query);
-  const itemCounts = submissionCounts(db);
-  const totalCounts = submissionCounts(db);
-  const order =
-    query.sort === "newest"
-      ? [desc(itemCounts.latestPublishedAt), asc(courses.name)]
-      : QUESTION_ORDER[query.sort];
-
+  const where = and(questionFilters(query), hasPublished);
   const [items, totals] = await Promise.all([
-    selectQuestions(db, itemCounts)
-      .where(and(where, gt(itemCounts.published, 0)))
-      .orderBy(...order, asc(questions.id))
+    selectQuestions(db)
+      .where(where)
+      .orderBy(...QUESTION_ORDER[query.sort], desc(questions.id))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db
-      .select({ total: count() })
-      .from(questions)
-      .innerJoin(totalCounts, eq(totalCounts.questionId, questions.id))
-      .where(and(where, gt(totalCounts.published, 0))),
+    db.select({ total: count() }).from(questions).where(where),
   ]);
 
   return {
@@ -137,8 +120,17 @@ export async function getQuestion(
   id: number,
   filesUrl: string,
 ): Promise<QuestionDetail | null> {
+  // Like the lists, a question without any submission doesn't exist publicly.
   const [question]: Question[] = await selectQuestions(db)
-    .where(eq(questions.id, id))
+    .where(
+      and(
+        eq(questions.id, id),
+        gt(
+          sql`${questions.publishedCount} + ${questions.pendingReviewCount} + ${questions.rejectedCount}`,
+          0,
+        ),
+      ),
+    )
     .limit(1);
   if (!question) return null;
 

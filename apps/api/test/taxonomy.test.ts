@@ -3,6 +3,7 @@ import type {
   DepartmentList,
   ExamTypeList,
   SemesterList,
+  Taxonomy,
 } from "@qb/shared";
 import { describe, expect, it } from "vitest";
 import { api, seedQuestion, seedSubmission, seedTaxonomy } from "./helpers";
@@ -63,5 +64,42 @@ describe("taxonomy routes", () => {
       await api("/api/v1/exam-types")
     ).json<ExamTypeList>();
     expect(examTypes.items).toContainEqual(midterm);
+  });
+
+  it("returns all four lists at once, as the separate endpoints do", async () => {
+    const { cse, algorithms, sem1, midterm } = await seedTaxonomy();
+    const question = await seedQuestion({
+      departmentId: cse.id,
+      courseId: algorithms.id,
+      semesterId: sem1.id,
+      examTypeId: midterm.id,
+    });
+    await seedSubmission(question.id);
+
+    const res = await api("/api/v1/taxonomy");
+    expect(res.status).toBe(200);
+    const body = await res.json<Taxonomy>();
+    expect(body.departments).toContainEqual({ ...cse, publishedCount: 1 });
+    expect(body.courses).toContainEqual({
+      id: algorithms.id,
+      name: algorithms.name,
+      departmentId: cse.id,
+    });
+    expect(body.semesters).toContainEqual(sem1);
+    expect(body.examTypes).toContainEqual(midterm);
+
+    const separate = await Promise.all(
+      ["departments", "courses", "semesters", "exam-types"].map(
+        async (path) =>
+          (await (await api(`/api/v1/${path}`)).json<{ items: unknown[] }>())
+            .items,
+      ),
+    );
+    expect([
+      body.departments,
+      body.courses,
+      body.semesters,
+      body.examTypes,
+    ]).toEqual(separate);
   });
 });

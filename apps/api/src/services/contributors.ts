@@ -5,7 +5,7 @@ import type {
   ContributorPapersQuery,
   ListContributorsQuery,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, isNotNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, or, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { usernameOf } from "../db/username";
 import { inList } from "../db/in-list";
@@ -16,46 +16,25 @@ import {
 } from "./submission-rows";
 
 /**
- * Published papers per uploader. Pending and rejected uploads are private to the
- * uploader and admins, so they are neither counted nor listed publicly.
+ * Users with published papers. Pending and rejected uploads are private to the
+ * uploader and admins, so they are neither counted nor listed publicly. The counts are
+ * columns kept up to date by triggers (migration 0006).
  */
-function publishedCounts(db: Database) {
-  return db
-    .select({
-      uploaderId: submissions.uploaderId,
-      published: count().as("published_count"),
-      views: sql<number>`sum(${submissions.viewCount})`
-        .mapWith(Number)
-        .as("published_views"),
-    })
-    .from(submissions)
-    .where(
-      and(
-        isNotNull(submissions.uploaderId),
-        eq(submissions.status, "published"),
-      ),
-    )
-    .groupBy(submissions.uploaderId)
-    .as("published_counts");
-}
-
-/** Users joined with their counts, so only users with published papers are included. */
 function selectContributors(db: Database) {
-  const counts = publishedCounts(db);
-  const query = db
+  return db
     .select({
       id: user.id,
       username: usernameOf,
       name: user.name,
       image: user.image,
       joinedAt: user.createdAt,
-      publishedCount: counts.published,
-      viewCount: counts.views,
+      publishedCount: user.publishedSubmissionCount,
+      viewCount: user.publishedViewCount,
     })
-    .from(user)
-    .innerJoin(counts, eq(counts.uploaderId, user.id));
-  return { counts, query };
+    .from(user);
 }
+
+const isContributor = gt(user.publishedSubmissionCount, 0);
 
 /** Each uploader's published papers per department, the most first. */
 async function departmentBreakdown(
@@ -95,18 +74,13 @@ export async function listContributors(
   db: Database,
   query: ListContributorsQuery,
 ): Promise<ContributorList> {
-  const { counts, query: contributors } = selectContributors(db);
-  const totalCounts = publishedCounts(db);
-
   const [rows, totals] = await Promise.all([
-    contributors
-      .orderBy(desc(counts.published), asc(user.name))
+    selectContributors(db)
+      .where(isContributor)
+      .orderBy(desc(user.publishedSubmissionCount), asc(user.name))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
-    db
-      .select({ total: count() })
-      .from(user)
-      .innerJoin(totalCounts, eq(totalCounts.uploaderId, user.id)),
+    db.select({ total: count() }).from(user).where(isContributor),
   ]);
 
   const breakdown = await departmentBreakdown(
@@ -135,10 +109,13 @@ export async function getContributor(
   query: ContributorPapersQuery,
 ): Promise<ContributorDetail | null> {
   const [contributor] = await selectContributors(db)
-    .query.where(
-      or(
-        eq(user.username, usernameOrId.toLowerCase()),
-        eq(user.id, usernameOrId),
+    .where(
+      and(
+        isContributor,
+        or(
+          eq(user.username, usernameOrId.toLowerCase()),
+          eq(user.id, usernameOrId),
+        ),
       ),
     )
     .limit(1);

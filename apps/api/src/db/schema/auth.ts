@@ -14,22 +14,36 @@ const timestamps = {
     .$onUpdate(() => new Date()),
 };
 
-export const user = sqliteTable("user", {
-  id: text().primaryKey(),
-  name: text().notNull(),
-  email: text().notNull().unique(),
-  emailVerified: integer({ mode: "boolean" }).notNull().default(false),
-  image: text(),
-  /** Declared as an additional field in `lib/auth.ts`; users can't set it themselves. */
-  role: text({ enum: USER_ROLES }).notNull().default("user"),
-  /**
-   * Public handle in contributor URLs (`/contributors/<username>`), lowercase, see
-   * USERNAME_PATTERN. Set for every user (at sign-up, or by migration 0003); nullable
-   * only because SQLite can't add a NOT NULL column without rebuilding the table.
-   */
-  username: text().unique(),
-  ...timestamps,
-});
+export const user = sqliteTable(
+  "user",
+  {
+    id: text().primaryKey(),
+    name: text().notNull(),
+    email: text().notNull().unique(),
+    emailVerified: integer({ mode: "boolean" }).notNull().default(false),
+    image: text(),
+    /** Declared as an additional field in `lib/auth.ts`; users can't set it themselves. */
+    role: text({ enum: USER_ROLES }).notNull().default("user"),
+    /**
+     * Public handle in contributor URLs (`/contributors/<username>`), lowercase, see
+     * USERNAME_PATTERN. Set for every user (at sign-up, or by migration 0003); nullable
+     * only because SQLite can't add a NOT NULL column without rebuilding the table.
+     */
+    username: text().unique(),
+    // Published papers and their views, kept in sync from submissions by triggers
+    // (migration 0006) for the contributor pages; never write them from application code.
+    publishedSubmissionCount: integer().notNull().default(0),
+    publishedViewCount: integer().notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    // Contributors, the most published first.
+    index("user_published_submission_count_name_idx").on(
+      t.publishedSubmissionCount,
+      t.name,
+    ),
+  ],
+);
 
 export const session = sqliteTable(
   "session",

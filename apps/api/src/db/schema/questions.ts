@@ -30,6 +30,14 @@ export const questions = sqliteTable(
       .references(() => examTypes.id),
     /** Question page views. Incremented directly, anyone can count a view. */
     viewCount: integer().notNull().default(0),
+
+    // Denormalised from this question's submissions by triggers (migration 0006), so
+    // lists don't aggregate the submissions table; never write them from application code.
+    publishedCount: integer().notNull().default(0),
+    pendingReviewCount: integer().notNull().default(0),
+    rejectedCount: integer().notNull().default(0),
+    /** created_at of the newest published submission; null while none is published. */
+    latestPublishedAt: integer({ mode: "timestamp_ms" }),
     ...timestamps,
   },
   (t) => [
@@ -46,7 +54,18 @@ export const questions = sqliteTable(
       t.semesterId,
       t.examTypeId,
     ),
-    index("questions_department_id_idx").on(t.departmentId),
+    // Public lists: questions with a published paper, newest or most viewed first,
+    // optionally in one department (these also serve lookups by department).
+    index("questions_latest_published_at_idx").on(t.latestPublishedAt),
+    index("questions_view_count_idx").on(t.viewCount),
+    index("questions_department_id_latest_published_at_idx").on(
+      t.departmentId,
+      t.latestPublishedAt,
+    ),
+    index("questions_department_id_view_count_idx").on(
+      t.departmentId,
+      t.viewCount,
+    ),
     index("questions_semester_id_idx").on(t.semesterId),
     index("questions_exam_type_id_idx").on(t.examTypeId),
   ],
@@ -105,7 +124,7 @@ export const submissions = sqliteTable(
     uploaderId: text().references(() => user.id, { onDelete: "set null" }),
 
     // Denormalised counters. Likes, dislikes and pending reports are maintained by
-    // triggers on submission_votes / submission_reports (migration 0003); never write
+    // triggers on submission_votes / submission_reports (migration 0001); never write
     // them from application code.
     likeCount: integer().notNull().default(0),
     dislikeCount: integer().notNull().default(0),
@@ -139,7 +158,12 @@ export const submissions = sqliteTable(
         AND (course_id IS NULL OR department_id IS NOT NULL)
       )`),
     ),
-    index("submissions_question_id_status_idx").on(t.questionId, t.status),
+    // Covers the question counter triggers (count and newest published per status).
+    index("submissions_question_id_status_created_at_idx").on(
+      t.questionId,
+      t.status,
+      t.createdAt,
+    ),
     index("submissions_uploader_id_idx").on(t.uploaderId),
     // The admin catalog counts submissions per department, course, semester and exam type.
     index("submissions_department_id_idx").on(t.departmentId),

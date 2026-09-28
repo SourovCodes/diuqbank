@@ -44,6 +44,7 @@ import {
 } from "~/components/ui/table";
 import { adminGetJson, adminRequest, formObject } from "~/lib/admin.server";
 import { plural } from "~/lib/submissions";
+import { invalidateTaxonomy } from "~/lib/taxonomy.server";
 import type { Route } from "./+types/admin-catalog";
 
 export const handle = { breadcrumb: "Catalog" };
@@ -82,16 +83,22 @@ export async function action({ request }: Route.ActionArgs) {
   const id = encodeURIComponent(String(form.get("id") ?? ""));
   const body = formObject(form, "intent", "kind", "id");
 
-  switch (intent) {
-    case "create":
-      return adminRequest(request, intent, "POST", `/${kind}`, body);
-    case "update":
-      return adminRequest(request, intent, "PATCH", `/${kind}/${id}`, body);
-    case "delete":
-      return adminRequest(request, intent, "DELETE", `/${kind}/${id}`);
-    default:
-      throw new Response("Unknown intent", { status: 400 });
-  }
+  const send = () => {
+    switch (intent) {
+      case "create":
+        return adminRequest(request, intent, "POST", `/${kind}`, body);
+      case "update":
+        return adminRequest(request, intent, "PATCH", `/${kind}/${id}`, body);
+      case "delete":
+        return adminRequest(request, intent, "DELETE", `/${kind}/${id}`);
+      default:
+        throw new Response("Unknown intent", { status: 400 });
+    }
+  };
+  const result = await send();
+  // Public pages cache the catalog for a minute; this isolate shows the change now.
+  invalidateTaxonomy();
+  return result;
 }
 
 export { AdminRouteError as ErrorBoundary };

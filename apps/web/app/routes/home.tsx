@@ -1,9 +1,4 @@
-import type {
-  ContributorList,
-  CourseList,
-  DepartmentList,
-  QuestionList,
-} from "@qb/shared";
+import type { ContributorList, QuestionList } from "@qb/shared";
 import {
   ArrowRight,
   ChevronRight,
@@ -31,6 +26,7 @@ import {
 import { apiGetJson } from "~/lib/api.server";
 import { AUTHOR } from "~/lib/author";
 import { formatCount } from "~/lib/format";
+import { loadTaxonomy } from "~/lib/taxonomy.server";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/home";
 
@@ -51,26 +47,24 @@ function onePerCourse(questions: QuestionList["items"], limit = 6) {
  * the API is down, so a failed request just leaves its part out.
  */
 export async function loader({ request }: Route.LoaderArgs) {
-  const [newest, popular, contributors, courses, departments] =
-    await Promise.allSettled([
-      apiGetJson<QuestionList>(
-        request,
-        "/api/v1/questions?sort=newest&pageSize=24",
-      ),
-      apiGetJson<QuestionList>(
-        request,
-        "/api/v1/questions?sort=popular&pageSize=24",
-      ),
-      apiGetJson<ContributorList>(request, "/api/v1/contributors?pageSize=1"),
-      apiGetJson<CourseList>(request, "/api/v1/courses"),
-      apiGetJson<DepartmentList>(request, "/api/v1/departments"),
-    ]);
+  const [newest, popular, contributors, taxonomy] = await Promise.allSettled([
+    apiGetJson<QuestionList>(
+      request,
+      "/api/v1/questions?sort=newest&pageSize=24",
+    ),
+    apiGetJson<QuestionList>(
+      request,
+      "/api/v1/questions?sort=popular&pageSize=24",
+    ),
+    apiGetJson<ContributorList>(request, "/api/v1/contributors?pageSize=1"),
+    loadTaxonomy(request),
+  ]);
   const value = <T,>(result: PromiseSettledResult<T>) =>
     result.status === "fulfilled" ? result.value : null;
 
   const stats = [
     { label: "questions", count: value(newest)?.total },
-    { label: "courses", count: value(courses)?.items.length },
+    { label: "courses", count: value(taxonomy)?.courses.length },
     { label: "contributors", count: value(contributors)?.total },
   ].filter((stat): stat is { label: string; count: number } =>
     Boolean(stat.count),
@@ -80,7 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     newest: onePerCourse(value(newest)?.items ?? []),
     popular: onePerCourse(value(popular)?.items ?? []),
     // Departments without papers have nothing to browse yet.
-    departments: (value(departments)?.items ?? []).filter(
+    departments: (value(taxonomy)?.departments ?? []).filter(
       (d) => d.publishedCount > 0,
     ),
   };

@@ -1,9 +1,20 @@
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core";
 
 export const departments = sqliteTable("departments", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().notNull().unique(),
   shortName: text().notNull().unique(),
+  /**
+   * Published papers in the department, kept in sync with questions.published_count
+   * by a trigger (migration 0006); never write it from application code.
+   */
+  publishedCount: integer().notNull().default(0),
 });
 
 export const courses = sqliteTable(
@@ -21,6 +32,8 @@ export const courses = sqliteTable(
     // Referenced by the composite foreign key on `questions`, which guarantees a
     // question's department is the same as its course's department.
     unique("courses_id_department_id_unique").on(t.id, t.departmentId),
+    // Covers the course list, which is ordered by name.
+    index("courses_name_department_id_idx").on(t.name, t.departmentId),
   ],
 );
 

@@ -44,6 +44,15 @@ export type CourseList = z.infer<typeof courseListSchema>;
 export type SemesterList = z.infer<typeof semesterListSchema>;
 export type ExamTypeList = z.infer<typeof examTypeListSchema>;
 
+/** All four lookup lists in one response, for filters and forms. */
+export const taxonomySchema = z.object({
+  departments: z.array(departmentListItemSchema),
+  courses: z.array(courseSchema),
+  semesters: z.array(semesterSchema),
+  examTypes: z.array(examTypeSchema),
+});
+export type Taxonomy = z.infer<typeof taxonomySchema>;
+
 /** Query-string id: coerced from text, must be a positive integer. */
 export const idQuerySchema = z.coerce.number().int().positive();
 

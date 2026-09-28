@@ -5,10 +5,12 @@ import {
   examTypeListSchema,
   listCoursesQuerySchema,
   semesterListSchema,
+  taxonomySchema,
 } from "@qb/shared";
 import { validationHook } from "../lib/errors";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import {
+  getTaxonomy,
   listCourses,
   listDepartments,
   listExamTypes,
@@ -17,6 +19,16 @@ import {
 import type { AppEnv } from "../types";
 
 const tags = ["Taxonomy"];
+
+const getTaxonomyRoute = createRoute({
+  method: "get",
+  path: "/taxonomy",
+  tags,
+  summary: "List departments, courses, semesters and exam types at once",
+  responses: {
+    200: jsonResponse(taxonomySchema, "All four lists, ordered as below"),
+  },
+});
 
 const listDepartmentsRoute = createRoute({
   method: "get",
@@ -57,6 +69,9 @@ const listExamTypesRoute = createRoute({
 export const taxonomyRoutes = new OpenAPIHono<AppEnv>({
   defaultHook: validationHook,
 })
+  .openapi(getTaxonomyRoute, async (c) =>
+    c.json(await getTaxonomy(c.var.db), 200),
+  )
   .openapi(listDepartmentsRoute, async (c) =>
     c.json({ items: await listDepartments(c.var.db) }, 200),
   )

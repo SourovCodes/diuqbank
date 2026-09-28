@@ -87,7 +87,7 @@ import { formatDate } from "~/lib/dates";
 import { REPORT_REASON_LABELS } from "~/lib/engagement";
 import { formatBytes, formatCount } from "~/lib/format";
 import { contributorUrl, STATUS_LABELS } from "~/lib/submissions";
-import { loadTaxonomy } from "~/lib/taxonomy.server";
+import { invalidateTaxonomy, loadTaxonomy } from "~/lib/taxonomy.server";
 import type { Route } from "./+types/admin-submission";
 
 type LoaderData = Awaited<ReturnType<typeof loader>>;
@@ -111,7 +111,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       request,
       `/submissions/${encodeURIComponent(params.id)}`,
     ),
-    loadTaxonomy(request),
+    // Fresh: classifying can add departments, courses and semesters.
+    loadTaxonomy(request, { fresh: true }),
   ]);
   return { submission, taxonomy };
 }
@@ -127,14 +128,18 @@ export async function action({ request, params }: Route.ActionArgs) {
         status: form.get("status"),
         reason: form.get("reason") ?? undefined,
       });
-    case "classify":
-      return adminRequest(
+    case "classify": {
+      const result = await adminRequest(
         request,
         intent,
         "PUT",
         `${path}/classification`,
         formObject(form, "intent"),
       );
+      // It may have created departments, courses or semesters.
+      invalidateTaxonomy();
+      return result;
+    }
     case "analyze":
       return adminRequest(request, intent, "POST", `${path}/analysis`);
     case "watermark":
