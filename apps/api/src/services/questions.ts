@@ -127,17 +127,22 @@ export async function listQuestions(
   };
 }
 
+/**
+ * `filesUrl`: origin of the public R2 domain (FILES_URL). Empty in local dev, where
+ * files are only served through the API.
+ */
 export async function getQuestion(
   db: Database,
   id: number,
+  filesUrl: string,
 ): Promise<QuestionDetail | null> {
   const [question]: Question[] = await selectQuestions(db)
     .where(eq(questions.id, id))
     .limit(1);
   if (!question) return null;
 
-  // Metadata only: file keys never leave the API, files are served separately
-  // (published submissions only), and uploaders expose just their public profile.
+  // Metadata only: the only file key that leaves the API is a published paper's
+  // watermarked copy (as its URL), and uploaders expose just their public profile.
   const rows = await db
     .select({
       id: submissions.id,
@@ -150,6 +155,7 @@ export async function getQuestion(
       section: submissions.section,
       batch: submissions.batch,
       uploader: { id: user.id, name: user.name, image: user.image },
+      watermarkedFileKey: submissions.watermarkedFileKey,
     })
     .from(submissions)
     .leftJoin(user, eq(user.id, submissions.uploaderId))
@@ -164,11 +170,23 @@ export async function getQuestion(
 
   return {
     ...question,
-    submissions: rows.map((row) => ({
+    submissions: rows.map(({ watermarkedFileKey, ...row }) => ({
       ...row,
       createdAt: row.createdAt.toISOString(),
+      fileUrl: publicFileUrl(row, watermarkedFileKey, filesUrl),
     })),
   };
+}
+
+function publicFileUrl(
+  row: { id: number; status: string },
+  watermarkedFileKey: string | null,
+  filesUrl: string,
+) {
+  if (row.status !== "published") return null;
+  return filesUrl && watermarkedFileKey
+    ? `${filesUrl.replace(/\/$/, "")}/${watermarkedFileKey}`
+    : `/api/v1/submissions/${row.id}/file`;
 }
 
 /**

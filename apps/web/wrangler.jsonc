@@ -13,6 +13,10 @@
     // goes in the watermark on public PDFs.
     // CI sets the production value at deploy time (`--var SITE_URL:…`).
     "SITE_URL": "http://localhost:5173",
+    // Origin of the R2 bucket's public custom domain, where published papers'
+    // watermarked copies are read from. Empty locally: files go through the API.
+    // CI sets the production value at deploy time (`--var FILES_URL:…`).
+    "FILES_URL": "",
     // AI analysis of uploads: PDFs are compressed (only to cut Gemini's input cost),
     // then read by Gemini. Published papers are watermarked by the same PDF processor.
     // Keys are the GEMINI_API_KEY and COMPRESSOR_API_KEY secrets.

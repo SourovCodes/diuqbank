@@ -87,6 +87,10 @@ export type SubmissionWatermark = z.infer<typeof submissionWatermarkSchema>;
 export const watermarkQueuedSchema = z.object({ queued: z.number().int() });
 export type WatermarkQueued = z.infer<typeof watermarkQueuedSchema>;
 
+/** How many never-checked papers were queued for the AI check. */
+export const checksQueuedSchema = z.object({ queued: z.number().int() });
+export type ChecksQueued = z.infer<typeof checksQueuedSchema>;
+
 export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   /** Null when the uploader's account no longer exists. */
   uploader: adminUserRefSchema.nullable(),

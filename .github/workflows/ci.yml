@@ -89,4 +89,4 @@ jobs:
         run: pnpm --filter @qb/api db:migrate:remote
       - name: Deploy the Worker
         working-directory: apps/web
-        run: pnpm build && pnpm exec wrangler deploy --var "SITE_URL:${{ vars.SITE_URL }}"
+        run: pnpm build && pnpm exec wrangler deploy --var "SITE_URL:${{ vars.SITE_URL }}" --var "FILES_URL:${{ vars.FILES_URL }}"

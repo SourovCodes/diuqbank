@@ -27,6 +27,7 @@ import {
   updateSubmissionStatusInputSchema,
   updateUserRoleInputSchema,
   submissionWatermarkSchema,
+  checksQueuedSchema,
   watermarkQueuedSchema,
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
@@ -34,7 +35,7 @@ import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { requireAdmin } from "../middleware/require-admin";
 import { getAdminStats } from "../services/admin-stats";
-import { rerunAnalysis } from "../services/analysis";
+import { checkUnchecked, rerunAnalysis } from "../services/analysis";
 import * as catalog from "../services/catalog";
 import {
   classifySubmission,
@@ -190,6 +191,20 @@ const analyzeSubmissionRoute = createRoute({
     202: jsonResponse(submissionAnalysisSchema, "Analysis queued"),
     ...denied,
     404: errorResponse("Submission not found"),
+  },
+});
+
+const checkUncheckedRoute = createRoute({
+  method: "post",
+  path: "/submissions/analysis",
+  tags: submissionTags,
+  summary: "Run the AI check on pending papers that were never checked",
+  description:
+    "Runs the upload check (which publishes papers it confirms) on up to 100 pending papers without an analysis, such as imported ones. Call again for the rest.",
+  middleware,
+  responses: {
+    202: jsonResponse(checksQueuedSchema, "Papers queued"),
+    ...denied,
   },
 });
 
@@ -458,6 +473,12 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
         c.env.ANALYSIS_QUEUE,
         c.req.valid("param").id,
       ),
+      202,
+    ),
+  )
+  .openapi(checkUncheckedRoute, async (c) =>
+    c.json(
+      { queued: await checkUnchecked(c.var.db, c.env.ANALYSIS_QUEUE) },
       202,
     ),
   )

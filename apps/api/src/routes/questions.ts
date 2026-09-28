@@ -44,7 +44,11 @@ export const questionRoutes = new OpenAPIHono<AppEnv>({
     c.json(await listQuestions(c.var.db, c.req.valid("query")), 200),
   )
   .openapi(getQuestionRoute, async (c) => {
-    const question = await getQuestion(c.var.db, c.req.valid("param").id);
+    const question = await getQuestion(
+      c.var.db,
+      c.req.valid("param").id,
+      c.env.FILES_URL,
+    );
     if (!question) throw new AppError(404, "NOT_FOUND", "Question not found");
     return c.json(question, 200);
   });

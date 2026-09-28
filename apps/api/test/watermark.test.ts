@@ -10,6 +10,7 @@ import { inList } from "../src/db/in-list";
 import { submissions, type NewSubmissionRow } from "../src/db/schema";
 import { publishIfConfirmed } from "../src/services/analysis";
 import { updateSubmissionStatus } from "../src/services/moderation";
+import { getQuestion } from "../src/services/questions";
 import {
   enqueueWatermarks,
   runWatermark,
@@ -257,10 +258,13 @@ describe("runWatermark", () => {
     expect(row).toMatchObject({
       watermarkStatus: "done",
       watermarkError: null,
-      watermarkedFileKey: `watermarked/${paper.id}.pdf`,
+      // Random, not derived from the id: the bucket is public.
+      watermarkedFileKey: expect.stringMatching(
+        /^watermarked\/[0-9a-f-]{36}\.pdf$/,
+      ),
       watermarkedFileSize: WATERMARKED.length,
     });
-    const copy = await env.BUCKET.get(`watermarked/${paper.id}.pdf`);
+    const copy = await env.BUCKET.get(row!.watermarkedFileKey!);
     expect(await copy!.text()).toBe(WATERMARKED);
     expect(copy!.httpMetadata?.contentType).toBe("application/pdf");
     expect(await (await env.BUCKET.get(paper.fileKey))!.text()).toBe(ORIGINAL);
@@ -354,10 +358,32 @@ async function seedWatermarkedPaper(overrides: Partial<NewSubmissionRow> = {}) {
     { submissionId: paper.id },
     { fetch: fakeProcessor().fetch },
   );
-  return paper;
+  const { watermarkedFileKey } = (await readRow(paper.id))!;
+  return { ...paper, watermarkedFileKey: watermarkedFileKey! };
 }
 
 describe("serving", () => {
+  it("links a published paper to its copy on the public files domain", async () => {
+    const [copy, original, pending] = await Promise.all([
+      seedWatermarkedPaper(),
+      seedPaper(),
+      seedPaper({ status: "pending_review" }),
+    ]);
+    const urls = async (filesUrl: string) => {
+      const question = (await getQuestion(db(), questionId, filesUrl))!;
+      const byId = new Map(question.submissions.map((s) => [s.id, s.fileUrl]));
+      return [copy, original, pending].map((paper) => byId.get(paper.id));
+    };
+    expect(await urls("https://files.test")).toEqual([
+      `https://files.test/${copy.watermarkedFileKey}`,
+      // No copy yet: the API serves the original.
+      `/api/v1/submissions/${original.id}/file`,
+      null,
+    ]);
+    // Without a files domain (local dev), everything goes through the API.
+    expect((await urls(""))[0]).toBe(`/api/v1/submissions/${copy.id}/file`);
+  });
+
   it("gives the public the watermarked copy, cached for a day", async () => {
     const paper = await seedWatermarkedPaper();
     const res = await api(`/api/v1/submissions/${paper.id}/file`);
@@ -419,7 +445,7 @@ describe("deleting", () => {
     });
     expect(res.status).toBe(204);
     expect(await env.BUCKET.head(paper.fileKey)).toBeNull();
-    expect(await env.BUCKET.head(`watermarked/${paper.id}.pdf`)).toBeNull();
+    expect(await env.BUCKET.head(paper.watermarkedFileKey)).toBeNull();
   });
 
   it("removes both files when the uploader withdraws a hidden paper", async () => {
@@ -434,7 +460,7 @@ describe("deleting", () => {
     });
     expect(res.status).toBe(204);
     expect(await env.BUCKET.head(paper.fileKey)).toBeNull();
-    expect(await env.BUCKET.head(`watermarked/${paper.id}.pdf`)).toBeNull();
+    expect(await env.BUCKET.head(paper.watermarkedFileKey)).toBeNull();
   });
 });
 
@@ -503,6 +529,20 @@ describe("admin endpoints", () => {
     // The current copy keeps being served meanwhile.
     const file = await api(`/api/v1/submissions/${paper.id}/file`);
     expect(await pdfText(file)).toBe(WATERMARKED);
+  });
+
+  it("replaces the old copy when it's made again", async () => {
+    const paper = await seedWatermarkedPaper();
+    await runWatermark(
+      db(),
+      watermarkEnv,
+      { submissionId: paper.id },
+      { fetch: fakeProcessor().fetch },
+    );
+    const { watermarkedFileKey } = await readRow(paper.id);
+    expect(watermarkedFileKey).not.toBe(paper.watermarkedFileKey);
+    expect(await env.BUCKET.head(watermarkedFileKey!)).not.toBeNull();
+    expect(await env.BUCKET.head(paper.watermarkedFileKey)).toBeNull();
   });
 
   it("refuses to watermark unpublished or missing papers", async () => {

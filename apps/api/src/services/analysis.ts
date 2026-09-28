@@ -13,7 +13,7 @@ import {
   type Semester,
   type SubmissionAnalysis,
 } from "@qb/shared";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { createDb, type Database } from "../db/client";
 import {
@@ -415,6 +415,39 @@ export async function rerunAnalysis(
   }
   // Re-runs only inform the admin; they never publish.
   return enqueueAnalysis(db, queue, submissionId, { autoPublish: false });
+}
+
+/** Most papers `checkUnchecked` queues per call: a few queries each, per request. */
+export const CHECK_UNCHECKED_LIMIT = 100;
+
+/**
+ * Admin backfill: runs the upload check on pending papers that were never checked
+ * (e.g. imported ones), publishing those it confirms, as after an upload. Queues at
+ * most CHECK_UNCHECKED_LIMIT; returns how many were queued.
+ */
+export async function checkUnchecked(
+  db: Database,
+  queue: Queue<AnalysisJob>,
+): Promise<number> {
+  const rows = await db
+    .select({ id: submissions.id })
+    .from(submissions)
+    .leftJoin(
+      submissionAnalyses,
+      eq(submissionAnalyses.submissionId, submissions.id),
+    )
+    .where(
+      and(
+        eq(submissions.status, "pending_review"),
+        isNull(submissionAnalyses.submissionId),
+      ),
+    )
+    .orderBy(submissions.id)
+    .limit(CHECK_UNCHECKED_LIMIT);
+  for (const { id } of rows) {
+    await enqueueAnalysis(db, queue, id, { autoPublish: true });
+  }
+  return rows.length;
 }
 
 /** The bindings an analysis needs (vars widened to plain strings, for tests). */

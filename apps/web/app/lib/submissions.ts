@@ -12,10 +12,6 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   rejected: "Rejected",
 };
 
-export function submissionFileUrl(id: number) {
-  return `/api/v1/submissions/${id}/file`;
-}
-
 /** The signed-in uploader's copy of their own PDF, available in any status. */
 export function ownSubmissionFileUrl(id: number) {
   return `/api/v1/me/submissions/${id}/file`;

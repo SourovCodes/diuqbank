@@ -42,6 +42,11 @@ export const submissionSchema = submissionStatsSchema.extend({
   batch: z.string().nullable(),
   /** Null when the uploader's account no longer exists. */
   uploader: uploaderSchema.nullable(),
+  /**
+   * Where the PDF is read and downloaded; null unless published. Its watermarked copy
+   * on the public files domain once that exists, until then the API's file endpoint.
+   */
+  fileUrl: z.string().nullable(),
 });
 export type Submission = z.infer<typeof submissionSchema>;
 

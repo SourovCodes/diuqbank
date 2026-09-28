@@ -32,12 +32,7 @@ import {
   type PaperActionResult,
 } from "~/lib/engagement";
 import { hasSessionCookie, requireUser } from "~/lib/session.server";
-import {
-  paperTitles,
-  plural,
-  pickSubmission,
-  submissionFileUrl,
-} from "~/lib/submissions";
+import { paperTitles, plural, pickSubmission } from "~/lib/submissions";
 import type { Route } from "./+types/question";
 
 /** The signed-in visitor's votes and reports. Skipped for anonymous visitors. */
@@ -211,7 +206,7 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
     searchParams.get("submission"),
   );
   const { pendingReview } = question.submissionCounts;
-  const fileUrl = selected ? submissionFileUrl(selected.id) : null;
+  const fileUrl = selected?.fileUrl ?? null;
   const title = `${question.course.name} — ${question.examType.name}, ${question.semester.name}`;
   const published = question.submissions.filter(
     (s) => s.status === "published",

@@ -14,6 +14,7 @@ interface Env {
   ANALYSIS_QUEUE: Queue;
   WATERMARK_QUEUE: Queue;
   SITE_URL: string;
+  FILES_URL: string;
   PDF_PROCESSOR_URL: string;
   GEMINI_MODEL: string;
   BETTER_AUTH_SECRET: string;
@@ -30,6 +31,7 @@ declare namespace Cloudflare {
     ANALYSIS_QUEUE: Queue;
     WATERMARK_QUEUE: Queue;
     SITE_URL: string;
+    FILES_URL: string;
     PDF_PROCESSOR_URL: string;
     GEMINI_MODEL: string;
     BETTER_AUTH_SECRET: string;

@@ -6,6 +6,7 @@ import type {
 } from "@qb/shared";
 import { ANALYSIS_FILTERS, SUBMISSION_STATUSES } from "@qb/shared/constants";
 import {
+  Bot,
   CircleCheck,
   CircleX,
   EllipsisVertical,
@@ -103,10 +104,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const intent = String(form.get("intent"));
-  if (intent !== "watermark-missing") {
-    throw new Response("Unknown intent", { status: 400 });
+  if (intent === "watermark-missing") {
+    return adminRequest(request, intent, "POST", "/submissions/watermark");
   }
-  return adminRequest(request, intent, "POST", "/submissions/watermark");
+  if (intent === "check-unchecked") {
+    return adminRequest(request, intent, "POST", "/submissions/analysis");
+  }
+  throw new Response("Unknown intent", { status: 400 });
 }
 
 export { AdminRouteError as ErrorBoundary };
@@ -267,19 +271,34 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
         title="Submissions"
         description="Review uploaded papers. Reported papers are listed first."
         actions={
-          <ConfirmAction
-            trigger={
-              <Button variant="outline" size="sm">
-                <Stamp />
-                Watermark missing PDFs
-              </Button>
-            }
-            title="Watermark published papers?"
-            description="Published papers without a watermarked copy, or whose watermark failed, get one in the background. The public downloads the original until it's ready."
-            confirmLabel="Watermark"
-            successMessage="Watermarking started"
-            fields={{ intent: "watermark-missing" }}
-          />
+          <>
+            <ConfirmAction
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Bot />
+                  Check unchecked papers
+                </Button>
+              }
+              title="Run the AI check on unchecked papers?"
+              description="Pending papers that were never checked, such as imported ones, get the same check as a new upload: papers it confirms are published. Up to 100 at a time."
+              confirmLabel="Check"
+              successMessage="AI check started"
+              fields={{ intent: "check-unchecked" }}
+            />
+            <ConfirmAction
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Stamp />
+                  Watermark missing PDFs
+                </Button>
+              }
+              title="Watermark published papers?"
+              description="Published papers without a watermarked copy, or whose watermark failed, get one in the background. The public downloads the original until it's ready."
+              confirmLabel="Watermark"
+              successMessage="Watermarking started"
+              fields={{ intent: "watermark-missing" }}
+            />
+          </>
         }
       />
       <UrlTabs

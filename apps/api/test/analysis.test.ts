@@ -16,6 +16,7 @@ import {
 import {
   ANALYSIS_MAX_ATTEMPTS,
   buildPrompt,
+  checkUnchecked,
   enqueueAnalysis,
   matchToCatalog,
   runAnalysis,
@@ -679,5 +680,42 @@ describe("admin analysis", () => {
       method: "POST",
     });
     expect(missing.status).toBe(404);
+  });
+
+  it("checks never-checked pending papers like new uploads", async () => {
+    const [unchecked, checked, rejected] = await Promise.all([
+      seedPaper(),
+      seedPaper(),
+      seedPaper({ status: "rejected" }),
+    ]);
+    await startRun(checked.id);
+    const { queue, sent } = fakeQueue();
+    const queued = await checkUnchecked(db(), queue);
+    const ids = sent.map((job) => job.submissionId);
+    expect(ids).toContain(unchecked.id);
+    expect(ids).not.toContain(checked.id);
+    expect(ids).not.toContain(rejected.id);
+    expect(queued).toBe(sent.length);
+    // Like the check after an upload, a confirming result publishes the paper.
+    expect((await analysisRow(unchecked.id))?.autoPublish).toBe(true);
+    // Queued now, so the next call skips it.
+    const again = fakeQueue();
+    await checkUnchecked(db(), again.queue);
+    expect(again.sent.map((job) => job.submissionId)).not.toContain(
+      unchecked.id,
+    );
+  });
+
+  it("starts the backfill through the API, for admins only", async () => {
+    const denied = await api("/api/v1/admin/submissions/analysis", {
+      method: "POST",
+      headers: { cookie: member.cookie },
+    });
+    expect(denied.status).toBe(403);
+    const res = await asAdmin("/api/v1/admin/submissions/analysis", {
+      method: "POST",
+    });
+    expect(res.status).toBe(202);
+    expect(await res.json()).toEqual({ queued: expect.any(Number) });
   });
 });

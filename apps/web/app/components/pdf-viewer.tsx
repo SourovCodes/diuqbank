@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 import { buttonVariants } from "~/components/ui/button";
 
 type PdfViewerProps = {
-  /** Same-origin URL of the PDF, rendered by the browser's built-in viewer. */
+  /** URL of the PDF (this site or the public files domain), shown by the browser's viewer. */
   src: string;
   title: string;
 };

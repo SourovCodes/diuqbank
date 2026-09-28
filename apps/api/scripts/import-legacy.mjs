@@ -5,17 +5,17 @@
 // Usage: LEGACY_TOKEN=<legacy admin JWT> pnpm import-legacy [--remote]
 //   (local D1/R2 unless --remote is given; LEGACY_API_URL overrides the API origin)
 //
-// Safe to re-run: users get deterministic `legacy-*` ids and papers deterministic
-// `submissions/legacy-*.pdf` file keys (their ids are assigned by D1), rows are inserted
-// with INSERT OR IGNORE, taxonomy and questions are matched by name, and anything already
-// imported is skipped (including its R2 upload). Downloads are cached in
-// apps/api/.legacy-import/.
+// Fills a database without legacy data (it stops if it finds any): the R2 bucket is
+// public, so papers get random file keys, and a re-run couldn't tell which papers it
+// already imported. Taxonomy and questions are matched by name, so they are reused.
+// Downloads are cached in apps/api/.legacy-import/, so a retry after a failure (on a
+// cleared database) doesn't download everything again.
 //
 // Legacy users signed in with Google. Each imported user gets a random, discarded
 // password, so they can only sign in after resetting it. A legacy user whose email
 // already has an account here is mapped to that account instead.
 import { execFileSync } from "node:child_process";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -272,18 +272,17 @@ const emailByUserId = new Map(
 // ---------------------------------------------------------------------------- plan
 
 console.log(
-  `Checking what is already imported (${remote ? "remote" : "local"} D1) …`,
+  `Checking for earlier imports (${remote ? "remote" : "local"} D1) …`,
 );
-const existingUsers = new Set(
-  d1Query(`SELECT id FROM "user" WHERE id LIKE 'legacy-%'`).map((r) => r.id),
+const [{ imported: alreadyImported }] = d1Query(
+  `SELECT count(*) AS imported FROM "user" WHERE id LIKE 'legacy-%'`,
 );
-/** Imported papers are recognised by their file key; D1 assigns their ids. */
-const LEGACY_FILES = `file_key LIKE 'submissions/legacy-%'`;
-const existingSubmissions = new Set(
-  d1Query(`SELECT file_key FROM submissions WHERE ${LEGACY_FILES}`).map(
-    (r) => r.file_key,
-  ),
-);
+if (alreadyImported > 0) {
+  console.error(
+    `${alreadyImported} legacy users are already imported. This script only fills a database without legacy data.`,
+  );
+  process.exit(1);
+}
 
 const warnings = [];
 
@@ -297,8 +296,8 @@ for (const s of allUploads) {
 }
 
 /**
- * Legacy submissions and unpublished uploads, each with a `ref` for messages
- * (e.g. `legacy-auto-12`) and the R2 key its PDF is stored under.
+ * Legacy submissions and unpublished uploads, each with a `ref` for messages and the
+ * download cache (e.g. `legacy-auto-12`), and a random R2 key for its PDF.
  */
 const allPapers = [
   ...submissions.map((s) => ({
@@ -308,9 +307,8 @@ const allPapers = [
     ref: `legacy-${s.id}`,
   })),
   ...uploads.map((s) => ({ ...s, ref: `legacy-${s.kind}-${s.id}` })),
-].map((s) => ({ ...s, fileKey: `submissions/${s.ref}.pdf` }));
+].map((s) => ({ ...s, fileKey: `submissions/${randomUUID()}.pdf` }));
 const newPapers = allPapers
-  .filter((s) => !existingSubmissions.has(s.fileKey))
   .filter((s) => {
     if (s.newStatus) return true;
     warnings.push(`${s.ref}: unknown legacy status "${s.status}", skipped`);
@@ -322,13 +320,13 @@ const newPapers = allPapers
     return false;
   });
 
-const newUsers = users.filter((u) => !existingUsers.has(`legacy-${u.id}`));
+const newUsers = users;
 
 // ---------------------------------------------------------------------------- download
 
 console.log(`Downloading ${newPapers.length} PDFs …`);
 await pool(newPapers, async (paper) => {
-  paper.file = await download(paper.pdfUrl, paper.fileKey);
+  paper.file = await download(paper.pdfUrl, `submissions/${paper.ref}.pdf`);
   paper.fileSize = statSync(paper.file).size;
   const head = readFileSync(paper.file).subarray(0, 5).toString("latin1");
   if (head !== "%PDF-")
@@ -536,22 +534,10 @@ for (const p of newPapers) {
   );
 }
 
-// Backfills section and batch on papers imported before those columns existed,
-// without overwriting values an admin has set since.
-for (const p of allPapers) {
-  if (!existingSubmissions.has(p.fileKey)) continue;
-  const [section, batch] = [detail(p.section), detail(p.batch)];
-  if (!section && !batch) continue;
-  statements.push(
-    `UPDATE submissions SET section = ${sq(section)}, batch = ${sq(batch)} WHERE file_key = ${sq(p.fileKey)} AND section IS NULL AND batch IS NULL;`,
-  );
-}
-
 // Like an upload here (createSubmission): an upload whose values all exist is filed
 // under its question straight away. Only uploads proposing a new name stay a
-// proposal, since the admin page can only publish filed submissions. Also repairs
-// rows from earlier runs.
-const fullyExisting = `${LEGACY_FILES} AND question_id IS NULL AND department_id IS NOT NULL AND course_id IS NOT NULL AND semester_id IS NOT NULL`;
+// proposal, since the admin page can only publish filed submissions.
+const fullyExisting = `question_id IS NULL AND department_id IS NOT NULL AND course_id IS NOT NULL AND semester_id IS NOT NULL`;
 const sameQuestion = `q.course_id = submissions.course_id AND q.semester_id = submissions.semester_id AND q.exam_type_id = submissions.exam_type_id`;
 statements.push(
   `INSERT OR IGNORE INTO questions (department_id, course_id, semester_id, exam_type_id) SELECT DISTINCT department_id, course_id, semester_id, exam_type_id FROM submissions WHERE ${fullyExisting};`,
@@ -576,9 +562,7 @@ wrangler(
 
 // INSERT OR IGNORE skips rows silently (e.g. a lookup that found nothing), so check.
 const present = new Set(
-  d1Query(`SELECT file_key FROM submissions WHERE ${LEGACY_FILES}`).map(
-    (r) => r.file_key,
-  ),
+  d1Query(`SELECT file_key FROM submissions`).map((r) => r.file_key),
 );
 for (const p of imported) {
   if (!present.has(p.fileKey))
@@ -589,9 +573,9 @@ for (const p of imported) {
 const [counts] = d1Query(
   `SELECT (SELECT count(*) FROM "user" WHERE id LIKE 'legacy-%') AS users,
           (SELECT count(*) FROM questions) AS questions,
-          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'published') AS published,
-          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'pending_review') AS pending,
-          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'rejected') AS rejected`,
+          (SELECT count(*) FROM submissions WHERE status = 'published') AS published,
+          (SELECT count(*) FROM submissions WHERE status = 'pending_review') AS pending,
+          (SELECT count(*) FROM submissions WHERE status = 'rejected') AS rejected`,
 );
 
 if (warnings.length > 0) {
@@ -599,7 +583,7 @@ if (warnings.length > 0) {
   for (const w of warnings) console.warn(`  - ${w}`);
 }
 console.log(
-  `\nDone (${remote ? "remote" : "local"}). Legacy rows now present: ${counts.users} users, ` +
+  `\nDone (${remote ? "remote" : "local"}). Rows now present: ${counts.users} users, ` +
     `${counts.published} published, ${counts.pending} pending and ${counts.rejected} rejected submissions; ` +
     `${counts.questions} questions in total.`,
 );

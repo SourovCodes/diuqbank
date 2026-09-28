@@ -26,8 +26,11 @@ const MAX_WATERMARK_LENGTH = 255;
 /** Queue `sendBatch` takes at most 100 messages. */
 const QUEUE_BATCH_SIZE = 100;
 
-/** R2 key of a submission's watermarked copy. */
-export const watermarkedFileKey = (id: number) => `watermarked/${id}.pdf`;
+/**
+ * R2 key for a new watermarked copy. Random, like the originals' keys: the bucket is
+ * public, so keys must not be guessable from submission ids.
+ */
+const newWatermarkedFileKey = () => `watermarked/${crypto.randomUUID()}.pdf`;
 
 /** Every R2 object of a submission, for deleting them together. */
 export const submissionFileKeys = (row: {
@@ -199,7 +202,11 @@ export async function runWatermark(
 ): Promise<"done" | "retry"> {
   const attempt = options.attempt ?? 1;
   const [row] = await db
-    .select({ fileKey: submissions.fileKey, uploaderName: user.name })
+    .select({
+      fileKey: submissions.fileKey,
+      previousKey: submissions.watermarkedFileKey,
+      uploaderName: user.name,
+    })
     .from(submissions)
     .leftJoin(user, eq(user.id, submissions.uploaderId))
     .where(eq(submissions.id, job.submissionId));
@@ -230,7 +237,7 @@ export async function runWatermark(
         fetch: options.fetch,
       },
     );
-    const key = watermarkedFileKey(job.submissionId);
+    const key = newWatermarkedFileKey();
     await env.BUCKET.put(key, pdf, {
       httpMetadata: { contentType: "application/pdf" },
     });
@@ -246,6 +253,8 @@ export async function runWatermark(
       .returning({ id: submissions.id });
     // Deleted while we were working: don't leave the copy behind.
     if (updated.length === 0) await env.BUCKET.delete(key);
+    // Made again (e.g. after a rename): the old copy is replaced.
+    else if (row.previousKey) await env.BUCKET.delete(row.previousKey);
     return "done";
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
