@@ -19,6 +19,7 @@ import { EmptyState } from "~/components/empty-state";
 import { SiteHeader } from "~/components/site-header";
 import { SocialIcon } from "~/components/social-icons";
 import { buttonVariants } from "~/components/ui/button";
+import { TopLoader } from "~/components/top-loader";
 import { Toaster } from "~/components/ui/sonner";
 import { AUTHOR } from "~/lib/author";
 import { getUser } from "~/lib/session.server";
@@ -67,6 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
+        <TopLoader />
         {ownShell ? (
           children
         ) : (

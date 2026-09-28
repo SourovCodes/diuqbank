@@ -28,6 +28,28 @@ test("landing page leads to the questions page", async ({ page }) => {
   );
 });
 
+test("a slow navigation shows the top loader until the page is ready", async ({
+  page,
+}) => {
+  await page.goto("/");
+  // A client-side navigation first, so the page is hydrated.
+  await clickUntilUrl(page, "Browse questions", /\/questions$/);
+  // Client navigations load their data from `*.data`; hold it back for a moment.
+  await page.route("**/*.data*", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await route.continue();
+  });
+  const loader = page.getByRole("progressbar", { name: "Loading page" });
+  await expect(loader).toHaveCount(0);
+  await page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: "Contributors" })
+    .click();
+  await expect(loader).toBeVisible();
+  await expect(page).toHaveURL(/\/contributors$/);
+  await expect(loader).toHaveCount(0);
+});
+
 test("the footer leads to the about page and its promise", async ({ page }) => {
   await page.goto("/");
   await clickUntilUrl(page, "About", /\/about$/);
