@@ -38,6 +38,8 @@
   // Background work with retries, run by the API's queue handler (via workers/app.ts):
   // - uploads are analysed (compress → Gemini);
   // - published papers get a watermarked copy, the public download (PDF processor).
+  // Both call the PDF processor, so each consumer runs at most 5 jobs at once; bursts
+  // wait in the queue instead of overloading it.
   "queues": {
     "producers": [
       { "binding": "ANALYSIS_QUEUE", "queue": "qb-submission-analysis" },
@@ -47,12 +49,14 @@
       {
         "queue": "qb-submission-analysis",
         "max_batch_size": 1,
+        "max_concurrency": 5,
         "max_retries": 3,
         "retry_delay": 30,
       },
       {
         "queue": "qb-pdf-watermark",
         "max_batch_size": 1,
+        "max_concurrency": 5,
         "max_retries": 3,
         "retry_delay": 30,
       },
