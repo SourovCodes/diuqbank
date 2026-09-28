@@ -264,13 +264,13 @@ test("a failed Google sign-in explains what happened", async ({ page }) => {
   await expect(page.getByText("Google sign-in was cancelled.")).toBeVisible();
 });
 
-test("a sign-in with a non-DIU account asks for a DIU one", async ({
+test("a sign-up with a non-DIU account asks for a DIU one", async ({
   page,
 }) => {
   await page.goto("/login?error=EMAIL_DOMAIN_NOT_ALLOWED");
   await expect(
     page.getByText(
-      "Only DIU accounts can sign in. Choose your @diu.edu.bd or @s.diu.edu.bd Google account.",
+      "New accounts need a DIU email. Choose your @diu.edu.bd or @s.diu.edu.bd Google account.",
     ),
   ).toBeVisible();
 });

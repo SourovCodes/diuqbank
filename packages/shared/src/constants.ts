@@ -62,8 +62,8 @@ export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 export const USER_ROLES = ["user", "admin"] as const;
 
 /**
- * Only DIU accounts can sign in (staff and students); admins are exempt, so an admin
- * account on another address keeps working.
+ * Only DIU addresses (staff and students) can create an account; existing accounts on
+ * other addresses (imported users, admins) can still sign in.
  */
 export const ALLOWED_EMAIL_DOMAINS = ["diu.edu.bd", "s.diu.edu.bd"] as const;
 
@@ -82,7 +82,7 @@ export const USERNAME_PATTERN = /^[a-z0-9_.-]{3,50}$/;
 export const USERNAME_RULES =
   "3–50 lowercase letters, digits, dots, dashes or underscores";
 
-/** The error Better Auth sends a refused sign-in back with (`?error=`). */
+/** The error Better Auth sends a refused sign-up back with (`?error=`). */
 export const EMAIL_DOMAIN_NOT_ALLOWED = "EMAIL_DOMAIN_NOT_ALLOWED";
 
 /** Lifecycle of a submission's AI analysis (compress, then ask Gemini). */

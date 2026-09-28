@@ -26,7 +26,7 @@ function signInError(code: string | null) {
   if (!code) return undefined;
   if (code === "access_denied") return "Google sign-in was cancelled.";
   if (code === EMAIL_DOMAIN_NOT_ALLOWED) {
-    return `Only DIU accounts can sign in. Choose your ${DOMAINS} Google account.`;
+    return `New accounts need a DIU email. Choose your ${DOMAINS} Google account.`;
   }
   return "Could not sign in with Google. Please try again.";
 }

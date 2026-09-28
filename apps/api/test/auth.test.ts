@@ -212,7 +212,7 @@ describe("auth", () => {
       expect(rows).toEqual([]);
     });
 
-    it("refuses an existing account on another domain", async () => {
+    it("lets an existing account on another domain in", async () => {
       const existing = await seedUser("Old Contributor");
       const email = `old-${existing.id}@gmail.com`;
       await db()
@@ -224,23 +224,6 @@ describe("auth", () => {
         sub: `google-${existing.id}`,
         email,
         name: "Old Contributor",
-      });
-
-      expect(refusal(res)).toBe(EMAIL_DOMAIN_NOT_ALLOWED);
-    });
-
-    it("lets admins on another domain in", async () => {
-      const existing = await seedUser("Gmail Admin");
-      const email = `admin-${existing.id}@gmail.com`;
-      await db()
-        .update(user)
-        .set({ email, emailVerified: true, role: "admin" })
-        .where(eq(user.id, existing.id));
-
-      const { res } = await completeGoogleSignIn({
-        sub: `google-${existing.id}`,
-        email,
-        name: "Gmail Admin",
       });
 
       expect(res.headers.get("location")).toBe("/contribute");

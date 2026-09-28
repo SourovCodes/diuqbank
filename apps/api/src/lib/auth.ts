@@ -7,11 +7,11 @@ import * as schema from "../db/schema";
 import { user } from "../db/schema";
 import { importGoogleAvatar } from "../services/avatars";
 
-/** A sign-in refused by the DIU email rule; the login page explains it. */
+/** A sign-up refused by the DIU email rule; the login page explains it. */
 const notAllowed = () =>
   new APIError("FORBIDDEN", {
     code: EMAIL_DOMAIN_NOT_ALLOWED,
-    message: "Only DIU email addresses can sign in",
+    message: "Only DIU email addresses can create an account",
   });
 
 /** A new user's username until they pick one, like the old site's: `user_1a2b3c`. */
@@ -33,8 +33,8 @@ async function freshUsername(db: Database): Promise<string> {
 }
 
 /**
- * Google is the only way to sign in, with a DIU address (ALLOWED_EMAIL_DOMAINS), or
- * as an admin. Exported on its own so tests can build an auth
+ * Google is the only way to sign in. New accounts need a DIU address
+ * (ALLOWED_EMAIL_DOMAINS); existing accounts can always sign in. Exported on its own so tests can build an auth
  * instance with the same options plus Better Auth's `testUtils` plugin.
  */
 export function authOptions(env: Env, db: Database) {
@@ -60,23 +60,11 @@ export function authOptions(env: Env, db: Database) {
       },
     },
     databaseHooks: {
-      // Every sign-in makes a session, for new and existing users alike.
-      session: {
-        create: {
-          before: async (session) => {
-            const [row] = await db
-              .select({ email: user.email, role: user.role })
-              .from(user)
-              .where(eq(user.id, session.userId));
-            if (row?.role !== "admin" && !isAllowedEmail(row?.email ?? "")) {
-              throw notAllowed();
-            }
-          },
-        },
-      },
       user: {
         create: {
-          // Refused before the account exists, so no stray users are left behind.
+          // The DIU rule only applies to new accounts: anyone who already has one
+          // can sign in whatever their email. Refused before the account exists, so
+          // no stray users are left behind.
           before: async (created) => {
             if (!isAllowedEmail(created.email)) throw notAllowed();
             return {
