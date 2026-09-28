@@ -5,7 +5,7 @@ export default [
   route("questions", "routes/questions.tsx"),
   route("questions/:id", "routes/question.tsx"),
   route("contributors", "routes/contributors.tsx"),
-  route("contributors/:id", "routes/contributor.tsx"),
+  route("contributors/:username", "routes/contributor.tsx"),
   route("contribute", "routes/contribute.tsx"),
   route("about", "routes/about.tsx"),
   // A full page of its own, outside the account shell.

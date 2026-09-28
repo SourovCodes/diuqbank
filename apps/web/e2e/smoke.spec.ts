@@ -294,6 +294,8 @@ test("contributors index leads to a contributor's submissions", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Nusrat Jahan",
   );
+  // Contributor pages are addressed by username.
+  await expect(page).toHaveURL(/\/contributors\/nusrat\.jahan$/);
   // Only published papers are public; pending uploads stay private.
   await expect(page.getByText("Pending review")).toHaveCount(0);
 
@@ -301,6 +303,15 @@ test("contributors index leads to a contributor's submissions", async ({
   await page.getByRole("link", { name: /Algorithms/ }).click();
   await expect(page).toHaveURL(/\/questions\/3\?submission=4$/);
   await expect(page.getByRole("link", { name: /^Nusrat Jahan/ })).toBeVisible();
+
+  // Links from before usernames (by user id) and other cases lead to the same page.
+  for (const old of [
+    "/contributors/seed-user-3",
+    "/contributors/NUSRAT.JAHAN",
+  ]) {
+    await page.goto(`${old}?page=1`);
+    await expect(page).toHaveURL(/\/contributors\/nusrat\.jahan\?page=1$/);
+  }
 });
 
 test("a contributor can upload a paper with a new course", async ({ page }) => {
@@ -538,6 +549,17 @@ test("a contributor can manage their submissions and profile", async ({
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Renamed Contributor",
   );
+
+  // A new username, typed in any case, is saved in lowercase.
+  const username = `e2e.${suffix}`.slice(0, 50).toLowerCase();
+  await page.getByLabel("Username").fill(username.toUpperCase());
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Profile updated")).toBeVisible();
+  await expect(page.getByLabel("Username")).toHaveValue(username);
+  // An invalid one is explained.
+  await page.getByLabel("Username").fill("no spaces allowed");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText(/^Use 3–50 lowercase letters/)).toBeVisible();
 
   // The email comes from Google and can't be changed here.
   await expect(page.getByText(email)).toBeVisible();

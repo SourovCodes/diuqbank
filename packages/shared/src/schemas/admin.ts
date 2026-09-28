@@ -37,6 +37,7 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 /** A user as admins see them, with their email address. */
 export const adminUserRefSchema = z.object({
   id: z.string(),
+  username: z.string(),
   name: z.string(),
   email: z.string(),
   image: z.string().nullable(),
@@ -288,7 +289,7 @@ export const adminUserSchema = adminUserRefSchema.extend({
 export type AdminUser = z.infer<typeof adminUserSchema>;
 
 export const listAdminUsersQuerySchema = paginationQuerySchema.extend({
-  /** Matches name or email, ignoring case. */
+  /** Matches name, username or email, ignoring case. */
   q: z.string().trim().max(100).optional(),
   role: userRoleSchema.optional(),
 });

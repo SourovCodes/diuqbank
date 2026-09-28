@@ -14,7 +14,7 @@ import { Badge } from "~/components/ui/badge";
 import { Card, CardTitle } from "~/components/ui/card";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { formatCount } from "~/lib/format";
-import { plural } from "~/lib/submissions";
+import { contributorUrl, plural } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/contributors";
 
@@ -83,7 +83,7 @@ export default function Contributors({ loaderData }: Route.ComponentProps) {
                       <div className="grid min-w-0 flex-1 gap-1">
                         <CardTitle className="truncate text-[0.9375rem] leading-snug">
                           <Link
-                            to={`/contributors/${encodeURIComponent(contributor.id)}`}
+                            to={contributorUrl(contributor.username)}
                             prefetch="intent"
                             className={STRETCHED_LINK}
                           >

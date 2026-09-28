@@ -22,6 +22,12 @@ export const user = sqliteTable("user", {
   image: text(),
   /** Declared as an additional field in `lib/auth.ts`; users can't set it themselves. */
   role: text({ enum: USER_ROLES }).notNull().default("user"),
+  /**
+   * Public handle in contributor URLs (`/contributors/<username>`), lowercase, see
+   * USERNAME_PATTERN. Set for every user (at sign-up, or by migration 0003); nullable
+   * only because SQLite can't add a NOT NULL column without rebuilding the table.
+   */
+  username: text().unique(),
   ...timestamps,
 });
 

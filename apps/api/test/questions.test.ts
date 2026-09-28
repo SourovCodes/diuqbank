@@ -253,7 +253,12 @@ describe("GET /api/v1/questions/:id", () => {
     expect(body.submissions.map((s) => [s.id, s.uploader])).toEqual([
       [
         withUploader.id,
-        { id: uploader.id, name: "Ayesha Rahman", image: null },
+        {
+          id: uploader.id,
+          username: uploader.username,
+          name: "Ayesha Rahman",
+          image: null,
+        },
       ],
       [anonymous.id, null],
     ]);

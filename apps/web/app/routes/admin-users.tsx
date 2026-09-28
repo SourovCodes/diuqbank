@@ -38,6 +38,7 @@ import { adminGetJson, adminRequest } from "~/lib/admin.server";
 import { formatDate } from "~/lib/dates";
 import type { loader as adminLoader } from "./admin";
 import type { Route } from "./+types/admin-users";
+import { contributorUrl } from "~/lib/submissions";
 
 export const handle = { breadcrumb: "Users" };
 
@@ -132,7 +133,7 @@ function RowActions({ user }: { user: AdminUser }) {
           {hasPapers && (
             <>
               <DropdownMenuItem asChild>
-                <Link to={`/contributors/${encodeURIComponent(user.id)}`}>
+                <Link to={contributorUrl(user.username)}>
                   <FileText />
                   View papers
                 </Link>

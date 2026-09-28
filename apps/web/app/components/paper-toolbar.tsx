@@ -36,7 +36,7 @@ import {
   type PaperActionResult,
 } from "~/lib/engagement";
 import { formatCount, formatViews } from "~/lib/format";
-import { paperDetails } from "~/lib/submissions";
+import { contributorUrl, paperDetails } from "~/lib/submissions";
 import { cn } from "~/lib/utils";
 
 /** Who is looking at the paper, which decides what they can do with it. */
@@ -90,7 +90,7 @@ export function PaperToolbar({ submission, label, viewer }: PaperToolbarProps) {
       <p className="flex min-w-0 items-center gap-x-3 gap-y-1 px-1 text-sm">
         {uploader ? (
           <Link
-            to={`/contributors/${encodeURIComponent(uploader.id)}`}
+            to={contributorUrl(uploader.username)}
             className="flex min-w-0 items-center gap-2 font-medium hover:underline"
           >
             <ContributorAvatar

@@ -8,6 +8,7 @@ import type {
 import { count, eq, sql, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Database } from "../db/client";
+import { usernameOf } from "../db/username";
 import {
   courses,
   departments,
@@ -132,6 +133,7 @@ export function selectSubmissionRows(db: Database) {
       customSemesterName: submissions.customSemesterName,
       uploader: {
         id: user.id,
+        username: usernameOf,
         name: user.name,
         email: user.email,
         image: user.image,

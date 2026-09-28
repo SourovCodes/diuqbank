@@ -5,7 +5,7 @@ import type {
 } from "@qb/shared";
 import { and, desc, eq, ne } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { submissions } from "../db/schema";
+import { submissions, user } from "../db/schema";
 import { AppError } from "../lib/errors";
 import { getSubmissionAnalysis, publishIfConfirmed } from "./analysis";
 import { submissionStatusOrder } from "./common";
@@ -169,4 +169,28 @@ export async function reclassifyOwnSubmission(
     );
   }
   return (await getOwnSubmission(db, uploaderId, id))!;
+}
+
+const usernameTaken = () =>
+  new AppError(409, "USERNAME_TAKEN", "Someone already has that username");
+
+/** Changes the user's username (already validated and lowercased). */
+export async function updateUsername(
+  db: Database,
+  userId: string,
+  username: string,
+): Promise<string> {
+  const [taken] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.username, username), ne(user.id, userId)));
+  if (taken) throw usernameTaken();
+  try {
+    await db.update(user).set({ username }).where(eq(user.id, userId));
+  } catch (err) {
+    // Taken by someone else in the meantime: the unique index wins.
+    if (String(err).includes("UNIQUE constraint failed")) throw usernameTaken();
+    throw err;
+  }
+  return username;
 }

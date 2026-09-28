@@ -23,7 +23,12 @@ export async function seedUser(name = "Test Contributor") {
   const id = crypto.randomUUID();
   const [row] = await createDb(env.DB)
     .insert(user)
-    .values({ id, name, email: `${id}@diu.edu.bd` })
+    .values({
+      id,
+      name,
+      email: `${id}@diu.edu.bd`,
+      username: `u_${id.slice(0, 8)}`,
+    })
     .returning();
   return row!;
 }

@@ -1,3 +1,4 @@
+import { USERNAME_PATTERN, USERNAME_RULES } from "@qb/shared/constants";
 import type { ApiError } from "@qb/shared";
 import { Check } from "lucide-react";
 import { useEffect, useId, useState } from "react";
@@ -36,10 +37,38 @@ const invalid = (intent: Intent, fieldErrors: Record<string, string>) =>
 
 async function updateProfile(request: Request, form: FormData) {
   const name = String(form.get("name") ?? "").trim();
+  const username = String(form.get("username") ?? "")
+    .trim()
+    .toLowerCase();
+  const fieldErrors: Record<string, string> = {};
   if (!name || name.length > MAX_NAME) {
+    fieldErrors.name = `Enter a name of up to ${MAX_NAME} characters.`;
+  }
+  if (!USERNAME_PATTERN.test(username)) {
+    fieldErrors.username = `Use ${USERNAME_RULES}.`;
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return invalid("profile", fieldErrors);
+  }
+
+  const usernameRes = await apiFetch(request, "/api/v1/me/username", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  if (usernameRes.status === 409) {
     return invalid("profile", {
-      name: `Enter a name of up to ${MAX_NAME} characters.`,
+      username: "Someone already has that username.",
     });
+  }
+  if (!usernameRes.ok) {
+    return data<ActionResult>(
+      {
+        intent: "profile",
+        error: "Could not update your profile. Please try again.",
+      },
+      { status: usernameRes.status },
+    );
   }
 
   const res = await apiFetch(request, "/api/auth/update-user", {
@@ -239,7 +268,12 @@ function ProfileSection({
   avatar,
   profile,
 }: {
-  user: { name: string; email: string; image?: string | null };
+  user: {
+    name: string;
+    email: string;
+    image?: string | null;
+    username?: string | null;
+  };
   avatar?: ActionResult;
   profile?: ActionResult;
 }) {
@@ -248,7 +282,7 @@ function ProfileSection({
   return (
     <SettingsSection
       title="Profile"
-      description="Your photo and name are shown on the papers you contribute."
+      description="Your photo and name are shown on the papers you contribute, and your username is in your public profile’s address."
     >
       {/* The photo has forms of its own, so it sits outside the profile form. */}
       <div className="border-b p-6">
@@ -272,6 +306,26 @@ function ProfileSection({
             maxLength={MAX_NAME}
             error={profile?.fieldErrors?.name}
           />
+          <div className="grid gap-1.5">
+            <FormField
+              // Re-mounted once saved, to show it as stored (lowercase).
+              key={user.username}
+              label="Username"
+              name="username"
+              defaultValue={user.username ?? ""}
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              required
+              minLength={3}
+              maxLength={50}
+              error={profile?.fieldErrors?.username}
+            />
+            <p className="text-xs text-muted-foreground">
+              Your public profile: /contributors/
+              {user.username ?? "your-username"}. {USERNAME_RULES}.
+            </p>
+          </div>
           <div className="grid gap-1.5">
             <FormField
               label="Email"

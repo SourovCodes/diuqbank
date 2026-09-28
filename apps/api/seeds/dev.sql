@@ -17,15 +17,15 @@ DELETE FROM "user" WHERE email LIKE '%@example.com';
 
 -- Sample contributors. Sign-in is Google-only and these addresses aren't Google
 -- accounts, so nobody logs in as them (the e2e tests create sessions directly).
-INSERT INTO "user" (id, name, email, created_at, updated_at) VALUES
-  ('seed-user-1', 'Ayesha Rahman', 'ayesha@seed.local', 1756684800000, 1756684800000),
-  ('seed-user-2', 'Tanvir Hasan', 'tanvir@seed.local', 1760486400000, 1760486400000),
-  ('seed-user-3', 'Nusrat Jahan', 'nusrat@seed.local', 1768867200000, 1768867200000);
+INSERT INTO "user" (id, name, email, username, created_at, updated_at) VALUES
+  ('seed-user-1', 'Ayesha Rahman', 'ayesha@seed.local', 'ayesha', 1756684800000, 1756684800000),
+  ('seed-user-2', 'Tanvir Hasan', 'tanvir@seed.local', 'tanvir_hasan', 1760486400000, 1760486400000),
+  ('seed-user-3', 'Nusrat Jahan', 'nusrat@seed.local', 'nusrat.jahan', 1768867200000, 1768867200000);
 
 -- The admin the e2e tests use. To try the admin panel yourself, log in with Google
 -- and run `pnpm make-admin <your email>`.
-INSERT INTO "user" (id, name, email, email_verified, role) VALUES
-  ('seed-user-admin', 'Admin', 'admin@seed.local', 1, 'admin');
+INSERT INTO "user" (id, name, email, email_verified, role, username) VALUES
+  ('seed-user-admin', 'Admin', 'admin@seed.local', 1, 'admin', 'seed_admin');
 
 INSERT INTO departments (id, name, short_name) VALUES
   (1, 'Computer Science and Engineering', 'CSE'),

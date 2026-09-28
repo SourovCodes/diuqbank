@@ -51,6 +51,7 @@ describe("GET /api/v1/contributors", () => {
     expect(ours).toEqual([
       {
         id: top.id,
+        username: top.username,
         name: "Top Contributor",
         image: null,
         joinedAt: top.createdAt.toISOString(),

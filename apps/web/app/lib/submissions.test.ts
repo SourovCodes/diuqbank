@@ -75,7 +75,9 @@ describe("paperTitles", () => {
     id,
     section: null,
     batch,
-    uploader: uploader ? { id: uploader, name: uploader, image: null } : null,
+    uploader: uploader
+      ? { id: uploader, username: uploader, name: uploader, image: null }
+      : null,
   });
 
   it("keeps distinct titles as they are", () => {

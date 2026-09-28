@@ -41,6 +41,7 @@ import { isChecking } from "~/lib/review";
 import { useRefreshWhile } from "~/hooks/use-refresh-while";
 import { requireUser } from "~/lib/session.server";
 import {
+  contributorUrl,
   ownSubmissionFileUrl,
   publicUrl,
   STATUS_LABELS,
@@ -58,7 +59,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     request,
     "/api/v1/me/submissions",
   );
-  return { userId: user.id, submissions: items };
+  return { username: user.username ?? user.id, submissions: items };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -186,7 +187,7 @@ function CardActions({
 export default function AccountSubmissions({
   loaderData,
 }: Route.ComponentProps) {
-  const { userId, submissions } = loaderData;
+  const { username, submissions } = loaderData;
   // Owned by the page: a withdrawn submission's row disappears.
   const { run } = useFormAction();
   // Keeps "Checking your paper" cards up to date.
@@ -238,9 +239,7 @@ export default function AccountSubmissions({
           toolbar={
             <>
               <Button variant="outline" size="sm" asChild>
-                <Link to={`/contributors/${encodeURIComponent(userId)}`}>
-                  Public profile
-                </Link>
+                <Link to={contributorUrl(username)}>Public profile</Link>
               </Button>
               <Button size="sm" asChild>
                 <Link to="/contribute">

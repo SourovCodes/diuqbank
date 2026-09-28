@@ -5,8 +5,9 @@ import type {
   ContributorPapersQuery,
   ListContributorsQuery,
 } from "@qb/shared";
-import { and, asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { usernameOf } from "../db/username";
 import { inList } from "../db/in-list";
 import { departments, questions, submissions, user } from "../db/schema";
 import {
@@ -44,6 +45,7 @@ function selectContributors(db: Database) {
   const query = db
     .select({
       id: user.id,
+      username: usernameOf,
       name: user.name,
       image: user.image,
       joinedAt: user.createdAt,
@@ -123,15 +125,25 @@ export async function listContributors(
   };
 }
 
+/**
+ * A contributor by username, or by id (older links, and rows without a username);
+ * the web app redirects those to the username URL.
+ */
 export async function getContributor(
   db: Database,
-  id: string,
+  usernameOrId: string,
   query: ContributorPapersQuery,
 ): Promise<ContributorDetail | null> {
   const [contributor] = await selectContributors(db)
-    .query.where(eq(user.id, id))
+    .query.where(
+      or(
+        eq(user.username, usernameOrId.toLowerCase()),
+        eq(user.id, usernameOrId),
+      ),
+    )
     .limit(1);
   if (!contributor) return null;
+  const { id } = contributor;
 
   const published = and(
     eq(submissions.uploaderId, id),

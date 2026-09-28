@@ -26,11 +26,13 @@ const listContributorsRoute = createRoute({
 
 const getContributorRoute = createRoute({
   method: "get",
-  path: "/{id}",
+  path: "/{username}",
   tags,
   summary: "Get a contributor with a page of their published papers",
+  description:
+    "By username (any case). A user id works too, for links made before usernames.",
   request: {
-    params: z.object({ id: z.string().min(1) }),
+    params: z.object({ username: z.string().min(1) }),
     query: contributorPapersQuerySchema,
   },
   responses: {
@@ -49,7 +51,7 @@ export const contributorRoutes = new OpenAPIHono<AppEnv>({
   .openapi(getContributorRoute, async (c) => {
     const contributor = await getContributor(
       c.var.db,
-      c.req.valid("param").id,
+      c.req.valid("param").username,
       c.req.valid("query"),
     );
     if (!contributor) {

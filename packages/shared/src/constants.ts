@@ -77,6 +77,11 @@ export function isAllowedEmail(email: string): boolean {
   );
 }
 
+/** Usernames, as on the old site: 3–50 of a-z, 0-9, `_`, `.` and `-`. */
+export const USERNAME_PATTERN = /^[a-z0-9_.-]{3,50}$/;
+export const USERNAME_RULES =
+  "3–50 lowercase letters, digits, dots, dashes or underscores";
+
 /** The error Better Auth sends a refused sign-in back with (`?error=`). */
 export const EMAIL_DOMAIN_NOT_ALLOWED = "EMAIL_DOMAIN_NOT_ALLOWED";
 

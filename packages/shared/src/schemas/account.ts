@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { USERNAME_PATTERN, USERNAME_RULES } from "../constants";
 import { analysisSummarySchema, submissionAnalysisSchema } from "./analysis";
 import { contributorSubmissionSchema } from "./contributor";
 
@@ -37,3 +38,13 @@ export const mySubmissionDetailSchema = mySubmissionSchema.extend({
   analysisDetail: uploaderAnalysisSchema.nullable(),
 });
 export type MySubmissionDetail = z.infer<typeof mySubmissionDetailSchema>;
+
+/** A username as users type it: trimmed and lowercased before the rules apply. */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(USERNAME_PATTERN, `Use ${USERNAME_RULES}`);
+
+export const updateUsernameInputSchema = z.object({ username: usernameSchema });
+export type UpdateUsernameInput = z.infer<typeof updateUsernameInputSchema>;

@@ -126,6 +126,8 @@ describe("profile images", () => {
     ).json<QuestionDetail>();
     expect(detail.submissions[0]?.uploader).toEqual({
       id: me.id,
+      // Given at sign-up.
+      username: expect.stringMatching(/^user_[0-9a-f]{6}$/),
       name: "Test User",
       image,
     });

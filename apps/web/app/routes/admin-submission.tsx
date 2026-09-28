@@ -86,7 +86,7 @@ import {
 import { formatDate } from "~/lib/dates";
 import { REPORT_REASON_LABELS } from "~/lib/engagement";
 import { formatBytes, formatCount } from "~/lib/format";
-import { STATUS_LABELS } from "~/lib/submissions";
+import { contributorUrl, STATUS_LABELS } from "~/lib/submissions";
 import { loadTaxonomy } from "~/lib/taxonomy.server";
 import type { Route } from "./+types/admin-submission";
 
@@ -601,7 +601,7 @@ function DetailsCard({ submission }: { submission: AdminSubmissionDetail }) {
       <CardContent className="grid gap-4">
         {uploader ? (
           <Link
-            to={`/contributors/${encodeURIComponent(uploader.id)}`}
+            to={contributorUrl(uploader.username)}
             className="-m-2 flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted"
           >
             <UserAvatar name={uploader.name} image={uploader.image} />

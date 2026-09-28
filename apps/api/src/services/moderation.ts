@@ -13,6 +13,7 @@ import type {
 } from "@qb/shared";
 import { and, count, desc, eq, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { usernameOf } from "../db/username";
 import { inList } from "../db/in-list";
 import {
   courses,
@@ -108,6 +109,7 @@ async function requireAdminSubmission(db: Database, id: number) {
 
 const reporterColumns = {
   id: user.id,
+  username: usernameOf,
   name: user.name,
   email: user.email,
   image: user.image,

@@ -167,6 +167,17 @@ const sq = (value) =>
 const ms = (epochSeconds) => (epochSeconds ? epochSeconds * 1000 : Date.now());
 const norm = (name) => name?.trim().toLowerCase();
 /**
+ * A legacy username under USERNAME_PATTERN: lowercase ("Al_Masrur" → "al_masrur"),
+ * spaces as underscores, other characters dropped ("@arko07" → "arko07"). The
+ * legacy ones stay unique that way (checked against the data on 2026-09-28).
+ */
+const legacyUsername = (name) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replaceAll(" ", "_")
+    .replace(/[^a-z0-9_.-]/g, "");
+/**
  * A section or batch. The app allows 10 characters; longer legacy values are mostly
  * lists like "A, B, C, D, E" that don't tell papers apart, so they are dropped.
  */
@@ -409,7 +420,7 @@ for (const u of newUsers) {
   // A random password nobody knows: the account exists, but signing in needs a reset.
   const hash = await hashPassword(randomBytes(32).toString("base64url"));
   statements.push(
-    `INSERT OR IGNORE INTO "user" (id, name, email, email_verified, image, role, created_at, updated_at) VALUES (${id}, ${sq(u.name.trim() || u.username)}, ${sq(emailByUserId.get(u.id))}, 1, ${sq(u.avatar ?? null)}, ${sq(u.role === "admin" ? "admin" : "user")}, ${created}, ${created});`,
+    `INSERT OR IGNORE INTO "user" (id, name, email, email_verified, image, role, username, created_at, updated_at) VALUES (${id}, ${sq(u.name.trim() || u.username)}, ${sq(emailByUserId.get(u.id))}, 1, ${sq(u.avatar ?? null)}, ${sq(u.role === "admin" ? "admin" : "user")}, ${sq(legacyUsername(u.username))}, ${created}, ${created});`,
     // Skipped when the email already belonged to an account here (the user insert was ignored).
     `INSERT OR IGNORE INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at) SELECT ${id}, ${id}, 'credential', ${id}, ${sq(hash)}, ${created}, ${created} WHERE EXISTS (SELECT 1 FROM "user" WHERE id = ${id});`,
   );

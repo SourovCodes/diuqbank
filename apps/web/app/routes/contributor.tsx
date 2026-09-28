@@ -1,5 +1,5 @@
 import type { ContributorDetail } from "@qb/shared";
-import { data, Link, useSearchParams } from "react-router";
+import { data, Link, redirect, useSearchParams } from "react-router";
 import { ContributorAvatar } from "~/components/contributor-avatar";
 import { Breadcrumbs } from "~/components/page-header";
 import { SubmissionCards } from "~/components/submission-cards";
@@ -8,7 +8,7 @@ import { UrlTabs } from "~/components/url-tabs";
 import { apiFetch, readJson } from "~/lib/api.server";
 import { formatMonth } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
-import { plural } from "~/lib/submissions";
+import { contributorUrl, plural } from "~/lib/submissions";
 import type { Route } from "./+types/contributor";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -20,13 +20,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   const res = await apiFetch(
     request,
-    `/api/v1/contributors/${encodeURIComponent(params.id)}?${query}`,
+    `/api/v1/contributors/${encodeURIComponent(params.username)}?${query}`,
   );
   if (res.status === 404 || res.status === 422) {
     throw data("Contributor not found", { status: 404 });
   }
   if (!res.ok) throw data("Failed to load contributor", { status: 502 });
-  return { contributor: await readJson<ContributorDetail>(res) };
+  const contributor = await readJson<ContributorDetail>(res);
+  // Found by user id (links from before usernames) or in other case: send to the
+  // one URL for this page.
+  if (contributor.username !== params.username) {
+    throw redirect(`${contributorUrl(contributor.username)}${url.search}`, 301);
+  }
+  return { contributor };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData }) => {

@@ -19,6 +19,8 @@ export type ContributorDepartment = z.infer<typeof contributorDepartmentSchema>;
 
 export const contributorSchema = z.object({
   id: z.string(),
+  /** In their page's URL: /contributors/<username>. */
+  username: z.string(),
   name: z.string(),
   image: z.string().nullable(),
   joinedAt: z.iso.datetime(),

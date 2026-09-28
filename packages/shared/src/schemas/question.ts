@@ -15,6 +15,8 @@ export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 /** Public identity of the user who uploaded a submission (never their email). */
 export const uploaderSchema = z.object({
   id: z.string(),
+  /** In their contributor page's URL. */
+  username: z.string(),
   name: z.string(),
   /** Profile image URL, or null to show initials. */
   image: z.string().nullable(),

@@ -6,6 +6,7 @@ import type {
 } from "@qb/shared";
 import { and, count, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { usernameOf } from "../db/username";
 import { submissions, user } from "../db/schema";
 import { AppError } from "../lib/errors";
 import { countWhereStatus } from "./common";
@@ -32,6 +33,7 @@ function selectUsers(db: Database) {
   return db
     .select({
       id: user.id,
+      username: usernameOf,
       name: user.name,
       email: user.email,
       image: user.image,
@@ -69,6 +71,7 @@ export async function listAdminUsers(
     pattern
       ? or(
           sql`lower(${user.name}) like ${pattern} escape '\\'`,
+          sql`${user.username} like ${pattern} escape '\\'`,
           sql`lower(${user.email}) like ${pattern} escape '\\'`,
         )
       : undefined,

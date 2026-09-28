@@ -2,6 +2,8 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   createSubmissionInputSchema,
   idQuerySchema,
+  updateUsernameInputSchema,
+  USERNAME_RULES,
   mySubmissionDetailSchema,
   mySubmissionListSchema,
 } from "@qb/shared";
@@ -14,6 +16,7 @@ import {
   getOwnSubmissionFile,
   listOwnSubmissions,
   reclassifyOwnSubmission,
+  updateUsername,
   withdrawSubmission,
 } from "../services/account";
 import type { AppEnv } from "../types";
@@ -108,6 +111,27 @@ const withdrawMySubmissionRoute = createRoute({
   },
 });
 
+const updateUsernameRoute = createRoute({
+  method: "put",
+  path: "/username",
+  tags,
+  summary: "Change your username",
+  description: `Used in your contributor page's URL. ${USERNAME_RULES}; saved in lowercase.`,
+  middleware: [requireAuth] as const,
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: updateUsernameInputSchema } },
+    },
+  },
+  responses: {
+    200: jsonResponse(updateUsernameInputSchema, "Your new username"),
+    401: errorResponse("Not signed in"),
+    409: errorResponse("Someone already has that username"),
+    422: errorResponse("Not a valid username"),
+  },
+});
+
 export const meRoutes = new OpenAPIHono<AppEnv>({
   defaultHook: validationHook,
 })
@@ -161,4 +185,16 @@ export const meRoutes = new OpenAPIHono<AppEnv>({
       c.req.valid("param").id,
     );
     return c.body(null, 204);
-  });
+  })
+  .openapi(updateUsernameRoute, async (c) =>
+    c.json(
+      {
+        username: await updateUsername(
+          c.var.db,
+          c.var.session!.user.id,
+          c.req.valid("json").username,
+        ),
+      },
+      200,
+    ),
+  );

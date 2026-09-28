@@ -126,3 +126,8 @@ export function publicUrl(submission: ContributorSubmission) {
     ? `/questions/${submission.questionId}?submission=${encodeURIComponent(submission.id)}`
     : null;
 }
+
+/** A contributor's public page, by username. */
+export function contributorUrl(username: string) {
+  return `/contributors/${encodeURIComponent(username)}`;
+}

@@ -76,7 +76,7 @@ export function createSessionPool() {
     db.exec(`DELETE FROM "user" WHERE id LIKE 'e2e-pool-%'`);
     db.exec(`DELETE FROM session WHERE id LIKE 'e2e-pool-%'`);
     const insertUser = db.prepare(
-      `INSERT INTO "user" (id, name, email, email_verified) VALUES (?, 'E2E User', ?, 1)`,
+      `INSERT INTO "user" (id, name, email, email_verified, username) VALUES (?, 'E2E User', ?, 1, ?)`,
     );
     const insertSession = db.prepare(
       "INSERT INTO session (id, token, user_id, expires_at) VALUES (?, ?, ?, ?)",
@@ -89,7 +89,7 @@ export function createSessionPool() {
             : `e2e-pool-${randomBytes(6).toString("hex")}`;
         const email =
           kind === "admin" ? "admin@seed.local" : `${userId}@example.com`;
-        if (kind === "user") insertUser.run(userId, email);
+        if (kind === "user") insertUser.run(userId, email, userId);
         const token = randomBytes(24).toString("base64url");
         insertSession.run(`e2e-pool-${kind}-${i}`, token, userId, expiresAt);
         pool[kind].push({ userId, email, cookie: cookieFor(token) });

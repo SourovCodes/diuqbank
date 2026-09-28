@@ -14,6 +14,24 @@ const notAllowed = () =>
     message: "Only DIU email addresses can sign in",
   });
 
+/** A new user's username until they pick one, like the old site's: `user_1a2b3c`. */
+function generateUsername(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(3));
+  return `user_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** A generated username nobody has yet. */
+async function freshUsername(db: Database): Promise<string> {
+  for (;;) {
+    const username = generateUsername();
+    const [taken] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.username, username));
+    if (!taken) return username;
+  }
+}
+
 /**
  * Google is the only way to sign in, with a DIU address (ALLOWED_EMAIL_DOMAINS), or
  * as an admin. Exported on its own so tests can build an auth
@@ -37,6 +55,8 @@ export function authOptions(env: Env, db: Database) {
           defaultValue: "user",
           input: false,
         },
+        // Changed through /api/v1/me/username, which validates it.
+        username: { type: "string", required: false, input: false },
       },
     },
     databaseHooks: {
@@ -59,6 +79,9 @@ export function authOptions(env: Env, db: Database) {
           // Refused before the account exists, so no stray users are left behind.
           before: async (created) => {
             if (!isAllowedEmail(created.email)) throw notAllowed();
+            return {
+              data: { ...created, username: await freshUsername(db) },
+            };
           },
           // Google gives a new user its photo URL; keep a copy of our own instead.
           after: async (created) => {

@@ -6,6 +6,7 @@ import type {
 } from "@qb/shared";
 import { and, asc, count, desc, eq, gt, sql, type SQL } from "drizzle-orm";
 import type { Database } from "../db/client";
+import { usernameOf } from "../db/username";
 import {
   courses,
   departments,
@@ -154,7 +155,12 @@ export async function getQuestion(
       viewCount: submissions.viewCount,
       section: submissions.section,
       batch: submissions.batch,
-      uploader: { id: user.id, name: user.name, image: user.image },
+      uploader: {
+        id: user.id,
+        username: usernameOf,
+        name: user.name,
+        image: user.image,
+      },
       watermarkedFileKey: submissions.watermarkedFileKey,
     })
     .from(submissions)
