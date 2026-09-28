@@ -7,12 +7,12 @@ export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
 };
 
 /** Any submission's PDF, for admins. */
-export function adminSubmissionFileUrl(id: string) {
-  return `/api/v1/admin/submissions/${encodeURIComponent(id)}/file`;
+export function adminSubmissionFileUrl(id: number) {
+  return `/api/v1/admin/submissions/${id}/file`;
 }
 
-export function adminSubmissionUrl(id: string) {
-  return `/admin/submissions/${encodeURIComponent(id)}`;
+export function adminSubmissionUrl(id: number) {
+  return `/admin/submissions/${id}`;
 }
 
 export { classificationLine, proposesNewEntries } from "./submissions";

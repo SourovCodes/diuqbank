@@ -31,7 +31,7 @@ export const contributorSchema = z.object({
 export type Contributor = z.infer<typeof contributorSchema>;
 
 export const contributorSubmissionSchema = submissionStatsSchema.extend({
-  id: z.string(),
+  id: z.number().int(),
   status: submissionStatusSchema,
   /** What this viewer downloads: the watermarked copy for the public, when ready. */
   fileSize: z.number().int(),

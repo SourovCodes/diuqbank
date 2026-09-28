@@ -62,7 +62,6 @@ async function seedPaper(overrides: Partial<NewSubmissionRow> = {}) {
   const [row] = await db()
     .insert(submissions)
     .values({
-      id,
       status: "pending_review",
       fileKey,
       fileSize: 1009,
@@ -136,13 +135,13 @@ function fakeFetch(options: {
   return { fetch: fetcher, calls };
 }
 
-async function startRun(submissionId: string, autoPublish = false) {
+async function startRun(submissionId: number, autoPublish = false) {
   const { queue, sent } = fakeQueue();
   await enqueueAnalysis(db(), queue, submissionId, { autoPublish });
   return sent[0]!;
 }
 
-const analysisRow = (submissionId: string) =>
+const analysisRow = (submissionId: number) =>
   db().query.submissionAnalyses.findFirst({
     where: eq(submissionAnalyses.submissionId, submissionId),
   });
@@ -436,7 +435,7 @@ const confirmingReply = (): AnalysisReply => ({
   examType: { existingId: t.midterm.id, name: t.midterm.name },
 });
 
-const submissionRow = (id: string) =>
+const submissionRow = (id: number) =>
   db().query.submissions.findFirst({ where: eq(submissions.id, id) });
 
 describe("auto-publishing", () => {
@@ -541,7 +540,7 @@ describe("POST /api/v1/submissions", () => {
       body,
     });
     expect(res.status).toBe(201);
-    const { id } = await res.json<{ id: string }>();
+    const { id } = await res.json<{ id: number }>();
     const row = await analysisRow(id);
     expect(row?.runId).toEqual(expect.any(String));
     // Right after upload, a confirming check may publish the paper.
@@ -551,7 +550,7 @@ describe("POST /api/v1/submissions", () => {
 
 /** Stores a completed analysis directly. */
 async function seedAnalysis(
-  submissionId: string,
+  submissionId: number,
   values: Partial<typeof submissionAnalyses.$inferInsert>,
 ) {
   await db()
@@ -617,7 +616,7 @@ describe("admin analysis", () => {
     const list = await (
       await asAdmin("/api/v1/admin/submissions?pageSize=100")
     ).json<AdminSubmissionList>();
-    const summary = (id: string) =>
+    const summary = (id: number) =>
       list.items.find((item) => item.id === id)?.analysis;
     expect(summary(agrees.id)).toEqual({
       status: "completed",
@@ -676,7 +675,7 @@ describe("admin analysis", () => {
     expect(after?.autoPublish).toBe(false);
     expect(after?.courseName).toBeNull();
 
-    const missing = await asAdmin("/api/v1/admin/submissions/nope/analysis", {
+    const missing = await asAdmin("/api/v1/admin/submissions/999999/analysis", {
       method: "POST",
     });
     expect(missing.status).toBe(404);

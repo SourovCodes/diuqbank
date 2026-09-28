@@ -38,7 +38,7 @@ import {
 import { watermarkIfMissing, type WatermarkJob } from "./watermark";
 
 /** The queue message. A message whose run was superseded by a re-run is ignored. */
-export type AnalysisJob = { submissionId: string; runId: string };
+export type AnalysisJob = { submissionId: number; runId: string };
 
 /** First delivery plus `max_retries` (3) of the consumer in wrangler.jsonc. */
 export const ANALYSIS_MAX_ATTEMPTS = 4;
@@ -327,7 +327,7 @@ export function toSubmissionAnalysis(
 
 export async function getSubmissionAnalysis(
   db: Database,
-  submissionId: string,
+  submissionId: number,
 ): Promise<SubmissionAnalysis | null> {
   const row = await db.query.submissionAnalyses.findFirst({
     where: eq(submissionAnalyses.submissionId, submissionId),
@@ -370,7 +370,7 @@ const clearedResult = {
 export async function enqueueAnalysis(
   db: Database,
   queue: Queue<AnalysisJob>,
-  submissionId: string,
+  submissionId: number,
   { autoPublish }: { autoPublish: boolean },
 ): Promise<SubmissionAnalysis> {
   const runId = crypto.randomUUID();
@@ -404,7 +404,7 @@ export async function enqueueAnalysis(
 export async function rerunAnalysis(
   db: Database,
   queue: Queue<AnalysisJob>,
-  submissionId: string,
+  submissionId: number,
 ): Promise<SubmissionAnalysis> {
   const submission = await db.query.submissions.findFirst({
     columns: { id: true },
@@ -438,7 +438,7 @@ export type AnalysisEnv = {
 export async function publishIfConfirmed(
   db: Database,
   watermarkQueue: Queue<WatermarkJob>,
-  submissionId: string,
+  submissionId: number,
   reply: Pick<AnalysisReply, "isQuestionPaper" | "paperCount">,
   values: AnalysisValues,
 ): Promise<boolean> {

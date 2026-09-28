@@ -74,7 +74,6 @@ async function seedProposal() {
   const [row] = await db()
     .insert(submissions)
     .values({
-      id,
       fileKey: `submissions/${id}.pdf`,
       fileSize: 1234,
       uploaderId: member.id,
@@ -210,7 +209,9 @@ describe("GET /api/v1/admin/submissions/{id}", () => {
       }),
     ]);
 
-    expect((await asAdmin("/api/v1/admin/submissions/nope")).status).toBe(404);
+    expect((await asAdmin("/api/v1/admin/submissions/999999")).status).toBe(
+      404,
+    );
   });
 });
 
@@ -238,7 +239,7 @@ describe("GET /api/v1/admin/submissions/{id}/file", () => {
 });
 
 describe("PATCH /api/v1/admin/submissions/{id}", () => {
-  const setStatus = (id: string, status: string) =>
+  const setStatus = (id: number, status: string) =>
     asAdmin(
       `/api/v1/admin/submissions/${id}`,
       jsonRequest("PATCH", { status }),
@@ -257,7 +258,7 @@ describe("PATCH /api/v1/admin/submissions/{id}", () => {
     }
 
     expect((await setStatus(submission.id, "archived")).status).toBe(422);
-    expect((await setStatus("nope", "published")).status).toBe(404);
+    expect((await setStatus(999_999, "published")).status).toBe(404);
   });
 
   it("won't publish a proposal before it is classified", async () => {
@@ -273,7 +274,7 @@ describe("PATCH /api/v1/admin/submissions/{id}", () => {
 });
 
 describe("PUT /api/v1/admin/submissions/{id}/classification", () => {
-  const classify = (id: string, body: unknown) =>
+  const classify = (id: number, body: unknown) =>
     asAdmin(
       `/api/v1/admin/submissions/${id}/classification`,
       jsonRequest("PUT", body),

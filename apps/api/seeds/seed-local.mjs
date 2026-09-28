@@ -45,7 +45,7 @@ wrangler([
   "DB",
   "--local",
   "--command",
-  `UPDATE submissions SET file_size = ${size} WHERE id LIKE 'seed-%'`,
+  `UPDATE submissions SET file_size = ${size} WHERE file_key LIKE 'submissions/seed-%'`,
 ]);
 
 console.log(`Seeded local D1 and uploaded ${keys.size} sample PDFs to R2.`);

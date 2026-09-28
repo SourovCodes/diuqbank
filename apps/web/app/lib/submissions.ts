@@ -12,13 +12,13 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   rejected: "Rejected",
 };
 
-export function submissionFileUrl(id: string) {
-  return `/api/v1/submissions/${encodeURIComponent(id)}/file`;
+export function submissionFileUrl(id: number) {
+  return `/api/v1/submissions/${id}/file`;
 }
 
 /** The signed-in uploader's copy of their own PDF, available in any status. */
-export function ownSubmissionFileUrl(id: string) {
-  return `/api/v1/me/submissions/${encodeURIComponent(id)}/file`;
+export function ownSubmissionFileUrl(id: number) {
+  return `/api/v1/me/submissions/${id}/file`;
 }
 
 /**
@@ -30,7 +30,9 @@ export function pickSubmission(
   requestedId: string | null,
 ): Submission | null {
   const published = submissions.filter((s) => s.status === "published");
-  return published.find((s) => s.id === requestedId) ?? published[0] ?? null;
+  return (
+    published.find((s) => String(s.id) === requestedId) ?? published[0] ?? null
+  );
 }
 
 /** e.g. "Section 5A · Batch 61", or null when the uploader gave neither. */
@@ -71,7 +73,7 @@ export function paperTitle(
  */
 export function paperTitles(
   published: Pick<Submission, "id" | "section" | "batch" | "uploader">[],
-): Map<string, string> {
+): Map<number, string> {
   const countOf = (titles: string[]) => {
     const counts = new Map<string, number>();
     for (const title of titles) counts.set(title, (counts.get(title) ?? 0) + 1);

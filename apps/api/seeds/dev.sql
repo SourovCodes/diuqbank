@@ -67,62 +67,62 @@ INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) 
   (10, 2, 9, 2, 2);
 
 -- file_size is set by the seed script from the uploaded sample PDF.
--- seed-14 has no uploader, to show an unknown contributor.
+-- #14 has no uploader, to show an unknown contributor.
 INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
-  ('seed-01', 1, 'published', 'submissions/seed-01.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
-  ('seed-02', 1, 'published', 'submissions/seed-02.pdf', 0, 'seed-user-2', 1762041600000, 1762041600000),
-  ('seed-03', 2, 'published', 'submissions/seed-03.pdf', 0, 'seed-user-1', 1769904000000, 1769904000000),
-  ('seed-04', 3, 'published', 'submissions/seed-04.pdf', 0, 'seed-user-3', 1776643200000, 1776643200000),
-  ('seed-05', 4, 'published', 'submissions/seed-05.pdf', 0, 'seed-user-1', 1765756800000, 1765756800000),
-  ('seed-06', 5, 'published', 'submissions/seed-06.pdf', 0, 'seed-user-2', 1769904000000, 1769904000000),
-  ('seed-07', 6, 'published', 'submissions/seed-07.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
-  ('seed-08', 7, 'published', 'submissions/seed-08.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
-  ('seed-09', 8, 'published', 'submissions/seed-09.pdf', 0, 'seed-user-2', 1765756800000, 1765756800000),
-  ('seed-10', 9, 'pending_review', 'submissions/seed-10.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
-  ('seed-11', 10, 'published', 'submissions/seed-11.pdf', 0, 'seed-user-1', 1776643200000, 1776643200000),
-  ('seed-12', 3, 'rejected', 'submissions/seed-12.pdf', 0, 'seed-user-2', 1773100800000, 1773100800000),
-  ('seed-13', 1, 'pending_review', 'submissions/seed-13.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
-  ('seed-14', 1, 'rejected', 'submissions/seed-14.pdf', 0, NULL, 1769904000000, 1769904000000);
+  (1, 1, 'published', 'submissions/seed-01.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
+  (2, 1, 'published', 'submissions/seed-02.pdf', 0, 'seed-user-2', 1762041600000, 1762041600000),
+  (3, 2, 'published', 'submissions/seed-03.pdf', 0, 'seed-user-1', 1769904000000, 1769904000000),
+  (4, 3, 'published', 'submissions/seed-04.pdf', 0, 'seed-user-3', 1776643200000, 1776643200000),
+  (5, 4, 'published', 'submissions/seed-05.pdf', 0, 'seed-user-1', 1765756800000, 1765756800000),
+  (6, 5, 'published', 'submissions/seed-06.pdf', 0, 'seed-user-2', 1769904000000, 1769904000000),
+  (7, 6, 'published', 'submissions/seed-07.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  (8, 7, 'published', 'submissions/seed-08.pdf', 0, 'seed-user-1', 1773100800000, 1773100800000),
+  (9, 8, 'published', 'submissions/seed-09.pdf', 0, 'seed-user-2', 1765756800000, 1765756800000),
+  (10, 9, 'pending_review', 'submissions/seed-10.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  (11, 10, 'published', 'submissions/seed-11.pdf', 0, 'seed-user-1', 1776643200000, 1776643200000),
+  (12, 3, 'rejected', 'submissions/seed-12.pdf', 0, 'seed-user-2', 1773100800000, 1773100800000),
+  (13, 1, 'pending_review', 'submissions/seed-13.pdf', 0, 'seed-user-3', 1777939200000, 1777939200000),
+  (14, 1, 'rejected', 'submissions/seed-14.pdf', 0, NULL, 1769904000000, 1769904000000);
 
 -- A pending submission proposing a new course and semester: no question until approved.
 INSERT INTO submissions (id, status, file_key, file_size, uploader_id, department_id, custom_course_name, custom_semester_name, exam_type_id, created_at, updated_at) VALUES
-  ('seed-15', 'pending_review', 'submissions/seed-15.pdf', 0, 'seed-user-3', 1, 'Operating Systems', 'Short 25', 2, 1778544000000, 1778544000000);
+  (15, 'pending_review', 'submissions/seed-15.pdf', 0, 'seed-user-3', 1, 'Operating Systems', 'Short 25', 2, 1778544000000, 1778544000000);
 
 -- The Data Structures midterm from another semester, for the question page's
 -- "Other semesters", and a section and batch on one paper.
 INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) VALUES
   (11, 1, 1, 1, 1);
 INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
-  ('seed-16', 11, 'published', 'submissions/seed-16.pdf', 0, 'seed-user-3', 1760000000000, 1760000000000);
-UPDATE submissions SET section = 'A', batch = '61' WHERE id = 'seed-01';
+  (16, 11, 'published', 'submissions/seed-16.pdf', 0, 'seed-user-3', 1760000000000, 1760000000000);
+UPDATE submissions SET section = 'A', batch = '61' WHERE id = 1;
 
--- AI analyses. seed-15: the AI reads a different semester and a section. seed-13: the
+-- AI analyses. #15: the AI reads a different semester and a section. #13: the
 -- AI found two papers in one file.
 INSERT INTO submission_analyses (submission_id, run_id, status, attempts, model, original_bytes, sent_bytes, is_question_paper, paper_count, note, department_id, department_name, department_short_name, course_id, course_name, semester_id, semester_name, exam_type_id, exam_type_name, section, batch, completed_at) VALUES
-  ('seed-15', 'seed-run-15', 'completed', 1, 'seed', 0, 0, 1, 1, 'A single final exam paper for Operating Systems.', 1, 'Computer Science and Engineering', 'CSE', NULL, 'Operating Systems', 5, 'Summer 25', 2, 'Final', 'B', NULL, 1778544060000),
-  ('seed-13', 'seed-run-13', 'completed', 1, 'seed', 0, 0, 1, 2, 'The file contains two different midterm papers.', 1, 'Computer Science and Engineering', 'CSE', 1, 'Data Structures', 2, 'Summer 24', 1, 'Midterm', NULL, NULL, 1777939260000);
+  (15, 'seed-run-15', 'completed', 1, 'seed', 0, 0, 1, 1, 'A single final exam paper for Operating Systems.', 1, 'Computer Science and Engineering', 'CSE', NULL, 'Operating Systems', 5, 'Summer 25', 2, 'Final', 'B', NULL, 1778544060000),
+  (13, 'seed-run-13', 'completed', 1, 'seed', 0, 0, 1, 2, 'The file contains two different midterm papers.', 1, 'Computer Science and Engineering', 'CSE', 1, 'Data Structures', 2, 'Summer 24', 1, 'Midterm', NULL, NULL, 1777939260000);
 
 -- Votes; the triggers fill in like_count and dislike_count. Nobody votes on their own paper.
--- Question 1: seed-01 scores +2 and stays ranked first, seed-02 scores 0.
+-- Question 1: #1 scores +2 and stays ranked first, #2 scores 0.
 INSERT INTO submission_votes (submission_id, user_id, value) VALUES
-  ('seed-01', 'seed-user-2', 1),
-  ('seed-01', 'seed-user-3', 1),
-  ('seed-02', 'seed-user-1', 1),
-  ('seed-02', 'seed-user-3', -1),
-  ('seed-04', 'seed-user-1', 1),
-  ('seed-04', 'seed-user-2', 1),
-  ('seed-07', 'seed-user-1', 1),
-  ('seed-11', 'seed-user-2', -1);
+  (1, 'seed-user-2', 1),
+  (1, 'seed-user-3', 1),
+  (2, 'seed-user-1', 1),
+  (2, 'seed-user-3', -1),
+  (4, 'seed-user-1', 1),
+  (4, 'seed-user-2', 1),
+  (7, 'seed-user-1', 1),
+  (11, 'seed-user-2', -1);
 
 -- One open report, below the auto-hide threshold; the trigger counts it.
 INSERT INTO submission_reports (submission_id, reporter_id, reason, details) VALUES
-  ('seed-02', 'seed-user-3', 'unreadable', 'The second page is too blurry to read.');
+  (2, 'seed-user-3', 'unreadable', 'The second page is too blurry to read.');
 
 -- View counters (question page views and paper views are counted separately).
 UPDATE questions SET view_count = 40 + id * 23;
 UPDATE submissions SET view_count = CASE id
-  WHEN 'seed-01' THEN 184
-  WHEN 'seed-02' THEN 97
-  WHEN 'seed-04' THEN 152
+  WHEN 1 THEN 184
+  WHEN 2 THEN 97
+  WHEN 4 THEN 152
   ELSE 12 + length(file_key) END
 WHERE status = 'published';

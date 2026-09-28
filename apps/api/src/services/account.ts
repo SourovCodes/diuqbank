@@ -32,7 +32,7 @@ export async function listOwnSubmissions(
 export async function getOwnSubmission(
   db: Database,
   uploaderId: string,
-  id: string,
+  id: number,
 ): Promise<MySubmissionDetail | null> {
   const [row] = await selectSubmissionRows(db)
     .where(and(eq(submissions.id, id), eq(submissions.uploaderId, uploaderId)))
@@ -55,7 +55,7 @@ export async function getOwnSubmission(
   };
 }
 
-function findOwnSubmission(db: Database, uploaderId: string, id: string) {
+function findOwnSubmission(db: Database, uploaderId: string, id: number) {
   return db.query.submissions.findFirst({
     columns: { fileKey: true, watermarkedFileKey: true, status: true },
     where: and(eq(submissions.id, id), eq(submissions.uploaderId, uploaderId)),
@@ -67,7 +67,7 @@ export async function getOwnSubmissionFile(
   db: Database,
   bucket: R2Bucket,
   uploaderId: string,
-  id: string,
+  id: number,
 ) {
   const submission = await findOwnSubmission(db, uploaderId, id);
   if (!submission) return null;
@@ -82,7 +82,7 @@ export async function withdrawSubmission(
   db: Database,
   bucket: R2Bucket,
   uploaderId: string,
-  id: string,
+  id: number,
 ) {
   const submission = await findOwnSubmission(db, uploaderId, id);
   if (!submission) {
@@ -127,7 +127,7 @@ export async function reclassifyOwnSubmission(
   db: Database,
   watermarkQueue: Queue<WatermarkJob>,
   uploaderId: string,
-  id: string,
+  id: number,
   input: SubmissionFields,
 ): Promise<MySubmissionDetail> {
   const submission = await findOwnSubmission(db, uploaderId, id);

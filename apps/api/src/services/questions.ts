@@ -178,7 +178,7 @@ export async function getQuestion(
 export async function getPublishedSubmissionFile(
   db: Database,
   bucket: R2Bucket,
-  id: string,
+  id: number,
 ): Promise<{ object: R2ObjectBody; watermarked: boolean } | null> {
   const submission = await db.query.submissions.findFirst({
     columns: { fileKey: true, watermarkedFileKey: true },

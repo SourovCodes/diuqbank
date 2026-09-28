@@ -196,7 +196,7 @@ function ReportDialog({
   label,
   reported,
 }: {
-  submissionId: string;
+  submissionId: number;
   label: string;
   reported: boolean;
 }) {
@@ -206,7 +206,7 @@ function ReportDialog({
   const detailsId = useId();
   const sending =
     fetcher.state !== "idle" &&
-    fetcher.formData?.get("submissionId") === submissionId;
+    fetcher.formData?.get("submissionId") === String(submissionId);
 
   if (reported || sending) {
     return (

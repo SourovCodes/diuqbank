@@ -16,7 +16,7 @@ import { courses, departments, examTypes, semesters } from "./taxonomy";
 export const submissionAnalyses = sqliteTable(
   "submission_analyses",
   {
-    submissionId: text()
+    submissionId: integer()
       .primaryKey()
       .references(() => submissions.id, { onDelete: "cascade" }),
     runId: text().notNull(),

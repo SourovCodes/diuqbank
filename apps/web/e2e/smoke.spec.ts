@@ -137,7 +137,7 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
     "Data Structures",
   );
 
-  // The newest published paper (seed-01, by Ayesha) is selected by default.
+  // The newest published paper (#1, by Ayesha) is selected by default.
   await expect(paperLink(page, SEED_01)).toHaveAttribute(
     "aria-current",
     "true",
@@ -145,12 +145,12 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   const viewer = page.getByTestId("pdf-viewer");
   await expect(viewer).toHaveAttribute(
     "data",
-    /^\/api\/v1\/submissions\/seed-01\/file/,
+    /^\/api\/v1\/submissions\/1\/file/,
   );
   // Browsers without an inline PDF viewer get links to the same file instead.
   await expect(
     page.getByTestId("pdf-viewer-fallback").locator("a[download]"),
-  ).toHaveAttribute("href", "/api/v1/submissions/seed-01/file");
+  ).toHaveAttribute("href", "/api/v1/submissions/1/file");
   // The uploader card links to their profile.
   await expect(
     page.getByRole("link", { name: /^Ayesha Rahman/ }),
@@ -158,19 +158,19 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   // The optional section and batch tell papers apart.
 
   await paperLink(page, SEED_02).click();
-  await expect(page).toHaveURL(/submission=seed-02/);
+  await expect(page).toHaveURL(/submission=2$/);
   await expect(paperLink(page, SEED_02)).toHaveAttribute(
     "aria-current",
     "true",
   );
-  await expect(viewer).toHaveAttribute("data", /seed-02/);
+  await expect(viewer).toHaveAttribute("data", /\/submissions\/2\/file/);
   await expect(page.getByRole("link", { name: /^Tanvir Hasan/ })).toBeVisible();
 
   // Switching back and forth keeps exactly one toolbar and viewer on the page.
   await paperLink(page, SEED_01).click();
-  await expect(viewer).toHaveAttribute("data", /seed-01/);
+  await expect(viewer).toHaveAttribute("data", /\/submissions\/1\/file/);
   await paperLink(page, SEED_02).click();
-  await expect(viewer).toHaveAttribute("data", /seed-02/);
+  await expect(viewer).toHaveAttribute("data", /\/submissions\/2\/file/);
   await expect(page.getByRole("link", { name: /^Log in to like/ })).toHaveCount(
     1,
   );
@@ -180,9 +180,7 @@ test("question page embeds the PDF, shows its uploader and switches submissions"
   // Unpublished submissions are listed but can't be opened.
   await expect(page.getByText("Pending review", { exact: true })).toBeVisible();
   await expect(page.getByText("Rejected", { exact: true })).toBeVisible();
-  const pendingFile = await page.request.get(
-    "/api/v1/submissions/seed-13/file",
-  );
+  const pendingFile = await page.request.get("/api/v1/submissions/13/file");
   expect(pendingFile.status()).toBe(404);
 });
 
@@ -266,7 +264,7 @@ test("contributors index leads to a contributor's submissions", async ({
 
   // Published submissions open the question with that paper selected.
   await page.getByRole("link", { name: /Algorithms/ }).click();
-  await expect(page).toHaveURL(/\/questions\/3\?submission=seed-04$/);
+  await expect(page).toHaveURL(/\/questions\/3\?submission=4$/);
   await expect(page.getByRole("link", { name: /^Nusrat Jahan/ })).toBeVisible();
 });
 
@@ -292,7 +290,7 @@ test("a contributor can upload a paper with a new course", async ({ page }) => {
     .filter({ hasText: courseName });
   await expect(card).toBeVisible();
   await card.getByRole("link", { name: courseName }).click();
-  await expect(page).toHaveURL(/\/account\/submissions\/[^/?]+$/);
+  await expect(page).toHaveURL(/\/account\/submissions\/\d+$/);
 });
 
 type ButtonLocator = ReturnType<Page["getByRole"]>;
@@ -321,7 +319,7 @@ test("a member can like, dislike and report a paper", async ({
   page,
 }, testInfo) => {
   // The two projects share one database, so each votes on its own paper:
-  // question 10 (seed-11) on desktop, question 8 (seed-09) on mobile.
+  // question 10 (#11) on desktop, question 8 (#9) on mobile.
   const questionId = testInfo.project.name === "mobile" ? 8 : 10;
   await logInAs(page, NEW_USER, `/questions/${questionId}`);
   await expect(page.getByText(/\d+ views?/).first()).toBeVisible();

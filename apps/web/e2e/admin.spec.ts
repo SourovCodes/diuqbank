@@ -164,8 +164,8 @@ test("an admin adds, renames and deletes a semester", async ({
 test("an admin compares the AI's reading and prefills the form with it", async ({
   page,
 }) => {
-  // Seeded: the AI reads a different semester and a section for seed-15.
-  await logInAs(page, SEED_ADMIN, "/admin/submissions/seed-15");
+  // Seeded: the AI reads a different semester and a section for #15.
+  await logInAs(page, SEED_ADMIN, "/admin/submissions/15");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Operating Systems",
   );
@@ -191,7 +191,7 @@ test("an admin compares the AI's reading and prefills the form with it", async (
   await expect(
     page.getByRole("row", { name: /Multiple papers/ }),
   ).toBeVisible();
-  await page.goto("/admin/submissions/seed-13");
+  await page.goto("/admin/submissions/13");
   await expect(
     page.getByText("The AI found several question papers in this file"),
   ).toBeVisible();

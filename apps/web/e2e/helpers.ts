@@ -109,7 +109,7 @@ export async function uploadPaperWithNewCourse(page: Page, courseName: string) {
   });
   await page.getByRole("button", { name: "Submit paper" }).click();
   // Lands on the paper's status page.
-  await expect(page).toHaveURL(/\/account\/submissions\/[^/?]+/);
+  await expect(page).toHaveURL(/\/account\/submissions\/\d+/);
   await expect(
     page.getByText("Thanks! Your paper was uploaded."),
   ).toBeVisible();

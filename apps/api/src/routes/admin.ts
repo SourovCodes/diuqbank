@@ -57,7 +57,7 @@ const denied = {
   403: errorResponse("Not an admin"),
 };
 
-const stringIdParams = z.object({ id: z.string().min(1) });
+const userIdParams = z.object({ id: z.string().min(1) });
 const numericIdParams = z.object({ id: idQuerySchema });
 
 function jsonBody<T extends z.ZodType>(schema: T) {
@@ -104,7 +104,7 @@ const getSubmissionRoute = createRoute({
   tags: submissionTags,
   summary: "Get a submission with its reports",
   middleware,
-  request: { params: stringIdParams },
+  request: { params: numericIdParams },
   responses: {
     200: jsonResponse(adminSubmissionDetailSchema, "Submission"),
     ...denied,
@@ -118,7 +118,7 @@ const getSubmissionFileRoute = createRoute({
   tags: submissionTags,
   summary: "Download the PDF of a submission in any status",
   middleware,
-  request: { params: stringIdParams },
+  request: { params: numericIdParams },
   responses: {
     200: {
       description: "PDF file",
@@ -142,7 +142,7 @@ const updateSubmissionStatusRoute = createRoute({
     "A submission that proposes new catalog entries has to be classified before it can be published.",
   middleware,
   request: {
-    params: stringIdParams,
+    params: numericIdParams,
     ...jsonBody(updateSubmissionStatusInputSchema),
   },
   responses: {
@@ -165,7 +165,7 @@ const classifySubmissionRoute = createRoute({
     "Use it to approve a proposal or to correct a paper's details. The status doesn't change.",
   middleware,
   request: {
-    params: stringIdParams,
+    params: numericIdParams,
     ...jsonBody(classifySubmissionInputSchema),
   },
   responses: {
@@ -185,7 +185,7 @@ const analyzeSubmissionRoute = createRoute({
   description:
     "Queues a new run (compress the PDF, ask Gemini) and clears the previous result.",
   middleware,
-  request: { params: stringIdParams },
+  request: { params: numericIdParams },
   responses: {
     202: jsonResponse(submissionAnalysisSchema, "Analysis queued"),
     ...denied,
@@ -215,7 +215,7 @@ const rewatermarkSubmissionRoute = createRoute({
   description:
     "E.g. after the contributor changed their name. The current copy is served until the new one is ready.",
   middleware,
-  request: { params: stringIdParams },
+  request: { params: numericIdParams },
   responses: {
     202: jsonResponse(submissionWatermarkSchema, "Watermark queued"),
     ...denied,
@@ -230,7 +230,7 @@ const deleteSubmissionRoute = createRoute({
   tags: submissionTags,
   summary: "Delete a submission in any status, with its PDF",
   middleware,
-  request: { params: stringIdParams },
+  request: { params: numericIdParams },
   responses: {
     204: { description: "Deleted" },
     ...denied,
@@ -392,7 +392,7 @@ const updateUserRoleRoute = createRoute({
   tags: userTags,
   summary: "Grant or remove admin rights",
   middleware,
-  request: { params: stringIdParams, ...jsonBody(updateUserRoleInputSchema) },
+  request: { params: userIdParams, ...jsonBody(updateUserRoleInputSchema) },
   responses: {
     200: jsonResponse(adminUserSchema, "Updated user"),
     ...denied,

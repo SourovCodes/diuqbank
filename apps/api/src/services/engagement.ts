@@ -22,7 +22,7 @@ export async function recordQuestionView(db: Database, questionId: number) {
 }
 
 /** Counts a view of a published paper. Returns false for unknown or unpublished ones. */
-export async function recordSubmissionView(db: Database, submissionId: string) {
+export async function recordSubmissionView(db: Database, submissionId: number) {
   const result = await db.run(
     sql`update submissions set view_count = view_count + 1 where id = ${submissionId} and status = 'published'`,
   );
@@ -32,7 +32,7 @@ export async function recordSubmissionView(db: Database, submissionId: string) {
 /** Loads a published submission that `userId` may vote on or report. */
 async function findPublishedSubmission(
   db: Database,
-  submissionId: string,
+  submissionId: number,
   userId: string,
   action: "vote on" | "report",
 ) {
@@ -50,7 +50,7 @@ async function findPublishedSubmission(
 
 async function voteResult(
   db: Database,
-  submissionId: string,
+  submissionId: number,
   userId: string,
 ): Promise<VoteResult> {
   const [row] = await db
@@ -75,7 +75,7 @@ async function voteResult(
 /** Likes (1) or dislikes (-1) a paper, replacing the user's previous vote. */
 export async function castVote(
   db: Database,
-  submissionId: string,
+  submissionId: number,
   userId: string,
   value: VoteValue,
 ) {
@@ -93,7 +93,7 @@ export async function castVote(
 
 export async function removeVote(
   db: Database,
-  submissionId: string,
+  submissionId: number,
   userId: string,
 ) {
   await findPublishedSubmission(db, submissionId, userId, "vote on");
@@ -117,7 +117,7 @@ const alreadyReported = () =>
  */
 export async function reportSubmission(
   db: Database,
-  submissionId: string,
+  submissionId: number,
   reporterId: string,
   input: CreateReportInput,
 ): Promise<CreatedReport> {

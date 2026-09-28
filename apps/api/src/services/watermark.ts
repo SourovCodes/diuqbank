@@ -14,7 +14,7 @@ import {
 // public gets it only until the copy is ready.
 
 /** The queue message. */
-export type WatermarkJob = { submissionId: string };
+export type WatermarkJob = { submissionId: number };
 
 /** First delivery plus `max_retries` (3) of the consumer in wrangler.jsonc. */
 export const WATERMARK_MAX_ATTEMPTS = 4;
@@ -26,7 +26,7 @@ const MAX_WATERMARK_LENGTH = 255;
 const QUEUE_BATCH_SIZE = 100;
 
 /** R2 key of a submission's watermarked copy. */
-export const watermarkedFileKey = (id: string) => `watermarked/${id}.pdf`;
+export const watermarkedFileKey = (id: number) => `watermarked/${id}.pdf`;
 
 /** Every R2 object of a submission, for deleting them together. */
 export const submissionFileKeys = (row: {
@@ -73,7 +73,7 @@ export function watermarkText(
 export async function enqueueWatermarks(
   db: Database,
   queue: Queue<WatermarkJob>,
-  ids: string[],
+  ids: number[],
 ): Promise<void> {
   for (let i = 0; i < ids.length; i += QUEUE_BATCH_SIZE) {
     const chunk = ids.slice(i, i + QUEUE_BATCH_SIZE);
@@ -102,7 +102,7 @@ export async function enqueueWatermarks(
 export async function watermarkIfMissing(
   db: Database,
   queue: Queue<WatermarkJob>,
-  id: string,
+  id: number,
 ): Promise<void> {
   const submission = await db.query.submissions.findFirst({
     columns: { watermarkStatus: true },
@@ -148,7 +148,7 @@ export async function watermarkMissing(
 export async function rewatermark(
   db: Database,
   queue: Queue<WatermarkJob>,
-  id: string,
+  id: number,
 ): Promise<SubmissionWatermark> {
   const submission = await db.query.submissions.findFirst({
     columns: { status: true },

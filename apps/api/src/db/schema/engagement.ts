@@ -20,7 +20,7 @@ import { submissions } from "./questions";
 export const submissionVotes = sqliteTable(
   "submission_votes",
   {
-    submissionId: text()
+    submissionId: integer()
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
     userId: text()
@@ -45,7 +45,7 @@ export const submissionReports = sqliteTable(
   "submission_reports",
   {
     id: integer().primaryKey({ autoIncrement: true }),
-    submissionId: text()
+    submissionId: integer()
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
     reporterId: text()

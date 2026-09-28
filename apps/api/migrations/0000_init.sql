@@ -1,5 +1,5 @@
 CREATE TABLE `submission_analyses` (
-	`submission_id` text PRIMARY KEY NOT NULL,
+	`submission_id` integer PRIMARY KEY NOT NULL,
 	`run_id` text NOT NULL,
 	`auto_publish` integer DEFAULT false NOT NULL,
 	`status` text DEFAULT 'queued' NOT NULL,
@@ -90,7 +90,7 @@ CREATE TABLE `verification` (
 CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);--> statement-breakpoint
 CREATE TABLE `submission_reports` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`submission_id` text NOT NULL,
+	`submission_id` integer NOT NULL,
 	`reporter_id` text NOT NULL,
 	`reason` text NOT NULL,
 	`details` text,
@@ -105,7 +105,7 @@ CREATE UNIQUE INDEX `submission_reports_open_unique` ON `submission_reports` (`s
 CREATE INDEX `submission_reports_submission_id_status_idx` ON `submission_reports` (`submission_id`,`status`);--> statement-breakpoint
 CREATE INDEX `submission_reports_reporter_id_idx` ON `submission_reports` (`reporter_id`);--> statement-breakpoint
 CREATE TABLE `submission_votes` (
-	`submission_id` text NOT NULL,
+	`submission_id` integer NOT NULL,
 	`user_id` text NOT NULL,
 	`value` integer NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
@@ -137,7 +137,7 @@ CREATE INDEX `questions_semester_id_idx` ON `questions` (`semester_id`);--> stat
 CREATE INDEX `questions_exam_type_id_idx` ON `questions` (`exam_type_id`);--> statement-breakpoint
 CREATE UNIQUE INDEX `questions_course_semester_exam_type_unique` ON `questions` (`course_id`,`semester_id`,`exam_type_id`);--> statement-breakpoint
 CREATE TABLE `submissions` (
-	`id` text PRIMARY KEY NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`question_id` integer,
 	`department_id` integer,
 	`custom_department_name` text,

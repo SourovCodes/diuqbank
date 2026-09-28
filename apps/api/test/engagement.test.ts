@@ -39,7 +39,7 @@ async function seedQuestionWithPaper(
   return { question, submission };
 }
 
-const findSubmission = (id: string) =>
+const findSubmission = (id: number) =>
   db().query.submissions.findFirst({ where: eq(submissions.id, id) });
 
 describe("view counters", () => {
@@ -89,7 +89,7 @@ describe("view counters", () => {
 });
 
 describe("PUT and DELETE /api/v1/submissions/{id}/vote", () => {
-  const vote = (id: string, value: number, cookie?: string) =>
+  const vote = (id: number, value: number, cookie?: string) =>
     api(
       `/api/v1/submissions/${id}/vote`,
       jsonRequest("PUT", { value }, cookie),
@@ -252,7 +252,7 @@ describe("GET /api/v1/me/questions/{id}/interactions", () => {
 
 describe("POST /api/v1/submissions/{id}/reports", () => {
   const report = (
-    id: string,
+    id: number,
     cookie?: string,
     body: object = { reason: "unreadable" },
   ) =>

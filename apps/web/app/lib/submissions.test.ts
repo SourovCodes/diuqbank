@@ -7,7 +7,7 @@ import {
   plural,
 } from "./submissions";
 
-const submission = (id: string, status: Submission["status"]): Submission => ({
+const submission = (id: number, status: Submission["status"]): Submission => ({
   id,
   status,
   fileSize: 1000,
@@ -21,25 +21,25 @@ const submission = (id: string, status: Submission["status"]): Submission => ({
 });
 
 const submissions = [
-  submission("a", "published"),
-  submission("b", "published"),
-  submission("c", "pending_review"),
-  submission("d", "rejected"),
+  submission(1, "published"),
+  submission(2, "published"),
+  submission(3, "pending_review"),
+  submission(4, "rejected"),
 ];
 
 describe("pickSubmission", () => {
   it("defaults to the first (best ranked) published submission", () => {
-    expect(pickSubmission(submissions, null)?.id).toBe("a");
+    expect(pickSubmission(submissions, null)?.id).toBe(1);
   });
 
   it("selects the requested published submission", () => {
-    expect(pickSubmission(submissions, "b")?.id).toBe("b");
+    expect(pickSubmission(submissions, "2")?.id).toBe(2);
   });
 
-  it.each(["c", "d", "missing"])(
+  it.each(["3", "4", "999", "nope"])(
     "falls back when %s is not a published submission",
     (id) => {
-      expect(pickSubmission(submissions, id)?.id).toBe("a");
+      expect(pickSubmission(submissions, id)?.id).toBe(1);
     },
   );
 
@@ -67,7 +67,7 @@ describe("paperDetails", () => {
 
 describe("paperTitles", () => {
   const paper = (
-    id: string,
+    id: number,
     batch: string | null,
     uploader: string | null,
   ) => ({
@@ -78,19 +78,16 @@ describe("paperTitles", () => {
   });
 
   it("keeps distinct titles as they are", () => {
-    const titles = paperTitles([
-      paper("a", "61", "Jane"),
-      paper("b", "62", "Sam"),
-    ]);
+    const titles = paperTitles([paper(1, "61", "Jane"), paper(2, "62", "Sam")]);
     expect([...titles.values()]).toEqual(["Batch 61", "Batch 62"]);
   });
 
   it("adds the uploader to clashing details, then numbers what still clashes", () => {
     const titles = paperTitles([
-      paper("a", "65", "Jane"),
-      paper("b", "65", "Sam"),
-      paper("c", null, null),
-      paper("d", "65", "Sam"),
+      paper(1, "65", "Jane"),
+      paper(2, "65", "Sam"),
+      paper(3, null, null),
+      paper(4, "65", "Sam"),
     ]);
     expect([...titles.values()]).toEqual([
       "Batch 65 · Jane",

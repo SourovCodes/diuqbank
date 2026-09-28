@@ -22,7 +22,7 @@ import type { AppEnv } from "../types";
 
 const tags = ["Engagement"];
 const questionParams = z.object({ id: idQuerySchema });
-const submissionParams = z.object({ id: z.string().min(1) });
+const submissionParams = z.object({ id: idQuerySchema });
 const jsonBody = <T extends z.ZodType>(schema: T) => ({
   required: true,
   content: { "application/json": { schema } },

@@ -109,14 +109,12 @@ export async function seedSubmission(
   questionId: number,
   overrides: Partial<NewSubmissionRow> = {},
 ) {
-  const id = overrides.id ?? crypto.randomUUID();
   const [row] = await db()
     .insert(submissions)
     .values({
-      id,
       questionId,
       status: "published",
-      fileKey: `submissions/${id}.pdf`,
+      fileKey: `submissions/${crypto.randomUUID()}.pdf`,
       fileSize: 1234,
       ...overrides,
     })

@@ -209,8 +209,8 @@ export async function createSubmission(
   const fields = await preferExistingValues(db, params.fields);
   const questionId = await resolveQuestionId(db, fields);
 
-  const id = crypto.randomUUID();
-  const fileKey = `submissions/${id}.pdf`;
+  // Named before the row exists (its id comes from the insert), so not after the id.
+  const fileKey = `submissions/${crypto.randomUUID()}.pdf`;
   await bucket.put(fileKey, file, {
     httpMetadata: { contentType: "application/pdf" },
   });
@@ -222,7 +222,6 @@ export async function createSubmission(
     const [row] = await db
       .insert(submissions)
       .values({
-        id,
         fileKey,
         fileSize: file.size,
         uploaderId: params.uploaderId,
@@ -242,6 +241,6 @@ export async function createSubmission(
     throw err;
   }
   // The AI check runs in the background and publishes the paper if it confirms it.
-  await enqueueAnalysis(db, queue, id, { autoPublish: true });
+  await enqueueAnalysis(db, queue, created.id, { autoPublish: true });
   return created;
 }

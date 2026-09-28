@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   createSubmissionInputSchema,
+  idQuerySchema,
   mySubmissionDetailSchema,
   mySubmissionListSchema,
 } from "@qb/shared";
@@ -18,7 +19,7 @@ import {
 import type { AppEnv } from "../types";
 
 const tags = ["Account"];
-const idParams = z.object({ id: z.string().min(1) });
+const idParams = z.object({ id: idQuerySchema });
 
 const listMySubmissionsRoute = createRoute({
   method: "get",

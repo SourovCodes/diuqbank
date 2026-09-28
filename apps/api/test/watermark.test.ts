@@ -64,7 +64,6 @@ async function seedPaper(overrides: Partial<NewSubmissionRow> = {}) {
   const [row] = await db()
     .insert(submissions)
     .values({
-      id,
       questionId,
       status: "published",
       fileKey,
@@ -80,7 +79,7 @@ async function seedPaper(overrides: Partial<NewSubmissionRow> = {}) {
 const pdfText = async (res: Response) =>
   new TextDecoder().decode(await res.arrayBuffer());
 
-const readRow = async (id: string) =>
+const readRow = async (id: number) =>
   (await db().query.submissions.findFirst({ where: eq(submissions.id, id) }))!;
 
 /** Collects sent messages instead of queueing them. */
@@ -337,7 +336,7 @@ describe("runWatermark", () => {
     const outcome = await runWatermark(
       db(),
       watermarkEnv,
-      { submissionId: crypto.randomUUID() },
+      { submissionId: 999_999 },
       { fetch: processor.fetch },
     );
     expect(outcome).toBe("done");
@@ -494,10 +493,10 @@ describe("admin endpoints", () => {
       { method: "POST", headers: { cookie: admin.cookie } },
     );
     expect(conflict.status).toBe(409);
-    const missing = await api(
-      `/api/v1/admin/submissions/${crypto.randomUUID()}/watermark`,
-      { method: "POST", headers: { cookie: admin.cookie } },
-    );
+    const missing = await api("/api/v1/admin/submissions/999999/watermark", {
+      method: "POST",
+      headers: { cookie: admin.cookie },
+    });
     expect(missing.status).toBe(404);
   });
 

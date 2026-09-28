@@ -22,8 +22,7 @@ import { formatDate } from "~/lib/dates";
 import { formatCount } from "~/lib/format";
 import { paperDetails } from "~/lib/submissions";
 
-export const mySubmissionUrl = (id: string) =>
-  `/account/submissions/${encodeURIComponent(id)}`;
+export const mySubmissionUrl = (id: number) => `/account/submissions/${id}`;
 
 function MySubmissionCard({
   submission,

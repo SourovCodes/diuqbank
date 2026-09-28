@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { isChecking, reviewStage } from "./review";
 
 const base: MySubmission = {
-  id: "s1",
+  id: 1,
   status: "pending_review",
   fileSize: 1000,
   createdAt: "2026-09-01T00:00:00.000Z",

@@ -47,9 +47,9 @@ export type CreatedReport = z.infer<typeof createdReportSchema>;
 export const questionInteractionsSchema = z.object({
   userId: z.string(),
   votes: z.array(
-    z.object({ submissionId: z.string(), value: voteValueSchema }),
+    z.object({ submissionId: z.number().int(), value: voteValueSchema }),
   ),
-  reportedSubmissionIds: z.array(z.string()),
+  reportedSubmissionIds: z.array(z.number().int()),
 });
 export type QuestionInteractions = z.infer<typeof questionInteractionsSchema>;
 

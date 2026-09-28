@@ -16,7 +16,7 @@ import { cn } from "~/lib/utils";
 type SubmissionListProps = {
   /** Already ranked by the API: best-rated published papers first. */
   submissions: Submission[];
-  selectedId: string | null;
+  selectedId: number | null;
 };
 
 function Stat({

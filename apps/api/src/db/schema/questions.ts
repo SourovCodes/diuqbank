@@ -63,9 +63,7 @@ export const questions = sqliteTable(
 export const submissions = sqliteTable(
   "submissions",
   {
-    id: text()
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+    id: integer().primaryKey({ autoIncrement: true }),
     questionId: integer().references(() => questions.id),
 
     // Proposed classification (only while question_id is null). For each of

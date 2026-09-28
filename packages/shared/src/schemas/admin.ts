@@ -174,7 +174,7 @@ export type ClassifySubmissionInput = z.infer<
 export const adminReportSchema = adminSubmissionReportSchema.extend({
   updatedAt: z.iso.datetime(),
   submission: z.object({
-    id: z.string(),
+    id: z.number().int(),
     status: submissionStatusSchema,
     questionId: z.number().int().nullable(),
     pendingReportCount: z.number().int(),

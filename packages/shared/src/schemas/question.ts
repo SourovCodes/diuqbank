@@ -34,7 +34,7 @@ export type SubmissionStats = z.infer<typeof submissionStatsSchema>;
  * is already under review, but only `published` files can be downloaded.
  */
 export const submissionSchema = submissionStatsSchema.extend({
-  id: z.string(),
+  id: z.number().int(),
   status: submissionStatusSchema,
   fileSize: z.number().int(),
   createdAt: z.iso.datetime(),

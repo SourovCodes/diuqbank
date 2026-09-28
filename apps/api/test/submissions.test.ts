@@ -70,7 +70,11 @@ describe("POST /api/v1/submissions", () => {
       questionId: expect.any(Number),
     });
 
-    const object = await env.BUCKET.get(`submissions/${created.id}.pdf`);
+    const row = await db().query.submissions.findFirst({
+      columns: { fileKey: true },
+      where: eq(submissions.id, created.id),
+    });
+    const object = await env.BUCKET.get(row!.fileKey);
     expect(new TextDecoder().decode(await object!.arrayBuffer())).toMatch(
       /^%PDF-/,
     );
@@ -112,7 +116,7 @@ describe("POST /api/v1/submissions", () => {
     const detail = await (
       await api(`/api/v1/questions/${withDetails.questionId}`)
     ).json<QuestionDetail>();
-    const byId = (id: string) => detail.submissions.find((s) => s.id === id);
+    const byId = (id: number) => detail.submissions.find((s) => s.id === id);
     expect(byId(withDetails.id)).toMatchObject({ section: "5A", batch: "61" });
     expect(byId(blank.id)).toMatchObject({ section: null, batch: null });
 

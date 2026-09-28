@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   createdSubmissionSchema,
+  idQuerySchema,
   refineSubmissionFields,
   submissionFieldsSchema,
 } from "@qb/shared";
@@ -52,7 +53,7 @@ const getSubmissionFileRoute = createRoute({
   path: "/{id}/file",
   tags,
   summary: "Download the PDF of a published submission",
-  request: { params: z.object({ id: z.string().min(1) }) },
+  request: { params: z.object({ id: idQuerySchema }) },
   responses: {
     200: {
       description: "PDF file",

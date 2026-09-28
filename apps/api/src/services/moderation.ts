@@ -91,7 +91,7 @@ export async function listAdminSubmissions(
 
 async function findAdminSubmission(
   db: Database,
-  id: string,
+  id: number,
 ): Promise<AdminSubmission | null> {
   const [row] = await selectSubmissionRows(db)
     .where(eq(submissions.id, id))
@@ -99,7 +99,7 @@ async function findAdminSubmission(
   return row ? toAdminSubmission(row) : null;
 }
 
-async function requireAdminSubmission(db: Database, id: string) {
+async function requireAdminSubmission(db: Database, id: number) {
   const submission = await findAdminSubmission(db, id);
   if (!submission) throw notFound();
   return submission;
@@ -114,7 +114,7 @@ const reporterColumns = {
 
 export async function getAdminSubmission(
   db: Database,
-  id: string,
+  id: number,
 ): Promise<AdminSubmissionDetail | null> {
   const submission = await findAdminSubmission(db, id);
   if (!submission) return null;
@@ -150,7 +150,7 @@ export async function getAdminSubmission(
 export async function getAdminSubmissionFile(
   db: Database,
   bucket: R2Bucket,
-  id: string,
+  id: number,
 ) {
   const submission = await db.query.submissions.findFirst({
     columns: { fileKey: true },
@@ -166,7 +166,7 @@ export async function getAdminSubmissionFile(
 export async function updateSubmissionStatus(
   db: Database,
   watermarkQueue: Queue<WatermarkJob>,
-  id: string,
+  id: number,
   status: SubmissionStatus,
 ): Promise<AdminSubmission> {
   const submission = await requireAdminSubmission(db, id);
@@ -251,7 +251,7 @@ async function createMissingValues(
  */
 export async function classifySubmission(
   db: Database,
-  id: string,
+  id: number,
   input: ClassifySubmissionInput,
 ): Promise<AdminSubmission> {
   await requireAdminSubmission(db, id);
@@ -287,7 +287,7 @@ export async function classifySubmission(
 export async function deleteSubmission(
   db: Database,
   bucket: R2Bucket,
-  id: string,
+  id: number,
 ) {
   const [deleted] = await db
     .delete(submissions)

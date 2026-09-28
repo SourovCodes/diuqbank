@@ -125,7 +125,7 @@ export const createSubmissionInputSchema = submissionFieldsSchema.superRefine(
 );
 
 export const createdSubmissionSchema = z.object({
-  id: z.string(),
+  id: z.number().int(),
   status: submissionStatusSchema,
   /** Null when the submission uses new values that an admin still has to create. */
   questionId: z.number().int().nullable(),

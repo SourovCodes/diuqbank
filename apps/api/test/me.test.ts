@@ -41,7 +41,7 @@ async function seedStoredSubmission(
   return row;
 }
 
-const findSubmission = (id: string) =>
+const findSubmission = (id: number) =>
   db().query.submissions.findFirst({ where: eq(submissions.id, id) });
 
 describe("GET /api/v1/me/submissions", () => {
@@ -137,7 +137,7 @@ describe("GET /api/v1/me/submissions/{id}", () => {
 });
 
 describe("PUT /api/v1/me/submissions/{id}/classification", () => {
-  const reclassify = (id: string, body: unknown, cookie: string) =>
+  const reclassify = (id: number, body: unknown, cookie: string) =>
     api(`/api/v1/me/submissions/${id}/classification`, {
       method: "PUT",
       headers: { cookie, "content-type": "application/json" },

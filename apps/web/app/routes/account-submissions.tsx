@@ -176,7 +176,7 @@ function CardActions({
         confirmLabel="Withdraw"
         destructive
         successMessage="Submission withdrawn"
-        fields={{ id: submission.id }}
+        fields={{ id: String(submission.id) }}
         run={run}
       />
     </>

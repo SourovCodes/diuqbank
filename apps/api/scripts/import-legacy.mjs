@@ -5,8 +5,9 @@
 // Usage: LEGACY_TOKEN=<legacy admin JWT> pnpm import-legacy [--remote]
 //   (local D1/R2 unless --remote is given; LEGACY_API_URL overrides the API origin)
 //
-// Safe to re-run: rows get deterministic `legacy-*` ids and are inserted with
-// INSERT OR IGNORE, taxonomy and questions are matched by name, and anything already
+// Safe to re-run: users get deterministic `legacy-*` ids and papers deterministic
+// `submissions/legacy-*.pdf` file keys (their ids are assigned by D1), rows are inserted
+// with INSERT OR IGNORE, taxonomy and questions are matched by name, and anything already
 // imported is skipped (including its R2 upload). Downloads are cached in
 // apps/api/.legacy-import/.
 //
@@ -49,20 +50,21 @@ const DOWNLOAD_CONCURRENCY = 8;
 
 // ---------------------------------------------------------------------------- helpers
 
-function wrangler(args, { json = false } = {}) {
-  const output = execFileSync("pnpm", ["exec", "wrangler", ...args], {
+/** `output`: "inherit" prints wrangler's output, "json" parses it, "quiet" drops it. */
+function wrangler(args, { output = "inherit" } = {}) {
+  const stdout = execFileSync("pnpm", ["exec", "wrangler", ...args], {
     cwd: webDir,
     encoding: "utf8",
-    stdio: ["ignore", json ? "pipe" : "inherit", "inherit"],
+    stdio: ["ignore", output === "inherit" ? "inherit" : "pipe", "inherit"],
     maxBuffer: 256 * 1024 * 1024,
   });
-  return json ? JSON.parse(output) : undefined;
+  return output === "json" ? JSON.parse(stdout) : undefined;
 }
 
 function d1Query(sql) {
   return (
     wrangler(["d1", "execute", "DB", target, "--json", "--command", sql], {
-      json: true,
+      output: "json",
     })[0]?.results ?? []
   );
 }
@@ -275,9 +277,11 @@ console.log(
 const existingUsers = new Set(
   d1Query(`SELECT id FROM "user" WHERE id LIKE 'legacy-%'`).map((r) => r.id),
 );
+/** Imported papers are recognised by their file key; D1 assigns their ids. */
+const LEGACY_FILES = `file_key LIKE 'submissions/legacy-%'`;
 const existingSubmissions = new Set(
-  d1Query(`SELECT id FROM submissions WHERE id LIKE 'legacy-%'`).map(
-    (r) => r.id,
+  d1Query(`SELECT file_key FROM submissions WHERE ${LEGACY_FILES}`).map(
+    (r) => r.file_key,
   ),
 );
 
@@ -292,29 +296,31 @@ for (const s of allUploads) {
   }
 }
 
-/** Legacy submissions and unpublished uploads that are new, with their target id and key. */
+/**
+ * Legacy submissions and unpublished uploads, each with a `ref` for messages
+ * (e.g. `legacy-auto-12`) and the R2 key its PDF is stored under.
+ */
 const allPapers = [
   ...submissions.map((s) => ({
     ...s,
     kind: "published",
     newStatus: "published",
-    newId: `legacy-${s.id}`,
+    ref: `legacy-${s.id}`,
   })),
-  ...uploads.map((s) => ({ ...s, newId: `legacy-${s.kind}-${s.id}` })),
-];
+  ...uploads.map((s) => ({ ...s, ref: `legacy-${s.kind}-${s.id}` })),
+].map((s) => ({ ...s, fileKey: `submissions/${s.ref}.pdf` }));
 const newPapers = allPapers
-  .filter((s) => !existingSubmissions.has(s.newId))
+  .filter((s) => !existingSubmissions.has(s.fileKey))
   .filter((s) => {
     if (s.newStatus) return true;
-    warnings.push(`${s.newId}: unknown legacy status "${s.status}", skipped`);
+    warnings.push(`${s.ref}: unknown legacy status "${s.status}", skipped`);
     return false;
   })
   .filter((s) => {
     if (s.pdfUrl) return true;
-    warnings.push(`${s.newId}: no original PDF, skipped`);
+    warnings.push(`${s.ref}: no original PDF, skipped`);
     return false;
-  })
-  .map((s) => ({ ...s, fileKey: `submissions/${s.newId}.pdf` }));
+  });
 
 const newUsers = users.filter((u) => !existingUsers.has(`legacy-${u.id}`));
 
@@ -326,7 +332,7 @@ await pool(newPapers, async (paper) => {
   paper.fileSize = statSync(paper.file).size;
   const head = readFileSync(paper.file).subarray(0, 5).toString("latin1");
   if (head !== "%PDF-")
-    warnings.push(`${paper.newId}: ${paper.pdfUrl} does not look like a PDF`);
+    warnings.push(`${paper.ref}: ${paper.pdfUrl} does not look like a PDF`);
 });
 
 console.log(`Downloading avatars for ${newUsers.length} users …`);
@@ -497,7 +503,6 @@ for (const p of newPapers) {
       : emailByUserId.get(p.userId);
   const created = ms(p.createdAt);
   const columns = {
-    id: sq(p.newId),
     status: sq(p.newStatus),
     file_key: sq(p.fileKey),
     file_size: p.fileSize,
@@ -511,7 +516,7 @@ for (const p of newPapers) {
   if (p.kind === "published") {
     const q = questionById.get(p.question.id);
     if (!q) {
-      warnings.push(`${p.newId}: unknown question ${p.question.id}, skipped`);
+      warnings.push(`${p.ref}: unknown question ${p.question.id}, skipped`);
       continue;
     }
     columns.question_id = questionExpr(q);
@@ -519,13 +524,13 @@ for (const p of newPapers) {
     const classification = proposedClassification(p);
     if (!classification) {
       warnings.push(
-        `${p.newId}: incomplete classification or unknown exam type "${p.examTypeName}", skipped`,
+        `${p.ref}: incomplete classification or unknown exam type "${p.examTypeName}", skipped`,
       );
       continue;
     }
     Object.assign(columns, classification);
   }
-  imported.push(p.newId);
+  imported.push(p);
   statements.push(
     `INSERT OR IGNORE INTO submissions (${Object.keys(columns).join(", ")}) VALUES (${Object.values(columns).join(", ")});`,
   );
@@ -534,11 +539,11 @@ for (const p of newPapers) {
 // Backfills section and batch on papers imported before those columns existed,
 // without overwriting values an admin has set since.
 for (const p of allPapers) {
-  if (!existingSubmissions.has(p.newId)) continue;
+  if (!existingSubmissions.has(p.fileKey)) continue;
   const [section, batch] = [detail(p.section), detail(p.batch)];
   if (!section && !batch) continue;
   statements.push(
-    `UPDATE submissions SET section = ${sq(section)}, batch = ${sq(batch)} WHERE id = ${sq(p.newId)} AND section IS NULL AND batch IS NULL;`,
+    `UPDATE submissions SET section = ${sq(section)}, batch = ${sq(batch)} WHERE file_key = ${sq(p.fileKey)} AND section IS NULL AND batch IS NULL;`,
   );
 }
 
@@ -546,7 +551,7 @@ for (const p of allPapers) {
 // under its question straight away. Only uploads proposing a new name stay a
 // proposal, since the admin page can only publish filed submissions. Also repairs
 // rows from earlier runs.
-const fullyExisting = `id LIKE 'legacy-%' AND question_id IS NULL AND department_id IS NOT NULL AND course_id IS NOT NULL AND semester_id IS NOT NULL`;
+const fullyExisting = `${LEGACY_FILES} AND question_id IS NULL AND department_id IS NOT NULL AND course_id IS NOT NULL AND semester_id IS NOT NULL`;
 const sameQuestion = `q.course_id = submissions.course_id AND q.semester_id = submissions.semester_id AND q.exam_type_id = submissions.exam_type_id`;
 statements.push(
   `INSERT OR IGNORE INTO questions (department_id, course_id, semester_id, exam_type_id) SELECT DISTINCT department_id, course_id, semester_id, exam_type_id FROM submissions WHERE ${fullyExisting};`,
@@ -558,11 +563,12 @@ writeFileSync(sqlFile, `${statements.join("\n")}\n`);
 console.log(
   `Writing ${statements.length} statements to ${remote ? "remote" : "local"} D1 …`,
 );
-// Captured, not printed: wrangler reports one result object per statement.
+// Not printed: wrangler reports one result object per statement. Not parsed either: with
+// --remote, upload progress comes before the JSON.
 wrangler(
   ["d1", "execute", "DB", target, "--yes", "--json", "--file", sqlFile],
   {
-    json: true,
+    output: "quiet",
   },
 );
 
@@ -570,22 +576,22 @@ wrangler(
 
 // INSERT OR IGNORE skips rows silently (e.g. a lookup that found nothing), so check.
 const present = new Set(
-  d1Query(`SELECT id FROM submissions WHERE id LIKE 'legacy-%'`).map(
-    (r) => r.id,
+  d1Query(`SELECT file_key FROM submissions WHERE ${LEGACY_FILES}`).map(
+    (r) => r.file_key,
   ),
 );
-for (const id of imported) {
-  if (!present.has(id))
+for (const p of imported) {
+  if (!present.has(p.fileKey))
     warnings.push(
-      `${id}: row was not inserted (question or classification lookup failed)`,
+      `${p.ref}: row was not inserted (question or classification lookup failed)`,
     );
 }
 const [counts] = d1Query(
   `SELECT (SELECT count(*) FROM "user" WHERE id LIKE 'legacy-%') AS users,
           (SELECT count(*) FROM questions) AS questions,
-          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'published') AS published,
-          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'pending_review') AS pending,
-          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'rejected') AS rejected`,
+          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'published') AS published,
+          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'pending_review') AS pending,
+          (SELECT count(*) FROM submissions WHERE ${LEGACY_FILES} AND status = 'rejected') AS rejected`,
 );
 
 if (warnings.length > 0) {

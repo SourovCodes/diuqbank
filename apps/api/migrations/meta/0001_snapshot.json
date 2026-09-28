@@ -1,6 +1,6 @@
 {
-  "id": "50843b74-66d2-40b4-a573-348368cb731d",
-  "prevId": "3f9cfe0c-3ef3-4931-8f6b-07a5b0b71aab",
+  "id": "abe2e26c-2d03-448f-882e-f48a1e1e8b74",
+  "prevId": "6906c5ed-fef7-4fc6-9d99-3cf118166216",
   "version": "6",
   "dialect": "sqlite",
   "tables": {
@@ -9,7 +9,7 @@
       "columns": {
         "submission_id": {
           "name": "submission_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -656,7 +656,7 @@
         },
         "submission_id": {
           "name": "submission_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -770,7 +770,7 @@
       "columns": {
         "submission_id": {
           "name": "submission_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -1020,10 +1020,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": true
         },
         "question_id": {
           "name": "question_id",
