@@ -38,15 +38,21 @@ describe("compareWithAnalysis", () => {
       values,
     );
     expect(
-      rows.map(({ label, differs, aiIsNew }) => [label, differs, aiIsNew]),
+      rows.map(({ label, differs, aiIsNew, applies }) => [
+        label,
+        differs,
+        aiIsNew,
+        applies,
+      ]),
     ).toEqual([
-      ["Department", false, false],
-      ["Course", false, true],
-      ["Semester", true, true],
-      ["Exam type", true, true],
-      ["Section", true, false],
+      ["Department", false, false, false],
+      ["Course", false, true, false],
+      ["Semester", true, true, true],
+      // New exam types can't be proposed: using the AI's details keeps ours.
+      ["Exam type", true, true, false],
+      ["Section", true, false, true],
       // Not read by the AI: not a disagreement.
-      ["Batch", false, false],
+      ["Batch", false, false, false],
     ]);
   });
 });

@@ -455,6 +455,14 @@ test("a contributor can manage their submissions and profile", async ({
   const courseName = `E2E Withdrawn ${suffix}`;
   await uploadPaperWithNewCourse(page, courseName);
 
+  // A pending paper's details can be fixed without uploading it again.
+  await page.getByRole("button", { name: "Edit details" }).click();
+  const editDialog = page.getByRole("dialog", { name: "Edit details" });
+  await editDialog.getByLabel("Section (optional)").fill("B");
+  await editDialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Details saved")).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("Section B");
+
   // The account menu leads to the user's own submissions, including unpublished ones.
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "My submissions" }).click();

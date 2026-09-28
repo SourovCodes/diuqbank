@@ -52,6 +52,11 @@ export type ComparisonRow = {
   aiIsNew: boolean;
   /** The AI read a value, and it isn't the submitted one. */
   differs: boolean;
+  /**
+   * Using the AI's details would change this field. Not for a new exam type: those
+   * can't be proposed, so the submitted one is kept.
+   */
+  applies: boolean;
 };
 
 /** The submission's values next to the AI's, field by field. */
@@ -69,13 +74,18 @@ export function compareWithAnalysis(
     mine: Named,
     theirs: Named,
     isEntry = true,
-  ): ComparisonRow => ({
-    label,
-    submitted: mine?.name ?? null,
-    ai: theirs?.name ?? null,
-    aiIsNew: isEntry && theirs !== null && theirs.id === null,
-    differs: theirs !== null && !sameValue(mine, theirs),
-  });
+  ): ComparisonRow => {
+    const aiIsNew = isEntry && theirs !== null && theirs.id === null;
+    const differs = theirs !== null && !sameValue(mine, theirs);
+    return {
+      label,
+      submitted: mine?.name ?? null,
+      ai: theirs?.name ?? null,
+      aiIsNew,
+      differs,
+      applies: differs && !(label === "Exam type" && aiIsNew),
+    };
+  };
   const detail = (label: string, mine: string | null, theirs: string | null) =>
     entry(
       label,

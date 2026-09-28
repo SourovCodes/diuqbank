@@ -3,12 +3,14 @@ import {
   Bot,
   ChevronDown,
   CircleCheck,
+  CircleHelp,
   ExternalLink,
   Globe,
   LoaderCircle,
   Pencil,
   Trash2,
   TriangleAlert,
+  Upload,
   Wand2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +27,7 @@ import { PdfViewer } from "~/components/pdf-viewer";
 import { RelativeTime } from "~/components/relative-time";
 import { TONE_CLASSES, ToneIcon } from "~/components/review-stage";
 import { StatusBadge } from "~/components/status-badge";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -49,6 +52,7 @@ import {
   classificationLine,
   ownSubmissionFileUrl,
   paperDetails,
+  proposesNewEntries,
   publicUrl,
 } from "~/lib/submissions";
 import { loadTaxonomy } from "~/lib/taxonomy.server";
@@ -183,7 +187,25 @@ function ComparisonItem({ row }: { row: ComparisonRow }) {
               <span>
                 <span className="font-normal">The AI read </span>
                 {row.ai}
+                {row.aiIsNew && (
+                  <Badge variant="secondary" className="ml-1.5 align-middle">
+                    New
+                  </Badge>
+                )}
               </span>
+            </span>
+            {!row.applies && (
+              <span className="text-xs text-muted-foreground">
+                Not in the list yet: pick the closest one with Edit details.
+              </span>
+            )}
+          </>
+        ) : row.ai === null ? (
+          <>
+            <span className="break-words">{row.submitted}</span>
+            <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
+              <CircleHelp className="mt-px size-3.5 shrink-0" aria-hidden />
+              The AI couldn’t read this
             </span>
           </>
         ) : (
@@ -200,36 +222,99 @@ function ComparisonItem({ row }: { row: ComparisonRow }) {
   );
 }
 
+/** The file isn't one question paper: say why, and how to fix it. */
+function FlaggedCheck({
+  submission,
+  analysis,
+  onWithdraw,
+}: {
+  submission: MySubmissionDetail;
+  analysis: UploaderAnalysis;
+  onWithdraw: () => void;
+}) {
+  const multiple = analysis.flag === "multiple_papers";
+  const fix = multiple
+    ? "Upload each paper on its own, then withdraw this file."
+    : "If it’s the wrong file, withdraw it and upload the question paper instead.";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="size-4" aria-hidden />
+          AI check
+        </CardTitle>
+        <CardDescription className="flex items-start gap-1.5 font-medium text-amber-700 dark:text-amber-400">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {multiple
+            ? `This file holds ${analysis.paperCount} question papers.`
+            : "This doesn’t look like an exam question paper."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 text-sm">
+        {analysis.note && (
+          <p className="border-l-2 pl-3 text-muted-foreground">
+            {analysis.note}
+          </p>
+        )}
+        {submission.status !== "published" && (
+          <>
+            <p className="text-muted-foreground">
+              {fix} Think the AI got it wrong? Leave it as it is and an admin
+              will check.
+            </p>
+            <div className="flex flex-wrap gap-2 border-t pt-4">
+              <Button size="sm" variant="outline" onClick={onWithdraw}>
+                <Trash2 />
+                Withdraw
+              </Button>
+              <Button size="sm" variant="ghost" asChild>
+                <Link to="/contribute">
+                  <Upload />
+                  Upload a paper
+                </Link>
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /** The AI's verdict, and its reading next to the uploader's details. */
 function DetailsCheck({
   submission,
   analysis,
-  taxonomy,
 }: {
   submission: MySubmissionDetail;
   analysis: UploaderAnalysis;
-  taxonomy: Taxonomy | null;
 }) {
-  const [showMatching, setShowMatching] = useState(false);
+  const [showRest, setShowRest] = useState(false);
   const values = analysis.values!;
   // Department, course, semester and exam type; section and batch only when set.
   const rows = compareWithAnalysis(submission, values).filter(
     (row, i) => i < 4 || row.submitted !== null || row.ai !== null,
   );
   const differing = rows.filter((row) => row.differs);
-  const matching = rows.filter((row) => !row.differs);
-  const matchingMain = rows.slice(0, 4).filter((row) => !row.differs).length;
-  const problem =
-    analysis.flag === "not_a_paper"
-      ? "It doesn’t look like an exam question paper."
-      : analysis.flag === "multiple_papers"
-        ? `The file holds ${analysis.paperCount} question papers; upload each one on its own.`
-        : null;
-  const summary =
-    problem ??
-    (differing.length === 0
-      ? "One question paper, and every detail matches yours."
-      : `One question paper. ${matchingMain} of 4 details match yours.`);
+  const rest = rows.filter((row) => !row.differs);
+  const main = rows.slice(0, 4);
+  const matchingMain = main.filter((row) => row.ai !== null && !row.differs);
+  const unreadMain = main.filter((row) => row.ai === null);
+  let summary: string;
+  if (differing.length > 0) {
+    summary = `One question paper. ${matchingMain.length} of 4 details match yours.`;
+  } else if (unreadMain.length > 0) {
+    summary =
+      "One question paper. Everything the AI could read matches your details.";
+  } else {
+    summary = "One question paper, and every detail matches yours.";
+  }
+
+  const applied = classificationFromAnalysis(submission.classification, values);
+  const canApply =
+    submission.status === "pending_review" &&
+    differing.some((row) => row.applies);
 
   return (
     <Card>
@@ -253,10 +338,10 @@ function DetailsCheck({
             ))}
           </dl>
         )}
-        {matching.length > 0 &&
-          (differing.length === 0 || showMatching ? (
+        {rest.length > 0 &&
+          (differing.length === 0 || showRest ? (
             <dl className="grid gap-3">
-              {matching.map((row) => (
+              {rest.map((row) => (
                 <ComparisonItem key={row.label} row={row} />
               ))}
             </dl>
@@ -265,54 +350,43 @@ function DetailsCheck({
               variant="ghost"
               size="sm"
               className="-ml-2 justify-self-start text-muted-foreground"
-              onClick={() => setShowMatching(true)}
+              onClick={() => setShowRest(true)}
             >
               <ChevronDown />
-              Show {matching.length} matching{" "}
-              {matching.length === 1 ? "detail" : "details"}
+              Show {rest.length} other{" "}
+              {rest.length === 1 ? "detail" : "details"}
             </Button>
           ))}
-        {submission.status === "pending_review" &&
-          taxonomy &&
-          differing.length > 0 && (
-            <div className="flex flex-wrap gap-2 border-t pt-4">
-              <ConfirmAction
-                trigger={
-                  <Button size="sm">
-                    <Wand2 />
-                    Use the AI’s details
-                  </Button>
-                }
-                title="Use the AI’s details?"
-                description="Your paper is filed under what the AI read. If that all matches existing entries, it’s published right away."
-                confirmLabel="Use them"
-                successMessage="Details updated"
-                fields={{
-                  intent: "details",
-                  ...classificationFields(
-                    classificationFromAnalysis(
-                      submission.classification,
-                      values,
-                    ),
-                    {
-                      section: values.section ?? submission.section,
-                      batch: values.batch ?? submission.batch,
-                    },
-                  ),
-                }}
-              />
-              <EditDetailsDialog
-                submission={submission}
-                taxonomy={taxonomy}
-                trigger={
-                  <Button size="sm" variant="outline">
-                    <Pencil />
-                    Edit my details
-                  </Button>
-                }
-              />
-            </div>
-          )}
+        {canApply && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-4">
+            <ConfirmAction
+              trigger={
+                <Button size="sm">
+                  <Wand2 />
+                  Use the AI’s details
+                </Button>
+              }
+              title="Use the AI’s details?"
+              description={
+                proposesNewEntries(applied)
+                  ? "Your paper is filed under what the AI read. That adds a new department, course or semester, so an admin approves it before it’s published."
+                  : "Your paper is filed under what the AI read. If that all matches, it’s published right away."
+              }
+              confirmLabel="Use them"
+              successMessage="Details updated"
+              fields={{
+                intent: "details",
+                ...classificationFields(applied, {
+                  section: values.section ?? submission.section,
+                  batch: values.batch ?? submission.batch,
+                }),
+              }}
+            />
+            <span className="text-xs text-muted-foreground">
+              or fix them yourself with Edit details.
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -348,13 +422,13 @@ function ActivityCard({ submission }: { submission: MySubmissionDetail }) {
   );
 }
 
-/** The AI check while it runs, its result, or a way to fix details without one. */
+/** The AI check while it runs, or its result. */
 function CheckPanel({
   submission,
-  taxonomy,
+  onWithdraw,
 }: {
   submission: MySubmissionDetail;
-  taxonomy: Taxonomy | null;
+  onWithdraw: () => void;
 }) {
   const analysis = submission.analysisDetail;
   if (isChecking(submission)) {
@@ -367,38 +441,17 @@ function CheckPanel({
       </Card>
     );
   }
-  if (analysis?.status === "completed" && analysis.values) {
+  if (analysis?.status === "completed" && analysis.flag) {
     return (
-      <DetailsCheck
+      <FlaggedCheck
         submission={submission}
         analysis={analysis}
-        taxonomy={taxonomy}
+        onWithdraw={onWithdraw}
       />
     );
   }
-  if (submission.status === "pending_review" && taxonomy) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Your details</CardTitle>
-          <CardDescription>
-            Spotted a mistake? Fix it before an admin reviews the paper.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EditDetailsDialog
-            submission={submission}
-            taxonomy={taxonomy}
-            trigger={
-              <Button size="sm" variant="outline">
-                <Pencil />
-                Edit details
-              </Button>
-            }
-          />
-        </CardContent>
-      </Card>
-    );
+  if (analysis?.status === "completed" && analysis.values) {
+    return <DetailsCheck submission={submission} analysis={analysis} />;
   }
   return null;
 }
@@ -462,6 +515,18 @@ export default function AccountSubmission({
                 Open PDF
               </a>
             </Button>
+            {submission.status === "pending_review" && taxonomy && (
+              <EditDetailsDialog
+                submission={submission}
+                taxonomy={taxonomy}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <Pencil />
+                    Edit details
+                  </Button>
+                }
+              />
+            )}
             {submission.status !== "published" && (
               <Button
                 variant="outline"
@@ -484,7 +549,10 @@ export default function AccountSubmission({
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-4 lg:order-2">
-          <CheckPanel submission={submission} taxonomy={taxonomy} />
+          <CheckPanel
+            submission={submission}
+            onWithdraw={() => setWithdrawing(true)}
+          />
           <ActivityCard submission={submission} />
         </div>
         <div className="min-w-0 lg:order-1">
