@@ -11,7 +11,7 @@ export type ReviewStage = {
 
 /** Where an uploader's paper is in the review, in plain words. */
 export function reviewStage(submission: MySubmission): ReviewStage {
-  const { status, analysis, autoPublished } = submission;
+  const { status, analysis, autoPublished, rejectionReason } = submission;
 
   if (status === "published") {
     return autoPublished
@@ -30,8 +30,9 @@ export function reviewStage(submission: MySubmission): ReviewStage {
   if (status === "rejected") {
     return {
       label: "Rejected",
-      description:
-        "An admin reviewed your paper and didn’t publish it. You can withdraw it and upload a corrected one.",
+      description: rejectionReason
+        ? `An admin didn’t publish your paper: ${rejectionReason} You can withdraw it and upload a corrected one.`
+        : "An admin reviewed your paper and didn’t publish it. You can withdraw it and upload a corrected one.",
       tone: "neutral",
     };
   }

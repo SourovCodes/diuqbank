@@ -24,6 +24,7 @@ const base: MySubmission = {
     examType: { id: 4, name: "Final" },
   },
   autoPublished: false,
+  rejectionReason: null,
   analysis: { status: "completed", flag: null, matches: true },
 };
 
@@ -36,6 +37,13 @@ describe("reviewStage", () => {
       "Published by an admin",
     );
     expect(reviewStage({ ...base, status: "rejected" }).label).toBe("Rejected");
+    expect(
+      reviewStage({
+        ...base,
+        status: "rejected",
+        rejectionReason: "This file is not a valid exam question paper.",
+      }).description,
+    ).toContain("This file is not a valid exam question paper.");
   });
 
   it("explains why a paper waits for an admin", () => {

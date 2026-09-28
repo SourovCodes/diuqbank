@@ -169,8 +169,10 @@ export async function updateSubmissionStatus(
   watermarkQueue: Queue<WatermarkJob>,
   id: number,
   status: SubmissionStatus,
+  reason?: string,
 ): Promise<AdminSubmission> {
   const submission = await requireAdminSubmission(db, id);
+  const rejectionReason = status === "rejected" ? (reason ?? null) : null;
   if (status === "published" && submission.questionId === null) {
     throw new AppError(
       409,
@@ -182,10 +184,16 @@ export async function updateSubmissionStatus(
     // An admin's decision replaces the AI's.
     await db
       .update(submissions)
-      .set({ status, autoPublishedAt: null })
+      .set({ status, autoPublishedAt: null, rejectionReason })
       .where(eq(submissions.id, id));
     if (status === "published")
       await watermarkIfMissing(db, watermarkQueue, id);
+  } else if (status === "rejected" && rejectionReason !== null) {
+    // Rejected again: the reason can be reworded.
+    await db
+      .update(submissions)
+      .set({ rejectionReason })
+      .where(eq(submissions.id, id));
   }
   return requireAdminSubmission(db, id);
 }

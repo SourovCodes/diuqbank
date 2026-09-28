@@ -137,6 +137,7 @@ export function selectSubmissionRows(db: Database) {
         image: user.image,
       },
       autoPublishedAt: submissions.autoPublishedAt,
+      rejectionReason: submissions.rejectionReason,
       publicFileSize: publicFileSize.mapWith(Number),
       watermark: {
         status: submissions.watermarkStatus,
@@ -240,6 +241,7 @@ export function toAdminSubmission(row: SubmissionRowData): AdminSubmission {
     uploader: row.uploader,
     analysis: toAnalysisSummary(row),
     autoPublished: row.autoPublishedAt !== null,
+    rejectionReason: row.rejectionReason,
     watermark: row.watermark?.status
       ? { ...row.watermark, status: row.watermark.status }
       : null,
@@ -255,6 +257,7 @@ export function toMySubmission(row: SubmissionRowData): MySubmission {
     ...toContributorSubmission(row),
     fileSize: row.submission.fileSize,
     autoPublished: row.autoPublishedAt !== null,
+    rejectionReason: row.rejectionReason,
     analysis: toAnalysisSummary(row),
   };
 }

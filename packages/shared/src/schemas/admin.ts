@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  MAX_REJECTION_REASON_LENGTH,
   normalizeCatalogName,
   USER_ROLES,
   WATERMARK_STATUSES,
@@ -100,6 +101,8 @@ export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   analysis: analysisSummarySchema.nullable(),
   /** Published by the AI check right after upload, not by an admin. */
   autoPublished: z.boolean(),
+  /** Why it was rejected; null unless rejected. */
+  rejectionReason: z.string().nullable(),
   /**
    * The public copy with a credit line. Null when it was never requested; until
    * it's done, the public gets the original.
@@ -143,9 +146,16 @@ export const adminSubmissionDetailSchema = adminSubmissionSchema.extend({
 });
 export type AdminSubmissionDetail = z.infer<typeof adminSubmissionDetailSchema>;
 
-export const updateSubmissionStatusInputSchema = z.object({
-  status: submissionStatusSchema,
-});
+export const updateSubmissionStatusInputSchema = z
+  .object({
+    status: submissionStatusSchema,
+    /** Shown to the uploader. Required when rejecting, ignored otherwise. */
+    reason: z.string().trim().max(MAX_REJECTION_REASON_LENGTH).optional(),
+  })
+  .refine((input) => input.status !== "rejected" || !!input.reason, {
+    path: ["reason"],
+    message: "Give a reason for rejecting",
+  });
 export type UpdateSubmissionStatusInput = z.infer<
   typeof updateSubmissionStatusInputSchema
 >;

@@ -517,7 +517,7 @@ describe("auto-publishing", () => {
     });
     const res = await asAdmin(
       `/api/v1/admin/submissions/${paper.id}`,
-      jsonRequest("PATCH", { status: "rejected" }),
+      jsonRequest("PATCH", { status: "rejected", reason: "Wrong details." }),
     );
     expect(await res.json()).toMatchObject({
       status: "rejected",

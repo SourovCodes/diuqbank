@@ -6,6 +6,8 @@ import { contributorSubmissionSchema } from "./contributor";
 export const mySubmissionSchema = contributorSubmissionSchema.extend({
   /** Published by the AI check right after upload, not by an admin. */
   autoPublished: z.boolean(),
+  /** The admin's reason; null unless rejected. */
+  rejectionReason: z.string().nullable(),
   /** Null for papers that were never checked. */
   analysis: analysisSummarySchema.nullable(),
 });

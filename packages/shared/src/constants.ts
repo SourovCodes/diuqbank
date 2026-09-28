@@ -18,6 +18,32 @@ export const REPORT_REASONS = [
 ] as const;
 export const REPORT_STATUSES = ["pending", "resolved", "dismissed"] as const;
 export const MAX_REPORT_DETAILS_LENGTH = 500;
+
+export const MAX_REJECTION_REASON_LENGTH = 1000;
+
+/** Common reasons for rejecting a paper, offered to admins as starting points. */
+export const REJECTION_REASON_PRESETS = [
+  {
+    label: "Multiple papers",
+    text: "This PDF contains multiple question papers. Please upload each question paper as a separate PDF.",
+  },
+  {
+    label: "Not a question paper",
+    text: "This file is not a valid exam question paper.",
+  },
+  {
+    label: "Wrong details",
+    text: "The details you provided (department, course, semester or exam type) do not match the uploaded paper.",
+  },
+  {
+    label: "Unreadable",
+    text: "The PDF is too blurry or incomplete to read. Please upload a clearer scan.",
+  },
+  {
+    label: "Duplicate",
+    text: "This paper is already in the question bank.",
+  },
+] as const;
 /**
  * Pending reports from different users that move a published submission back to
  * pending review. Enforced by the `submission_reports_after_insert` trigger in

@@ -89,6 +89,8 @@ export const submissions = sqliteTable(
      * admin changes the status.
      */
     autoPublishedAt: integer({ mode: "timestamp_ms" }),
+    /** Why an admin rejected it, shown to the uploader; null unless rejected. */
+    rejectionReason: text(),
     /** R2 object key of the PDF. */
     fileKey: text().notNull().unique(),
     fileSize: integer().notNull(),

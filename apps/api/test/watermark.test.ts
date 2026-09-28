@@ -189,7 +189,7 @@ describe("queueing on publish", () => {
   it("doesn't queue rejections", async () => {
     const paper = await seedPaper({ status: "pending_review" });
     const { queue, sent } = fakeQueue();
-    await updateSubmissionStatus(db(), queue, paper.id, "rejected");
+    await updateSubmissionStatus(db(), queue, paper.id, "rejected", "No.");
     expect(sent).toEqual([]);
     expect((await readRow(paper.id)).watermarkStatus).toBeNull();
   });

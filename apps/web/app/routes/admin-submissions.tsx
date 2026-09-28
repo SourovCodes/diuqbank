@@ -15,9 +15,11 @@ import {
   Inbox,
   Stamp,
 } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ConfirmAction, useFormAction } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
+import { RejectDialog } from "~/components/admin/reject-dialog";
 import {
   AnalysisBadge,
   SubmissionFlags,
@@ -121,14 +123,17 @@ type Run = ReturnType<typeof useFormAction>["run"];
 function RowActions({
   submission,
   run,
+  onReject,
 }: {
   submission: AdminSubmission;
   run: Run;
+  /** Rejecting asks for a reason, in a dialog the page owns. */
+  onReject: () => void;
 }) {
-  const decide = (status: SubmissionStatus) =>
+  const publish = () =>
     run(
-      { intent: "status", status },
-      status === "published" ? "Paper published" : "Paper rejected",
+      { intent: "status", status: "published" },
+      "Paper published",
       adminSubmissionUrl(submission.id),
     );
 
@@ -171,7 +176,7 @@ function RowActions({
           disabled={
             submission.status === "published" || submission.questionId === null
           }
-          onSelect={() => decide("published")}
+          onSelect={publish}
         >
           <CircleCheck />
           Publish
@@ -179,7 +184,7 @@ function RowActions({
         <DropdownMenuItem
           variant="destructive"
           disabled={submission.status === "rejected"}
-          onSelect={() => decide("rejected")}
+          onSelect={onReject}
         >
           <CircleX />
           Reject
@@ -193,8 +198,11 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
   const { list, status, ai } = loaderData;
   const { counts } = list;
   const navigate = useNavigate();
-  // Owned by the page: a published paper leaves the pending list, row and all.
+  // Owned by the page: a published or rejected paper leaves the pending list, row
+  // and all, which would take a dialog or toast of its own with it.
   const { run } = useFormAction();
+  // Keyed per opening, so each one starts from a fresh dialog.
+  const [rejecting, setRejecting] = useState<{ id: number; key: number }>();
 
   /** Search string for a status, AI filter and page, leaving out the defaults. */
   const searchFor = (
@@ -392,7 +400,13 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
                       <SubmissionStatusBadge status={submission.status} />
                     </TableCell>
                     <TableCell>
-                      <RowActions submission={submission} run={run} />
+                      <RowActions
+                        submission={submission}
+                        run={run}
+                        onReject={() =>
+                          setRejecting({ id: submission.id, key: Date.now() })
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -408,6 +422,14 @@ export default function AdminSubmissions({ loaderData }: Route.ComponentProps) {
           hrefFor={hrefFor}
         />
       </UrlTabs>
+      {rejecting && (
+        <RejectDialog
+          key={rejecting.key}
+          open
+          onOpenChange={(open) => !open && setRejecting(undefined)}
+          action={adminSubmissionUrl(rejecting.id)}
+        />
+      )}
     </>
   );
 }

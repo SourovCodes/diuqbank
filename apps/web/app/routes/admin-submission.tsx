@@ -34,6 +34,7 @@ import {
   useFormAction,
 } from "~/components/actions";
 import { AdminPageHeader } from "~/components/admin/admin-header";
+import { RejectDialog } from "~/components/admin/reject-dialog";
 import {
   ReportStatusBadge,
   SubmissionFlags,
@@ -124,6 +125,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     case "status":
       return adminRequest(request, intent, "PATCH", path, {
         status: form.get("status"),
+        reason: form.get("reason") ?? undefined,
       });
     case "classify":
       return adminRequest(
@@ -169,6 +171,7 @@ function DecisionActions({
   submission: AdminSubmissionDetail;
 }) {
   const [deleting, setDeleting] = useState(false);
+  const [rejecting, setRejecting] = useState<number>();
   const needsClassification = submission.questionId === null;
   const { status } = submission;
   const { busy, pending, run } = useFormAction();
@@ -204,10 +207,24 @@ function DecisionActions({
           publish
         ))}
       {status !== "rejected" && (
-        <Button {...decide("rejected")} size="sm" variant="outline">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setRejecting(Date.now())}
+        >
           <CircleX />
-          {deciding === "rejected" ? "Rejecting…" : "Reject"}
+          Reject
         </Button>
+      )}
+      {/* Outside the condition above: the paper is rejected by the time the
+          dialog's result toast shows. Keyed per opening. */}
+      {rejecting !== undefined && (
+        <RejectDialog
+          key={rejecting}
+          open
+          onOpenChange={(open) => !open && setRejecting(undefined)}
+        />
       )}
       {status !== "pending_review" && (
         <Button {...decide("pending_review")} size="sm" variant="outline">
@@ -725,6 +742,30 @@ export default function AdminSubmission({ loaderData }: Route.ComponentProps) {
         </div>
       </AdminPageHeader>
 
+      {submission.status === "rejected" && (
+        <Alert>
+          <CircleX />
+          <AlertTitle>Rejected</AlertTitle>
+          <AlertDescription className="grid gap-2">
+            <p className="whitespace-pre-line">
+              {submission.rejectionReason ?? "No reason was given."}
+            </p>
+            <RejectDialog
+              defaultReason={submission.rejectionReason}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="justify-self-start"
+                >
+                  <Pencil />
+                  Change the reason
+                </Button>
+              }
+            />
+          </AlertDescription>
+        </Alert>
+      )}
       {newEntries.length > 0 && (
         <Alert>
           <Sparkles />

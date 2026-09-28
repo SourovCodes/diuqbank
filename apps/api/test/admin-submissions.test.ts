@@ -239,10 +239,14 @@ describe("GET /api/v1/admin/submissions/{id}/file", () => {
 });
 
 describe("PATCH /api/v1/admin/submissions/{id}", () => {
-  const setStatus = (id: number, status: string) =>
+  const setStatus = (
+    id: number,
+    status: string,
+    reason = status === "rejected" ? "Not a question paper." : undefined,
+  ) =>
     asAdmin(
       `/api/v1/admin/submissions/${id}`,
-      jsonRequest("PATCH", { status }),
+      jsonRequest("PATCH", { status, reason }),
     );
 
   it("publishes, rejects and re-queues a submission", async () => {
@@ -259,6 +263,38 @@ describe("PATCH /api/v1/admin/submissions/{id}", () => {
 
     expect((await setStatus(submission.id, "archived")).status).toBe(422);
     expect((await setStatus(999_999, "published")).status).toBe(404);
+  });
+
+  it("rejects with a reason for the uploader, and clears it otherwise", async () => {
+    const question = await seedAnyQuestion();
+    const submission = await seedSubmission(question.id, {
+      status: "pending_review",
+      uploaderId: member.id,
+    });
+
+    const missing = await setStatus(submission.id, "rejected", "  ");
+    expect(missing.status).toBe(422);
+
+    const reason = "This PDF contains multiple question papers.";
+    const rejected = await setStatus(submission.id, "rejected", reason);
+    expect(await rejected.json<AdminSubmission>()).toMatchObject({
+      status: "rejected",
+      rejectionReason: reason,
+    });
+    // The uploader sees it.
+    const mine = await api(`/api/v1/me/submissions/${submission.id}`, {
+      headers: { cookie: member.cookie },
+    });
+    expect(await mine.json()).toMatchObject({ rejectionReason: reason });
+
+    // Rejected again: the reason is reworded.
+    const reworded = await setStatus(submission.id, "rejected", "Duplicate.");
+    expect(await reworded.json()).toMatchObject({
+      rejectionReason: "Duplicate.",
+    });
+
+    const back = await setStatus(submission.id, "pending_review");
+    expect(await back.json()).toMatchObject({ rejectionReason: null });
   });
 
   it("won't publish a proposal before it is classified", async () => {

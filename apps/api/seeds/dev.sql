@@ -95,6 +95,8 @@ INSERT INTO questions (id, department_id, course_id, semester_id, exam_type_id) 
 INSERT INTO submissions (id, question_id, status, file_key, file_size, uploader_id, created_at, updated_at) VALUES
   (16, 11, 'published', 'submissions/seed-16.pdf', 0, 'seed-user-3', 1760000000000, 1760000000000);
 UPDATE submissions SET section = 'A', batch = '61' WHERE id = 1;
+UPDATE submissions SET rejection_reason = 'This PDF contains multiple question papers. Please upload each question paper as a separate PDF.' WHERE id = 12;
+UPDATE submissions SET rejection_reason = 'This file is not a valid exam question paper.' WHERE id = 14;
 
 -- AI analyses. #15: the AI reads a different semester and a section. #13: the
 -- AI found two papers in one file.

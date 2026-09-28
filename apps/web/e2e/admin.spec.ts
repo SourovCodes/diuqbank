@@ -43,8 +43,14 @@ test("an admin approves a proposed course and publishes the paper", async ({
   await expect(page.getByRole("link", { name: "Contribute" })).toHaveCount(0);
   await page.getByRole("link", { name: "Review submissions" }).click();
   await expect(page).toHaveURL(/\/admin\/submissions$/);
-  await page.getByRole("link", { name: new RegExp(courseName) }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(courseName);
+  // A click that lands before hydration is dropped, so retry until it navigates.
+  await expect(async () => {
+    await page.getByRole("link", { name: new RegExp(courseName) }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      courseName,
+      { timeout: 2_000 },
+    );
+  }).toPass();
   await expect(
     page.getByText("This paper proposes new catalog entries"),
   ).toBeVisible();
@@ -195,4 +201,50 @@ test("an admin compares the AI's reading and prefills the form with it", async (
   await expect(
     page.getByText("The AI found several question papers in this file"),
   ).toBeVisible();
+});
+
+test("an admin rejects a paper with a reason the uploader sees", async ({
+  page,
+  browser,
+}) => {
+  const courseName = `E2E Rejected ${unique()}`;
+  await logInAs(page, NEW_USER, "/contribute");
+  await uploadPaperWithNewCourse(page, courseName);
+
+  // The admin, in a separate browser session.
+  const admin = await browser.newPage();
+  await logInAs(admin, SEED_ADMIN, "/admin/submissions");
+  await expect(async () => {
+    await admin.getByRole("link", { name: new RegExp(courseName) }).click();
+    await expect(admin.getByRole("heading", { level: 1 })).toHaveText(
+      courseName,
+      { timeout: 2_000 },
+    );
+  }).toPass();
+
+  const dialog = admin.getByRole("dialog");
+  await expect(async () => {
+    await admin.getByRole("button", { name: "Reject" }).click();
+    await expect(dialog).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  // A common reason fills in the text, which stays editable.
+  await dialog.getByRole("button", { name: "Multiple papers" }).click();
+  const reason = dialog.getByLabel("Reason", { exact: true });
+  await expect(reason).toHaveValue(/multiple question papers/);
+  await reason.fill("Two papers in one file. Please split them.");
+  await dialog.getByRole("button", { name: "Reject" }).click();
+  await expect(admin.getByText("Paper rejected")).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(
+    admin
+      .getByRole("main")
+      .getByText("Two papers in one file. Please split them."),
+  ).toBeVisible();
+  await admin.close();
+
+  // The uploader reads the reason on their submission.
+  await page.reload();
+  await expect(page.getByRole("status")).toContainText(
+    "Two papers in one file. Please split them.",
+  );
 });

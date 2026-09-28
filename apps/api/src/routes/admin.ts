@@ -452,6 +452,7 @@ export const adminRoutes = new OpenAPIHono<AppEnv>({
         c.env.WATERMARK_QUEUE,
         c.req.valid("param").id,
         c.req.valid("json").status,
+        c.req.valid("json").reason,
       ),
       200,
     ),

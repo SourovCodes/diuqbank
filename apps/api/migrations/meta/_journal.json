@@ -15,6 +15,13 @@
       "when": 1790586116033,
       "tag": "0001_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790598837154,
+      "tag": "0002_rejection_reason",
+      "breakpoints": true
     }
   ]
 }
