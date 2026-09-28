@@ -21,6 +21,12 @@ import { SocialIcon } from "~/components/social-icons";
 import { buttonVariants } from "~/components/ui/button";
 import { TopLoader } from "~/components/top-loader";
 import { Toaster } from "~/components/ui/sonner";
+import {
+  analyticsEnabled,
+  GA_MEASUREMENT_ID,
+  GTAG_SCRIPT,
+  usePageViews,
+} from "~/lib/analytics";
 import { AUTHOR } from "~/lib/author";
 import { getUser } from "~/lib/session.server";
 import { THEME_SCRIPT } from "~/lib/theme";
@@ -64,6 +70,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {analyticsEnabled && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+            <script dangerouslySetInnerHTML={{ __html: GTAG_SCRIPT }} />
+          </>
+        )}
         <Meta />
         <Links />
       </head>
@@ -135,6 +150,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  usePageViews();
   return <Outlet />;
 }
 
