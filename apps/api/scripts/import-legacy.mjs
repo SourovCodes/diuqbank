@@ -1,6 +1,6 @@
 // Imports the legacy site (api.diuqbank.com) into D1 and R2: departments, courses,
-// semesters, exam types, questions, published submissions, pending manual/auto uploads,
-// users and their avatars. Original (unwatermarked) PDFs are copied into R2.
+// semesters, exam types, questions, published submissions, manual/auto uploads in every
+// status, users and their avatars. Original (unwatermarked) PDFs are copied into R2.
 //
 // Usage: LEGACY_TOKEN=<legacy admin JWT> pnpm import-legacy [--remote]
 //   (local D1/R2 unless --remote is given; LEGACY_API_URL overrides the API origin)
@@ -205,16 +205,30 @@ const [
   fetchAll("submissions"),
   fetchAll("users"),
 ]);
-const pendingUploads = [
-  ...(await fetchAll("manual-submissions", "&status=pending")).map((s) => ({
+/**
+ * Status here of a legacy upload. Auto uploads that were still processing or failed
+ * were never reviewed, so an admin decides on them. Published uploads are left out:
+ * each one became a legacy submission, which is imported as published.
+ */
+const UPLOAD_STATUS = {
+  manual: { pending: "pending_review", rejected: "rejected" },
+  auto: {
+    needs_review: "pending_review",
+    processing: "pending_review",
+    failed: "pending_review",
+    rejected: "rejected",
+  },
+};
+const allUploads = [
+  ...(await fetchAll("manual-submissions")).map((s) => ({
     ...s,
     kind: "manual",
   })),
-  ...(await fetchAll("auto-submissions", "&status=needs_review")).map((s) => ({
-    ...s,
-    kind: "auto",
-  })),
+  ...(await fetchAll("auto-submissions")).map((s) => ({ ...s, kind: "auto" })),
 ];
+const uploads = allUploads
+  .filter((s) => s.status !== "published")
+  .map((s) => ({ ...s, newStatus: UPLOAD_STATUS[s.kind][s.status] }));
 
 // Numbered course parts as their own word, like the API's name normalizer does for new
 // names: "Physics-I" / "Chemistry -I" / "Manufacturing - II" → "Physics I". A name is
@@ -244,7 +258,7 @@ for (const q of questions) {
 console.log(
   `  ${departments.length} departments, ${courses.length} courses, ${semesters.length} semesters, ` +
     `${examTypes.length} exam types, ${questions.length} questions, ${submissions.length} submissions, ` +
-    `${pendingUploads.length} pending uploads, ${users.length} users`,
+    `${uploads.length} unpublished uploads, ${users.length} users`,
 );
 
 const deptById = new Map(departments.map((d) => [d.id, d]));
@@ -269,17 +283,32 @@ const existingSubmissions = new Set(
 
 const warnings = [];
 
-/** Legacy submissions and pending uploads that are new, with their target id and key. */
+const submissionIds = new Set(submissions.map((s) => s.id));
+for (const s of allUploads) {
+  if (s.status === "published" && !submissionIds.has(s.submissionId)) {
+    warnings.push(
+      `legacy-${s.kind}-${s.id}: published upload without a legacy submission (deleted?), skipped`,
+    );
+  }
+}
+
+/** Legacy submissions and unpublished uploads that are new, with their target id and key. */
 const allPapers = [
   ...submissions.map((s) => ({
     ...s,
     kind: "published",
+    newStatus: "published",
     newId: `legacy-${s.id}`,
   })),
-  ...pendingUploads.map((s) => ({ ...s, newId: `legacy-${s.kind}-${s.id}` })),
+  ...uploads.map((s) => ({ ...s, newId: `legacy-${s.kind}-${s.id}` })),
 ];
 const newPapers = allPapers
   .filter((s) => !existingSubmissions.has(s.newId))
+  .filter((s) => {
+    if (s.newStatus) return true;
+    warnings.push(`${s.newId}: unknown legacy status "${s.status}", skipped`);
+    return false;
+  })
   .filter((s) => {
     if (s.pdfUrl) return true;
     warnings.push(`${s.newId}: no original PDF, skipped`);
@@ -427,7 +456,7 @@ for (const q of questions) {
   );
 }
 
-/** Proposed classification of a pending upload: existing ids where the names match, else custom names. */
+/** Proposed classification of an upload: existing ids where the names match, else custom names. */
 function proposedClassification(s) {
   const dept = departments.find(
     (d) =>
@@ -469,7 +498,7 @@ for (const p of newPapers) {
   const created = ms(p.createdAt);
   const columns = {
     id: sq(p.newId),
-    status: sq(p.kind === "published" ? "published" : "pending_review"),
+    status: sq(p.newStatus),
     file_key: sq(p.fileKey),
     file_size: p.fileSize,
     uploader_id: email ? userExpr(email) : "NULL",
@@ -513,8 +542,8 @@ for (const p of allPapers) {
   );
 }
 
-// Like an upload here (createSubmission): a pending upload whose values all exist is
-// filed under its question straight away. Only uploads proposing a new name stay a
+// Like an upload here (createSubmission): an upload whose values all exist is filed
+// under its question straight away. Only uploads proposing a new name stay a
 // proposal, since the admin page can only publish filed submissions. Also repairs
 // rows from earlier runs.
 const fullyExisting = `id LIKE 'legacy-%' AND question_id IS NULL AND department_id IS NOT NULL AND course_id IS NOT NULL AND semester_id IS NOT NULL`;
@@ -555,7 +584,8 @@ const [counts] = d1Query(
   `SELECT (SELECT count(*) FROM "user" WHERE id LIKE 'legacy-%') AS users,
           (SELECT count(*) FROM questions) AS questions,
           (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'published') AS published,
-          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'pending_review') AS pending`,
+          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'pending_review') AS pending,
+          (SELECT count(*) FROM submissions WHERE id LIKE 'legacy-%' AND status = 'rejected') AS rejected`,
 );
 
 if (warnings.length > 0) {
@@ -564,5 +594,6 @@ if (warnings.length > 0) {
 }
 console.log(
   `\nDone (${remote ? "remote" : "local"}). Legacy rows now present: ${counts.users} users, ` +
-    `${counts.published} published and ${counts.pending} pending submissions; ${counts.questions} questions in total.`,
+    `${counts.published} published, ${counts.pending} pending and ${counts.rejected} rejected submissions; ` +
+    `${counts.questions} questions in total.`,
 );
