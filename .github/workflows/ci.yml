@@ -33,8 +33,9 @@ jobs:
         with:
           fetch-depth: 0
       # site: the Worker (web, API, shared packages, root tooling). Everything except
-      #   the Flutter app and Markdown.
-      # mobile: the Flutter app, and the OpenAPI document its client is generated from.
+      #   the Flutter app, its release workflow and Markdown.
+      # mobile: the Flutter app, its release workflow, and the OpenAPI document its
+      #   client is generated from.
       # This file counts for both. Without a usable base commit, everything runs.
       - id: diff
         env:
@@ -52,8 +53,8 @@ jobs:
           files=$(git diff --name-only "$base...$GITHUB_SHA")
           echo "$files"
           has() { grep -qE "$1" <<<"$files" && echo true || echo false; }
-          echo "site=$(grep -vE '^apps/mobile/|\.md$' <<<"$files" | grep -q . && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "mobile=$(has '^(apps/mobile/|apps/api/openapi\.json$|\.github/workflows/ci\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "site=$(grep -vE '^apps/mobile/|^\.github/workflows/release-android\.yml$|\.md$' <<<"$files" | grep -q . && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "mobile=$(has '^(apps/mobile/|apps/api/openapi\.json$|\.github/workflows/(ci|release-android)\.yml$)')" >> "$GITHUB_OUTPUT"
           cat "$GITHUB_OUTPUT"
 
   check:

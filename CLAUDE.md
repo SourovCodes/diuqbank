@@ -10,7 +10,7 @@ pnpm monorepo, one Cloudflare Worker: `apps/web` (React Router SSR) runs `@qb/ap
 - After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns.
 - Triggers (and other SQL drizzle-kit can't model) go in a custom migration: `pnpm --filter @qb/api exec drizzle-kit generate --custom --name=<name>`, separated with `--> statement-breakpoint` as in `0001_triggers.sql`. `wrangler d1` and the Vitest pool both split `BEGIN … END` trigger bodies correctly.
 - After changing an API route or a schema in `packages/shared`: `pnpm openapi`, then `apps/mobile/tool/generate_api.sh` (the Flutter app's Dart client), and commit both. New object schemas that public endpoints return get a `.meta({ id: "Name" })`.
-- Flutter app (`apps/mobile`, not in the pnpm workspace): `flutter analyze`, `flutter test` and `dart format lib test` from there.
+- Flutter app (`apps/mobile`, not in the pnpm workspace): `flutter analyze`, `flutter test` and `dart format lib test` from there. Android releases: push a `mobile-vX.Y.Z` tag on a commit on `main` (README, "Releasing the Android app"); never commit `android/key.properties` or a keystore.
 - After editing `apps/web/wrangler.jsonc`: `pnpm --filter @qb/web cf-typegen` and `pnpm --filter @qb/api cf-typegen`. A new binding, var or secret the API uses also goes in `apps/api/src/env.d.ts` (the API declares what it needs; vars are typed as plain strings on both sides).
 
 ## Conventions

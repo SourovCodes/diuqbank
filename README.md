@@ -179,13 +179,60 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 - **Compatibility:** installed app versions stay around for months, so `/api/v1` only changes in backward-compatible ways (new fields and endpoints). Anything breaking goes in a new version.
 - **Running it:** `flutter run` from `apps/mobile` talks to the production site. For a local dev server, add `--dart-define=API_BASE_URL=http://10.0.2.2:5173` (Android emulator) or `http://localhost:5173` (iOS simulator).
 
+### Releasing the Android app
+
+Pushing a tag `mobile-vMAJOR.MINOR.PATCH` on a commit that's on `main` runs `.github/workflows/release-android.yml`. It builds an App Bundle signed with the upload key and uploads it to Google Play. The version name comes from the tag, and the version code is `MAJOR*1000000 + MINOR*1000 + PATCH`, so every release needs a higher tag:
+
+```bash
+git tag mobile-v1.0.0 origin/main && git push origin mobile-v1.0.0
+```
+
+Builds go to the `internal` track as `draft` releases by default. Promote them to closed testing or production in Play Console, or change the defaults with the repository variables `PLAY_TRACK` and `PLAY_RELEASE_STATUS`. Each run also keeps the `.aab` as a workflow artifact for 30 days.
+
+The Play Console account is a personal one, so production needs a closed test first: at least 12 testers opted in for 14 days in a row, who actually use the app, before you can apply for production access. Until then, release to the internal and closed tracks.
+
+Locally, `flutter build appbundle` signs with the upload key if `android/key.properties` exists (git-ignored; same keys as the workflow writes), and with the debug key otherwise. Debug-signed builds can't be uploaded to Play.
+
+One-time setup:
+
+1. **Play Console.** Create the app (its package name, `com.bongomaker.diuqbank`, is set by the first upload) and keep Play App Signing on (the default): Google keeps the key that signs what users install, and our key is only an _upload_ key, which Google can reset if it's lost.
+2. **Upload key.** Create it once and keep the file and password in a password manager (`keytool` comes with Android Studio, in `Contents/jbr/Contents/Home/bin`):
+   ```bash
+   keytool -genkeypair -v -keystore upload-keystore.jks -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+   Then store it in a GitHub environment named `play` (Settings → Environments → New environment). Under "Deployment branches and tags", allow only tags matching `mobile-v*`:
+   ```bash
+   base64 -i upload-keystore.jks | gh secret set ANDROID_UPLOAD_KEYSTORE_BASE64 --env play
+   gh secret set ANDROID_UPLOAD_KEYSTORE_PASSWORD --env play
+   ```
+3. **Google Cloud: a service account that GitHub Actions can use without a key file.** In a Google Cloud project (any, e.g. a new `diuqbank`), with `gcloud`:
+   ```bash
+   PROJECT_ID=your-project-id
+   PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format 'value(projectNumber)')
+   gcloud services enable androidpublisher.googleapis.com iamcredentials.googleapis.com sts.googleapis.com --project "$PROJECT_ID"
+   gcloud iam service-accounts create play-publisher --project "$PROJECT_ID" --display-name "Google Play publisher (GitHub Actions)"
+   gcloud iam workload-identity-pools create github --project "$PROJECT_ID" --location global --display-name "GitHub Actions"
+   # Only this repository's release job (the play environment, on a mobile-v* tag) can sign in.
+   gcloud iam workload-identity-pools providers create-oidc diuqbank --project "$PROJECT_ID" --location global \
+     --workload-identity-pool github --issuer-uri "https://token.actions.githubusercontent.com" \
+     --attribute-mapping "google.subject=assertion.sub,attribute.repository_id=assertion.repository_id" \
+     --attribute-condition "assertion.repository_id == '817495452' && assertion.environment == 'play' && assertion.ref.startsWith('refs/tags/mobile-v')"
+   gcloud iam service-accounts add-iam-policy-binding "play-publisher@$PROJECT_ID.iam.gserviceaccount.com" --project "$PROJECT_ID" \
+     --role roles/iam.workloadIdentityUser \
+     --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/817495452"
+   ```
+   `817495452` is this repository's ID (`gh api repos/SourovCodes/DIUQBank --jq .id`), which stays the same if the repository is renamed or moved.
+4. **GitHub variables** (Settings → Secrets and variables → Actions → Variables): `GCP_WORKLOAD_IDENTITY_PROVIDER` = `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/diuqbank` and `GCP_SERVICE_ACCOUNT` = `play-publisher@<PROJECT_ID>.iam.gserviceaccount.com`.
+5. **Play Console access for the service account.** Users and permissions → Invite new users → the service account's email. Give it access to the app with "Release apps to testing tracks" (add "Release to production…" once the app has production access).
+6. **The first build goes up by hand.** Google Play's API can't upload to an app that has never had a build. Push `mobile-v1.0.0`; the upload step fails, but the run keeps the `.aab` as an artifact. Upload that in Play Console (Testing → Internal testing → Create new release). Later tags upload on their own. Once Google has reviewed the app, set `PLAY_RELEASE_STATUS` to `completed` so internal releases go out without a manual rollout.
+
 ## Testing strategy
 
 - **`packages/shared`** – unit tests for schemas.
 - **`apps/api`** – integration tests call the API inside `workerd` (using `apps/web/wrangler.jsonc`) with isolated per-file D1 and R2 storage (`@cloudflare/vitest-plugin`). Migrations are applied automatically.
 - **`apps/web`** – unit/component tests with Vitest + Testing Library; Playwright covers full user journeys against the dev server.
 - **`apps/mobile`** – widget tests (`flutter test`) with the API providers overridden.
-- **CI** is one workflow, `.github/workflows/ci.yml`. A first job looks at what the push or PR changed: site code (anything outside `apps/mobile` that isn't Markdown) runs lint, typecheck, tests, build and e2e; the Flutter app or `apps/api/openapi.json` runs the mobile jobs (stale-client check, `dart format`, `flutter analyze`, `flutter test`, an Android debug build, and an unsigned iOS build on macOS). Pushes to `main` that change site code deploy once its checks pass; mobile-only and docs-only changes don't. The final `CI` job passes when every job that ran passed, so it's the only check to require in branch protection. Running the workflow by hand (Actions → CI → Run workflow) runs everything, and deploys from `main`. Dependabot opens weekly, grouped update PRs for npm, pub (the Flutter app) and GitHub Actions.
+- **CI** is one workflow, `.github/workflows/ci.yml`. A first job looks at what the push or PR changed: site code (anything outside `apps/mobile` that isn't Markdown) runs lint, typecheck, tests, build and e2e; the Flutter app or `apps/api/openapi.json` runs the mobile jobs (stale-client check, `dart format`, `flutter analyze`, `flutter test`, an Android debug build, and an unsigned iOS build on macOS). Pushes to `main` that change site code deploy once its checks pass; mobile-only and docs-only changes don't. The final `CI` job passes when every job that ran passed, so it's the only check to require in branch protection. Running the workflow by hand (Actions → CI → Run workflow) runs everything, and deploys from `main`. Android releases have their own workflow, triggered by tags (see "Releasing the Android app"). Dependabot opens weekly, grouped update PRs for npm, pub (the Flutter app) and GitHub Actions.
 
 ## Deploying
 
