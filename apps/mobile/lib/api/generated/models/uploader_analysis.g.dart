@@ -16,8 +16,12 @@ UploaderAnalysis _$UploaderAnalysisFromJson(Map<String, dynamic> json) =>
       isQuestionPaper: json['isQuestionPaper'] as bool?,
       paperCount: (json['paperCount'] as num?)?.toInt(),
       note: json['note'] as String?,
-      flag: AnalysisFlag.fromJson(json['flag'] as String?),
-      values: AnalysisValues.fromJson(json['values'] as Map<String, dynamic>),
+      flag: json['flag'] == null
+          ? null
+          : AnalysisFlag.fromJson(json['flag'] as String),
+      values: json['values'] == null
+          ? null
+          : AnalysisValues.fromJson(json['values'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$UploaderAnalysisToJson(UploaderAnalysis instance) =>
@@ -43,6 +47,5 @@ const _$AnalysisStatusEnumMap = {
 const _$AnalysisFlagEnumMap = {
   AnalysisFlag.notAPaper: 'not_a_paper',
   AnalysisFlag.multiplePapers: 'multiple_papers',
-  AnalysisFlag.valueNull: null,
   AnalysisFlag.$unknown: r'$unknown',
 };

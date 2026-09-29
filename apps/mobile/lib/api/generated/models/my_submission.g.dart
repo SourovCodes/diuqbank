@@ -22,7 +22,9 @@ MySubmission _$MySubmissionFromJson(Map<String, dynamic> json) => MySubmission(
   ),
   autoPublished: json['autoPublished'] as bool,
   rejectionReason: json['rejectionReason'] as String?,
-  analysis: AnalysisSummary.fromJson(json['analysis'] as Map<String, dynamic>),
+  analysis: json['analysis'] == null
+      ? null
+      : AnalysisSummary.fromJson(json['analysis'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$MySubmissionToJson(MySubmission instance) =>

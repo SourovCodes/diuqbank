@@ -10,7 +10,7 @@ import {
   analysisSummarySchema,
   submissionAnalysisSchema,
 } from "./analysis";
-import { paginatedSchema, paginationQuerySchema } from "./common";
+import { nullableRef, paginatedSchema, paginationQuerySchema } from "./common";
 import { contributorSubmissionSchema } from "./contributor";
 import { reportReasonSchema, reportStatusSchema } from "./engagement";
 import { submissionCountsSchema, submissionStatusSchema } from "./question";
@@ -99,7 +99,7 @@ export const adminSubmissionSchema = contributorSubmissionSchema.extend({
   pendingReportCount: z.number().int(),
   updatedAt: z.iso.datetime(),
   /** Null for submissions that were never analysed. */
-  analysis: analysisSummarySchema.nullable(),
+  analysis: nullableRef(analysisSummarySchema),
   /** Published by the AI check right after upload, not by an admin. */
   autoPublished: z.boolean(),
   /** Why it was rejected; null unless rejected. */
@@ -143,7 +143,7 @@ export type AdminSubmissionReport = z.infer<typeof adminSubmissionReportSchema>;
 export const adminSubmissionDetailSchema = adminSubmissionSchema.extend({
   /** Newest first. */
   reports: z.array(adminSubmissionReportSchema),
-  analysisDetail: submissionAnalysisSchema.nullable(),
+  analysisDetail: nullableRef(submissionAnalysisSchema),
 });
 export type AdminSubmissionDetail = z.infer<typeof adminSubmissionDetailSchema>;
 

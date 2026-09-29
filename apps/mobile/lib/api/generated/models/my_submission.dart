@@ -45,7 +45,7 @@ class MySubmission {
   final SubmissionClassification classification;
   final bool autoPublished;
   final String? rejectionReason;
-  final AnalysisSummary analysis;
+  final AnalysisSummary? analysis;
 
   Map<String, Object?> toJson() => _$MySubmissionToJson(this);
 }

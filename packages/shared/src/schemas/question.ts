@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { QUESTION_SORTS, SUBMISSION_STATUSES } from "../constants";
-import { paginatedSchema, paginationQuerySchema } from "./common";
+import { nullableRef, paginatedSchema, paginationQuerySchema } from "./common";
 import {
   courseSchema,
   departmentSchema,
@@ -48,7 +48,7 @@ export const submissionSchema = submissionStatsSchema
     section: z.string().nullable(),
     batch: z.string().nullable(),
     /** Null when the uploader's account no longer exists. */
-    uploader: uploaderSchema.nullable(),
+    uploader: nullableRef(uploaderSchema),
     /**
      * Where the PDF is read and downloaded; null unless published. Its watermarked copy
      * on the public files domain once that exists, until then the API's file endpoint.

@@ -16,7 +16,9 @@ Submission _$SubmissionFromJson(Map<String, dynamic> json) => Submission(
   createdAt: DateTime.parse(json['createdAt'] as String),
   section: json['section'] as String?,
   batch: json['batch'] as String?,
-  uploader: Uploader.fromJson(json['uploader'] as Map<String, dynamic>),
+  uploader: json['uploader'] == null
+      ? null
+      : Uploader.fromJson(json['uploader'] as Map<String, dynamic>),
   fileUrl: json['fileUrl'] as String?,
 );
 

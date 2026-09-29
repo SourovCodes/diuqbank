@@ -4,6 +4,7 @@ import {
   ANALYSIS_FLAGS,
   ANALYSIS_STATUSES,
 } from "../constants";
+import { nullableRef } from "./common";
 
 // The AI analysis of an uploaded PDF (admin only): is it one question paper, and what
 // is it filed under according to its header.
@@ -32,13 +33,14 @@ const extractedValue = z
 /** What the AI read from the paper. Any value it couldn't find is null. */
 export const analysisValuesSchema = z
   .object({
-    department: extractedValue
-      .extend({ shortName: z.string().nullable() })
-      .meta({ id: "ExtractedDepartment" })
-      .nullable(),
-    course: extractedValue.nullable(),
-    semester: extractedValue.nullable(),
-    examType: extractedValue.nullable(),
+    department: nullableRef(
+      extractedValue
+        .extend({ shortName: z.string().nullable() })
+        .meta({ id: "ExtractedDepartment" }),
+    ),
+    course: nullableRef(extractedValue),
+    semester: nullableRef(extractedValue),
+    examType: nullableRef(extractedValue),
     section: z.string().nullable(),
     batch: z.string().nullable(),
   })
@@ -60,9 +62,9 @@ export const submissionAnalysisSchema = z
     paperCount: z.number().int().nullable(),
     /** The AI's short explanation of its verdict. */
     note: z.string().nullable(),
-    flag: analysisFlagSchema.nullable(),
+    flag: nullableRef(analysisFlagSchema),
     /** Null until completed. */
-    values: analysisValuesSchema.nullable(),
+    values: nullableRef(analysisValuesSchema),
     /** PDF size before and after compression. */
     originalBytes: z.number().int().nullable(),
     sentBytes: z.number().int().nullable(),
@@ -74,7 +76,7 @@ export type SubmissionAnalysis = z.infer<typeof submissionAnalysisSchema>;
 export const analysisSummarySchema = z
   .object({
     status: analysisStatusSchema,
-    flag: analysisFlagSchema.nullable(),
+    flag: nullableRef(analysisFlagSchema),
     /**
      * Whether the AI's department, course, semester and exam type match the
      * submission's. Null until completed.

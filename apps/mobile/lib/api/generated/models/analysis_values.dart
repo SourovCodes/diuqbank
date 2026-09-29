@@ -23,10 +23,10 @@ class AnalysisValues {
   factory AnalysisValues.fromJson(Map<String, Object?> json) =>
       _$AnalysisValuesFromJson(json);
 
-  final ExtractedDepartment department;
-  final ExtractedValue course;
-  final ExtractedValue semester;
-  final ExtractedValue examType;
+  final ExtractedDepartment? department;
+  final ExtractedValue? course;
+  final ExtractedValue? semester;
+  final ExtractedValue? examType;
   final String? section;
   final String? batch;
 
