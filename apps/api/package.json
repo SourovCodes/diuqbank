@@ -13,6 +13,7 @@
     "typecheck": "pnpm cf-typegen && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
+    "openapi": "tsx scripts/export-openapi.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --cwd ../web",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote --cwd ../web",
@@ -34,6 +35,7 @@
     "@cloudflare/vitest-plugin": "^1.2.8",
     "@types/node": "catalog:",
     "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "wrangler": "catalog:"
