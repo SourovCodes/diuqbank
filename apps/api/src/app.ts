@@ -10,6 +10,7 @@ import { engagementRoutes } from "./routes/engagement";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
 import { questionRoutes } from "./routes/questions";
+import { sitemapRoutes } from "./routes/sitemap";
 import { submissionRoutes } from "./routes/submissions";
 import { taxonomyRoutes } from "./routes/taxonomy";
 import type { AppEnv } from "./types";
@@ -26,6 +27,7 @@ export function createApp() {
   const v1 = new OpenAPIHono<AppEnv>({ defaultHook: validationHook })
     .route("/", healthRoutes)
     .route("/", taxonomyRoutes)
+    .route("/", sitemapRoutes)
     .route("/questions", questionRoutes)
     .route("/submissions", submissionRoutes)
     .route("/contributors", contributorRoutes)

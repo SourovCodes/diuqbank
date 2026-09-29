@@ -51,6 +51,8 @@ Every upload is checked in the background. The API enqueues a message on the `qb
 
 The questions list shows the newest papers first by default (`sort=newest`), or the most viewed (`popular`) or A–Z (`az`). Course names get the standard spelling for numbered parts ("Physics I", not "Physics-I"); `pnpm import-legacy` applies the same spelling to imported names, skipping any that would clash with a course already in the department.
 
+`/sitemap.xml` lists the static pages, every question with a published paper (its newest paper's upload date as `lastmod`) and every contributor, from `/api/v1/sitemap`. The Worker keeps the generated file in Cloudflare's cache for an hour, so crawlers don't query D1 on every fetch. `/robots.txt` keeps crawlers out of `/admin`, `/account` and `/api/` and points them at the sitemap. Both use the request's origin, which is `SITE_URL` in production thanks to the host redirect.
+
 Otherwise results only flag, never reject: the admin list shows an AI badge and can filter by "Flagged by AI" (not a paper, several papers) or "AI disagrees". The review page shows the AI's values next to the submitted ones, **Apply AI values** prefills the classification dialog with them, and **Re-run** starts a new analysis.
 
 Configuration: `GEMINI_MODEL` and `PDF_PROCESSOR_URL` in `apps/web/wrangler.jsonc`, secrets `GEMINI_API_KEY` and `COMPRESSOR_API_KEY` (`.dev.vars` locally; without them runs fail as "not configured"). See [Deploying](#deploying) for the production setup. Tests never call the real services.
@@ -182,4 +184,4 @@ One-time setup (the deploy job is skipped until `SITE_URL` is set):
 
 - Add rate limiting on the API.
 - Add email change (with verification) and account deletion.
-- Add caching for public pages and PDFs, a sitemap, and staging/production environments.
+- Add caching for public pages and PDFs, and staging/production environments.

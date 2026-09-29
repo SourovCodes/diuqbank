@@ -6,5 +6,6 @@ export * from "./schemas/common";
 export * from "./schemas/contributor";
 export * from "./schemas/engagement";
 export * from "./schemas/question";
+export * from "./schemas/sitemap";
 export * from "./schemas/submission";
 export * from "./schemas/taxonomy";
