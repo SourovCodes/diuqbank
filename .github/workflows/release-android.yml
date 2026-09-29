@@ -81,7 +81,7 @@ jobs:
           --build-name ${{ steps.version.outputs.name }}
           --build-number ${{ steps.version.outputs.code }}
       - run: rm android/key.properties android/upload-keystore.jks
-      # Kept so a build can be uploaded by hand, e.g. the app's very first one.
+      # Kept so a build can also be installed or uploaded by hand.
       - uses: actions/upload-artifact@v7
         with:
           name: app-release-${{ steps.version.outputs.name }}
@@ -101,5 +101,5 @@ jobs:
           releaseName: ${{ steps.version.outputs.name }}
           # internal until the app has production access; draft until Google has
           # reviewed the app once (Play only accepts draft releases before that).
-          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          tracks: ${{ vars.PLAY_TRACK || 'internal' }}
           status: ${{ vars.PLAY_RELEASE_STATUS || 'draft' }}
