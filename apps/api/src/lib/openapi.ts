@@ -11,3 +11,9 @@ export function jsonResponse<T extends z.ZodType>(
 export function errorResponse(description: string) {
   return jsonResponse(apiErrorSchema, description);
 }
+
+/** The OpenAPI document's header, shared by the served spec and `pnpm openapi`. */
+export const openApiConfig = {
+  openapi: "3.1.0",
+  info: { title: "QuestionBank API", version: "1.0.0" },
+} as const;

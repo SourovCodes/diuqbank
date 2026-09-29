@@ -124,28 +124,34 @@ export const createSubmissionInputSchema = submissionFieldsSchema.superRefine(
   refineSubmissionFields,
 );
 
-export const createdSubmissionSchema = z.object({
-  id: z.number().int(),
-  status: submissionStatusSchema,
-  /** Null when the submission uses new values that an admin still has to create. */
-  questionId: z.number().int().nullable(),
-});
+export const createdSubmissionSchema = z
+  .object({
+    id: z.number().int(),
+    status: submissionStatusSchema,
+    /** Null when the submission uses new values that an admin still has to create. */
+    questionId: z.number().int().nullable(),
+  })
+  .meta({ id: "CreatedSubmission" });
 export type CreatedSubmission = z.infer<typeof createdSubmissionSchema>;
 
 /**
  * What a submission was filed under. An `id` of null means a new value proposed by
  * the uploader that doesn't exist yet.
  */
-export const submissionClassificationSchema = z.object({
-  department: z.object({
-    id: z.number().int().nullable(),
-    name: z.string(),
-    shortName: z.string().nullable(),
-  }),
-  course: z.object({ id: z.number().int().nullable(), name: z.string() }),
-  semester: z.object({ id: z.number().int().nullable(), name: z.string() }),
-  examType: examTypeSchema,
-});
+const classifiedValueSchema = z
+  .object({ id: z.number().int().nullable(), name: z.string() })
+  .meta({ id: "ClassifiedValue" });
+
+export const submissionClassificationSchema = z
+  .object({
+    department: classifiedValueSchema
+      .extend({ shortName: z.string().nullable() })
+      .meta({ id: "ClassifiedDepartment" }),
+    course: classifiedValueSchema,
+    semester: classifiedValueSchema,
+    examType: examTypeSchema,
+  })
+  .meta({ id: "SubmissionClassification" });
 export type SubmissionClassification = z.infer<
   typeof submissionClassificationSchema
 >;

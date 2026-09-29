@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import committedSpec from "../openapi.json";
 import { api } from "./helpers";
 
 describe("system routes", () => {
@@ -37,6 +38,12 @@ describe("system routes", () => {
         "/api/v1/avatars/{id}",
       ]),
     );
+  });
+
+  // The mobile app's Dart client is generated from the committed copy.
+  it("matches the committed openapi.json (run `pnpm openapi` to update)", async () => {
+    const res = await api("/api/v1/openapi.json");
+    expect(await res.json()).toEqual(committedSpec);
   });
 
   it("returns a structured 404 for unknown routes", async () => {

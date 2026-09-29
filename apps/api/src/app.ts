@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import { secureHeaders } from "hono/secure-headers";
 import { handleError, handleNotFound, validationHook } from "./lib/errors";
+import { openApiConfig } from "./lib/openapi";
 import { contextMiddleware } from "./middleware/context";
 import { adminRoutes } from "./routes/admin";
 import { avatarRoutes } from "./routes/avatars";
@@ -37,10 +38,7 @@ export function createApp() {
     .route("/", avatarRoutes);
   app.route("/api/v1", v1);
 
-  app.doc31("/api/v1/openapi.json", {
-    openapi: "3.1.0",
-    info: { title: "QuestionBank API", version: "1.0.0" },
-  });
+  app.doc31("/api/v1/openapi.json", openApiConfig);
   app.get("/api/docs", Scalar({ url: "/api/v1/openapi.json" }));
 
   app.notFound(handleNotFound);

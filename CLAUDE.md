@@ -1,6 +1,6 @@
 # QuestionBank – working notes
 
-pnpm monorepo, one Cloudflare Worker: `apps/web` (React Router SSR) runs `@qb/api` (Hono, a library in `apps/api`) under `/api/*` and its queue handlers. The Worker config (bindings, vars, `.dev.vars`, local state) lives in `apps/web`. See README.md for the architecture overview.
+pnpm monorepo, one Cloudflare Worker: `apps/web` (React Router SSR) runs `@qb/api` (Hono, a library in `apps/api`) under `/api/*` and its queue handlers. `apps/mobile` is a Flutter app (Android + iOS) that calls `/api/v1`. The Worker config (bindings, vars, `.dev.vars`, local state) lives in `apps/web`. See README.md for the architecture overview.
 
 ## Commands
 
@@ -9,6 +9,8 @@ pnpm monorepo, one Cloudflare Worker: `apps/web` (React Router SSR) runs `@qb/ap
 - `pnpm test:e2e` – Playwright; needs `pnpm db:migrate && pnpm db:seed` first (tests rely on `apps/api/seeds/dev.sql`).
 - After editing `apps/api/src/db/schema/*`: `pnpm db:generate`, review the SQL, then `pnpm db:migrate`. Never edit a migration that has been applied anywhere. For SQLite table rebuilds, drizzle-kit may copy newly added columns from the old table (`SELECT "new_col" …` silently yields the string literal) — trim the INSERT to existing columns.
 - Triggers (and other SQL drizzle-kit can't model) go in a custom migration: `pnpm --filter @qb/api exec drizzle-kit generate --custom --name=<name>`, separated with `--> statement-breakpoint` as in `0001_triggers.sql`. `wrangler d1` and the Vitest pool both split `BEGIN … END` trigger bodies correctly.
+- After changing an API route or a schema in `packages/shared`: `pnpm openapi`, then `apps/mobile/tool/generate_api.sh` (the Flutter app's Dart client), and commit both. New object schemas that public endpoints return get a `.meta({ id: "Name" })`.
+- Flutter app (`apps/mobile`, not in the pnpm workspace): `flutter analyze`, `flutter test` and `dart format lib test` from there.
 - After editing `apps/web/wrangler.jsonc`: `pnpm --filter @qb/web cf-typegen` and `pnpm --filter @qb/api cf-typegen`. A new binding, var or secret the API uses also goes in `apps/api/src/env.d.ts` (the API declares what it needs; vars are typed as plain strings on both sides).
 
 ## Conventions

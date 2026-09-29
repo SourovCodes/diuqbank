@@ -4,39 +4,47 @@ import { analysisSummarySchema, submissionAnalysisSchema } from "./analysis";
 import { contributorSubmissionSchema } from "./contributor";
 
 /** One of the signed-in user's own submissions, with how its review is going. */
-export const mySubmissionSchema = contributorSubmissionSchema.extend({
-  /** Published by the AI check right after upload, not by an admin. */
-  autoPublished: z.boolean(),
-  /** The admin's reason; null unless rejected. */
-  rejectionReason: z.string().nullable(),
-  /** Null for papers that were never checked. */
-  analysis: analysisSummarySchema.nullable(),
-});
+export const mySubmissionSchema = contributorSubmissionSchema
+  .extend({
+    /** Published by the AI check right after upload, not by an admin. */
+    autoPublished: z.boolean(),
+    /** The admin's reason; null unless rejected. */
+    rejectionReason: z.string().nullable(),
+    /** Null for papers that were never checked. */
+    analysis: analysisSummarySchema.nullable(),
+  })
+  .meta({ id: "MySubmission" });
 export type MySubmission = z.infer<typeof mySubmissionSchema>;
 
 /** The signed-in user's own submissions, in every status. */
-export const mySubmissionListSchema = z.object({
-  /** Published first (newest first), then pending review, then rejected. */
-  items: z.array(mySubmissionSchema),
-});
+export const mySubmissionListSchema = z
+  .object({
+    /** Published first (newest first), then pending review, then rejected. */
+    items: z.array(mySubmissionSchema),
+  })
+  .meta({ id: "MySubmissionList" });
 export type MySubmissionList = z.infer<typeof mySubmissionListSchema>;
 
 /** What the uploader sees of the AI check: its verdict and what it read. */
-export const uploaderAnalysisSchema = submissionAnalysisSchema.pick({
-  status: true,
-  requestedAt: true,
-  completedAt: true,
-  isQuestionPaper: true,
-  paperCount: true,
-  note: true,
-  flag: true,
-  values: true,
-});
+export const uploaderAnalysisSchema = submissionAnalysisSchema
+  .pick({
+    status: true,
+    requestedAt: true,
+    completedAt: true,
+    isQuestionPaper: true,
+    paperCount: true,
+    note: true,
+    flag: true,
+    values: true,
+  })
+  .meta({ id: "UploaderAnalysis" });
 export type UploaderAnalysis = z.infer<typeof uploaderAnalysisSchema>;
 
-export const mySubmissionDetailSchema = mySubmissionSchema.extend({
-  analysisDetail: uploaderAnalysisSchema.nullable(),
-});
+export const mySubmissionDetailSchema = mySubmissionSchema
+  .extend({
+    analysisDetail: uploaderAnalysisSchema.nullable(),
+  })
+  .meta({ id: "MySubmissionDetail" });
 export type MySubmissionDetail = z.infer<typeof mySubmissionDetailSchema>;
 
 /** A username as users type it: trimmed and lowercased before the rules apply. */
@@ -46,5 +54,7 @@ export const usernameSchema = z
   .toLowerCase()
   .regex(USERNAME_PATTERN, `Use ${USERNAME_RULES}`);
 
-export const updateUsernameInputSchema = z.object({ username: usernameSchema });
+export const updateUsernameInputSchema = z
+  .object({ username: usernameSchema })
+  .meta({ id: "UpdateUsernameInput" });
 export type UpdateUsernameInput = z.infer<typeof updateUsernameInputSchema>;
