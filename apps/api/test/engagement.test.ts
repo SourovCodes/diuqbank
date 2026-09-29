@@ -15,6 +15,7 @@ import {
   user,
   type NewSubmissionRow,
 } from "../src/db/schema";
+import { MAX_REMEMBERED_VIEWS, VIEW_WINDOW_MS } from "../src/lib/view-cookie";
 import { createViewToken, VIEW_TOKEN_TTL_MS } from "../src/lib/view-token";
 import {
   api,
@@ -66,6 +67,19 @@ function countView(path: string, token: string, headers: HeadersInit = {}) {
       ...headers,
     },
   });
+}
+
+/** A browser on the question page: it sends the token and keeps the `qb_views` cookie. */
+function browser(token: string) {
+  let cookie = "";
+  return {
+    async view(path: string) {
+      const res = await countView(path, token, cookie ? { cookie } : {});
+      const set = res.headers.get("set-cookie");
+      if (set) cookie = set.split(";")[0]!;
+      return res;
+    },
+  };
 }
 
 const viewCountOf = async (questionId: number) =>
@@ -192,6 +206,75 @@ describe("view counters", () => {
       });
     }
     expect(await viewCountOf(question.id)).toBe(70);
+  });
+
+  it("counts a browser once a day per paper and per question page", async () => {
+    const { question, submission } = await seedQuestionWithPaper();
+    const other = await seedSubmission(question.id);
+    const token = await viewTokenFor(question.id);
+    const paper = `submissions/${submission.id}`;
+    const page = `questions/${question.id}`;
+
+    // Reloads count once; another browser (same campus IP) is another visitor.
+    const mine = browser(token);
+    for (let i = 0; i < 3; i++) {
+      expect((await mine.view(paper)).status).toBe(204);
+    }
+    await browser(token).view(paper);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(2);
+
+    // The same browser still counts on the question page and another paper, once each.
+    await mine.view(page);
+    await mine.view(page);
+    await mine.view(`submissions/${other.id}`);
+    await mine.view(paper);
+    expect(await viewCountOf(question.id)).toBe(1);
+    expect((await findSubmission(other.id))?.viewCount).toBe(1);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(2);
+
+    // A view remembered a day ago counts again.
+    const dayAgo = Math.floor((Date.now() - VIEW_WINDOW_MS) / 60_000);
+    await countView(paper, token, {
+      cookie: `qb_views=s${submission.id}_${dayAgo.toString(36)}`,
+    });
+    expect((await findSubmission(submission.id))?.viewCount).toBe(3);
+
+    // Unknown pages and ignored views don't set the cookie.
+    const missing = await countView(
+      "questions/999999",
+      await createViewToken(env.BETTER_AUTH_SECRET, 999999),
+    );
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get("set-cookie")).toBeNull();
+    const ignored = await countView(page, "garbage");
+    expect(ignored.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("keeps the cookie small and scoped to the API", async () => {
+    const { submission } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(submission.questionId!);
+    const minute = Math.floor(Date.now() / 60_000).toString(36);
+    const full = Array.from(
+      { length: MAX_REMEMBERED_VIEWS },
+      (_, i) => `q${i + 1_000_000}_${minute}`,
+    ).join(".");
+    const res = await countView(`submissions/${submission.id}`, token, {
+      cookie: `qb_views=${full}; other=junk`,
+    });
+    const set = res.headers.get("set-cookie")!;
+    expect(set).toMatch(/Path=\/api\/v1/);
+    expect(set).toMatch(/HttpOnly/);
+    const entries = set.split(";")[0]!.slice("qb_views=".length).split(".");
+    expect(entries).toHaveLength(MAX_REMEMBERED_VIEWS);
+    expect(entries[0]).toBe(`q1000001_${minute}`);
+    expect(entries.at(-1)).toBe(`s${submission.id}_${minute}`);
+
+    // Garbage in the cookie is ignored rather than failing the request.
+    const junk = await countView(`submissions/${submission.id}`, token, {
+      cookie: "qb_views=nonsense.x_y._.s_zz",
+    });
+    expect(junk.status).toBe(204);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(2);
   });
 });
 

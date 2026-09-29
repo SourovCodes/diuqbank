@@ -33,7 +33,7 @@ Sign-in is Google-only (`/login`, Better Auth's `sign-in/social`); the account i
 
 Engagement on published papers:
 
-- **Views** — question pages and papers count their views separately (`POST …/views`, open to everyone, no deduplication yet).
+- **Views** — question pages and papers count their views separately (`POST …/views`, from the question page only, see below). A browser counts once a day per page or paper: the API remembers what it counted in an HttpOnly `qb_views` cookie (`lib/view-cookie.ts`), so a reload costs no database write. It's per browser, not per IP address, because most students share a few campus addresses.
 - **Votes** — signed-in users like or dislike a paper (not their own). SQLite triggers in `migrations/0001_triggers.sql` keep `like_count` / `dislike_count` in sync. A question's papers are ranked by score (likes − dislikes), then views, then newest; the top paper opens by default.
 - **Reports** — signed-in users report a problem (one open report per user per paper) for admin review. A trigger counts open reports and moves a published paper back to `pending_review` (hidden) at 3 (`REPORT_HIDE_THRESHOLD`). Admins resolve or dismiss reports in the admin panel; that doesn't publish a hidden paper again, which is a separate decision.
 

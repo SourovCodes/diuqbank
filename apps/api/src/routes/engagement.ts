@@ -10,6 +10,7 @@ import {
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
 import { errorResponse, jsonResponse } from "../lib/openapi";
+import { readViews, rememberView } from "../lib/view-cookie";
 import { isCountableView } from "../lib/view-token";
 import { rateLimit } from "../middleware/rate-limit";
 import { requireAuth } from "../middleware/require-auth";
@@ -171,9 +172,12 @@ export const engagementRoutes = new OpenAPIHono<AppEnv>({
     const { id } = c.req.valid("param");
     // Invalid tokens are ignored before the 404, which never needs a token.
     if (!(await isVisitorView(c, id))) return c.body(null, 204);
+    const views = readViews(c);
+    if (views.has(`q${id}`)) return c.body(null, 204);
     if (!(await recordQuestionView(c.var.db, id))) {
       throw new AppError(404, "NOT_FOUND", "Question not found");
     }
+    rememberView(c, views, `q${id}`);
     return c.body(null, 204);
   })
   .openapi(recordSubmissionViewRoute, async (c) => {
@@ -182,9 +186,11 @@ export const engagementRoutes = new OpenAPIHono<AppEnv>({
     if (questionId === null) {
       throw new AppError(404, "NOT_FOUND", "Submission not found");
     }
+    const views = readViews(c);
     // The token is the paper's question page's.
-    if (await isVisitorView(c, questionId)) {
+    if (!views.has(`s${id}`) && (await isVisitorView(c, questionId))) {
       await recordSubmissionView(c.var.db, id);
+      rememberView(c, views, `s${id}`);
     }
     return c.body(null, 204);
   })
