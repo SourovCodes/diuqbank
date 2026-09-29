@@ -3,6 +3,8 @@ export const AUTHOR = {
   name: "Sourov Biswas",
   firstName: "Sourov",
   avatar: "/sourov.webp",
+  /** Where bugs, ideas, removal and data requests go (/contact and the legal pages). */
+  email: "sourov2305101004@diu.edu.bd",
   links: [
     {
       network: "linkedin",

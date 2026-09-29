@@ -8,6 +8,11 @@ export default [
   route("contributors/:username", "routes/contributor.tsx"),
   route("contribute", "routes/contribute.tsx"),
   route("about", "routes/about.tsx"),
+  route("contact", "routes/contact.tsx"),
+  route("privacy", "routes/privacy.tsx"),
+  route("terms", "routes/terms.tsx"),
+  route("copyright", "routes/copyright.tsx"),
+  route("cookies", "routes/cookies.tsx"),
   // A full page of its own, outside the account shell.
   route("account/submissions/:id", "routes/account-submission.tsx"),
   route("account", "routes/account.tsx", [

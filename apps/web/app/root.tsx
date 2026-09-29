@@ -30,6 +30,7 @@ import {
   usePageViews,
 } from "~/lib/analytics";
 import { AUTHOR } from "~/lib/author";
+import { LEGAL_PAGES } from "~/lib/legal";
 import { getUser } from "~/lib/session.server";
 import { THEME_SCRIPT } from "~/lib/theme";
 
@@ -122,29 +123,45 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link to="/about" className="hover:text-foreground">
                     About
                   </Link>
+                  <Link to="/contact" className="hover:text-foreground">
+                    Contact
+                  </Link>
                 </nav>
-                <div className="flex items-center gap-2 text-xs sm:col-span-2">
-                  <span>
-                    Made with ☕ by{" "}
-                    <Link
-                      to="/about"
-                      className="font-medium text-foreground underline-offset-4 hover:underline"
-                    >
-                      {AUTHOR.firstName}
-                    </Link>
-                  </span>
-                  {AUTHOR.links.map(({ network, label, href }) => (
-                    <a
-                      key={network}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`${AUTHOR.firstName} on ${label}`}
-                      className="rounded-sm p-1 transition-colors hover:text-foreground"
-                    >
-                      <SocialIcon network={network} className="size-3.5" />
-                    </a>
-                  ))}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:col-span-2 sm:justify-between">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Made with ☕ by{" "}
+                      <Link
+                        to="/about"
+                        className="font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        {AUTHOR.firstName}
+                      </Link>
+                    </span>
+                    {AUTHOR.links.map(({ network, label, href }) => (
+                      <a
+                        key={network}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${AUTHOR.firstName} on ${label}`}
+                        className="rounded-sm p-1 transition-colors hover:text-foreground"
+                      >
+                        <SocialIcon network={network} className="size-3.5" />
+                      </a>
+                    ))}
+                  </div>
+                  <nav aria-label="Legal" className="flex flex-wrap gap-4">
+                    {LEGAL_PAGES.map(({ path, label }) => (
+                      <Link
+                        key={path}
+                        to={path}
+                        className="hover:text-foreground"
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                  </nav>
                 </div>
               </div>
             </footer>

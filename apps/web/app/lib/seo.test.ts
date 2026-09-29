@@ -12,6 +12,8 @@ describe("sitemapXml", () => {
     expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>\n<urlset /);
     expect(xml).toContain(`<url><loc>${SITE}/</loc></url>`);
     expect(xml).toContain(`<url><loc>${SITE}/questions</loc></url>`);
+    expect(xml).toContain(`<url><loc>${SITE}/contact</loc></url>`);
+    expect(xml).toContain(`<url><loc>${SITE}/privacy</loc></url>`);
     expect(xml).toContain(
       `<url><loc>${SITE}/questions/7</loc><lastmod>2026-01-02T03:04:05.000Z</lastmod></url>`,
     );

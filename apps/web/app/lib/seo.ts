@@ -1,7 +1,15 @@
 import type { Sitemap } from "@qb/shared";
+import { LEGAL_PAGES } from "./legal";
 
 /** Public pages that always exist, with no data behind them. */
-const STATIC_PATHS = ["/", "/questions", "/contributors", "/about"];
+const STATIC_PATHS = [
+  "/",
+  "/questions",
+  "/contributors",
+  "/about",
+  "/contact",
+  ...LEGAL_PAGES.map((page) => page.path),
+];
 
 function escapeXml(text: string) {
   return text.replace(

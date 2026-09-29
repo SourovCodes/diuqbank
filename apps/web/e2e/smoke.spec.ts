@@ -71,6 +71,47 @@ test("the footer leads to the about page and its promise", async ({ page }) => {
   await expect(linkedin).toHaveAttribute("target", "_blank");
 });
 
+test("the footer leads to the contact and legal pages", async ({ page }) => {
+  await page.goto("/");
+  await clickUntilUrl(page, "Contact", /\/contact$/);
+  await expect(page).toHaveTitle("Contact — QuestionBank");
+  const main = page.getByRole("main");
+  await expect(
+    main.getByRole("link", { name: "sourov2305101004@diu.edu.bd" }),
+  ).toHaveAttribute("href", "mailto:sourov2305101004@diu.edu.bd");
+  // Each topic starts an email with its own subject.
+  await expect(
+    main.getByRole("link", { name: "Report a bug" }),
+  ).toHaveAttribute(
+    "href",
+    /^mailto:sourov2305101004@diu\.edu\.bd\?subject=Bug%20report&body=/,
+  );
+
+  const legal = page.getByRole("navigation", { name: "Legal", exact: true });
+  for (const [label, path, title] of [
+    ["Privacy", "/privacy", "Privacy policy"],
+    ["Terms", "/terms", "Terms of use"],
+    ["Copyright", "/copyright", "Copyright and removal"],
+    ["Cookies", "/cookies", "Cookie notice"],
+  ] as const) {
+    await expect(async () => {
+      await legal.getByRole("link", { name: label }).click();
+      await expect(page).toHaveURL(new RegExp(`${path}$`), { timeout: 2_000 });
+    }).toPass();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+    // The tabs between the legal pages mark the current one.
+    await expect(
+      page
+        .getByRole("navigation", { name: "Legal pages" })
+        .getByRole("link", { name: label }),
+    ).toHaveAttribute("aria-current", "page");
+  }
+  // The cookie notice lists the cookies the site sets (a table, or cards on phones).
+  await expect(
+    page.getByText("qb_views_q", { exact: true }).filter({ visible: true }),
+  ).toHaveCount(1);
+});
+
 test("an unknown URL renders a styled 404 page", async ({ page }) => {
   const response = await page.goto("/no-such-page");
   expect(response?.status()).toBe(404);
