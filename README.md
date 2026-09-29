@@ -195,7 +195,7 @@ Locally, `flutter build appbundle` signs with the upload key if `android/key.pro
 
 One-time setup:
 
-1. **Play Console.** Create the app with package name `com.diuqbank.app`, and turn on Play App Signing (the default): Google keeps the key that signs what users install, and our key is only an _upload_ key, which Google can reset if it's lost.
+1. **Play Console.** Create the app (its package name, `com.bongomaker.diuqbank`, is set by the first upload) and keep Play App Signing on (the default): Google keeps the key that signs what users install, and our key is only an _upload_ key, which Google can reset if it's lost.
 2. **Upload key.** Create it once and keep the file and password in a password manager (`keytool` comes with Android Studio, in `Contents/jbr/Contents/Home/bin`):
    ```bash
    keytool -genkeypair -v -keystore upload-keystore.jks -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 -alias upload

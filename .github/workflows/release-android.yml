@@ -96,7 +96,7 @@ jobs:
       - uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
-          packageName: com.diuqbank.app
+          packageName: com.bongomaker.diuqbank
           releaseFiles: apps/mobile/build/app/outputs/bundle/release/app-release.aab
           releaseName: ${{ steps.version.outputs.name }}
           # internal until the app has production access; draft until Google has
