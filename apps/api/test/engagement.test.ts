@@ -5,6 +5,7 @@ import {
   type QuestionInteractions,
   type VoteResult,
 } from "@qb/shared";
+import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import {
@@ -14,6 +15,7 @@ import {
   user,
   type NewSubmissionRow,
 } from "../src/db/schema";
+import { createViewToken, VIEW_TOKEN_TTL_MS } from "../src/lib/view-token";
 import {
   api,
   db,
@@ -42,13 +44,40 @@ async function seedQuestionWithPaper(
 const findSubmission = (id: number) =>
   db().query.submissions.findFirst({ where: eq(submissions.id, id) });
 
+const BROWSER =
+  "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36";
+
+/** The view token the question's page gets. */
+async function viewTokenFor(questionId: number) {
+  const detail = await (
+    await api(`/api/v1/questions/${questionId}`)
+  ).json<QuestionDetail>();
+  return detail.viewToken;
+}
+
+/** Counts a view the way the question page does, unless `headers` say otherwise. */
+function countView(path: string, token: string, headers: HeadersInit = {}) {
+  return api(`/api/v1/${path}/views`, {
+    method: "POST",
+    headers: {
+      "x-view-token": token,
+      "user-agent": BROWSER,
+      "sec-fetch-site": "same-origin",
+      ...headers,
+    },
+  });
+}
+
+const viewCountOf = async (questionId: number) =>
+  (await (await api(`/api/v1/questions/${questionId}`)).json<QuestionDetail>())
+    .viewCount;
+
 describe("view counters", () => {
   it("counts question page views from anyone, separately from paper views", async () => {
     const { question } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
     for (let i = 0; i < 2; i++) {
-      const res = await api(`/api/v1/questions/${question.id}/views`, {
-        method: "POST",
-      });
+      const res = await countView(`questions/${question.id}`, token);
       expect(res.status).toBe(204);
     }
 
@@ -58,9 +87,10 @@ describe("view counters", () => {
     expect(detail.viewCount).toBe(2);
     expect(detail.submissions[0]?.viewCount).toBe(0);
 
-    const missing = await api("/api/v1/questions/999999/views", {
-      method: "POST",
-    });
+    const missing = await countView(
+      "questions/999999",
+      await createViewToken(env.BETTER_AUTH_SECRET, 999999),
+    );
     expect(missing.status).toBe(404);
   });
 
@@ -70,21 +100,98 @@ describe("view counters", () => {
     const pending = await seedSubmission(submission.questionId!, {
       status: "pending_review",
     });
+    const token = await viewTokenFor(submission.questionId!);
 
-    const res = await api(`/api/v1/submissions/${submission.id}/views`, {
-      method: "POST",
-    });
+    const res = await countView(`submissions/${submission.id}`, token);
     expect(res.status).toBe(204);
     expect(await findSubmission(submission.id)).toMatchObject({
       viewCount: 1,
       updatedAt,
     });
 
-    const hidden = await api(`/api/v1/submissions/${pending.id}/views`, {
-      method: "POST",
-    });
+    const hidden = await countView(`submissions/${pending.id}`, token);
     expect(hidden.status).toBe(404);
     expect((await findSubmission(pending.id))?.viewCount).toBe(0);
+  });
+
+  it("ignores views without a valid token for the paper's question page", async () => {
+    const { question, submission } = await seedQuestionWithPaper();
+    const other = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
+    const otherToken = await viewTokenFor(other.question.id);
+    const secret = env.BETTER_AUTH_SECRET;
+    const expired = await createViewToken(
+      secret,
+      question.id,
+      Date.now() - VIEW_TOKEN_TTL_MS - 1000,
+    );
+    const forged = await createViewToken("another-secret", question.id);
+
+    for (const bad of [
+      "",
+      "garbage",
+      `${token}.x`,
+      otherToken,
+      expired,
+      forged,
+    ]) {
+      const res = await countView(`questions/${question.id}`, bad);
+      expect(res.status).toBe(204);
+      expect(
+        (await countView(`submissions/${submission.id}`, bad)).status,
+      ).toBe(204);
+    }
+    // No token header at all, as a script would send.
+    expect(
+      (await api(`/api/v1/questions/${question.id}/views`, { method: "POST" }))
+        .status,
+    ).toBe(204);
+
+    expect(await viewCountOf(question.id)).toBe(0);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(0);
+  });
+
+  it("ignores views from crawlers, scripts and other sites", async () => {
+    const { question } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
+
+    for (const userAgent of [
+      "",
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "curl/8.5.0",
+      "python-requests/2.32.3",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/130.0 Safari/537.36",
+    ]) {
+      await countView(`questions/${question.id}`, token, {
+        "user-agent": userAgent,
+      });
+    }
+    await countView(`questions/${question.id}`, token, {
+      "sec-fetch-site": "cross-site",
+    });
+    expect(await viewCountOf(question.id)).toBe(0);
+
+    // Apps don't send Sec-Fetch-Site.
+    const headers = new Headers({
+      "x-view-token": token,
+      "user-agent": BROWSER,
+    });
+    await api(`/api/v1/questions/${question.id}/views`, {
+      method: "POST",
+      headers,
+    });
+    expect(await viewCountOf(question.id)).toBe(1);
+  });
+
+  it("lets many visitors behind one address count", async () => {
+    const { question } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
+    for (let i = 0; i < 70; i++) {
+      await countView(`questions/${question.id}`, token, {
+        "cf-connecting-ip": "203.0.113.7",
+      });
+    }
+    expect(await viewCountOf(question.id)).toBe(70);
   });
 });
 

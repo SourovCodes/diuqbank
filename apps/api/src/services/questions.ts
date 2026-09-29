@@ -119,7 +119,7 @@ export async function getQuestion(
   db: Database,
   id: number,
   filesUrl: string,
-): Promise<QuestionDetail | null> {
+): Promise<Omit<QuestionDetail, "viewToken"> | null> {
   // Like the lists, a question without any submission doesn't exist publicly.
   const [question]: Question[] = await selectQuestions(db)
     .where(

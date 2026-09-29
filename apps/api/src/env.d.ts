@@ -13,6 +13,9 @@ interface Env {
   BUCKET: R2Bucket;
   ANALYSIS_QUEUE: Queue;
   WATERMARK_QUEUE: Queue;
+  UPLOAD_LIMITER: RateLimit;
+  VOTE_LIMITER: RateLimit;
+  REPORT_LIMITER: RateLimit;
   SITE_URL: string;
   FILES_URL: string;
   PDF_PROCESSOR_URL: string;
@@ -30,6 +33,9 @@ declare namespace Cloudflare {
     BUCKET: R2Bucket;
     ANALYSIS_QUEUE: Queue;
     WATERMARK_QUEUE: Queue;
+    UPLOAD_LIMITER: RateLimit;
+    VOTE_LIMITER: RateLimit;
+    REPORT_LIMITER: RateLimit;
     SITE_URL: string;
     FILES_URL: string;
     PDF_PROCESSOR_URL: string;

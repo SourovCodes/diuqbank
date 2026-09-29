@@ -29,6 +29,18 @@ export async function recordSubmissionView(db: Database, submissionId: number) {
   return result.meta.changes > 0;
 }
 
+/** The question of a published paper, or null for unknown or unpublished ones. */
+export async function publishedSubmissionQuestionId(
+  db: Database,
+  submissionId: number,
+) {
+  const submission = await db.query.submissions.findFirst({
+    columns: { questionId: true, status: true },
+    where: eq(submissions.id, submissionId),
+  });
+  return submission?.status === "published" ? submission.questionId : null;
+}
+
 /** Loads a published submission that `userId` may vote on or report. */
 async function findPublishedSubmission(
   db: Database,

@@ -8,6 +8,7 @@ import {
 import { AppError, validationHook } from "../lib/errors";
 import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
+import { rateLimit } from "../middleware/rate-limit";
 import { requireAuth } from "../middleware/require-auth";
 import { getPublishedSubmissionFile } from "../services/questions";
 import { createSubmission } from "../services/submissions";
@@ -23,7 +24,13 @@ const createSubmissionRoute = createRoute({
   description:
     "Department, course and semester can each be an existing id or a new name. " +
     "Submissions with new names have no question until an admin approves the new values.",
-  middleware: [requireAuth] as const,
+  middleware: [
+    requireAuth,
+    rateLimit(
+      "UPLOAD_LIMITER",
+      "You're uploading too fast. Please wait a minute and try again.",
+    ),
+  ] as const,
   request: {
     body: {
       required: true,
@@ -45,6 +52,7 @@ const createSubmissionRoute = createRoute({
     400: errorResponse("Invalid file"),
     401: errorResponse("Not signed in"),
     422: errorResponse("Invalid fields"),
+    429: errorResponse("Too many uploads"),
   },
 });
 

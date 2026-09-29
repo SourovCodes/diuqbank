@@ -42,6 +42,31 @@
       "bucket_name": "questionbank-papers",
     },
   ],
+  // Per-user request limits for the API's costly or spammable endpoints (the API's
+  // rate-limit middleware). Never per IP address: most visitors share a few campus
+  // addresses; view counts use page tokens instead (the API's lib/view-token.ts).
+  // Counted per Cloudflare location, so they are loose caps against abuse, not exact
+  // quotas. Periods can only be 10 or 60 seconds.
+  "ratelimits": [
+    // Uploads, per user: each one is compressed and read by Gemini.
+    {
+      "name": "UPLOAD_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 5, "period": 60 },
+    },
+    // Likes, dislikes and removing them, per user.
+    {
+      "name": "VOTE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 30, "period": 60 },
+    },
+    // Reports, per user.
+    {
+      "name": "REPORT_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 10, "period": 60 },
+    },
+  ],
   // Background work with retries, run by the API's queue handler (via workers/app.ts):
   // - uploads are analysed (compress → Gemini);
   // - published papers get a watermarked copy, the public download (PDF processor).

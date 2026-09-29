@@ -215,11 +215,12 @@ export default function QuestionPage({ loaderData }: Route.ComponentProps) {
     ? (paperTitles(published).get(selected.id) ?? "")
     : "";
 
-  useCountView(`/api/v1/questions/${question.id}/views`);
+  useCountView(`/api/v1/questions/${question.id}/views`, question.viewToken);
   useCountView(
     selected
       ? `/api/v1/submissions/${encodeURIComponent(selected.id)}/views`
       : null,
+    question.viewToken,
   );
 
   return (

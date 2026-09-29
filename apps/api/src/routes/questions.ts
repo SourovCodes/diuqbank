@@ -7,6 +7,7 @@ import {
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
 import { errorResponse, jsonResponse } from "../lib/openapi";
+import { createViewToken } from "../lib/view-token";
 import { getQuestion, listQuestions } from "../services/questions";
 import type { AppEnv } from "../types";
 
@@ -50,5 +51,9 @@ export const questionRoutes = new OpenAPIHono<AppEnv>({
       c.env.FILES_URL,
     );
     if (!question) throw new AppError(404, "NOT_FOUND", "Question not found");
-    return c.json(question, 200);
+    const viewToken = await createViewToken(
+      c.env.BETTER_AUTH_SECRET,
+      question.id,
+    );
+    return c.json({ ...question, viewToken }, 200);
   });

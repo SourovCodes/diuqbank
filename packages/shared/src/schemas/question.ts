@@ -82,6 +82,11 @@ export const questionDetailSchema = questionSchema.extend({
    * score (likes − dislikes), then views, then newest.
    */
   submissions: z.array(submissionSchema),
+  /**
+   * Send as `X-View-Token` when counting a view of this question or one of its papers.
+   * Valid for an hour.
+   */
+  viewToken: z.string(),
 });
 export type QuestionDetail = z.infer<typeof questionDetailSchema>;
 

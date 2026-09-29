@@ -48,15 +48,20 @@ export function withVote(
 }
 
 /**
- * Counts a view by POSTing to `url` once per value (skipped while `url` is null).
- * Fire-and-forget: a failed count never affects the page.
+ * Counts a view by POSTing to `url` once per value (skipped while `url` is null),
+ * with the question's view token. Fire-and-forget: a failed count never affects the
+ * page.
  */
-export function useCountView(url: string | null) {
+export function useCountView(url: string | null, viewToken: string) {
   // Also stops React's development double-run of effects from counting twice.
   const counted = useRef<string | null>(null);
   useEffect(() => {
     if (!url || counted.current === url) return;
     counted.current = url;
-    fetch(url, { method: "POST", keepalive: true }).catch(() => {});
-  }, [url]);
+    fetch(url, {
+      method: "POST",
+      headers: { "x-view-token": viewToken },
+      keepalive: true,
+    }).catch(() => {});
+  }, [url, viewToken]);
 }
