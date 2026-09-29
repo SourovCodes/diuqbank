@@ -39,6 +39,14 @@ dependencies:
   dio: ^5.11.1
   retrofit: ^4.10.0
   json_annotation: ^4.12.0
+  pdfrx: ^2.6.5
+  dio_cookie_manager: ^3.5.0
+  cookie_jar: ^4.0.9
+  path_provider: ^2.1.6
+  share_plus: ^13.3.0
+  url_launcher: ^6.3.2
+  shared_preferences: ^2.5.5
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   flutter_test:
@@ -60,11 +68,14 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+
+  # Roboto Flex (SIL Open Font License, assets/fonts/OFL.txt), a variable font:
+  # the expressive headings use its width axis.
+  fonts:
+    - family: RobotoFlex
+      fonts:
+        - asset: assets/fonts/RobotoFlex.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
