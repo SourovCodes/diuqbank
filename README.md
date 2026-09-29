@@ -195,7 +195,7 @@ Locally, `flutter build appbundle` signs with the upload key if `android/key.pro
 
 One-time setup:
 
-1. **Play Console.** Create the app (its package name, `com.bongomaker.diuqbank`, is set by the first upload) and keep Play App Signing on (the default): Google keeps the key that signs what users install, and our key is only an _upload_ key, which Google can reset if it's lost.
+1. **Play Console.** Create the app (its package name, `com.bongomaker.diuqbank`, is fixed by the first upload) and keep Play App Signing on (the default): Google keeps the key that signs what users install, and our key is only an _upload_ key, which Google can reset if it's lost.
 2. **Upload key.** Create it once and keep the file and password in a password manager (`keytool` comes with Android Studio, in `Contents/jbr/Contents/Home/bin`):
    ```bash
    keytool -genkeypair -v -keystore upload-keystore.jks -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 -alias upload
@@ -224,7 +224,7 @@ One-time setup:
    `817495452` is this repository's ID (`gh api repos/SourovCodes/DIUQBank --jq .id`), which stays the same if the repository is renamed or moved.
 4. **GitHub variables** (Settings → Secrets and variables → Actions → Variables): `GCP_WORKLOAD_IDENTITY_PROVIDER` = `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/diuqbank` and `GCP_SERVICE_ACCOUNT` = `play-publisher@<PROJECT_ID>.iam.gserviceaccount.com`.
 5. **Play Console access for the service account.** Users and permissions → Invite new users → the service account's email. Give it access to the app with "Release apps to testing tracks" (add "Release to production…" once the app has production access).
-6. **The first build goes up by hand.** Google Play's API can't upload to an app that has never had a build. Push `mobile-v1.0.0`; the upload step fails, but the run keeps the `.aab` as an artifact. Upload that in Play Console (Testing → Internal testing → Create new release). Later tags upload on their own. Once Google has reviewed the app, set `PLAY_RELEASE_STATUS` to `completed` so internal releases go out without a manual rollout.
+6. **Release.** Push a `mobile-v*` tag (the first was `mobile-v1.0.0`). Releases arrive as drafts on the internal track: roll them out in Play Console (Testing → Internal testing). Once Google has reviewed the app, set `PLAY_RELEASE_STATUS` to `completed` so internal releases go out without that step.
 
 ## Testing strategy
 
