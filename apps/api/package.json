@@ -24,14 +24,14 @@
     "@better-auth/drizzle-adapter": "^1.7.6",
     "@hono/zod-openapi": "^1.6.3",
     "@qb/shared": "workspace:*",
-    "@scalar/hono-api-reference": "^0.12.5",
+    "@scalar/hono-api-reference": "^0.12.6",
     "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
     "hono": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "^1.2.6",
+    "@cloudflare/vitest-plugin": "^1.2.8",
     "@types/node": "catalog:",
     "drizzle-kit": "^0.31.11",
     "typescript": "catalog:",
