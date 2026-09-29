@@ -108,6 +108,8 @@ test("course filter follows the selected department", async ({ page }) => {
     page.getByRole("option", { name: "Circuit Analysis (EEE)" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
+  // Closing a picker returns focus to it (unless another picker took it meanwhile).
+  await expect(page.getByRole("combobox", { name: "Course" })).toBeFocused();
 
   // Pick a department by searching its short name.
   await openCombobox(page, "Department");

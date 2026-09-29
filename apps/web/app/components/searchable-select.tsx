@@ -109,6 +109,20 @@ export function SearchableSelect({
         <PopoverContent
           align="start"
           className="w-(--radix-popover-trigger-width) min-w-64 p-0"
+          onCloseAutoFocus={(event) => {
+            // Radix moves focus back to this trigger once the closing animation
+            // ends. If another picker opened meanwhile (quick hands, a slow phone),
+            // leave focus there: taking it back would close that picker again.
+            const active = document.activeElement;
+            const content = event.currentTarget as Node | null;
+            if (
+              active &&
+              active !== document.body &&
+              !content?.contains(active)
+            ) {
+              event.preventDefault();
+            }
+          }}
         >
           <Command shouldFilter={false}>
             <CommandInput
