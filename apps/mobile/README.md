@@ -1,6 +1,6 @@
 # QuestionBank mobile app
 
-Flutter app for Android and iOS (`com.diuqbank.app`), using Riverpod and go_router. See "Mobile app" in the repository's README for how it fits in with the API.
+Flutter app for Android (`com.bongomaker.diuqbank`) and iOS (`com.diuqbank.app`), using Riverpod and go_router. See "Mobile app" in the repository's README for how it fits in with the API.
 
 ```bash
 fvm install             # the Flutter version pinned in .fvmrc
