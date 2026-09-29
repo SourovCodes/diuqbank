@@ -9,7 +9,9 @@ part of 'analysis_summary.dart';
 AnalysisSummary _$AnalysisSummaryFromJson(Map<String, dynamic> json) =>
     AnalysisSummary(
       status: AnalysisStatus.fromJson(json['status'] as String),
-      flag: AnalysisFlag.fromJson(json['flag'] as String?),
+      flag: json['flag'] == null
+          ? null
+          : AnalysisFlag.fromJson(json['flag'] as String),
       matches: json['matches'] as bool?,
     );
 
@@ -31,6 +33,5 @@ const _$AnalysisStatusEnumMap = {
 const _$AnalysisFlagEnumMap = {
   AnalysisFlag.notAPaper: 'not_a_paper',
   AnalysisFlag.multiplePapers: 'multiple_papers',
-  AnalysisFlag.valueNull: null,
   AnalysisFlag.$unknown: r'$unknown',
 };

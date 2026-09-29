@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { USERNAME_PATTERN, USERNAME_RULES } from "../constants";
 import { analysisSummarySchema, submissionAnalysisSchema } from "./analysis";
+import { nullableRef } from "./common";
 import { contributorSubmissionSchema } from "./contributor";
 
 /** One of the signed-in user's own submissions, with how its review is going. */
@@ -11,7 +12,7 @@ export const mySubmissionSchema = contributorSubmissionSchema
     /** The admin's reason; null unless rejected. */
     rejectionReason: z.string().nullable(),
     /** Null for papers that were never checked. */
-    analysis: analysisSummarySchema.nullable(),
+    analysis: nullableRef(analysisSummarySchema),
   })
   .meta({ id: "MySubmission" });
 export type MySubmission = z.infer<typeof mySubmissionSchema>;
@@ -42,7 +43,7 @@ export type UploaderAnalysis = z.infer<typeof uploaderAnalysisSchema>;
 
 export const mySubmissionDetailSchema = mySubmissionSchema
   .extend({
-    analysisDetail: uploaderAnalysisSchema.nullable(),
+    analysisDetail: nullableRef(uploaderAnalysisSchema),
   })
   .meta({ id: "MySubmissionDetail" });
 export type MySubmissionDetail = z.infer<typeof mySubmissionDetailSchema>;

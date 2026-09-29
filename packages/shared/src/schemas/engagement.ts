@@ -4,6 +4,7 @@ import {
   REPORT_REASONS,
   REPORT_STATUSES,
 } from "../constants";
+import { nullableRef } from "./common";
 import { submissionStatsSchema } from "./question";
 
 /** 1 = like, -1 = dislike. */
@@ -20,7 +21,7 @@ export type CastVoteInput = z.infer<typeof castVoteInputSchema>;
 /** A submission's counters after a vote change, plus the caller's current vote. */
 export const voteResultSchema = submissionStatsSchema
   .extend({
-    myVote: voteValueSchema.nullable(),
+    myVote: nullableRef(voteValueSchema),
   })
   .meta({ id: "VoteResult" });
 export type VoteResult = z.infer<typeof voteResultSchema>;

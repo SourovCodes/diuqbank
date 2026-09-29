@@ -21,7 +21,7 @@ class AnalysisSummary {
       _$AnalysisSummaryFromJson(json);
 
   final AnalysisStatus status;
-  final AnalysisFlag flag;
+  final AnalysisFlag? flag;
   final bool? matches;
 
   Map<String, Object?> toJson() => _$AnalysisSummaryToJson(this);

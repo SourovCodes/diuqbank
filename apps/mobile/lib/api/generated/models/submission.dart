@@ -37,7 +37,7 @@ class Submission {
   final DateTime createdAt;
   final String? section;
   final String? batch;
-  final Uploader uploader;
+  final Uploader? uploader;
   final String? fileUrl;
 
   Map<String, Object?> toJson() => _$SubmissionToJson(this);

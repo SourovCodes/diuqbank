@@ -32,8 +32,8 @@ class UploaderAnalysis {
   final bool? isQuestionPaper;
   final int? paperCount;
   final String? note;
-  final AnalysisFlag flag;
-  final AnalysisValues values;
+  final AnalysisFlag? flag;
+  final AnalysisValues? values;
 
   Map<String, Object?> toJson() => _$UploaderAnalysisToJson(this);
 }

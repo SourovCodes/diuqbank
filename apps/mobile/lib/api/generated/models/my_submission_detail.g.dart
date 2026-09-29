@@ -23,12 +23,14 @@ MySubmissionDetail _$MySubmissionDetailFromJson(Map<String, dynamic> json) =>
       ),
       autoPublished: json['autoPublished'] as bool,
       rejectionReason: json['rejectionReason'] as String?,
-      analysis: AnalysisSummary.fromJson(
-        json['analysis'] as Map<String, dynamic>,
-      ),
-      analysisDetail: UploaderAnalysis.fromJson(
-        json['analysisDetail'] as Map<String, dynamic>,
-      ),
+      analysis: json['analysis'] == null
+          ? null
+          : AnalysisSummary.fromJson(json['analysis'] as Map<String, dynamic>),
+      analysisDetail: json['analysisDetail'] == null
+          ? null
+          : UploaderAnalysis.fromJson(
+              json['analysisDetail'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$MySubmissionDetailToJson(MySubmissionDetail instance) =>

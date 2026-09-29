@@ -11,16 +11,12 @@ enum AnalysisFlag {
   @JsonValue('multiple_papers')
   multiplePapers('multiple_papers'),
 
-  /// The name has been replaced because it contains a keyword. Original name: `null`.
-  @JsonValue(null)
-  valueNull(null),
-
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 
   const AnalysisFlag(this.json);
 
-  factory AnalysisFlag.fromJson(String? json) =>
+  factory AnalysisFlag.fromJson(String json) =>
       values.firstWhere((e) => e.json == json, orElse: () => $unknown);
 
   final String? json;
