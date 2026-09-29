@@ -171,7 +171,7 @@ Everything (D1, R2, secrets) runs locally through Wrangler/Miniflare; local data
 
 ## Mobile app
 
-`apps/mobile` is a Flutter app (Android and iOS; package `com.bongomaker.diuqbank` on Android, bundle ID `com.diuqbank.app` on iOS) using Riverpod and go_router. It isn't part of the pnpm workspace (it has no `package.json`), and Prettier and ESLint skip it; Dart's own tools format and lint it.
+`apps/mobile` is a Flutter app (Android and iOS; package `com.bongomaker.diuqbank` on Android, bundle ID `com.diuqbank.app` on iOS) using Riverpod and go_router. It has four tabs (Home, Browse, Saved, Account) and a full-screen PDF reader, designed in Material 3 Expressive on the site's indigo; see `apps/mobile/README.md` for the design system. It isn't part of the pnpm workspace (it has no `package.json`), and Prettier and ESLint skip it; Dart's own tools format and lint it.
 
 - **Flutter version:** pinned in `apps/mobile/.fvmrc` ([FVM](https://fvm.app)); CI reads it from there too.
 - **API client:** `lib/api/generated` is generated from `apps/api/openapi.json` by [swagger_parser](https://pub.dev/packages/swagger_parser) (Dio + Retrofit + json_serializable) and committed. Admin and sitemap endpoints are left out (`swagger_parser.yaml`). Class names come from the `.meta({ id })` names on the Zod schemas in `packages/shared`, so give every object schema a public endpoint returns a name there; otherwise the generator invents one, and unnamed objects that share a property name (e.g. `department`) can overwrite each other's class.
