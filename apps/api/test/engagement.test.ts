@@ -15,7 +15,11 @@ import {
   user,
   type NewSubmissionRow,
 } from "../src/db/schema";
-import { MAX_REMEMBERED_VIEWS, VIEW_WINDOW_MS } from "../src/lib/view-cookie";
+import {
+  MAX_REMEMBERED_VIEWS,
+  VIEW_COOKIES,
+  VIEW_WINDOW_MS,
+} from "../src/lib/view-cookie";
 import { createViewToken, VIEW_TOKEN_TTL_MS } from "../src/lib/view-token";
 import {
   api,
@@ -56,6 +60,17 @@ async function viewTokenFor(questionId: number) {
   return detail.viewToken;
 }
 
+// Distinct issue times, all before any token the API issues during the tests.
+const firstPageLoad = Date.now();
+let pageLoads = 0;
+/** Another visit's view token (each one counts each page once a minute). */
+const anotherPageLoad = (questionId: number) =>
+  createViewToken(
+    env.BETTER_AUTH_SECRET,
+    questionId,
+    firstPageLoad - ++pageLoads,
+  );
+
 /** Counts a view the way the question page does, unless `headers` say otherwise. */
 function countView(path: string, token: string, headers: HeadersInit = {}) {
   return api(`/api/v1/${path}/views`, {
@@ -69,14 +84,18 @@ function countView(path: string, token: string, headers: HeadersInit = {}) {
   });
 }
 
-/** A browser on the question page: it sends the token and keeps the `qb_views` cookie. */
+/** A browser on the question page: it sends the token and keeps the view cookies. */
 function browser(token: string) {
-  let cookie = "";
+  const cookies = new Map<string, string>();
   return {
     async view(path: string) {
+      const cookie = [...cookies.values()].join("; ");
       const res = await countView(path, token, cookie ? { cookie } : {});
       const set = res.headers.get("set-cookie");
-      if (set) cookie = set.split(";")[0]!;
+      if (set) {
+        const pair = set.split(";")[0]!;
+        cookies.set(pair.split("=")[0]!, pair);
+      }
       return res;
     },
   };
@@ -89,8 +108,10 @@ const viewCountOf = async (questionId: number) =>
 describe("view counters", () => {
   it("counts question page views from anyone, separately from paper views", async () => {
     const { question } = await seedQuestionWithPaper();
-    const token = await viewTokenFor(question.id);
-    for (let i = 0; i < 2; i++) {
+    for (const token of [
+      await viewTokenFor(question.id),
+      await anotherPageLoad(question.id),
+    ]) {
       const res = await countView(`questions/${question.id}`, token);
       expect(res.status).toBe(204);
     }
@@ -199,13 +220,53 @@ describe("view counters", () => {
 
   it("lets many visitors behind one address count", async () => {
     const { question } = await seedQuestionWithPaper();
-    const token = await viewTokenFor(question.id);
     for (let i = 0; i < 70; i++) {
-      await countView(`questions/${question.id}`, token, {
-        "cf-connecting-ip": "203.0.113.7",
-      });
+      await countView(
+        `questions/${question.id}`,
+        await anotherPageLoad(question.id),
+        { "cf-connecting-ip": "203.0.113.7" },
+      );
     }
     expect(await viewCountOf(question.id)).toBe(70);
+  });
+
+  it("counts each page once per page load's token, however often it is sent", async () => {
+    const { question, submission } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
+    // A script replaying one token, without keeping the cookie.
+    for (let i = 0; i < 3; i++) {
+      await countView(`questions/${question.id}`, token);
+      await countView(`submissions/${submission.id}`, token);
+    }
+    expect(await viewCountOf(question.id)).toBe(1);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(1);
+
+    // Loading the page again gives a token that counts again.
+    await countView(
+      `questions/${question.id}`,
+      await anotherPageLoad(question.id),
+    );
+    expect(await viewCountOf(question.id)).toBe(2);
+  });
+
+  it("remembers a question page and its paper counted at the same time", async () => {
+    const { question, submission } = await seedQuestionWithPaper();
+    const token = await viewTokenFor(question.id);
+    // The question page sends both views at once, from a browser with no cookie yet.
+    const responses = await Promise.all([
+      countView(`questions/${question.id}`, token),
+      countView(`submissions/${submission.id}`, token),
+    ]);
+    const cookie = responses
+      .map((res) => res.headers.get("set-cookie")!.split(";")[0])
+      .join("; ");
+
+    // Reloading the page with both cookies counts neither again.
+    const reload = await anotherPageLoad(question.id);
+    await countView(`questions/${question.id}`, reload, { cookie });
+    await countView(`submissions/${submission.id}`, reload, { cookie });
+    expect(await viewCountOf(question.id)).toBe(1);
+    expect((await findSubmission(submission.id))?.viewCount).toBe(1);
   });
 
   it("counts a browser once a day per paper and per question page", async () => {
@@ -220,7 +281,7 @@ describe("view counters", () => {
     for (let i = 0; i < 3; i++) {
       expect((await mine.view(paper)).status).toBe(204);
     }
-    await browser(token).view(paper);
+    await browser(await anotherPageLoad(question.id)).view(paper);
     expect((await findSubmission(submission.id))?.viewCount).toBe(2);
 
     // The same browser still counts on the question page and another paper, once each.
@@ -234,10 +295,21 @@ describe("view counters", () => {
 
     // A view remembered a day ago counts again.
     const dayAgo = Math.floor((Date.now() - VIEW_WINDOW_MS) / 60_000);
-    await countView(paper, token, {
-      cookie: `qb_views=s${submission.id}_${dayAgo.toString(36)}`,
+    await countView(paper, await anotherPageLoad(question.id), {
+      cookie: `${VIEW_COOKIES.paper}=${submission.id}_${dayAgo.toString(36)}`,
     });
     expect((await findSubmission(submission.id))?.viewCount).toBe(3);
+
+    // Remembered papers and crawlers are ignored before the paper is even loaded.
+    const minute = Math.floor(Date.now() / 60_000).toString(36);
+    const remembered = await countView("submissions/999999", token, {
+      cookie: `${VIEW_COOKIES.paper}=999999_${minute}`,
+    });
+    expect(remembered.status).toBe(204);
+    const crawler = await countView("submissions/999999", token, {
+      "user-agent": "curl/8.5.0",
+    });
+    expect(crawler.status).toBe(204);
 
     // Unknown pages and ignored views don't set the cookie.
     const missing = await countView(
@@ -256,23 +328,28 @@ describe("view counters", () => {
     const minute = Math.floor(Date.now() / 60_000).toString(36);
     const full = Array.from(
       { length: MAX_REMEMBERED_VIEWS },
-      (_, i) => `q${i + 1_000_000}_${minute}`,
+      (_, i) => `${i + 1_000_000}_${minute}`,
     ).join(".");
     const res = await countView(`submissions/${submission.id}`, token, {
-      cookie: `qb_views=${full}; other=junk`,
+      cookie: `${VIEW_COOKIES.paper}=${full}; other=junk`,
     });
     const set = res.headers.get("set-cookie")!;
     expect(set).toMatch(/Path=\/api\/v1/);
     expect(set).toMatch(/HttpOnly/);
-    const entries = set.split(";")[0]!.slice("qb_views=".length).split(".");
+    const entries = set
+      .split(";")[0]!
+      .slice(`${VIEW_COOKIES.paper}=`.length)
+      .split(".");
     expect(entries).toHaveLength(MAX_REMEMBERED_VIEWS);
-    expect(entries[0]).toBe(`q1000001_${minute}`);
-    expect(entries.at(-1)).toBe(`s${submission.id}_${minute}`);
+    expect(entries[0]).toBe(`1000001_${minute}`);
+    expect(entries.at(-1)).toBe(`${submission.id}_${minute}`);
 
     // Garbage in the cookie is ignored rather than failing the request.
-    const junk = await countView(`submissions/${submission.id}`, token, {
-      cookie: "qb_views=nonsense.x_y._.s_zz",
-    });
+    const junk = await countView(
+      `submissions/${submission.id}`,
+      await anotherPageLoad(submission.questionId!),
+      { cookie: `${VIEW_COOKIES.paper}=nonsense.x_y._.s_zz` },
+    );
     expect(junk.status).toBe(204);
     expect((await findSubmission(submission.id))?.viewCount).toBe(2);
   });

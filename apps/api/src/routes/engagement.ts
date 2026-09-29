@@ -11,7 +11,7 @@ import {
 import { AppError, validationHook } from "../lib/errors";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { readViews, rememberView } from "../lib/view-cookie";
-import { isCountableView } from "../lib/view-token";
+import { isBrowserRequest, verifyViewToken } from "../lib/view-token";
 import { rateLimit } from "../middleware/rate-limit";
 import { requireAuth } from "../middleware/require-auth";
 import {
@@ -39,7 +39,8 @@ const reportLimit = rateLimit(
 const VIEW_DESCRIPTION =
   "Public and unauthenticated. Counts only views sent from the question's page: " +
   "`viewToken` from `GET /questions/{id}` in `X-View-Token`, from a browser or app " +
-  "rather than a crawler or script. Other requests are ignored, still with 204.";
+  "rather than a crawler or script. A token counts each page at most once a minute, " +
+  "and a browser once a day. Other requests are ignored, still with 204.";
 const viewHeaders = z.object({
   "x-view-token": z
     .string()
@@ -47,17 +48,41 @@ const viewHeaders = z.object({
     .openapi({ description: "The question's `viewToken`" }),
 });
 
-/** Whether this request is a visitor's view of question `questionId` or its papers. */
-function isVisitorView(c: Context<AppEnv>, questionId: number) {
-  return isCountableView(
-    c.env.BETTER_AUTH_SECRET,
-    {
-      token: c.req.header("x-view-token"),
+/**
+ * Whether this is a browser's first view of the page today (the view cookie) from
+ * a person rather than a crawler or another site. Costs no D1 read or crypto.
+ */
+function isNewBrowserView(
+  c: Context<AppEnv>,
+  views: Map<number, number>,
+  id: number,
+) {
+  return (
+    !views.has(id) &&
+    isBrowserRequest({
       userAgent: c.req.header("user-agent"),
       fetchSite: c.req.header("sec-fetch-site"),
-    },
-    questionId,
+    })
   );
+}
+
+/**
+ * Whether the request's view token counts a view of page `page` (`q12`, `s5`) of
+ * question `questionId`: valid, and not already used for that page in the last minute.
+ */
+async function tokenCounts(
+  c: Context<AppEnv>,
+  questionId: number,
+  page: string,
+) {
+  const token = c.req.header("x-view-token");
+  if (!(await verifyViewToken(c.env.BETTER_AUTH_SECRET, token, questionId))) {
+    return false;
+  }
+  const { success } = await c.env.VIEW_LIMITER.limit({
+    key: `${page}:${token}`,
+  });
+  return success;
 }
 
 const jsonBody = <T extends z.ZodType>(schema: T) => ({
@@ -170,27 +195,33 @@ export const engagementRoutes = new OpenAPIHono<AppEnv>({
 })
   .openapi(recordQuestionViewRoute, async (c) => {
     const { id } = c.req.valid("param");
-    // Invalid tokens are ignored before the 404, which never needs a token.
-    if (!(await isVisitorView(c, id))) return c.body(null, 204);
-    const views = readViews(c);
-    if (views.has(`q${id}`)) return c.body(null, 204);
+    const views = readViews(c, "question");
+    // Ignored views get their 204 before the 404, which never needs a token.
+    if (
+      !isNewBrowserView(c, views, id) ||
+      !(await tokenCounts(c, id, `q${id}`))
+    ) {
+      return c.body(null, 204);
+    }
     if (!(await recordQuestionView(c.var.db, id))) {
       throw new AppError(404, "NOT_FOUND", "Question not found");
     }
-    rememberView(c, views, `q${id}`);
+    rememberView(c, "question", views, id);
     return c.body(null, 204);
   })
   .openapi(recordSubmissionViewRoute, async (c) => {
     const { id } = c.req.valid("param");
+    const views = readViews(c, "paper");
+    // Repeats and crawlers are ignored before the paper is loaded.
+    if (!isNewBrowserView(c, views, id)) return c.body(null, 204);
     const questionId = await publishedSubmissionQuestionId(c.var.db, id);
     if (questionId === null) {
       throw new AppError(404, "NOT_FOUND", "Submission not found");
     }
-    const views = readViews(c);
     // The token is the paper's question page's.
-    if (!views.has(`s${id}`) && (await isVisitorView(c, questionId))) {
+    if (await tokenCounts(c, questionId, `s${id}`)) {
       await recordSubmissionView(c.var.db, id);
-      rememberView(c, views, `s${id}`);
+      rememberView(c, "paper", views, id);
     }
     return c.body(null, 204);
   })

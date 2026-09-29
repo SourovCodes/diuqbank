@@ -1,8 +1,9 @@
 // View counts are public and unauthenticated, and most visitors share a few campus
 // IP addresses, so they can't be limited per address. Instead a view only counts
 // with a token from the question page itself: `GET /questions/{id}` signs one, and
-// the page sends it back. A script then has to load the question for each view
-// it wants counted, like a visitor does, rather than POST in a loop.
+// the page sends it back. A token counts each page at most once a minute (the
+// VIEW_LIMITER binding, keyed by token), so a script has to load the question again
+// for each view it wants counted, like a visitor does, rather than replay one token.
 
 /** How long a question page's token counts views (a visitor reading for a while). */
 export const VIEW_TOKEN_TTL_MS = 60 * 60 * 1000;
@@ -83,22 +84,16 @@ const AUTOMATED_AGENT =
   /bot|crawl|spider|slurp|preview|headless|curl|wget|python|httpie|http-client|httpclient|okhttp|axios|node-fetch|undici|go-http|java\/|libwww|scrapy|phantomjs|selenium|puppeteer|playwright/i;
 
 /**
- * Whether a view request comes from a person's browser (or app) on a question page:
- * a valid token for the question, a user agent that isn't an automated one, and, when
- * the browser says so, a request from this site rather than another one.
+ * Whether a view request comes from a person's browser (or app): a user agent that
+ * isn't an automated one and, when the browser says so, a request from this site
+ * rather than another one. Checked before anything that costs a D1 read.
  */
-export async function isCountableView(
-  secret: string,
-  headers: {
-    token: string | undefined;
-    userAgent: string | undefined;
-    fetchSite: string | undefined;
-  },
-  questionId: number,
-) {
+export function isBrowserRequest(headers: {
+  userAgent: string | undefined;
+  fetchSite: string | undefined;
+}) {
   if (!headers.userAgent || AUTOMATED_AGENT.test(headers.userAgent)) {
     return false;
   }
-  if (headers.fetchSite && headers.fetchSite !== "same-origin") return false;
-  return verifyViewToken(secret, headers.token, questionId);
+  return !headers.fetchSite || headers.fetchSite === "same-origin";
 }

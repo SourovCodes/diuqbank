@@ -42,9 +42,10 @@
       "bucket_name": "questionbank-papers",
     },
   ],
-  // Per-user request limits for the API's costly or spammable endpoints (the API's
-  // rate-limit middleware). Never per IP address: most visitors share a few campus
-  // addresses; view counts use page tokens instead (the API's lib/view-token.ts).
+  // Request limits for the API's costly or spammable endpoints: per user (the API's
+  // rate-limit middleware), or per page token for view counts (the API's
+  // lib/view-token.ts). Never per IP address: most visitors share a few campus
+  // addresses.
   // Counted per Cloudflare location, so they are loose caps against abuse, not exact
   // quotas. Periods can only be 10 or 60 seconds.
   "ratelimits": [
@@ -65,6 +66,13 @@
       "name": "REPORT_LIMITER",
       "namespace_id": "1003",
       "simple": { "limit": 10, "period": 60 },
+    },
+    // View counts, per question page token and page: a page load counts each page
+    // once, so a script can't replay one token for the hour it is valid.
+    {
+      "name": "VIEW_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 1, "period": 60 },
     },
   ],
   // Background work with retries, run by the API's queue handler (via workers/app.ts):
