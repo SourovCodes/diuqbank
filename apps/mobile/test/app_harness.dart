@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -10,6 +11,7 @@ import 'package:diuqbank/data/questions.dart';
 import 'package:diuqbank/data/taxonomy.dart';
 import 'package:diuqbank/features/questions/question_providers.dart';
 import 'package:diuqbank/features/upload/papers.dart';
+import 'package:diuqbank/features/upload/shared_pdfs.dart';
 import 'package:diuqbank/features/upload/upload_screen.dart';
 import 'package:diuqbank/main.dart';
 import 'package:diuqbank/router.dart';
@@ -109,6 +111,20 @@ class FakePaperSources implements PaperSources {
   Future<PickedPdf?> pick() async => pdf;
 }
 
+/// PDFs shared from other apps: one the app opened with, and later ones.
+class FakeSharedPdfs implements SharedPdfs {
+  FakeSharedPdfs([this.first]);
+
+  final PickedPdf? first;
+  final controller = StreamController<PickedPdf>.broadcast();
+
+  @override
+  Future<PickedPdf?> initial() async => first;
+
+  @override
+  Stream<PickedPdf> get incoming => controller.stream;
+}
+
 /// Question lists by query: a course's exams, the most viewed, or the newest.
 typedef Lists = Future<QuestionList> Function(QuestionQuery query);
 
@@ -121,6 +137,7 @@ Future<FakeViewCounter> pumpApp(
   GoogleAccounts? google,
   TokenStore? tokens,
   PaperSources? sources,
+  SharedPdfs? shared,
 }) async {
   tester.view
     ..physicalSize = const Size(1080, 2340)
@@ -151,6 +168,7 @@ Future<FakeViewCounter> pumpApp(
         ),
         tokenStoreProvider.overrideWithValue(store),
         paperSourcesProvider.overrideWithValue(sources ?? FakePaperSources()),
+        sharedPdfsProvider.overrideWithValue(shared ?? FakeSharedPdfs()),
         pdfThumbnailProvider.overrideWithValue((path) => const SizedBox()),
         savedSessionTokenProvider.overrideWithValue(token),
         paperViewerProvider.overrideWithValue(
