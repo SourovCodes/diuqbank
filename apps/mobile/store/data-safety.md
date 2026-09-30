@@ -21,8 +21,7 @@ upload that isn't published yet, and undoing a like or dislike, both in the app.
 
 ### Data types
 
-Nothing is **shared** in Play's sense: Cloudflare, Google (sign-in, Gemini,
-Crashlytics) and the PDF service are service providers acting on your behalf,
+Nothing is **shared** in Play's sense: Cloudflare, Google (sign-in, Gemini) and the PDF service are service providers acting on your behalf,
 and a published paper showing your name is something you chose to do.
 
 | Category | Data type | Collected | Required? | Purposes |
@@ -34,16 +33,16 @@ and a published paper showing your name is something you chose to do.
 | Files and docs | Files and docs | Yes (PDFs you upload) | Optional | App functionality |
 | App activity | App interactions | Yes (likes, dislikes, reports) | Optional | App functionality |
 | App activity | Other user-generated content | Yes (a report's note) | Optional | App functionality |
-| App info and performance | Crash logs | Yes (Crashlytics) | Required | Analytics |
-| App info and performance | Diagnostics | Yes (Crashlytics: device model, OS and app version) | Required | Analytics |
-| Device or other IDs | Device or other IDs | Yes (Crashlytics installation ID) | Required | Analytics |
 
 Everything above is **not processed ephemerally** (it's stored).
 
 **Not collected:** location, contacts, photos and videos (a camera scan becomes
 the PDF you upload, which is under Files and docs; nothing else leaves the
 phone), audio, calendar, messages, health, financial info, web browsing, and
-installed apps. Saved papers, recent courses and the theme stay on the phone and
+installed apps, crash logs and diagnostics (the app has no crash reporter or
+analytics yet; add them here when it does). "Send feedback" puts the app version
+and phone model in an email the user sends from their own mail app, which Play
+doesn't count as collection. Saved papers, recent courses and the theme stay on the phone and
 aren't "collected" (Play only counts data sent off the device).
 
 ## App access

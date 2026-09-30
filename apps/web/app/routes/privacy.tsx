@@ -84,13 +84,6 @@ export default function Privacy() {
             to upload leaves it. The same goes for PDFs you pick from your files
             or share to the app from another one.
           </li>
-          <li>
-            <strong>Crash reports</strong>: when the app crashes or hits an
-            error, Firebase Crashlytics sends what went wrong in the code, your
-            phone’s model and system version, the app version and a random ID
-            for this installation. They aren’t linked to your account, and I use
-            them only to fix bugs.
-          </li>
         </ul>
       </LegalSection>
       <LegalSection id="use" title="How it is used">
@@ -134,9 +127,8 @@ export default function Privacy() {
             file storage, including uploaded PDFs and profile photos.
           </li>
           <li>
-            <strong>Google</strong> handles sign-in, runs Google Analytics,
-            collects the app’s crash reports (Firebase Crashlytics), and its
-            Gemini AI reads uploaded PDFs to check them and suggest their
+            <strong>Google</strong> handles sign-in, runs Google Analytics, and
+            its Gemini AI reads uploaded PDFs to check them and suggest their
             details.
           </li>
           <li>
