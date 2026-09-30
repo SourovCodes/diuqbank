@@ -13,6 +13,7 @@ export default [
   route("terms", "routes/terms.tsx"),
   route("copyright", "routes/copyright.tsx"),
   route("cookies", "routes/cookies.tsx"),
+  route("delete-account", "routes/delete-account.tsx"),
   // A full page of its own, outside the account shell.
   route("account/submissions/:id", "routes/account-submission.tsx"),
   route("account", "routes/account.tsx", [

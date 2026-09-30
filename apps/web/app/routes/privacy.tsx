@@ -63,6 +63,29 @@ export default function Privacy() {
         </p>
       </LegalSection>
 
+      <LegalSection id="mobile-app" title="In the mobile app">
+        <p>
+          The QuestionBank app for Android collects the same account, upload and
+          like, dislike or report data as the site, when you do the same things.
+          Unlike the site, it doesn’t use Google Analytics or cookies.
+        </p>
+        <ul>
+          <li>
+            <strong>Signing in</strong> keeps a session token in your phone’s
+            secure storage, so you stay signed in. Signing out removes it.
+          </li>
+          <li>
+            <strong>Saved papers, recent courses and your theme</strong> are
+            kept on your phone only, and are removed when you uninstall the app.
+          </li>
+          <li>
+            <strong>Scanning a paper</strong> uses the camera through Google’s
+            document scanner, which runs on your phone. Only the PDF you choose
+            to upload leaves it. The same goes for PDFs you pick from your files
+            or share to the app from another one.
+          </li>
+        </ul>
+      </LegalSection>
       <LegalSection id="use" title="How it is used">
         <ul>
           <li>To sign you in and show your account and uploads.</li>
@@ -150,7 +173,8 @@ export default function Privacy() {
           </li>
           <li>
             Ask for a copy of your data, a correction, or your account to be
-            deleted, by emailing{" "}
+            deleted (<Link to="/delete-account">how deleting works</Link>), by
+            emailing{" "}
             <a href={mailto(AUTHOR.email, "Account and data request")}>
               {AUTHOR.email}
             </a>{" "}
