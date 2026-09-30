@@ -1,5 +1,6 @@
 // Renders feature-graphic.html to feature-graphic.png with the web app's Playwright.
 // Run from the repo root: node apps/mobile/store/render-feature-graphic.mjs
+/* global URL, document */
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
