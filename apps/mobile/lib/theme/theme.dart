@@ -182,7 +182,11 @@ ThemeData buildTheme(Brightness brightness) {
     chipTheme: base.chipTheme.copyWith(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       side: BorderSide(color: scheme.outlineVariant),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w500),
+      // With a colour: a style without one leaves chip labels white.
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w500,
+        color: scheme.onSurfaceVariant,
+      ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: scheme.surfaceContainerLow,

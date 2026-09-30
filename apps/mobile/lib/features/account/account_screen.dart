@@ -15,6 +15,7 @@ import '../../theme/theme.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/google_button.dart';
 import '../../widgets/skeleton.dart';
+import '../upload/share_card.dart';
 
 final _versionProvider = FutureProvider<String>(
   (ref) async => (await PackageInfo.fromPlatform()).version,
@@ -39,9 +40,11 @@ class AccountScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            if (signedIn)
-              const _Profile()
-            else ...[
+            if (signedIn) ...[
+              const _Profile(),
+              const SizedBox(height: 24),
+              const YourPapersSection(),
+            ] else ...[
               Text('Account', style: expressive(40, color: scheme.onSurface)),
               const SizedBox(height: 20),
               const _SignInCard(),
@@ -486,6 +489,7 @@ class _SignOutButton extends ConsumerWidget {
         final messenger = ScaffoldMessenger.of(context);
         final confirmed = await showModalBottomSheet<bool>(
           context: context,
+          useRootNavigator: true,
           showDragHandle: true,
           builder: (context) => const _ConfirmSignOut(),
         );

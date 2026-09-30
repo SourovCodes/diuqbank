@@ -44,6 +44,7 @@ Dio _newDio(Ref ref) {
 /// public reads stay anonymous, so the site's cache can answer them.
 bool needsSession(String path) =>
     path.startsWith('/api/v1/me') ||
+    path == '/api/v1/submissions' ||
     RegExp(r'^/api/v1/submissions/\d+/(vote|reports)$').hasMatch(path);
 
 final dioProvider = Provider<Dio>((ref) {

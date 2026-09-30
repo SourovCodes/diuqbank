@@ -14,6 +14,7 @@ import '../../widgets/question_row.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/state_message.dart';
+import '../upload/share_card.dart';
 import 'search_pill.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -107,6 +108,8 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             _MostViewed(questions: popular.requireValue.items),
+            const SizedBox(height: 20),
+            const ShareCard(),
             const SizedBox(height: 20),
             SectionHeader(
               'Recently added',

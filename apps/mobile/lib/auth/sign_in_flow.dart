@@ -47,6 +47,7 @@ Future<bool> ensureSignedIn(
   if (ref.read(sessionTokenProvider) != null) return true;
   final proceed = await showModalBottomSheet<bool>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     builder: (context) => _SignInNeeded(to: to),
   );

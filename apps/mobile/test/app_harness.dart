@@ -9,6 +9,8 @@ import 'package:diuqbank/data/prefs.dart';
 import 'package:diuqbank/data/questions.dart';
 import 'package:diuqbank/data/taxonomy.dart';
 import 'package:diuqbank/features/questions/question_providers.dart';
+import 'package:diuqbank/features/upload/papers.dart';
+import 'package:diuqbank/features/upload/upload_screen.dart';
 import 'package:diuqbank/main.dart';
 import 'package:diuqbank/router.dart';
 import 'package:dio/dio.dart';
@@ -94,6 +96,19 @@ class FakeGoogleAccounts implements GoogleAccounts {
   Future<void> forget() async => forgotten++;
 }
 
+/// The scanner and file picker, handing over [pdf] (or nothing: backed out).
+class FakePaperSources implements PaperSources {
+  FakePaperSources([this.pdf]);
+
+  PickedPdf? pdf;
+
+  @override
+  Future<PickedPdf?> scan() async => pdf;
+
+  @override
+  Future<PickedPdf?> pick() async => pdf;
+}
+
 /// Question lists by query: a course's exams, the most viewed, or the newest.
 typedef Lists = Future<QuestionList> Function(QuestionQuery query);
 
@@ -105,6 +120,7 @@ Future<FakeViewCounter> pumpApp(
   FakeBackend? backend,
   GoogleAccounts? google,
   TokenStore? tokens,
+  PaperSources? sources,
 }) async {
   tester.view
     ..physicalSize = const Size(1080, 2340)
@@ -134,6 +150,8 @@ Future<FakeViewCounter> pumpApp(
           google ?? FakeGoogleAccounts(),
         ),
         tokenStoreProvider.overrideWithValue(store),
+        paperSourcesProvider.overrideWithValue(sources ?? FakePaperSources()),
+        pdfThumbnailProvider.overrideWithValue((path) => const SizedBox()),
         savedSessionTokenProvider.overrideWithValue(token),
         paperViewerProvider.overrideWithValue(
           (url, events) => GestureDetector(
@@ -165,11 +183,17 @@ Future<QuestionList> defaultLists(QuestionQuery query) async => page(
         ],
 );
 
-/// Scrolls the list that holds [finder] until it is fully visible.
+/// Scrolls the list that holds [finder] until it is fully visible. If it isn't
+/// built yet (further down a lazy list), scrolls the visible vertical list.
 Future<void> scrollTo(WidgetTester tester, Finder finder) async {
-  final list = find
-      .ancestor(of: finder, matching: find.byType(Scrollable))
-      .first;
+  final list = finder.evaluate().isNotEmpty
+      ? find.ancestor(of: finder, matching: find.byType(Scrollable)).first
+      : find
+            .byWidgetPredicate(
+              (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+            )
+            .hitTestable()
+            .first;
   await tester.scrollUntilVisible(finder, 200, scrollable: list);
   await tester.pumpAndSettle();
 }
