@@ -9,8 +9,10 @@ import 'token.dart';
 
 /// The site's web OAuth client ID. Google issues the ID token for it, so the
 /// API accepts the token as its own. The Android client (package name and
-/// signing certificate) only has to exist in the same Google Cloud project.
-const googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+/// signing certificate) only has to exist in the same Google Cloud project
+/// (`diuquestionbank`). Client IDs are public; the secret stays on the server.
+const googleServerClientId =
+    '550941155781-v1hejo68llkdju4urh31p5q85rqe8mj5.apps.googleusercontent.com';
 
 /// The API's code for a new account whose email isn't a DIU one.
 const emailDomainNotAllowed = 'EMAIL_DOMAIN_NOT_ALLOWED';
@@ -30,7 +32,7 @@ class PlatformGoogleAccounts implements GoogleAccounts {
   Future<void>? _initialized;
 
   Future<void> _init() => _initialized ??= GoogleSignIn.instance.initialize(
-    serverClientId: googleServerClientId.isEmpty ? null : googleServerClientId,
+    serverClientId: googleServerClientId,
   );
 
   @override
