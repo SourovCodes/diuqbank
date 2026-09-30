@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../api/api.dart';
@@ -9,6 +8,7 @@ import '../../auth/session.dart';
 import '../../auth/sign_in_flow.dart';
 import '../../auth/token.dart';
 import '../../data/format.dart';
+import '../../data/support.dart';
 import '../../data/settings.dart';
 import '../../theme/exam_shape.dart';
 import '../../theme/theme.dart';
@@ -16,10 +16,6 @@ import '../../widgets/avatar.dart';
 import '../../widgets/google_button.dart';
 import '../../widgets/skeleton.dart';
 import '../upload/share_card.dart';
-
-final _versionProvider = FutureProvider<String>(
-  (ref) async => (await PackageInfo.fromPlatform()).version,
-);
 
 Future<void> _openSite(String path) =>
     launchUrl(Uri.parse('$apiBaseUrl$path'), mode: LaunchMode.inAppBrowserView);
@@ -31,7 +27,8 @@ class AccountScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final version = ref.watch(_versionProvider).value;
+    final details = ref.watch(appDetailsProvider).value;
+    final android = Theme.of(context).platform == TargetPlatform.android;
     final signedIn = ref.watch(sessionTokenProvider) != null;
 
     return Scaffold(
@@ -84,6 +81,27 @@ class AccountScreen extends ConsumerWidget {
             Column(
               spacing: 2,
               children: [
+                if (android)
+                  _LinkTile(
+                    icon: Icons.star_outline_rounded,
+                    title: 'Rate QuestionBank',
+                    subtitle: 'On Google Play',
+                    bottom: false,
+                    onTap: openStoreListing,
+                  ),
+                _LinkTile(
+                  icon: Icons.feedback_outlined,
+                  title: 'Send feedback',
+                  subtitle: 'Report a bug or suggest an idea',
+                  top: !android,
+                  onTap: () => sendFeedback(details),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              spacing: 2,
+              children: [
                 for (final (i, (icon, label, path)) in const [
                   (Icons.info_outline_rounded, 'About QuestionBank', '/about'),
                   (Icons.mail_outline_rounded, 'Contact us', '/contact'),
@@ -102,11 +120,22 @@ class AccountScreen extends ConsumerWidget {
             if (signedIn) ...[
               const SizedBox(height: 24),
               const _SignOutButton(),
+              const SizedBox(height: 4),
+              Center(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.onSurfaceVariant,
+                  ),
+                  // Google Play asks for a way to delete the account from the app.
+                  onPressed: () => _openSite('/delete-account'),
+                  child: const Text('Delete account'),
+                ),
+              ),
             ],
             const SizedBox(height: 20),
             Text(
               [
-                if (version != null) 'Version $version',
+                if (details != null) 'Version ${details.version}',
                 'diuqbank.com',
               ].join(' · '),
               textAlign: TextAlign.center,

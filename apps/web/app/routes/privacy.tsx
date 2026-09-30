@@ -63,6 +63,36 @@ export default function Privacy() {
         </p>
       </LegalSection>
 
+      <LegalSection id="mobile-app" title="In the mobile app">
+        <p>
+          The QuestionBank app for Android collects the same account, upload and
+          like, dislike or report data as the site, when you do the same things.
+          Unlike the site, it doesn’t use Google Analytics or cookies.
+        </p>
+        <ul>
+          <li>
+            <strong>Signing in</strong> keeps a session token in your phone’s
+            secure storage, so you stay signed in. Signing out removes it.
+          </li>
+          <li>
+            <strong>Saved papers, recent courses and your theme</strong> are
+            kept on your phone only, and are removed when you uninstall the app.
+          </li>
+          <li>
+            <strong>Scanning a paper</strong> uses the camera through Google’s
+            document scanner, which runs on your phone. Only the PDF you choose
+            to upload leaves it. The same goes for PDFs you pick from your files
+            or share to the app from another one.
+          </li>
+          <li>
+            <strong>Crash reports</strong>: when the app crashes or hits an
+            error, Firebase Crashlytics sends what went wrong in the code, your
+            phone’s model and system version, the app version and a random ID
+            for this installation. They aren’t linked to your account, and I use
+            them only to fix bugs.
+          </li>
+        </ul>
+      </LegalSection>
       <LegalSection id="use" title="How it is used">
         <ul>
           <li>To sign you in and show your account and uploads.</li>
@@ -104,8 +134,9 @@ export default function Privacy() {
             file storage, including uploaded PDFs and profile photos.
           </li>
           <li>
-            <strong>Google</strong> handles sign-in, runs Google Analytics, and
-            its Gemini AI reads uploaded PDFs to check them and suggest their
+            <strong>Google</strong> handles sign-in, runs Google Analytics,
+            collects the app’s crash reports (Firebase Crashlytics), and its
+            Gemini AI reads uploaded PDFs to check them and suggest their
             details.
           </li>
           <li>
@@ -150,7 +181,8 @@ export default function Privacy() {
           </li>
           <li>
             Ask for a copy of your data, a correction, or your account to be
-            deleted, by emailing{" "}
+            deleted (<Link to="/delete-account">how deleting works</Link>), by
+            emailing{" "}
             <a href={mailto(AUTHOR.email, "Account and data request")}>
               {AUTHOR.email}
             </a>{" "}

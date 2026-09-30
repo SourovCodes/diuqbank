@@ -112,6 +112,25 @@ test("the footer leads to the contact and legal pages", async ({ page }) => {
   ).toHaveCount(1);
 });
 
+test("the account deletion page explains how to ask", async ({ page }) => {
+  // Google Play links here, and so does the app's Account screen.
+  await page.goto("/privacy");
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "how deleting works" })
+    .click();
+  await expect(page).toHaveURL(/\/delete-account$/);
+  await expect(page).toHaveTitle("Delete your account — QuestionBank");
+  await expect(
+    page
+      .getByRole("main")
+      .getByRole("link", { name: "Email a deletion request" }),
+  ).toHaveAttribute(
+    "href",
+    /^mailto:sourov2305101004@diu\.edu\.bd\?subject=Delete%20my%20account/,
+  );
+});
+
 test("an unknown URL renders a styled 404 page", async ({ page }) => {
   const response = await page.goto("/no-such-page");
   expect(response?.status()).toBe(404);

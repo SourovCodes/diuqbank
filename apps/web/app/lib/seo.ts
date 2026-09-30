@@ -8,6 +8,7 @@ const STATIC_PATHS = [
   "/contributors",
   "/about",
   "/contact",
+  "/delete-account",
   ...LEGAL_PAGES.map((page) => page.path),
 ];
 
