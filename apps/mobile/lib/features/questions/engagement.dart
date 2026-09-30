@@ -252,20 +252,29 @@ class VoteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? scheme.onSecondaryContainer : scheme.onSurface;
-    return Opacity(
-      opacity: onPressed == null ? 0.45 : 1,
-      child: Tooltip(
-        message: tooltip,
-        child: Material(
-          color: selected ? scheme.secondaryContainer : Colors.transparent,
-          shape: const StadiumBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: Semantics(
-              button: true,
-              selected: selected,
+    // A tint of the primary colour: the containers are too close to the
+    // toolbar's own colour to show a vote.
+    final fg = selected ? scheme.primary : scheme.onSurface;
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: onPressed != null,
+      selected: selected,
+      label: count == null ? tooltip : '$tooltip, $count',
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: onPressed == null ? 0.45 : 1,
+        child: Tooltip(
+          message: tooltip,
+          excludeFromSemantics: true,
+          child: Material(
+            color: selected
+                ? scheme.primary.withValues(alpha: 0.14)
+                : Colors.transparent,
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onPressed,
               child: SizedBox(
                 height: 44,
                 child: Padding(
