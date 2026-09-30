@@ -49,7 +49,8 @@ export const db = () => createDb(env.DB);
  * a test could log in through.
  */
 function testAuth() {
-  return betterAuth({ ...authOptions(env, db()), plugins: [testUtils()] });
+  const options = authOptions(env, db());
+  return betterAuth({ ...options, plugins: [...options.plugins, testUtils()] });
 }
 
 /** Creates a fresh user and returns a Cookie header value for authenticated requests. */

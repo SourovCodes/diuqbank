@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { EMAIL_DOMAIN_NOT_ALLOWED, isAllowedEmail } from "@qb/shared/constants";
 import { APIError, betterAuth, type BetterAuthOptions } from "better-auth";
+import { bearer } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import * as schema from "../db/schema";
@@ -36,6 +37,12 @@ async function freshUsername(db: Database): Promise<string> {
  * Google is the only way to sign in. New accounts need a DIU address
  * (ALLOWED_EMAIL_DOMAINS); existing accounts can always sign in. Exported on its own so tests can build an auth
  * instance with the same options plus Better Auth's `testUtils` plugin.
+ *
+ * The site signs in through Google's redirect and keeps the session in a cookie. The
+ * mobile app gets an ID token from Google on the phone, sends it to
+ * `/api/auth/sign-in/social` (its audience is the same web client ID), and keeps the
+ * session token from the `set-auth-token` response header, which it then sends as
+ * `Authorization: Bearer <token>` (the `bearer` plugin).
  */
 export function authOptions(env: Env, db: Database) {
   return {
@@ -85,6 +92,7 @@ export function authOptions(env: Env, db: Database) {
         },
       },
     },
+    plugins: [bearer({ requireSignature: true })],
     socialProviders: {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,

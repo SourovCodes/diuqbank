@@ -4,14 +4,27 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-part 'vote_value.g.dart';
+@JsonEnum()
+enum VoteValue {
+  @JsonValue(1)
+  value1(1),
+  @JsonValue(-1)
+  valueMinus1(-1),
 
-@JsonSerializable()
-class VoteValue {
-  const VoteValue();
+  /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
+  $unknown(null);
 
-  factory VoteValue.fromJson(Map<String, Object?> json) =>
-      _$VoteValueFromJson(json);
+  const VoteValue(this.json);
 
-  Map<String, Object?> toJson() => _$VoteValueToJson(this);
+  factory VoteValue.fromJson(int json) =>
+      values.firstWhere((e) => e.json == json, orElse: () => $unknown);
+
+  final int? json;
+
+  @override
+  String toString() => json?.toString() ?? super.toString();
+
+  /// Returns all defined enum values excluding the $unknown value.
+  static List<VoteValue> get $valuesDefined =>
+      values.where((value) => value != $unknown).toList();
 }

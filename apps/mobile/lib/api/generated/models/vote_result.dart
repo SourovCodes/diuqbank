@@ -4,6 +4,8 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'vote_value.dart';
+
 part 'vote_result.g.dart';
 
 @JsonSerializable()
@@ -21,7 +23,7 @@ class VoteResult {
   final int likeCount;
   final int dislikeCount;
   final int viewCount;
-  final dynamic myVote;
+  final VoteValue? myVote;
 
   Map<String, Object?> toJson() => _$VoteResultToJson(this);
 }

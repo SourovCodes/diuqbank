@@ -10,12 +10,13 @@ Submission submission(
   String? section,
   String? batch,
   Uploader? uploader,
+  int likes = 0,
 }) => Submission(
   id: id,
   status: status,
   fileSize: 1000,
   createdAt: DateTime.utc(2026),
-  likeCount: 0,
+  likeCount: likes,
   dislikeCount: 0,
   viewCount: 0,
   section: section,
@@ -104,3 +105,18 @@ Question question(
 
 QuestionList page(List<Question> items) =>
     QuestionList(items: items, page: 1, pageSize: 20, total: items.length);
+
+Map<String, Object?> profileJson({
+  String id = 'me',
+  String name = 'Nusrat Jahan',
+  int published = 12,
+  int views = 4180,
+}) => {
+  'id': id,
+  'name': name,
+  'email': 'nusrat@diu.edu.bd',
+  'username': 'nusrat',
+  'image': null,
+  'publishedCount': published,
+  'viewCount': views,
+};

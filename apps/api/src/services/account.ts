@@ -1,6 +1,7 @@
 import type {
   MySubmission,
   MySubmissionDetail,
+  Profile,
   SubmissionFields,
 } from "@qb/shared";
 import { and, desc, eq, ne } from "drizzle-orm";
@@ -16,6 +17,28 @@ import {
   resolveQuestionId,
 } from "./submissions";
 import { submissionFileKeys, type WatermarkJob } from "./watermark";
+
+/** The signed-in user's profile and the counts kept on their row. */
+export async function getProfile(
+  db: Database,
+  userId: string,
+): Promise<Profile> {
+  const [row] = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      image: user.image,
+      publishedCount: user.publishedSubmissionCount,
+      viewCount: user.publishedViewCount,
+    })
+    .from(user)
+    .where(eq(user.id, userId));
+  if (!row) throw new AppError(404, "NOT_FOUND", "User not found");
+  // Every user gets one at sign-up; the column is only nullable for SQLite's sake.
+  return { ...row, username: row.username ?? "" };
+}
 
 /** The user's own submissions in every status: published first, then newest first. */
 export async function listOwnSubmissions(

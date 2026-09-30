@@ -4,18 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/api.dart';
 import '../../api/generated/export.dart';
+import '../../auth/session.dart';
+import '../../auth/sign_in_flow.dart';
+import '../../auth/token.dart';
 import '../../data/format.dart';
 import '../../data/saved.dart';
 import '../../theme/exam_shape.dart';
 import '../../widgets/question_row.dart';
+import '../../widgets/avatar.dart';
 import '../../widgets/state_message.dart';
+import 'engagement.dart';
 import 'paper_actions.dart';
 import 'paper_titles.dart';
 import 'question_providers.dart';
 
 /// The reader. The top-ranked published paper fills the screen; a tap on the
 /// page hides the bars. A floating toolbar names the paper being read and opens a
-/// sheet to switch between the question's papers.
+/// sheet to switch between the question's papers, and holds the likes; the menu
+/// opens the paper in a browser or reports a problem with it.
 class QuestionScreen extends ConsumerStatefulWidget {
   const QuestionScreen({super.key, required this.id, this.summary});
 
@@ -35,12 +41,102 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   var _chrome = true;
   (int, int)? _page;
 
+  /// Votes and reports made here, over what the question and your interactions
+  /// said when they loaded.
+  final _votes = <int, VoteResult>{};
+  final _reported = <int>{};
+
   @override
   void initState() {
     super.initState();
     ref.listenManual(questionProvider(widget.id), (_, next) {
       if (next case AsyncData(:final value)) _countViews(value);
     }, fireImmediately: true);
+    ref.listenManual(sessionTokenProvider, (_, _) {
+      setState(() {
+        _votes.clear();
+        _reported.clear();
+      });
+    });
+  }
+
+  QuestionInteractions? get _interactions =>
+      ref.read(interactionsProvider(widget.id)).value;
+
+  VoteResult _voteOf(Submission paper) =>
+      _votes[paper.id] ??
+      VoteResult(
+        likeCount: paper.likeCount,
+        dislikeCount: paper.dislikeCount,
+        viewCount: paper.viewCount,
+        myVote: _interactions?.votes
+            .where((v) => v.submissionId == paper.id)
+            .firstOrNull
+            ?.value,
+      );
+
+  bool _isReported(Submission paper) =>
+      _reported.contains(paper.id) ||
+      (_interactions?.reportedSubmissionIds.contains(paper.id) ?? false);
+
+  /// Your own papers can't be liked or reported.
+  bool _isOwn(Submission paper) {
+    final me = ref.read(profileProvider).value;
+    return me != null && paper.uploader?.id == me.id;
+  }
+
+  void _snack(String text) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(text)));
+
+  /// Likes or dislikes [paper]; the same vote again takes it back. Signed out,
+  /// it signs in first and then records [value].
+  Future<void> _vote(Submission paper, VoteValue value) async {
+    final wasSignedIn = ref.read(sessionTokenProvider) != null;
+    if (!await ensureSignedIn(context, ref, to: 'like papers')) return;
+    if (!mounted) return;
+    final before = _voteOf(paper);
+    final next = wasSignedIn && before.myVote == value ? null : value;
+    setState(() => _votes[paper.id] = expectedVote(before, next));
+    final engagement = ref.read(qbApiProvider).engagement;
+    try {
+      final result = next == null
+          ? await engagement.deleteApiV1SubmissionsIdVote(id: paper.id)
+          : await engagement.putApiV1SubmissionsIdVote(
+              id: paper.id,
+              body: CastVoteInput(value: next),
+            );
+      if (mounted) setState(() => _votes[paper.id] = result);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() => _votes[paper.id] = before);
+      _snack(switch (e.response?.statusCode) {
+        403 => "You can't vote on your own paper.",
+        429 => "You're voting too fast. Please wait a minute.",
+        _ => "Couldn't save your vote. Check your connection.",
+      });
+    }
+  }
+
+  Future<void> _report(Submission paper, String? title) async {
+    if (!await ensureSignedIn(context, ref, to: 'report a problem')) return;
+    if (!mounted) return;
+    final result = await showModalBottomSheet<ReportResult>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (context) =>
+          ReportSheet(submissionId: paper.id, paperTitle: title),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _reported.add(paper.id));
+    _snack(switch (result) {
+      ReportResult.sent => 'Report sent. An admin will take a look.',
+      ReportResult.hidden =>
+        'Report sent. The paper is hidden until an admin checks it.',
+      ReportResult.alreadyReported => 'You already reported this paper.',
+    });
   }
 
   void _countViews(QuestionDetail question) {
@@ -128,6 +224,10 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     final saved = ref
         .watch(savedQuestionsProvider)
         .any((q) => q.id == question.id);
+    // Watched so the votes, reports and own-paper checks below stay current.
+    ref
+      ..watch(interactionsProvider(widget.id))
+      ..watch(profileProvider);
     const barHeight = 64.0;
     const motion = Duration(milliseconds: 220);
 
@@ -216,6 +316,16 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                               );
                           },
                         ),
+                        if (url != null && selected != null)
+                          _PaperMenu(
+                            reported: _isReported(selected),
+                            own: _isOwn(selected),
+                            onOpenInBrowser: () => openInBrowser(url),
+                            onReport: () => _report(
+                              selected,
+                              published.length > 1 ? titles[selected.id] : null,
+                            ),
+                          ),
                         const SizedBox(width: 4),
                       ],
                     ),
@@ -270,6 +380,9 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                       : null,
                   onPickPaper: () =>
                       _showPapers(context, question, published, titles),
+                  vote: _voteOf(selected),
+                  own: _isOwn(selected),
+                  onVote: (value) => _vote(selected, value),
                   url: url,
                   fileName: paperFileName([
                     question.course.name,
@@ -349,6 +462,9 @@ class _Toolbar extends StatelessWidget {
     required this.paperTitle,
     required this.position,
     required this.onPickPaper,
+    required this.vote,
+    required this.own,
+    required this.onVote,
     required this.url,
     required this.fileName,
   });
@@ -358,6 +474,11 @@ class _Toolbar extends StatelessWidget {
   /// (current, count) when the question has more than one paper.
   final (int, int)? position;
   final VoidCallback onPickPaper;
+  final VoteResult vote;
+
+  /// Your own paper: no voting on it.
+  final bool own;
+  final ValueChanged<VoteValue> onVote;
   final Uri url;
   final String fileName;
 
@@ -440,15 +561,76 @@ class _Toolbar extends StatelessWidget {
                 ),
               },
             ),
-            _ShareButton(url: url, fileName: fileName),
-            IconButton(
-              tooltip: 'Open in browser',
-              icon: const Icon(Icons.open_in_new_rounded),
-              onPressed: () => openInBrowser(url),
+            VoteButton(
+              icon: Icons.thumb_up_outlined,
+              selectedIcon: Icons.thumb_up_rounded,
+              tooltip: own ? 'Your paper' : 'Like',
+              selected: vote.myVote == VoteValue.value1,
+              count: vote.likeCount,
+              onPressed: own ? null : () => onVote(VoteValue.value1),
             ),
+            VoteButton(
+              icon: Icons.thumb_down_outlined,
+              selectedIcon: Icons.thumb_down_rounded,
+              tooltip: own ? 'Your paper' : 'Dislike',
+              selected: vote.myVote == VoteValue.valueMinus1,
+              onPressed: own ? null : () => onVote(VoteValue.valueMinus1),
+            ),
+            _ShareButton(url: url, fileName: fileName),
           ],
         ),
       ),
+    );
+  }
+}
+
+enum _MenuAction { openInBrowser, report }
+
+class _PaperMenu extends StatelessWidget {
+  const _PaperMenu({
+    required this.reported,
+    required this.own,
+    required this.onOpenInBrowser,
+    required this.onReport,
+  });
+
+  final bool reported;
+  final bool own;
+  final VoidCallback onOpenInBrowser;
+  final VoidCallback onReport;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return PopupMenuButton<_MenuAction>(
+      tooltip: 'More',
+      icon: const Icon(Icons.more_vert_rounded),
+      onSelected: (action) => switch (action) {
+        _MenuAction.openInBrowser => onOpenInBrowser(),
+        _MenuAction.report => onReport(),
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _MenuAction.openInBrowser,
+          child: ListTile(
+            leading: Icon(Icons.open_in_new_rounded, color: muted),
+            title: const Text('Open in browser'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: _MenuAction.report,
+          enabled: !reported && !own,
+          child: ListTile(
+            leading: Icon(Icons.flag_outlined, color: muted),
+            title: Text(
+              reported ? 'You reported this paper' : 'Report a problem',
+            ),
+            enabled: !reported && !own,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -519,14 +701,6 @@ class _PaperOption extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fg = selected ? scheme.onPrimaryContainer : scheme.onSurface;
     final uploader = paper.uploader;
-    final initials = uploader == null
-        ? '?'
-        : uploader.name
-              .split(RegExp(r'\s+'))
-              .where((w) => w.isNotEmpty)
-              .take(2)
-              .map((w) => w[0].toUpperCase())
-              .join();
     return Material(
       color: selected ? scheme.primaryContainer : scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
@@ -544,18 +718,11 @@ class _PaperOption extends StatelessWidget {
           child: Row(
             spacing: 12,
             children: [
-              CircleAvatar(
-                backgroundColor: scheme.secondaryContainer,
-                foregroundImage: uploader?.image == null
-                    ? null
-                    : NetworkImage(uploader!.image!),
-                child: Text(
-                  initials,
-                  style: TextStyle(
-                    color: scheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              PersonAvatar(
+                name: uploader?.name ?? '?',
+                image: uploader?.image,
+                background: scheme.secondaryContainer,
+                foreground: scheme.onSecondaryContainer,
               ),
               Expanded(
                 child: DefaultTextStyle.merge(
