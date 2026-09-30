@@ -7,9 +7,13 @@ part of 'cast_vote_input.dart';
 // **************************************************************************
 
 CastVoteInput _$CastVoteInputFromJson(Map<String, dynamic> json) =>
-    CastVoteInput(
-      value: VoteValue.fromJson(json['value'] as Map<String, dynamic>),
-    );
+    CastVoteInput(value: VoteValue.fromJson((json['value'] as num).toInt()));
 
 Map<String, dynamic> _$CastVoteInputToJson(CastVoteInput instance) =>
-    <String, dynamic>{'value': instance.value};
+    <String, dynamic>{'value': _$VoteValueEnumMap[instance.value]!};
+
+const _$VoteValueEnumMap = {
+  VoteValue.value1: 1,
+  VoteValue.valueMinus1: -1,
+  VoteValue.$unknown: r'$unknown',
+};

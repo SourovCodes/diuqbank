@@ -6,12 +6,14 @@ import {
   USERNAME_RULES,
   mySubmissionDetailSchema,
   mySubmissionListSchema,
+  profileSchema,
 } from "@qb/shared";
 import { AppError, validationHook } from "../lib/errors";
 import { objectResponse } from "../lib/files";
 import { errorResponse, jsonResponse } from "../lib/openapi";
 import { requireAuth } from "../middleware/require-auth";
 import {
+  getProfile,
   getOwnSubmission,
   getOwnSubmissionFile,
   listOwnSubmissions,
@@ -23,6 +25,18 @@ import type { AppEnv } from "../types";
 
 const tags = ["Account"];
 const idParams = z.object({ id: idQuerySchema });
+
+const getProfileRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags,
+  summary: "Get your profile and the counts on your contributor page",
+  middleware: [requireAuth] as const,
+  responses: {
+    200: jsonResponse(profileSchema, "Your profile"),
+    401: errorResponse("Not signed in"),
+  },
+});
 
 const listMySubmissionsRoute = createRoute({
   method: "get",
@@ -135,6 +149,9 @@ const updateUsernameRoute = createRoute({
 export const meRoutes = new OpenAPIHono<AppEnv>({
   defaultHook: validationHook,
 })
+  .openapi(getProfileRoute, async (c) =>
+    c.json(await getProfile(c.var.db, c.var.session!.user.id), 200),
+  )
   .openapi(listMySubmissionsRoute, async (c) =>
     c.json(
       {

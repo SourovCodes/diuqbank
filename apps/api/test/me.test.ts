@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import type { MySubmissionDetail, MySubmissionList } from "@qb/shared";
+import type { MySubmissionDetail, MySubmissionList, Profile } from "@qb/shared";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { submissionAnalyses, submissions } from "../src/db/schema";
@@ -43,6 +43,44 @@ async function seedStoredSubmission(
 
 const findSubmission = (id: number) =>
   db().query.submissions.findFirst({ where: eq(submissions.id, id) });
+
+describe("GET /api/v1/me", () => {
+  it("requires sign-in", async () => {
+    const res = await api("/api/v1/me");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns your profile with your published papers and their views", async () => {
+    const { cookie, id } = await signedInUser();
+    const question = await seedAnyQuestion();
+    const published = await seedSubmission(question.id, {
+      uploaderId: id,
+      status: "published",
+    });
+    await seedSubmission(question.id, {
+      uploaderId: id,
+      status: "pending_review",
+    });
+    await db()
+      .update(submissions)
+      .set({ viewCount: 12 })
+      .where(eq(submissions.id, published.id));
+
+    const res = await api("/api/v1/me", { headers: { cookie } });
+
+    expect(res.status).toBe(200);
+    const profile = await res.json<Profile>();
+    expect(profile).toMatchObject({
+      id,
+      name: "Test User",
+      publishedCount: 1,
+      viewCount: 12,
+      image: null,
+    });
+    expect(profile.email).toMatch(/@diu\.edu\.bd$/);
+    expect(profile.username).toMatch(/^user_/);
+  });
+});
 
 describe("GET /api/v1/me/submissions", () => {
   it("requires sign-in", async () => {

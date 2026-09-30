@@ -59,3 +59,20 @@ export const updateUsernameInputSchema = z
   .object({ username: usernameSchema })
   .meta({ id: "UpdateUsernameInput" });
 export type UpdateUsernameInput = z.infer<typeof updateUsernameInputSchema>;
+
+/** The signed-in user, with the counts their contributor page shows. */
+export const profileSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    /** In their contributor page's URL: /contributors/<username>. */
+    username: z.string(),
+    /** An avatar URL, relative (`/api/v1/avatars/…`) when it's stored by the API. */
+    image: z.string().nullable(),
+    publishedCount: z.number().int(),
+    /** Views of all their published papers. */
+    viewCount: z.number().int(),
+  })
+  .meta({ id: "Profile" });
+export type Profile = z.infer<typeof profileSchema>;

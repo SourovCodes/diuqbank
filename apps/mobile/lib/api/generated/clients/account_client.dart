@@ -11,6 +11,7 @@ import 'package:retrofit/retrofit.dart';
 import '../models/api_v1_me_submissions_id_classification_request_body.dart';
 import '../models/my_submission_detail.dart';
 import '../models/my_submission_list.dart';
+import '../models/profile.dart';
 import '../models/update_username_input.dart';
 
 part 'account_client.g.dart';
@@ -18,6 +19,10 @@ part 'account_client.g.dart';
 @RestApi()
 abstract class AccountClient {
   factory AccountClient(Dio dio, {String? baseUrl}) = _AccountClient;
+
+  /// Get your profile and the counts on your contributor page
+  @GET('/api/v1/me')
+  Future<Profile> getApiV1Me();
 
   /// List your own submissions, in every status
   @GET('/api/v1/me/submissions')

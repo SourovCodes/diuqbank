@@ -7,10 +7,13 @@ import {
 import { nullableRef } from "./common";
 import { submissionStatsSchema } from "./question";
 
-/** 1 = like, -1 = dislike. */
+/**
+ * 1 = like, -1 = dislike. The document's `enum` is spelled out: generated from the
+ * literals it keeps only the first value.
+ */
 export const voteValueSchema = z
-  .union([z.literal(1), z.literal(-1)])
-  .meta({ id: "VoteValue" });
+  .literal([1, -1])
+  .meta({ id: "VoteValue", type: "integer", enum: [1, -1] });
 export type VoteValue = z.infer<typeof voteValueSchema>;
 
 export const castVoteInputSchema = z

@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/generated/export.dart';
+import '../../auth/session.dart';
 import '../../data/format.dart';
 import '../../data/questions.dart';
 import '../../data/taxonomy.dart';
 import '../../theme/exam_shape.dart';
 import '../../theme/theme.dart';
+import '../../widgets/avatar.dart';
 import '../../widgets/question_row.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
@@ -125,12 +127,13 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _Masthead extends StatelessWidget {
+class _Masthead extends ConsumerWidget {
   const _Masthead();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final profile = ref.watch(profileProvider).value;
     return Row(
       children: [
         Expanded(
@@ -147,7 +150,10 @@ class _Masthead extends StatelessWidget {
         IconButton.filledTonal(
           tooltip: 'Account',
           onPressed: () => context.go('/account'),
-          icon: const Icon(Icons.person_rounded),
+          padding: profile == null ? null : EdgeInsets.zero,
+          icon: profile == null
+              ? const Icon(Icons.person_rounded)
+              : PersonAvatar(name: profile.name, image: profile.image),
         ),
       ],
     );

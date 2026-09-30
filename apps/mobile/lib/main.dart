@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api/api.dart';
+import 'auth/token.dart';
 import 'data/prefs.dart';
 import 'data/settings.dart';
 import 'router.dart';
@@ -13,9 +14,11 @@ import 'theme/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final (dir, prefs) = await (
+  final tokens = SecureTokenStore();
+  final (dir, prefs, token) = await (
     getApplicationSupportDirectory(),
     SharedPreferences.getInstance(),
+    tokens.read(),
   ).wait;
 
   runApp(
@@ -25,6 +28,8 @@ Future<void> main() async {
           PersistCookieJar(storage: FileStorage('${dir.path}/cookies/')),
         ),
         prefsProvider.overrideWithValue(prefs),
+        tokenStoreProvider.overrideWithValue(tokens),
+        savedSessionTokenProvider.overrideWithValue(token),
       ],
       child: QbApp(router: buildRouter()),
     ),

@@ -62,6 +62,18 @@ describe("system routes", () => {
     expect(text).not.toMatch(/"allOf":\[\{"\$ref"/);
   });
 
+  // Zod's export of `z.literal([1, -1])` keeps only the first value.
+  it("lists both vote values", async () => {
+    const res = await api("/api/v1/openapi.json");
+    const doc = await res.json<{
+      components: { schemas: Record<string, unknown> };
+    }>();
+    expect(doc.components.schemas.VoteValue).toEqual({
+      type: "integer",
+      enum: [1, -1],
+    });
+  });
+
   it("returns a structured 404 for unknown routes", async () => {
     const res = await api("/api/v1/nope");
     expect(res.status).toBe(404);

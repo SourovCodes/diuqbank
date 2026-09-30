@@ -793,6 +793,44 @@
           "name"
         ]
       },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedCount": {
+            "type": "integer"
+          },
+          "viewCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "username",
+          "image",
+          "publishedCount",
+          "viewCount"
+        ]
+      },
       "MySubmissionList": {
         "type": "object",
         "properties": {
@@ -1345,16 +1383,7 @@
           "myVote": {
             "anyOf": [
               {
-                "type": "number",
-                "enum": [
-                  1
-                ]
-              },
-              {
-                "type": "number",
-                "enum": [
-                  -1
-                ]
+                "$ref": "#/components/schemas/VoteValue"
               },
               {
                 "type": "null"
@@ -1369,6 +1398,13 @@
           "myVote"
         ]
       },
+      "VoteValue": {
+        "type": "integer",
+        "enum": [
+          1,
+          -1
+        ]
+      },
       "CastVoteInput": {
         "type": "object",
         "properties": {
@@ -1378,22 +1414,6 @@
         },
         "required": [
           "value"
-        ]
-      },
-      "VoteValue": {
-        "anyOf": [
-          {
-            "type": "number",
-            "enum": [
-              1
-            ]
-          },
-          {
-            "type": "number",
-            "enum": [
-              -1
-            ]
-          }
         ]
       },
       "CreatedReport": {
@@ -2132,6 +2152,36 @@
           },
           "422": {
             "description": "Invalid query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get your profile and the counts on your contributor page",
+        "responses": {
+          "200": {
+            "description": "Your profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
             "content": {
               "application/json": {
                 "schema": {
