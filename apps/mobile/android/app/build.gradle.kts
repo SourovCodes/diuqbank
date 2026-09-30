@@ -16,7 +16,7 @@ val keyProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.bongomaker.diuqbank"
+    namespace = "com.ourdiu.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bongomaker.diuqbank"
+        applicationId = "com.ourdiu.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -2,7 +2,7 @@
     <!-- The app loads everything from the API. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="QuestionBank"
+        android:label="OurDIU"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
