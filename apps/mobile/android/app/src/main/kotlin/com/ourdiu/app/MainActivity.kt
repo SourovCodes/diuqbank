@@ -1,4 +1,4 @@
-package com.bongomaker.diuqbank
+package com.ourdiu.app
 
 import android.content.Intent
 import android.net.Uri

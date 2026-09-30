@@ -65,9 +65,10 @@ export default function Privacy() {
 
       <LegalSection id="mobile-app" title="In the mobile app">
         <p>
-          The QuestionBank app for Android collects the same account, upload and
-          like, dislike or report data as the site, when you do the same things.
-          Unlike the site, it doesn’t use Google Analytics or cookies.
+          OurDIU, the QuestionBank app for Android, collects the same account,
+          upload and like, dislike or report data as the site, when you do the
+          same things. Unlike the site, it doesn’t use Google Analytics or
+          cookies.
         </p>
         <ul>
           <li>

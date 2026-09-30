@@ -11,7 +11,7 @@ export const meta: Route.MetaFunction = () => [
   {
     name: "description",
     content:
-      "How to delete your QuestionBank account, on the site or in the Android app, and what happens to your data.",
+      "How to delete your QuestionBank account, on the site or in the OurDIU app for Android, and what happens to your data.",
   },
 ];
 
@@ -27,7 +27,7 @@ export default function DeleteAccount() {
   return (
     <LegalPage
       title="Delete your account"
-      description="How to delete your QuestionBank account, from the site or the Android app, and what happens to your data."
+      description="How to delete your QuestionBank account, from the site or the OurDIU app for Android, and what happens to your data."
     >
       <LegalSection id="how" title="How to ask">
         <p>
@@ -36,8 +36,8 @@ export default function DeleteAccount() {
             {AUTHOR.email}
           </a>{" "}
           from the address you sign in with, so I know the account is yours. In
-          the QuestionBank app, <strong>Account → Delete account</strong> starts
-          the same email.
+          the OurDIU app, <strong>Account → Delete account</strong> starts the
+          same email.
         </p>
         <Button
           asChild
