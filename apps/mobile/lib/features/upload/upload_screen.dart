@@ -76,7 +76,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   /// Starts on the department you share most, or the one you last read.
   void _defaultDepartment(Taxonomy taxonomy) {
     if (_defaulted || _editing || _details.hasDepartment) return;
-    final mine = ref.read(myPapersProvider).value ?? const [];
+    // Watched: opened straight from a share, your papers may still be loading.
+    final papers = ref.watch(myPapersProvider);
+    if (papers.isLoading && !papers.hasValue) return;
+    final mine = papers.value ?? const [];
     final counts = <int, int>{};
     for (final p in mine) {
       if (p.classification.department.id case final id?) {
