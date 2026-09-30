@@ -16,9 +16,10 @@ Material 3 Expressive on the site's indigo, in light and dark (`lib/theme/theme.
 ## Layout
 
 - `lib/shell/` – the four tabs (Home, Browse, Saved, Account), each with its own navigation stack; `lib/router.dart` has the routes. The reader (`/questions/:id`) covers the tabs.
-- `lib/features/` – screens and their providers, one folder per feature.
+- `lib/features/` – screens and their providers, one folder per feature. `upload/` is sharing a paper: Android's ML Kit document scanner or the file picker (`papers.dart`), the form (`/upload`, which also edits a paper's details), Your papers (`/account/papers`) and each paper's page, which refreshes itself while the AI check runs. `review.dart` mirrors the site's `review.ts` and `analysis.ts` (stages, the comparison with the AI's reading, "Use the AI's details"); keep them in step.
+- `lib/auth/` – Google sign-in and the session token (see "Sign-in" in the repository's README).
 - `lib/data/` – taxonomy and question queries, saved papers and settings (kept on the device with shared_preferences), formatting.
 - `lib/widgets/` – shared pieces: question rows, state messages, skeletons.
 - `lib/api/api.dart` – Dio (with a cookie jar kept on the device, for the API's view cookies) and the client; `lib/api/generated/` is generated from `../api/openapi.json`. Don't edit it; run `tool/generate_api.sh` after `pnpm openapi`.
 
-Checks (also run by the mobile jobs in `.github/workflows/ci.yml`): `dart format lib test`, `flutter analyze`, `flutter test`. Widget tests drive the whole app with the API replaced by test data (`test/app_harness.dart`).
+Checks (also run by the mobile jobs in `.github/workflows/ci.yml`): `dart format lib test`, `flutter analyze`, `flutter test`. Widget tests drive the whole app with the API replaced by test data (`test/app_harness.dart`): a `FakeBackend` answers the real Dio clients, and fakes stand in for Google's account picker, the scanner and the file picker.

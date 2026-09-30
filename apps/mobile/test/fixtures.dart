@@ -73,8 +73,18 @@ const taxonomy = Taxonomy(
     Course(id: 200, name: 'Data Structures', departmentId: 5),
     Course(id: 300, name: 'Structured Programming', departmentId: 13),
   ],
-  semesters: [Semester(id: 1, name: 'Fall 25')],
-  examTypes: [ExamType(id: 1, name: 'Final')],
+  semesters: [
+    Semester(id: 1, name: 'Fall 25'),
+    Semester(id: 2, name: 'Summer 25'),
+    Semester(id: 3, name: 'Spring 25'),
+    Semester(id: 4, name: 'Fall 24'),
+    Semester(id: 5, name: 'Summer 24'),
+  ],
+  examTypes: [
+    ExamType(id: 1, name: 'Final'),
+    ExamType(id: 2, name: 'Midterm'),
+    ExamType(id: 3, name: 'Quiz'),
+  ],
 );
 
 Question question(
@@ -119,4 +129,76 @@ Map<String, Object?> profileJson({
   'image': null,
   'publishedCount': published,
   'viewCount': views,
+};
+
+/// One of your papers as the API sends it: Data Structures, CSE Final Fall 25.
+Map<String, Object?> myPaperJson(
+  int id, {
+  String status = 'pending_review',
+  String? analysis = 'completed',
+  String? flag,
+  bool? matches = true,
+  bool autoPublished = false,
+  Map<String, Object?>? aiSemester,
+  int? questionId = 7,
+  int views = 0,
+  int? courseId = 200,
+}) => {
+  'id': id,
+  'status': status,
+  'fileSize': 1000,
+  'createdAt': '2026-09-20T10:00:00.000Z',
+  'section': null,
+  'batch': null,
+  'questionId': questionId,
+  'likeCount': 0,
+  'dislikeCount': 0,
+  'viewCount': views,
+  'classification': {
+    'department': {
+      'id': 5,
+      'name': 'Computer Science and Engineering',
+      'shortName': 'CSE',
+    },
+    'course': {
+      'id': courseId,
+      'name': courseId == null ? 'Compiler Construction' : 'Data Structures',
+    },
+    'semester': {'id': 1, 'name': 'Fall 25'},
+    'examType': {'id': 1, 'name': 'Final'},
+  },
+  'autoPublished': autoPublished,
+  'rejectionReason': null,
+  'analysis': analysis == null
+      ? null
+      : {'status': analysis, 'flag': flag, 'matches': matches},
+  'analysisDetail': analysis == null
+      ? null
+      : {
+          'status': analysis,
+          'requestedAt': '2026-09-20T10:00:00.000Z',
+          'completedAt': analysis == 'completed'
+              ? '2026-09-20T10:00:30.000Z'
+              : null,
+          'isQuestionPaper': analysis == 'completed' ? true : null,
+          'paperCount': analysis == 'completed'
+              ? (flag == 'multiple_papers' ? 3 : 1)
+              : null,
+          'note': null,
+          'flag': flag,
+          'values': analysis == 'completed'
+              ? {
+                  'department': {
+                    'id': 5,
+                    'name': 'Computer Science and Engineering',
+                    'shortName': 'CSE',
+                  },
+                  'course': {'id': 200, 'name': 'Data Structures'},
+                  'semester': aiSemester ?? {'id': 1, 'name': 'Fall 25'},
+                  'examType': {'id': 1, 'name': 'Final'},
+                  'section': null,
+                  'batch': null,
+                }
+              : null,
+        },
 };
